@@ -1,29 +1,28 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
-from openpyxl.styles import numbers
 from openpyxl import load_workbook
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
-import locale
+import json
 
 # Configurações iniciais
 st.set_page_config(page_title="Processador de Sangria", layout="centered")
 st.title("📊 Processador de Sangria")
 
-# Conexão com o Google Sheets
+# Autenticação segura com Google Sheets via st.secrets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-import json
 credentials_dict = json.loads(st.secrets["GCP_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
 
-# Abrindo a planilha correta
+# Abre a planilha chamada "Tabela"
 spreadsheet = gc.open("Tabela")
 tabela_empresa = pd.DataFrame(spreadsheet.worksheet("Tabela Empresa").get_all_records())
 tabela_descricoes = pd.DataFrame(spreadsheet.worksheet("Tabela Descrição Sangria").get_all_records())
 
+# Upload do Excel
 uploaded_file = st.file_uploader("📥 Envie seu arquivo Excel (.xlsx ou .xlsm)", type=["xlsx", "xlsm"])
 
 if uploaded_file:
@@ -37,12 +36,10 @@ if uploaded_file:
         if st.button("🚀 Processar Sangria"):
             st.info("🔄 Processando arquivo...")
 
-            # Processamento
             df = df_dados.copy()
             df["Data"] = pd.to_datetime(df["Data"]).dt.date
             df["Dia da Semana"] = pd.to_datetime(df["Data"]).dt.strftime("%A")
 
-            # Traduz dia da semana
             dias_semana_pt = {
                 "Monday": "segunda-feira",
                 "Tuesday": "terça-feira",
@@ -54,25 +51,19 @@ if uploaded_file:
             }
             df["Dia da Semana"] = df["Dia da Semana"].map(dias_semana_pt)
 
-            # Formatação moeda
-            df["Valor (R$)"] = pd.to_numeric(df["Valor (R$)"], errors="coerce")
-            df["Valor (R$)"] = df["Valor (R$)"].fillna(0)
+            df["Valor (R$)"] = pd.to_numeric(df["Valor (R$)"], errors="coerce").fillna(0)
 
-            # Agrupamento por descrição
             def agrupar_descricao(desc):
-                for i, row in tabela_descricoes.iterrows():
+                for _, row in tabela_descricoes.iterrows():
                     chave = str(row["Chave"]).lower()
                     if chave in str(desc).lower():
                         return row["Descrição Agrupada"]
                 return desc
 
             df["Descrição Base"] = df["Descrição"].apply(agrupar_descricao)
-
-            # Mês e Ano
             df["Mês"] = pd.to_datetime(df["Data"]).dt.strftime("%B").str.capitalize()
             df["Ano"] = pd.to_datetime(df["Data"]).dt.year
 
-            # Exportar para Excel
             output = BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
                 df.to_excel(writer, index=False, sheet_name='Sangria')
