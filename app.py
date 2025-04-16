@@ -3,21 +3,25 @@ import pandas as pd
 from io import BytesIO
 from openpyxl import load_workbook
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-from datetime import datetime
 import json
+from google.oauth2.service_account import Credentials
+from datetime import datetime
 
-# Configurações iniciais
 st.set_page_config(page_title="Processador de Sangria", layout="centered")
 st.title("📊 Processador de Sangria")
 
-# Autenticação segura com Google Sheets via st.secrets
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials_dict = json.loads(st.secrets["GCP_SERVICE_ACCOUNT"])
-credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+# Autenticação moderna com google-auth (sem \\n)
+service_account_info = json.loads(st.secrets["GCP_SERVICE_ACCOUNT"])
+
+scopes = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
+
+credentials = Credentials.from_service_account_info(service_account_info, scopes=scopes)
 gc = gspread.authorize(credentials)
 
-# Abre a planilha chamada "Tabela"
+# Abre a planilha chamada "Tabela" e lê as abas auxiliares
 spreadsheet = gc.open("Tabela")
 tabela_empresa = pd.DataFrame(spreadsheet.worksheet("Tabela Empresa").get_all_records())
 tabela_descricoes = pd.DataFrame(spreadsheet.worksheet("Tabela Descrição Sangria").get_all_records())
@@ -83,3 +87,5 @@ if uploaded_file:
 
     except Exception as e:
         st.error(f"❌ Erro ao processar: {e}")
+
+      
