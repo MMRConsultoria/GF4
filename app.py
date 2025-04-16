@@ -9,11 +9,12 @@ from urllib.parse import quote
 st.set_page_config(page_title="Processador de Sangria", layout="centered")
 st.title("📊 Processador de Sangria")
 
-# ID da planilha pública no Google Sheets
 sheet_id = "13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q"
 sheet_empresa = quote("Tabela_Empresa")
 tabela_empresa_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_empresa}"
-df_empresa = pd.read_csv(tabela_empresa_url)
+df_empresa_raw = pd.read_csv(tabela_empresa_url)
+df_empresa_raw.columns = df_empresa_raw.iloc[0].str.strip()
+df_empresa = df_empresa_raw[1:].copy()
 
 uploaded_file = st.file_uploader("Envie seu arquivo Excel (.xlsx ou .xlsm)", type=["xlsx", "xlsm"])
 
@@ -85,13 +86,9 @@ if uploaded_file:
             st.subheader("🔎 Visualização da Tabela Empresa (Google Sheets)")
             st.write(df_empresa.head())
 
-            try:
-                df_final = pd.merge(df, df_empresa, on="Loja", how="left")
-            except Exception as e:
-                st.error(f"Erro ao juntar as tabelas (merge): {e}")
-                st.stop()
+            df_final = df.merge(df_empresa, left_on="Loja", right_on=df_empresa.columns[0], how="left")
 
-            lojas_nao_cadastradas = df_final[df_final["Codigo Everest Loja"].isna() | df_final["Codigo Everest Grupo de Empresas"].isna()]["Loja"].unique()
+            lojas_nao_cadastradas = df_final[df_final[df_empresa.columns[2]].isna() | df_final[df_empresa.columns[3]].isna()]["Loja"].unique()
             if len(lojas_nao_cadastradas) > 0:
                 st.warning("⚠️ As seguintes lojas não foram encontradas na Tabela Empresa:")
                 for loja in lojas_nao_cadastradas:
@@ -113,9 +110,8 @@ if uploaded_file:
             df_final["Resumo Descrição"] = df_final["Descrição"].apply(mapear_resumo)
 
             ordem_colunas = [
-                "Data", "Dia da Semana", "Loja", "Codigo Everest Loja", "Grupo",
-                "Codigo Everest Grupo de Empresas", "Meio de recebimento", "Funcionário",
-                "Hora", "Descrição", "Resumo Descrição", "Valor(R$)", "Mês", "Ano"
+                "Data", "Dia da Semana", "Loja", df_empresa.columns[2], df_empresa.columns[1], df_empresa.columns[3],
+                "Meio de recebimento", "Funcionário", "Hora", "Descrição", "Resumo Descrição", "Valor(R$)", "Mês", "Ano"
             ]
             df_final = df_final[[col for col in ordem_colunas if col in df_final.columns]]
 
@@ -144,4 +140,4 @@ if uploaded_file:
             output.seek(0)
 
             st.success("✅ Sangria processada com sucesso!")
-            st.download_button("📅 Baixar resultado", data=output, file_name="Sangria_estruturada.xlsx")
+            st.download_button("📥 Baixar resultado", data=output, file_name="Sangria_estruturada.xlsx")
