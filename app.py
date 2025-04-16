@@ -2,23 +2,27 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 from openpyxl import load_workbook
-from datetime import datetime
+from urllib.parse import quote
 
 st.set_page_config(page_title="Processador de Sangria", layout="centered")
 st.title("📊 Processador de Sangria")
 
-# ID da planilha pública no Google Sheets
+# ID da sua planilha
 sheet_id = "13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q"
 
-# URLs para leitura direta via CSV export
-tabela_empresa_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet=Tabela Empresa"
-tabela_descricoes_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet=Tabela Descrição Sangria"
+# Nomes codificados das abas (sheets)
+sheet_empresa = quote("Tabela_Empresa")
+sheet_descricoes = quote("Tabela_Descrição_ Sangria")  # <- espaço depois do underline
 
-# Leitura das tabelas auxiliares
+# URLs formatadas
+tabela_empresa_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_empresa}"
+tabela_descricoes_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_descricoes}"
+
+# Lê as tabelas auxiliares do Google Sheets público
 tabela_empresa = pd.read_csv(tabela_empresa_url)
 tabela_descricoes = pd.read_csv(tabela_descricoes_url)
 
-# Upload do Excel
+# Upload do Excel do usuário
 uploaded_file = st.file_uploader("📥 Envie seu arquivo Excel (.xlsx ou .xlsm)", type=["xlsx", "xlsm"])
 
 if uploaded_file:
@@ -30,7 +34,7 @@ if uploaded_file:
         st.dataframe(df_dados.head())
 
         if st.button("🚀 Processar Sangria"):
-            st.info("🔄 Processando arquivo...")
+            st.info("🔄 Processando...")
 
             df = df_dados.copy()
             df["Data"] = pd.to_datetime(df["Data"]).dt.date
@@ -69,7 +73,7 @@ if uploaded_file:
                     worksheet.column_dimensions[chr(64 + idx)].width = 18
             output.seek(0)
 
-            st.success("✅ Arquivo processado com sucesso!")
+            st.success("✅ Processamento finalizado!")
             st.download_button(
                 label="📥 Baixar arquivo processado",
                 data=output,
@@ -79,3 +83,4 @@ if uploaded_file:
 
     except Exception as e:
         st.error(f"❌ Erro ao processar: {e}")
+
