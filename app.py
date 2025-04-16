@@ -13,8 +13,10 @@ sheet_id = "13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q"
 sheet_empresa = quote("Tabela_Empresa")
 tabela_empresa_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_empresa}"
 df_empresa_raw = pd.read_csv(tabela_empresa_url, header=None)
+cabecalho = df_empresa_raw.iloc[0].fillna("").astype(str).str.strip()
 df_empresa = df_empresa_raw[1:].copy()
-df_empresa.columns = df_empresa_raw.iloc[0].tolist()
+df_empresa.columns = cabecalho
+df_empresa = df_empresa.loc[:, df_empresa.columns != ""]
 
 uploaded_file = st.file_uploader("Envie seu arquivo Excel (.xlsx ou .xlsm)", type=["xlsx", "xlsm"])
 
@@ -66,7 +68,7 @@ if uploaded_file:
 
             df["Descrição"] = df["Descrição"].astype(str).str.strip().str.lower()
             df["Funcionário"] = df["Funcionário"].astype(str).str.strip()
-            df["Valor(R$)"] = pd.to_numeric(df["Valor(R$)"] , errors="coerce")
+            df["Valor(R$)"] = pd.to_numeric(df["Valor(R$)"], errors="coerce")
 
             dias_semana = {
                 0: 'segunda-feira', 1: 'terça-feira', 2: 'quarta-feira',
