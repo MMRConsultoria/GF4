@@ -1,6 +1,5 @@
-gspread
-oauth2client
-pandas
-openpyxl
-xlsxwriter
 streamlit
+pandas
+gspread
+google-auth
+openpyxl
