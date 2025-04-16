@@ -14,7 +14,9 @@ st.title("📊 Processador de Sangria")
 
 # Conexão com o Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", scope)
+import json
+credentials_dict = json.loads(st.secrets["GCP_SERVICE_ACCOUNT"])
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
 
 # Abrindo a planilha correta
