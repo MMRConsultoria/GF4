@@ -2,29 +2,21 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 from openpyxl import load_workbook
-import gspread
-import json
-from google.oauth2.service_account import Credentials
 from datetime import datetime
 
 st.set_page_config(page_title="Processador de Sangria", layout="centered")
 st.title("📊 Processador de Sangria")
 
-# Autenticação moderna com google-auth (sem \\n)
-service_account_info = json.loads(st.secrets["GCP_SERVICE_ACCOUNT"])
+# ID da planilha pública no Google Sheets
+sheet_id = "13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q"
 
-scopes = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
-]
+# URLs para leitura direta via CSV export
+tabela_empresa_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet=Tabela Empresa"
+tabela_descricoes_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet=Tabela Descrição Sangria"
 
-credentials = Credentials.from_service_account_info(service_account_info, scopes=scopes)
-gc = gspread.authorize(credentials)
-
-# Abre a planilha chamada "Tabela" e lê as abas auxiliares
-spreadsheet = gc.open("Tabela")
-tabela_empresa = pd.DataFrame(spreadsheet.worksheet("Tabela Empresa").get_all_records())
-tabela_descricoes = pd.DataFrame(spreadsheet.worksheet("Tabela Descrição Sangria").get_all_records())
+# Leitura das tabelas auxiliares
+tabela_empresa = pd.read_csv(tabela_empresa_url)
+tabela_descricoes = pd.read_csv(tabela_descricoes_url)
 
 # Upload do Excel
 uploaded_file = st.file_uploader("📥 Envie seu arquivo Excel (.xlsx ou .xlsm)", type=["xlsx", "xlsm"])
@@ -87,5 +79,3 @@ if uploaded_file:
 
     except Exception as e:
         st.error(f"❌ Erro ao processar: {e}")
-
-      
