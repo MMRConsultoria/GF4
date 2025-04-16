@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 from io import BytesIO
+from openpyxl.styles import numbers
 from openpyxl import load_workbook
 from urllib.parse import quote
 
@@ -9,92 +11,137 @@ st.title("📊 Processador de Sangria")
 
 # ID da planilha pública no Google Sheets
 sheet_id = "13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q"
-
-# Codifica nomes com espaços
 sheet_empresa = quote("Tabela_Empresa")
-sheet_descricoes = quote("Tabela_Descrição_ Sangria")  # com espaço mesmo
-
-# Monta os links de exportação
 tabela_empresa_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_empresa}"
-tabela_descricoes_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_descricoes}"
+df_empresa = pd.read_csv(tabela_empresa_url)
 
-# Lê as tabelas auxiliares públicas
-tabela_empresa = pd.read_csv(tabela_empresa_url)
-tabela_descricoes = pd.read_csv(tabela_descricoes_url)
-
-# Upload do Excel
-uploaded_file = st.file_uploader("📥 Envie seu arquivo Excel (.xlsx ou .xlsm)", type=["xlsx", "xlsm"])
+uploaded_file = st.file_uploader("Envie seu arquivo Excel (.xlsx ou .xlsm)", type=["xlsx", "xlsm"])
 
 if uploaded_file:
     try:
         xls = pd.ExcelFile(uploaded_file)
-        st.write("📄 Abas encontradas:", xls.sheet_names)
-        df_dados = pd.read_excel(xls, sheet_name=0)  # Lê a primeira aba automaticamente
-        st.subheader("Prévia dos dados carregados")
+        df_dados = pd.read_excel(xls, sheet_name="Sheet")
+    except Exception as e:
+        st.error(f"Erro ao ler o Excel: {e}")
+    else:
+        st.subheader("Prévia dos dados da aba 'Sheet'")
         st.dataframe(df_dados.head())
-        st.write("🧾 Colunas encontradas:", df_dados.columns.tolist())
 
-        if st.button("🚀 Processar Sangria"):
-            st.info("🔄 Processando...")
-
+        if st.button("Processar Sangria"):
+            st.info("🔄 Processando arquivo... Aguarde...")
             df = df_dados.copy()
+            df["Loja"] = np.nan
+            df["Data"] = np.nan
+            df["Funcionário"] = np.nan
 
-            # Tenta encontrar uma coluna que pareça ser 'Data'
-            col_data = next((col for col in df.columns if "data" in col.lower()), None)
-            col_descr = next((col for col in df.columns if "descr" in col.lower()), None)
-            col_valor = next((col for col in df.columns if "valor" in col.lower()), None)
+            data_atual = None
+            funcionario_atual = None
+            loja_atual = None
+            linhas_validas = []
 
-            if not all([col_data, col_descr, col_valor]):
-                st.error("❌ Não foi possível identificar as colunas 'Data', 'Descrição' e 'Valor'.")
+            for i, row in df.iterrows():
+                valor = str(row["Hora"]).strip()
+                if valor.startswith("Loja:"):
+                    loja = valor.split("Loja:")[1].split("(Total")[0].strip()
+                    if "-" in loja:
+                        loja = loja.split("-", 1)[1].strip()
+                    loja_atual = loja or "Loja nao cadastrada"
+                elif valor.startswith("Data:"):
+                    try:
+                        data_atual = pd.to_datetime(valor.split("Data:")[1].split("(Total")[0].strip(), dayfirst=True)
+                    except:
+                        data_atual = pd.NaT
+                elif valor.startswith("Funcionário:"):
+                    funcionario_atual = valor.split("Funcionário:")[1].split("(Total")[0].strip()
+                else:
+                    if pd.notna(row["Valor(R$)"]) and pd.notna(row["Hora"]):
+                        df.at[i, "Data"] = data_atual
+                        df.at[i, "Funcionário"] = funcionario_atual
+                        df.at[i, "Loja"] = loja_atual
+                        linhas_validas.append(i)
+
+            df = df.loc[linhas_validas].copy()
+            df.ffill(inplace=True)
+
+            df["Descrição"] = df["Descrição"].astype(str).str.strip().str.lower()
+            df["Funcionário"] = df["Funcionário"].astype(str).str.strip()
+            df["Valor(R$)"] = pd.to_numeric(df["Valor(R$)"], errors="coerce")
+
+            dias_semana = {
+                0: 'segunda-feira', 1: 'terça-feira', 2: 'quarta-feira',
+                3: 'quinta-feira', 4: 'sexta-feira', 5: 'sábado', 6: 'domingo'
+            }
+            df["Dia da Semana"] = df["Data"].dt.dayofweek.map(dias_semana)
+
+            df["Mês"] = df["Data"].dt.month.map({
+                1: 'jan', 2: 'fev', 3: 'mar', 4: 'abr', 5: 'mai', 6: 'jun',
+                7: 'jul', 8: 'ago', 9: 'set', 10: 'out', 11: 'nov', 12: 'dez'
+            })
+            df["Ano"] = df["Data"].dt.year
+
+            df["Loja"] = df["Loja"].astype(str).str.strip().str.upper()
+            df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.upper()
+
+            st.subheader("🔎 Visualização da Tabela Empresa (Google Sheets)")
+            st.write(df_empresa.head())
+
+            try:
+                df_final = pd.merge(df, df_empresa, on="Loja", how="left")
+            except Exception as e:
+                st.error(f"Erro ao juntar as tabelas (merge): {e}")
                 st.stop()
 
-            df[col_data] = pd.to_datetime(df[col_data], errors="coerce")
-            df["Data"] = df[col_data].dt.date
-            df["Dia da Semana"] = pd.to_datetime(df["Data"]).dt.strftime("%A")
+            lojas_nao_cadastradas = df_final[df_final["Codigo Everest Loja"].isna() | df_final["Codigo Everest Grupo de Empresas"].isna()]["Loja"].unique()
+            if len(lojas_nao_cadastradas) > 0:
+                st.warning("⚠️ As seguintes lojas não foram encontradas na Tabela Empresa:")
+                for loja in lojas_nao_cadastradas:
+                    st.text(f"- {loja}")
 
-            dias_semana_pt = {
-                "Monday": "segunda-feira",
-                "Tuesday": "terça-feira",
-                "Wednesday": "quarta-feira",
-                "Thursday": "quinta-feira",
-                "Friday": "sexta-feira",
-                "Saturday": "sábado",
-                "Sunday": "domingo"
-            }
-            df["Dia da Semana"] = df["Dia da Semana"].map(dias_semana_pt)
+            def mapear_resumo(desc):
+                desc = desc.lower()
+                if any(p in desc for p in ["meta", "prem"]):
+                    return "Premiação/Meta"
+                elif "motiv" in desc:
+                    return "Motivacional"
+                elif "sangr" in desc:
+                    return "Sangria"
+                elif "dep" in desc:
+                    return "Deposito"
+                else:
+                    return ""
 
-            df["Valor (R$)"] = pd.to_numeric(df[col_valor], errors="coerce").fillna(0)
-            df["Descrição"] = df[col_descr]
+            df_final["Resumo Descrição"] = df_final["Descrição"].apply(mapear_resumo)
 
-            def agrupar_descricao(desc):
-                for _, row in tabela_descricoes.iterrows():
-                    chave = str(row["Chave"]).lower()
-                    if chave in str(desc).lower():
-                        return row["Descrição Agrupada"]
-                return desc
+            ordem_colunas = [
+                "Data", "Dia da Semana", "Loja", "Codigo Everest Loja", "Grupo",
+                "Codigo Everest Grupo de Empresas", "Meio de recebimento", "Funcionário",
+                "Hora", "Descrição", "Resumo Descrição", "Valor(R$)", "Mês", "Ano"
+            ]
+            df_final = df_final[[col for col in ordem_colunas if col in df_final.columns]]
 
-            df["Descrição Base"] = df["Descrição"].apply(agrupar_descricao)
-            df["Mês"] = pd.to_datetime(df["Data"]).dt.strftime("%B").str.capitalize()
-            df["Ano"] = pd.to_datetime(df["Data"]).dt.year
+            df_final["Data"] = pd.to_datetime(df_final["Data"], errors="coerce").dt.strftime("%d/%m/%Y")
+            periodo_min = pd.to_datetime(df_final["Data"], dayfirst=True, errors="coerce").min().strftime("%d/%m/%Y")
+            periodo_max = pd.to_datetime(df_final["Data"], dayfirst=True, errors="coerce").max().strftime("%d/%m/%Y")
+            valor_total = df_final["Valor(R$)"].sum()
+
+            st.subheader("📅 Período e Valor Processado")
+            st.markdown(f"**Período:** {periodo_min} até {periodo_max}")
+            st.markdown(f"**Valor Total:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+            st.subheader("🔍 Tabela final antes de exportar")
+            st.write(f"Total de linhas: {len(df_final)}")
+            st.dataframe(df_final.head(30))
 
             output = BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df.to_excel(writer, index=False, sheet_name='Sangria')
+                df_final.to_excel(writer, index=False, sheet_name="Sangria")
                 workbook = writer.book
-                worksheet = writer.sheets['Sangria']
-                for idx, col in enumerate(df.columns, 1):
-                    worksheet.column_dimensions[chr(64 + idx)].width = 18
+                worksheet = writer.sheets["Sangria"]
+                valor_col_idx = df_final.columns.get_loc("Valor(R$)") + 1
+                for row in range(2, len(df_final) + 2):
+                    cell = worksheet.cell(row=row, column=valor_col_idx)
+                    cell.number_format = '#,##0.00\ [$R$-pt-BR]'
             output.seek(0)
 
-            st.success("✅ Arquivo processado com sucesso!")
-            st.download_button(
-                label="📥 Baixar arquivo processado",
-                data=output,
-                file_name="sangria_processada.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-
-    except Exception as e:
-        st.error(f"❌ Erro ao processar: {e}")
-
-
+            st.success("✅ Sangria processada com sucesso!")
+            st.download_button("📅 Baixar resultado", data=output, file_name="Sangria_estruturada.xlsx")
