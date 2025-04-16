@@ -1,59 +1,92 @@
 import streamlit as st
 import pandas as pd
+from io import BytesIO
+from openpyxl.styles import numbers
+from openpyxl import load_workbook
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from io import BytesIO
 from datetime import datetime
+import locale
 
-st.set_page_config(page_title="📊 Processador de Sangria", layout="centered")
+# Configurações iniciais
+st.set_page_config(page_title="Processador de Sangria", layout="centered")
 st.title("📊 Processador de Sangria")
 
-# 🔐 Autenticação com Google Sheets via st.secrets
+# Conexão com o Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = ServiceAccountCredentials.from_json_keyfile_dict(st.secrets["gspread"], scope)
+credentials = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", scope)
 gc = gspread.authorize(credentials)
 
-# 🧾 Abre a planilha e aba
-spreadsheet = gc.open("Nome da SUA Planilha")  # <-- Troque aqui pelo nome exato
-tabela_empresa = spreadsheet.worksheet("Tabela Empresa")  # <-- Nome da aba com dados da empresa
-df_empresa = pd.DataFrame(tabela_empresa.get_all_records())
+# Abrindo a planilha correta
+spreadsheet = gc.open("Tabela")
+tabela_empresa = pd.DataFrame(spreadsheet.worksheet("Tabela Empresa").get_all_records())
+tabela_descricoes = pd.DataFrame(spreadsheet.worksheet("Tabela Descrição Sangria").get_all_records())
 
-# 📤 Upload do Excel do usuário
-uploaded_file = st.file_uploader("Envie seu arquivo Excel (.xlsx ou .xlsm)", type=["xlsx", "xlsm"])
+uploaded_file = st.file_uploader("📥 Envie seu arquivo Excel (.xlsx ou .xlsm)", type=["xlsx", "xlsm"])
 
 if uploaded_file:
     try:
-        df_dados = pd.read_excel(uploaded_file, sheet_name="Sheet")
-    except Exception as e:
-        st.error(f"Erro ao ler o Excel: {e}")
-    else:
-        st.subheader("Prévia dos dados enviados")
+        xls = pd.ExcelFile(uploaded_file)
+        df_dados = pd.read_excel(xls, sheet_name="Sheet")
+
+        st.subheader("Prévia dos dados da aba 'Sheet'")
         st.dataframe(df_dados.head())
 
-        if st.button("Processar Sangria"):
+        if st.button("🚀 Processar Sangria"):
             st.info("🔄 Processando arquivo...")
 
-            # 📅 Converte coluna de data (assumindo que ela existe)
-            df_dados["Data"] = pd.to_datetime(df_dados["Data"])
-            df_dados["Dia da Semana"] = df_dados["Data"].dt.day_name(locale="pt_BR")
+            # Processamento
+            df = df_dados.copy()
+            df["Data"] = pd.to_datetime(df["Data"]).dt.date
+            df["Dia da Semana"] = pd.to_datetime(df["Data"]).dt.strftime("%A")
 
-            # 🔗 Exemplo de merge com a Tabela Empresa
-            if "Loja" in df_dados.columns and "Loja" in df_empresa.columns:
-                df_final = pd.merge(df_dados, df_empresa, on="Loja", how="left")
-            else:
-                df_final = df_dados  # se não puder mesclar, segue com os dados originais
+            # Traduz dia da semana
+            dias_semana_pt = {
+                "Monday": "segunda-feira",
+                "Tuesday": "terça-feira",
+                "Wednesday": "quarta-feira",
+                "Thursday": "quinta-feira",
+                "Friday": "sexta-feira",
+                "Saturday": "sábado",
+                "Sunday": "domingo"
+            }
+            df["Dia da Semana"] = df["Dia da Semana"].map(dias_semana_pt)
 
-            # 💰 Formatações
-            df_final["Data"] = df_final["Data"].dt.strftime("%d/%m/%Y")
-            if "Valor" in df_final.columns:
-                df_final["Valor (R$)"] = df_final["Valor"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            # Formatação moeda
+            df["Valor (R$)"] = pd.to_numeric(df["Valor (R$)"], errors="coerce")
+            df["Valor (R$)"] = df["Valor (R$)"].fillna(0)
 
-            # 📤 Download
+            # Agrupamento por descrição
+            def agrupar_descricao(desc):
+                for i, row in tabela_descricoes.iterrows():
+                    chave = str(row["Chave"]).lower()
+                    if chave in str(desc).lower():
+                        return row["Descrição Agrupada"]
+                return desc
+
+            df["Descrição Base"] = df["Descrição"].apply(agrupar_descricao)
+
+            # Mês e Ano
+            df["Mês"] = pd.to_datetime(df["Data"]).dt.strftime("%B").str.capitalize()
+            df["Ano"] = pd.to_datetime(df["Data"]).dt.year
+
+            # Exportar para Excel
             output = BytesIO()
-            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                df_final.to_excel(writer, sheet_name="Sangria", index=False)
-            st.success("✅ Processamento concluído!")
-            st.download_button("📥 Baixar resultado Excel", output.getvalue(), file_name="Sangria_Processada.xlsx")
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False, sheet_name='Sangria')
+                workbook = writer.book
+                worksheet = writer.sheets['Sangria']
+                for idx, col in enumerate(df.columns, 1):
+                    worksheet.column_dimensions[chr(64 + idx)].width = 18
+            output.seek(0)
 
+            st.success("✅ Arquivo processado com sucesso!")
+            st.download_button(
+                label="📥 Baixar arquivo processado",
+                data=output,
+                file_name="sangria_processada.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
-     
+    except Exception as e:
+        st.error(f"❌ Erro ao processar: {e}")
