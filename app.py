@@ -7,37 +7,49 @@ from urllib.parse import quote
 st.set_page_config(page_title="Processador de Sangria", layout="centered")
 st.title("📊 Processador de Sangria")
 
-# ID da sua planilha
+# ID da planilha pública no Google Sheets
 sheet_id = "13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q"
 
-# Nomes codificados das abas (sheets)
+# Codifica nomes com espaços
 sheet_empresa = quote("Tabela_Empresa")
-sheet_descricoes = quote("Tabela_Descrição_ Sangria")  # <- espaço depois do underline
+sheet_descricoes = quote("Tabela_Descrição_ Sangria")  # com espaço mesmo
 
-# URLs formatadas
+# Monta os links de exportação
 tabela_empresa_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_empresa}"
 tabela_descricoes_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_descricoes}"
 
-# Lê as tabelas auxiliares do Google Sheets público
+# Lê as tabelas auxiliares públicas
 tabela_empresa = pd.read_csv(tabela_empresa_url)
 tabela_descricoes = pd.read_csv(tabela_descricoes_url)
 
-# Upload do Excel do usuário
+# Upload do Excel
 uploaded_file = st.file_uploader("📥 Envie seu arquivo Excel (.xlsx ou .xlsm)", type=["xlsx", "xlsm"])
 
 if uploaded_file:
     try:
         xls = pd.ExcelFile(uploaded_file)
-        df_dados = pd.read_excel(xls, sheet_name="Sheet")
-
-        st.subheader("Prévia dos dados da aba 'Sheet'")
+        st.write("📄 Abas encontradas:", xls.sheet_names)
+        df_dados = pd.read_excel(xls, sheet_name=0)  # Lê a primeira aba automaticamente
+        st.subheader("Prévia dos dados carregados")
         st.dataframe(df_dados.head())
+        st.write("🧾 Colunas encontradas:", df_dados.columns.tolist())
 
         if st.button("🚀 Processar Sangria"):
             st.info("🔄 Processando...")
 
             df = df_dados.copy()
-            df["Data"] = pd.to_datetime(df["Data"]).dt.date
+
+            # Tenta encontrar uma coluna que pareça ser 'Data'
+            col_data = next((col for col in df.columns if "data" in col.lower()), None)
+            col_descr = next((col for col in df.columns if "descr" in col.lower()), None)
+            col_valor = next((col for col in df.columns if "valor" in col.lower()), None)
+
+            if not all([col_data, col_descr, col_valor]):
+                st.error("❌ Não foi possível identificar as colunas 'Data', 'Descrição' e 'Valor'.")
+                st.stop()
+
+            df[col_data] = pd.to_datetime(df[col_data], errors="coerce")
+            df["Data"] = df[col_data].dt.date
             df["Dia da Semana"] = pd.to_datetime(df["Data"]).dt.strftime("%A")
 
             dias_semana_pt = {
@@ -51,7 +63,8 @@ if uploaded_file:
             }
             df["Dia da Semana"] = df["Dia da Semana"].map(dias_semana_pt)
 
-            df["Valor (R$)"] = pd.to_numeric(df["Valor (R$)"], errors="coerce").fillna(0)
+            df["Valor (R$)"] = pd.to_numeric(df[col_valor], errors="coerce").fillna(0)
+            df["Descrição"] = df[col_descr]
 
             def agrupar_descricao(desc):
                 for _, row in tabela_descricoes.iterrows():
@@ -73,7 +86,7 @@ if uploaded_file:
                     worksheet.column_dimensions[chr(64 + idx)].width = 18
             output.seek(0)
 
-            st.success("✅ Processamento finalizado!")
+            st.success("✅ Arquivo processado com sucesso!")
             st.download_button(
                 label="📥 Baixar arquivo processado",
                 data=output,
@@ -83,4 +96,5 @@ if uploaded_file:
 
     except Exception as e:
         st.error(f"❌ Erro ao processar: {e}")
+
 
