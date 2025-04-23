@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import json
 from io import BytesIO
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -13,16 +14,15 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Conecta ao Google Sheets
+# Conecta ao Google Sheets com st.secrets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = ServiceAccountCredentials.from_json_keyfile_name("projetosangria-30ff2b50039e.json", scope)
+credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
 planilha = gc.open("Tabela")
 
-# Aba de empresas (cadastro de lojas)
+# Abas de referência
 df_empresa = pd.DataFrame(planilha.worksheet("Tabela_Empresa").get_all_records())
-
-# Aba de palavras-chave para descrição agrupada
 df_descricoes = pd.DataFrame(
     planilha.worksheet("Tabela_Descrição_Sangria").get_all_values(),
     columns=["Palavra-chave", "Descrição Agrupada"]
