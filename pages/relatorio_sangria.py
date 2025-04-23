@@ -8,8 +8,8 @@ from io import BytesIO
 st.set_page_config(page_title="Relatório de Sangria", layout="wide")
 st.markdown("""
     <div style='display: flex; align-items: center; gap: 10px;'>
-        <img src='https://img.icons8.com/fluency/48/report-card.png' width='36'/>
-        <h1 style='display: inline; margin: 0;'>Relatório de Sangria</h1>
+        <img src='https://img.icons8.com/color/48/clipboard-list.png' width='40'/>
+        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório de Sangria</h1>
     </div>
 """, unsafe_allow_html=True)
 
