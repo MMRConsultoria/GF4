@@ -1,12 +1,12 @@
-# pages/Sangria.py (versão sem tabela externa para teste)
+# pages/relatorio_sangria.py (versão sem Google Sheets)
 
 import streamlit as st
 import pandas as pd
 import numpy as np
 from io import BytesIO
 
-st.set_page_config(page_title="Processador de Sangria", layout="centered")
-st.title("📊 Processador de Sangria")
+st.set_page_config(page_title="Relatório de Sangria", layout="centered")
+st.title("🧾 Relatório de Sangria")
 
 uploaded_file = st.file_uploader("Envie seu arquivo Excel (.xlsx ou .xlsm)", type=["xlsx", "xlsm"])
 
