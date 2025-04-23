@@ -1,30 +1,13 @@
-# pages/FaturamentoServico.py (sem uso de credentials.json)
+# pages/FaturamentoServico.py (temporariamente sem tabela do Google)
 
 import streamlit as st
 import pandas as pd
 import numpy as np
-from urllib.parse import quote
 from io import BytesIO
 from datetime import datetime
 
 st.set_page_config(page_title="Faturamento por Serviço", layout="wide")
 st.title("📋 Relatório de Faturamento por Serviço")
-
-# URL pública da planilha do Google
-sheet_id = "13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q"
-sheet_empresa = quote("Tabela_Empresa")
-tabela_empresa_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_empresa}"
-
-# Carregar a Tabela Empresa
-try:
-    df_empresa_raw = pd.read_csv(tabela_empresa_url, header=None)
-    cabecalho = df_empresa_raw.iloc[0].fillna("").astype(str).str.strip()
-    df_empresa = df_empresa_raw[1:].copy()
-    df_empresa.columns = cabecalho
-    df_empresa = df_empresa.loc[:, df_empresa.columns != ""]
-except Exception as e:
-    st.error(f"Erro ao carregar a Tabela Empresa: {e}")
-    st.stop()
 
 # Upload do arquivo Excel
 uploaded_file = st.file_uploader("Envie o arquivo Excel com a aba 'FaturamentoDiarioPorLoja'", type=["xlsx"])
@@ -88,15 +71,6 @@ if uploaded_file:
 
             df_final["Data"] = pd.to_datetime(df_final["Data"], errors='coerce')
             df_final.insert(1, "Dia da Semana", df_final["Data"].dt.day_name().map(dias_traducao))
-
-            df_empresa[df_empresa.columns[0]] = df_empresa[df_empresa.columns[0]].astype(str).str.strip().str.upper()
-            df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.upper()
-
-            df_final = df_final.merge(df_empresa, left_on="Loja", right_on=df_empresa.columns[0], how="left")
-
-            df_final = df_final[[
-                "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo", "Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket", "Mês", "Ano"
-            ]]
 
             st.success("✅ Relatório processado com sucesso!")
             st.dataframe(df_final.head(50))
