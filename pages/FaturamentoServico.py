@@ -33,7 +33,9 @@ if uploaded_file:
             if re.match(r"^\d+\s*-", nome_loja):
                 nome_loja = nome_loja.split("-", 1)[-1].strip()
 
-                if str(df.iloc[0, col]) == "Fat.Total":
+                header_col = str(df.iloc[0, col]).strip().lower()
+                st.write(f"Coluna {col}: header -> {header_col}")  # DEBUG
+                if "fat.total" in header_col:
                     for i in range(1, df.shape[0]):
                         linha = df.iloc[i]
                         valor_data = str(df.iloc[i, 2]).strip().lower()
