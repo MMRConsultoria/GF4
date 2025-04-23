@@ -1,4 +1,4 @@
-# pages/relatorio_sangria.py (versão sem Google Sheets e com resumo direto)
+# pages/relatorio_sangria.py (versão totalmente em português, sem Google Sheets)
 
 import streamlit as st
 import pandas as pd
@@ -8,14 +8,14 @@ from io import BytesIO
 st.set_page_config(page_title="Relatório de Sangria", layout="centered")
 st.title("🧾 Relatório de Sangria")
 
-uploaded_file = st.file_uploader("Envie seu arquivo Excel (.xlsx ou .xlsm)", type=["xlsx", "xlsm"])
+uploaded_file = st.file_uploader("Selecione o arquivo Excel com os dados de sangria:", type=["xlsx", "xlsm"])
 
 if uploaded_file:
     try:
         xls = pd.ExcelFile(uploaded_file)
         df_dados = pd.read_excel(xls, sheet_name="Sheet")
     except Exception as e:
-        st.error(f"Erro ao ler o Excel: {e}")
+        st.error(f"Erro ao ler o arquivo: {e}")
     else:
         df = df_dados.copy()
         df["Loja"] = np.nan
@@ -33,7 +33,7 @@ if uploaded_file:
                 loja = valor.split("Loja:")[1].split("(Total")[0].strip()
                 if "-" in loja:
                     loja = loja.split("-", 1)[1].strip()
-                loja_atual = loja or "Loja nao cadastrada"
+                loja_atual = loja or "Loja não cadastrada"
             elif valor.startswith("Data:"):
                 try:
                     data_atual = pd.to_datetime(valor.split("Data:")[1].split("(Total")[0].strip(), dayfirst=True)
@@ -74,13 +74,13 @@ if uploaded_file:
         periodo_max = pd.to_datetime(df["Data"], dayfirst=True).max().strftime("%d/%m/%Y")
         valor_total = df["Valor(R$)"].sum()
 
-        st.success("✅ Sangria processada com sucesso!")
-        st.markdown(f"**Período:** {periodo_min} até {periodo_max}")
-        st.markdown(f"**Valor Total:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        st.success("✅ Relatório gerado com sucesso!")
+        st.markdown(f"**Período processado:** {periodo_min} até {periodo_max}")
+        st.markdown(f"**Valor total de sangria:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name="Sangria")
         output.seek(0)
 
-        st.download_button("📥 Baixar resultado", data=output, file_name="Sangria_estruturada.xlsx")
+        st.download_button("📥 Baixar relatório de sangria", data=output, file_name="Sangria_estruturada.xlsx")
