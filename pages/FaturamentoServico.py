@@ -1,4 +1,4 @@
-# pages/FaturamentoServico.py (reescrito com nova lógica baseada na sua descrição)
+# pages/FaturamentoServico.py (corrigido: leitura correta da linha 4 com nomes das lojas)
 
 import streamlit as st
 import pandas as pd
@@ -24,12 +24,12 @@ if uploaded_file:
             st.stop()
 
         df = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None, skiprows=4)
-        linha_lojas = df_raw.iloc[4, 4:].dropna()
+        linha_lojas = df_raw.iloc[3, 4:].dropna()  # ← CORRETO: nomes estão na linha 4 (índice 3)
 
         registros = []
         col = 4
         while col < df.shape[1]:
-            nome_loja = str(df_raw.iloc[4, col]).strip()
+            nome_loja = str(df_raw.iloc[3, col]).strip()
             st.write(f"Nome detectado na coluna {col}: {nome_loja}")  # DEBUG
             if re.match(r"^\d+\s*-?\s*", nome_loja):
                 nome_loja = nome_loja.split("-", 1)[-1].strip()
