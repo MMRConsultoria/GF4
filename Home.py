@@ -1,15 +1,13 @@
-## pages/home.py – Página inicial com logo e instrução para login
+# Home.py – Página inicial com controle de login
 
 import streamlit as st
 
-st.set_page_config(page_title="MMR Consultoria", layout="centered")
+st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
 
-st.markdown("""
-    <div style='display: flex; align-items: center; justify-content: center;'>
-        <img src='https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo-mmr.png' alt='MMR Consultoria' style='height: 160px;'/>
-    </div>
-    <h1 style='text-align: center;'>Bem-vindo ao Portal de Relatórios</h1>
-    <p style='text-align: center;'>Para acessar os relatórios, vá até a aba <strong>Login</strong> no menu lateral.</p>
-""", unsafe_allow_html=True)
+if not st.session_state.get("acesso_liberado"):
+    st.warning("⚠️ Acesse o menu à esquerda e clique em 'Login' para continuar.")
+    st.stop()
 
-st.info("🔐 Acesse o menu à esquerda e clique em 'Login' para continuar.")
+st.image("logo-mmr.png", width=120)
+st.title("Bem-vindo ao Portal de Relatórios")
+st.markdown(f"✅ Olá, **{st.session_state.get('empresa')}**. Use o menu lateral para acessar os relatórios disponíveis.")
