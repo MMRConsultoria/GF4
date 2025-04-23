@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from io import BytesIO, StringIO
+import json
+from io import BytesIO
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -13,12 +14,10 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# ✅ CORRETO PARA JSON MULTILINHA NO SECRETS
+# Conexão com Google Sheets via secrets (correção: usar from_json_keyfile_dict)
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = ServiceAccountCredentials.from_json_keyfile_name(
-    filename=StringIO(st.secrets["GOOGLE_SERVICE_ACCOUNT"]),
-    scopes=scope
-)
+credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
 planilha = gc.open("Tabela")
 
