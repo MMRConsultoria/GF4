@@ -14,7 +14,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Conecta ao Google Sheets com json completo vindo de st.secrets (com quebras de linha reais)
+# Conexão segura com Google Sheets usando secrets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials = ServiceAccountCredentials.from_json_keyfile_name(
     filename=StringIO(st.secrets["GOOGLE_SERVICE_ACCOUNT"]),
@@ -23,7 +23,6 @@ credentials = ServiceAccountCredentials.from_json_keyfile_name(
 gc = gspread.authorize(credentials)
 planilha = gc.open("Tabela")
 
-# Abas de referência
 df_empresa = pd.DataFrame(planilha.worksheet("Tabela_Empresa").get_all_records())
 df_descricoes = pd.DataFrame(
     planilha.worksheet("Tabela_Descrição_Sangria").get_all_values(),
@@ -88,4 +87,40 @@ if uploaded_file:
         df["Dia da Semana"] = df["Data"].dt.dayofweek.map(dias_semana)
 
         df["Mês"] = df["Data"].dt.month.map({
-            1: 'jan', 2: 'fev', 3: 'mar', 4:
+            1: 'jan', 2: 'fev', 3: 'mar', 4: 'abr', 5: 'mai', 6: 'jun',
+            7: 'jul', 8: 'ago', 9: 'set', 10: 'out', 11: 'nov', 12: 'dez'
+        })
+        df["Ano"] = df["Data"].dt.year
+        df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
+
+        # Junta com os dados da empresa
+        df = pd.merge(df, df_empresa, on="Loja", how="left")
+
+        # Mapeia descrição agrupada
+        def mapear_descricao(desc):
+            desc_lower = str(desc).lower()
+            for _, row in df_descricoes.iterrows():
+                if str(row["Palavra-chave"]).lower() in desc_lower:
+                    return row["Descrição Agrupada"]
+            return "Outros"
+
+        df["Descrição Agrupada"] = df["Descrição"].apply(mapear_descricao)
+
+        df = df.sort_values(by=["Data", "Loja"])
+
+        periodo_min = pd.to_datetime(df["Data"], dayfirst=True).min().strftime("%d/%m/%Y")
+        periodo_max = pd.to_datetime(df["Data"], dayfirst=True).max().strftime("%d/%m/%Y")
+        valor_total = df["Valor(R$)"].sum()
+
+        col1, col2 = st.columns(2)
+        col1.metric("📅 Período processado", f"{periodo_min} até {periodo_max}")
+        col2.metric("💰 Valor total de sangria", f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+        st.success("✅ Relatório gerado com sucesso!")
+
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name="Sangria")
+        output.seek(0)
+
+        st.download_button("📥 Baixar relatório de sangria", data=output, file_name="Sangria_estruturada.xlsx")
