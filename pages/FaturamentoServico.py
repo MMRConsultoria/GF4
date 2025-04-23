@@ -1,4 +1,4 @@
-# pages/FaturamentoServico.py (sem tabela externa – corrigido e compatível com Streamlit Cloud)
+# pages/FaturamentoServico.py (corrigido para ler a aba 'FaturamentoDiarioPorLoja')
 
 import streamlit as st
 import pandas as pd
