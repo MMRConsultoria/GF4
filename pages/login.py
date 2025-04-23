@@ -1,4 +1,4 @@
-# pages/login.py – Tela de login simples por empresa + senha
+# pages/login.py – Tela de login com controle de sessão (sem exibir alerta após login)
 
 import streamlit as st
 
@@ -19,13 +19,12 @@ senha = st.text_input("Senha:", type="password")
 
 if st.button("Entrar"):
     if senha == empresas[empresa]:
-        st.success(f"✅ Acesso liberado para {empresa}!")
         st.session_state["acesso_liberado"] = True
         st.session_state["empresa"] = empresa
-        st.info("Use o menu lateral para acessar seus relatórios.")
+        st.success(f"✅ Acesso liberado para {empresa}!")
     else:
         st.error("❌ Senha incorreta. Tente novamente.")
 
-# Bloquear acesso às páginas se o usuário não estiver autenticado
+# Exibe aviso apenas se não estiver autenticado
 if "acesso_liberado" not in st.session_state:
     st.warning("⚠️ Você precisa fazer login para visualizar os relatórios.")
