@@ -17,10 +17,11 @@ st.markdown("""
 # Conexão com Google Sheets via secrets (correção: usar from_json_keyfile_dict)
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
+from io import StringIO
 credentials = ServiceAccountCredentials.from_json_keyfile_name(
     filename=StringIO(st.secrets["GOOGLE_SERVICE_ACCOUNT"]),
-    scopes=scope)
-
+    scopes=scope
+)
 
 
 #credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
