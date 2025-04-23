@@ -14,15 +14,29 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
+# Conexão com Google Sheets via secrets (correção: usar from_json_keyfile_dict)
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+
+#from io import StringIO
+#credentials = ServiceAccountCredentials.from_json_keyfile_name(
+ #   filename=StringIO(st.secrets["GOOGLE_SERVICE_ACCOUNT"]),
+  #  scopes=scope
+#)
+
+
+import json
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+
+
+#credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+#credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
 planilha = gc.open("Tabela")
 
 df_empresa = pd.DataFrame(planilha.worksheet("Tabela_Empresa").get_all_records())
 df_descricoes = pd.DataFrame(
-    planilha.worksheet("Tabela_Descrição_ Sangria").get_all_values(),
+    planilha.worksheet("Tabela_Descrição_Sangria").get_all_values(),
     columns=["Palavra-chave", "Descrição Agrupada"]
 )
 
@@ -103,20 +117,12 @@ if uploaded_file:
 
         df = df.sort_values(by=["Data", "Loja"])
 
-        # Reorganiza as colunas conforme a estrutura final
-        colunas_finais = [
-            "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo", "Código Grupo Everest",
-            "Funcionário", "Hora", "Descrição", "Descrição Agrupada",
-            "Meio de recebimento", "Valor(R$)", "Mês", "Ano"
-        ]
-        df = df[colunas_finais]
-
-        periodo_min = pd.to_datetime(df["Data"], dayfirst=True).min()
-        periodo_max = pd.to_datetime(df["Data"], dayfirst=True).max()
+        periodo_min = pd.to_datetime(df["Data"], dayfirst=True).min().strftime("%d/%m/%Y")
+        periodo_max = pd.to_datetime(df["Data"], dayfirst=True).max().strftime("%d/%m/%Y")
         valor_total = df["Valor(R$)"].sum()
 
         col1, col2 = st.columns(2)
-        col1.metric("📅 Período processado", f"{periodo_min.strftime('%d/%m/%Y')} até {periodo_max.strftime('%d/%m/%Y')}")
+        col1.metric("📅 Período processado", f"{periodo_min} até {periodo_max}")
         col2.metric("💰 Valor total de sangria", f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
         st.success("✅ Relatório gerado com sucesso!")
