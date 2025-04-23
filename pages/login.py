@@ -1,10 +1,8 @@
-# pages/login.py – Tela de login com código, e-mail e senha
-
 import streamlit as st
 
 st.set_page_config(page_title="Login | MMR Consultoria")
 
-# Se já estiver logado, redireciona para Home
+# Redireciona se já estiver logado
 if st.session_state.get("acesso_liberado"):
     st.switch_page("Home")
 
@@ -19,6 +17,6 @@ if st.button("Entrar"):
     if codigo_empresa == "1825" and senha == "1234":
         st.session_state["acesso_liberado"] = True
         st.session_state["empresa"] = codigo_empresa
-        st.experimental_rerun()  # Força recarregamento para ativar o switch_page
+        st.experimental_rerun()  # 🔄 força atualização da tela
     else:
         st.error("❌ Código ou senha incorretos. Tente novamente.")
