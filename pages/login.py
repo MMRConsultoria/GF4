@@ -2,21 +2,17 @@ import streamlit as st
 
 st.set_page_config(page_title="Login | MMR Consultoria")
 
-# Redireciona se já estiver logado
-if st.session_state.get("acesso_liberado"):
-    st.switch_page("Home")
-
 st.title("🔐 Acesso Restrito")
-st.markdown("Informe o código da empresa, seu e-mail e senha para acessar os relatórios.")
+st.subheader("Escolha sua empresa e digite a senha para acessar os relatórios.")
 
-codigo_empresa = st.text_input("Código da Empresa:")
-email = st.text_input("E-mail:")
-senha = st.text_input("Senha:", type="password")
+empresa = st.text_input("Empresa:")
+email = st.text_input("Email:")
+senha = st.text_input("Senha", type="password")
 
 if st.button("Entrar"):
-    if codigo_empresa == "1825" and senha == "1234":
-        st.session_state["acesso_liberado"] = True
-        st.session_state["empresa"] = codigo_empresa
-        st.experimental_rerun()  # 🔄 força atualização da tela
+    if empresa == "1825" and senha == "suasenha":  # troque pela lógica correta
+        st.session_state.logado = True
+        st.success("Login feito com sucesso!")
+        st.experimental_rerun()  # recarrega a página para limpar a tela de login
     else:
-        st.error("❌ Código ou senha incorretos. Tente novamente.")
+        st.error("Credenciais inválidas.")
