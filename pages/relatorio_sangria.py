@@ -1,32 +1,13 @@
-# pages/Sangria.py (sem uso de credentials.json)
+# pages/Sangria.py (versão sem tabela externa para teste)
 
 import streamlit as st
 import pandas as pd
 import numpy as np
-from urllib.parse import quote
 from io import BytesIO
-from datetime import datetime
 
-st.set_page_config(page_title="Relatório de Sangria", layout="wide")
-st.title("💵 Relatório de Sangria")
+st.set_page_config(page_title="Processador de Sangria", layout="centered")
+st.title("📊 Processador de Sangria")
 
-# URL pública da planilha do Google
-sheet_id = "13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q"
-sheet_empresa = quote("Tabela_Empresa")
-tabela_empresa_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_empresa}"
-
-# Carregar a Tabela Empresa
-try:
-    df_empresa_raw = pd.read_csv(tabela_empresa_url, header=None)
-    cabecalho = df_empresa_raw.iloc[0].fillna("").astype(str).str.strip()
-    df_empresa = df_empresa_raw[1:].copy()
-    df_empresa.columns = cabecalho
-    df_empresa = df_empresa.loc[:, df_empresa.columns != ""]
-except Exception as e:
-    st.error(f"Erro ao carregar a Tabela Empresa: {e}")
-    st.stop()
-
-# Upload do arquivo Excel
 uploaded_file = st.file_uploader("Envie seu arquivo Excel (.xlsx ou .xlsm)", type=["xlsx", "xlsm"])
 
 if uploaded_file:
@@ -52,7 +33,7 @@ if uploaded_file:
             linhas_validas = []
 
             for i, row in df.iterrows():
-                valor = str(row.get("Hora", "")).strip()
+                valor = str(row["Hora"]).strip()
                 if valor.startswith("Loja:"):
                     loja = valor.split("Loja:")[1].split("(Total")[0].strip()
                     if "-" in loja:
@@ -66,7 +47,7 @@ if uploaded_file:
                 elif valor.startswith("Funcionário:"):
                     funcionario_atual = valor.split("Funcionário:")[1].split("(Total")[0].strip()
                 else:
-                    if pd.notna(row.get("Valor(R$)")) and pd.notna(row.get("Hora")):
+                    if pd.notna(row["Valor(R$)"]) and pd.notna(row["Hora"]):
                         df.at[i, "Data"] = data_atual
                         df.at[i, "Funcionário"] = funcionario_atual
                         df.at[i, "Loja"] = loja_atual
@@ -83,57 +64,24 @@ if uploaded_file:
                 0: 'segunda-feira', 1: 'terça-feira', 2: 'quarta-feira',
                 3: 'quinta-feira', 4: 'sexta-feira', 5: 'sábado', 6: 'domingo'
             }
-            df["Dia da Semana"] = pd.to_datetime(df["Data"], errors="coerce").dt.dayofweek.map(dias_semana)
+            df["Dia da Semana"] = df["Data"].dt.dayofweek.map(dias_semana)
 
-            df["Mês"] = pd.to_datetime(df["Data"], errors="coerce").dt.month.map({
+            df["Mês"] = df["Data"].dt.month.map({
                 1: 'jan', 2: 'fev', 3: 'mar', 4: 'abr', 5: 'mai', 6: 'jun',
                 7: 'jul', 8: 'ago', 9: 'set', 10: 'out', 11: 'nov', 12: 'dez'
             })
-            df["Ano"] = pd.to_datetime(df["Data"], errors="coerce").dt.year
+            df["Ano"] = df["Data"].dt.year
 
-            df["Loja"] = df["Loja"].astype(str).str.strip().str.upper()
-            df_empresa[df_empresa.columns[0]] = df_empresa[df_empresa.columns[0]].astype(str).str.strip().str.upper()
+            df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
+            df = df.sort_values(by=["Data", "Loja"])
 
-            df_final = df.merge(df_empresa, left_on="Loja", right_on=df_empresa.columns[0], how="left")
-
-            def mapear_resumo(desc):
-                desc = desc.lower()
-                if any(p in desc for p in ["meta", "prem"]):
-                    return "Premiação/Meta"
-                elif "motiv" in desc:
-                    return "Motivacional"
-                elif "sangr" in desc:
-                    return "Sangria"
-                elif "dep" in desc:
-                    return "Deposito"
-                else:
-                    return ""
-
-            df_final["Resumo Descrição"] = df_final["Descrição"].apply(mapear_resumo)
-
-            ordem_colunas = [
-                "Data", "Dia da Semana", "Loja", df_empresa.columns[2], df_empresa.columns[1], df_empresa.columns[3],
-                "Meio de recebimento", "Funcionário", "Hora", "Descrição", "Resumo Descrição", "Valor(R$)", "Mês", "Ano"
-            ]
-            df_final = df_final[[col for col in ordem_colunas if col in df_final.columns]]
-
-            df_final["Data"] = pd.to_datetime(df_final["Data"], errors="coerce").dt.strftime("%d/%m/%Y")
-            periodo_min = pd.to_datetime(df_final["Data"], dayfirst=True, errors="coerce").min().strftime("%d/%m/%Y")
-            periodo_max = pd.to_datetime(df_final["Data"], dayfirst=True, errors="coerce").max().strftime("%d/%m/%Y")
-            valor_total = df_final["Valor(R$)"].sum()
-
-            st.subheader("📅 Período e Valor Processado")
-            st.markdown(f"**Período:** {periodo_min} até {periodo_max}")
-            st.markdown(f"**Valor Total:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
-            st.subheader("🔍 Tabela final antes de exportar")
-            st.write(f"Total de linhas: {len(df_final)}")
-            st.dataframe(df_final.head(30))
+            st.success("✅ Sangria processada com sucesso!")
+            st.write(f"Total de linhas: {len(df)}")
+            st.dataframe(df.head(30))
 
             output = BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df_final.to_excel(writer, index=False, sheet_name="Sangria")
+                df.to_excel(writer, index=False, sheet_name="Sangria")
             output.seek(0)
 
-            st.success("✅ Sangria processada com sucesso!")
             st.download_button("📥 Baixar resultado", data=output, file_name="Sangria_estruturada.xlsx")
