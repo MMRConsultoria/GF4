@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import json
-from io import BytesIO, StringIO
+from io import BytesIO
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -14,15 +14,14 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Conexão segura com Google Sheets usando secrets
+# ✅ Conexão com Google Sheets via secrets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = ServiceAccountCredentials.from_json_keyfile_name(
-    filename=StringIO(st.secrets["GOOGLE_SERVICE_ACCOUNT"]),
-    scopes=scope
-)
+credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
 planilha = gc.open("Tabela")
 
+# Leitura das abas de referência
 df_empresa = pd.DataFrame(planilha.worksheet("Tabela_Empresa").get_all_records())
 df_descricoes = pd.DataFrame(
     planilha.worksheet("Tabela_Descrição_Sangria").get_all_values(),
@@ -93,7 +92,7 @@ if uploaded_file:
         df["Ano"] = df["Data"].dt.year
         df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
 
-        # Junta com os dados da empresa
+        # Merge com empresas
         df = pd.merge(df, df_empresa, on="Loja", how="left")
 
         # Mapeia descrição agrupada
