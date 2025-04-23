@@ -1,15 +1,12 @@
 import streamlit as st
 
-# Inicializa o estado de login na primeira visita
-if "logado" not in st.session_state:
-    st.session_state.logado = False
+st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
 
-st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria", layout="wide")
-
-# Conteúdo principal
-st.title("Portal de Relatórios 📊")
-
-if not st.session_state.logado:
+# Verifica se login foi feito
+if not st.session_state.get("acesso_liberado"):
     st.warning("⚠️ Acesse o menu à esquerda e clique em 'Login' para continuar.")
-else:
-    st.success("✅ Login realizado com sucesso. Escolha um relatório no menu à esquerda.")
+    st.stop()
+
+st.image("https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo-mmr.png", width=150)
+st.markdown("## Bem-vindo ao Portal de Relatórios")
+st.success(f"✅ Acesso liberado para o código {st.session_state.get('empresa')}!")
