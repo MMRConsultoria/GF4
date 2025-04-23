@@ -24,18 +24,16 @@ if uploaded_file:
             st.stop()
 
         df = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None, skiprows=4)
-        linha_lojas = df_raw.iloc[3, 4:].dropna()  # ← CORRETO: nomes estão na linha 4 (índice 3)
+        linha_lojas = df_raw.iloc[3, 4:].dropna()
 
         registros = []
         col = 4
         while col < df.shape[1]:
             nome_loja = str(df_raw.iloc[3, col]).strip()
-            st.write(f"Nome detectado na coluna {col}: {nome_loja}")  # DEBUG
             if re.match(r"^\d+\s*-?\s*", nome_loja):
                 nome_loja = nome_loja.split("-", 1)[-1].strip()
 
                 header_col = str(df.iloc[0, col]).strip().lower()
-                st.write(f"Coluna {col}: header -> {header_col}")  # DEBUG
                 if "fat.total" in header_col:
                     for i in range(1, df.shape[0]):
                         linha = df.iloc[i]
@@ -62,7 +60,7 @@ if uploaded_file:
                             data.year
                         ])
 
-                col += 5  # pula para o próximo bloco
+                col += 5
             else:
                 col += 1
 
@@ -82,8 +80,27 @@ if uploaded_file:
 
         df_final["Data"] = pd.to_datetime(df_final["Data"], errors='coerce')
         df_final.insert(1, "Dia da Semana", df_final["Data"].dt.day_name().map(dias_traducao))
+        df_final["Data"] = df_final["Data"].dt.strftime("%d/%m/%Y")
+
+        # Formatar valores numéricos com duas casas decimais
+        colunas_valores = ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket"]
+        for col_val in colunas_valores:
+            df_final[col_val] = pd.to_numeric(df_final[col_val], errors="coerce").round(2)
+
+        # Traduzir o mês para abreviado em português
+        meses = {
+            "jan": "jan", "feb": "fev", "mar": "mar", "apr": "abr", "may": "mai", "jun": "jun",
+            "jul": "jul", "aug": "ago", "sep": "set", "oct": "out", "nov": "nov", "dec": "dez"
+        }
+        df_final["Mês"] = df_final["Mês"].str.lower().map(meses)
 
         st.success("✅ Relatório processado com sucesso!")
+
+        # Mostrar total dos valores na tela
+        totalizador = df_final[colunas_valores].sum().round(2)
+        st.subheader("📊 Totais Gerais")
+        st.dataframe(pd.DataFrame(totalizador).transpose())
+
         st.dataframe(df_final.head(50))
 
         def to_excel(df):
