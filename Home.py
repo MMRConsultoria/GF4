@@ -1,4 +1,4 @@
-# pages/home.py – Página inicial com logo e redirecionamento para login
+## pages/home.py – Página inicial com logo e instrução para login
 
 import streamlit as st
 
