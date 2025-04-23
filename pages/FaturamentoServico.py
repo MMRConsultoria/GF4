@@ -1,4 +1,4 @@
-# pages/FaturamentoServico.py (corrigido para ler a aba 'FaturamentoDiarioPorLoja')
+# pages/FaturamentoServico.py (corrigido: leitura correta da linha das lojas)
 
 import streamlit as st
 import pandas as pd
@@ -20,7 +20,7 @@ if uploaded_file:
             st.error("❌ A célula B1 não contém o texto esperado: 'faturamento diário sintético multi-loja'")
         else:
             df = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None, skiprows=4)
-            lojas = df_raw.iloc[3, 4:].dropna()
+            lojas = df_raw.iloc[4, 4:].dropna()
 
             registros = []
             for idx_loja, nome_loja in lojas.items():
@@ -31,7 +31,7 @@ if uploaded_file:
                 if str(df.iloc[0, base_col]) != "Fat.Total":
                     continue
 
-                for i in range(2, df.shape[0]):
+                for i in range(1, df.shape[0]):
                     linha = df.iloc[i]
                     data_texto = str(df.iloc[i, 2]).strip()
                     if data_texto.lower() == "subtotal" or str(df.iloc[i, 1]).lower() == "total":
