@@ -1,9 +1,9 @@
-# pages/relatorio_sangria.py (versão com layout mais elegante e distribuído)
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 from io import BytesIO
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 st.set_page_config(page_title="Relatório de Sangria", layout="wide")
 st.markdown("""
@@ -12,6 +12,21 @@ st.markdown("""
         <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório de Sangria</h1>
     </div>
 """, unsafe_allow_html=True)
+
+# Conecta ao Google Sheets
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials = ServiceAccountCredentials.from_json_keyfile_name("projetosangria-30ff2b50039e.json", scope)
+gc = gspread.authorize(credentials)
+planilha = gc.open("Tabela")
+
+# Aba de empresas (cadastro de lojas)
+df_empresa = pd.DataFrame(planilha.worksheet("Tabela_Empresa").get_all_records())
+
+# Aba de palavras-chave para descrição agrupada
+df_descricoes = pd.DataFrame(
+    planilha.worksheet("Tabela_Descrição_Sangria").get_all_values(),
+    columns=["Palavra-chave", "Descrição Agrupada"]
+)
 
 uploaded_file = st.file_uploader(
     label="📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de sangria",
@@ -24,7 +39,7 @@ if uploaded_file:
         xls = pd.ExcelFile(uploaded_file)
         df_dados = pd.read_excel(xls, sheet_name="Sheet")
     except Exception as e:
-        st.error(f"❌ Não foi possível ler o arquivo enviado. Verifique se ele está no formato correto (.xlsx ou .xlsm). Detalhes técnicos: {e}")
+        st.error(f"❌ Não foi possível ler o arquivo enviado. Detalhes: {e}")
     else:
         df = df_dados.copy()
         df["Loja"] = np.nan
@@ -76,6 +91,19 @@ if uploaded_file:
         })
         df["Ano"] = df["Data"].dt.year
         df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
+
+        # Merge com cadastro da empresa
+        df = pd.merge(df, df_empresa, on="Loja", how="left")
+
+        # Mapeia a descrição agrupada
+        def mapear_descricao(desc):
+            desc_lower = str(desc).lower()
+            for _, row in df_descricoes.iterrows():
+                if str(row["Palavra-chave"]).lower() in desc_lower:
+                    return row["Descrição Agrupada"]
+            return "Outros"
+
+        df["Descrição Agrupada"] = df["Descrição"].apply(mapear_descricao)
 
         df = df.sort_values(by=["Data", "Loja"])
 
