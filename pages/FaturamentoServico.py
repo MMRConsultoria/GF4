@@ -30,7 +30,8 @@ if uploaded_file:
         col = 4
         while col < df.shape[1]:
             nome_loja = str(df_raw.iloc[4, col]).strip()
-            if re.match(r"^\d+\s*-", nome_loja):
+            st.write(f"Nome detectado na coluna {col}: {nome_loja}")  # DEBUG
+            if re.match(r"^\d+\s*-?\s*", nome_loja):
                 nome_loja = nome_loja.split("-", 1)[-1].strip()
 
                 header_col = str(df.iloc[0, col]).strip().lower()
