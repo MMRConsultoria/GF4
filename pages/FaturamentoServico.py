@@ -1,4 +1,4 @@
-# pages/FaturamentoServico.py (temporariamente sem tabela do Google)
+# pages/FaturamentoServico.py (sem tabela externa – corrigido)
 
 import streamlit as st
 import pandas as pd
@@ -9,7 +9,6 @@ from datetime import datetime
 st.set_page_config(page_title="Faturamento por Serviço", layout="wide")
 st.title("📋 Relatório de Faturamento por Serviço")
 
-# Upload do arquivo Excel
 uploaded_file = st.file_uploader("Envie o arquivo Excel com a aba 'FaturamentoDiarioPorLoja'", type=["xlsx"])
 
 if uploaded_file:
@@ -72,6 +71,7 @@ if uploaded_file:
             df_final["Data"] = pd.to_datetime(df_final["Data"], errors='coerce')
             df_final.insert(1, "Dia da Semana", df_final["Data"].dt.day_name().map(dias_traducao))
 
+            # Exibe e exporta
             st.success("✅ Relatório processado com sucesso!")
             st.dataframe(df_final.head(50))
 
