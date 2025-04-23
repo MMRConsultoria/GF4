@@ -1,12 +1,14 @@
-# pages/relatorio_sangria.py (versão totalmente em português, com upload traduzido)
+# pages/relatorio_sangria.py (versão com layout mais elegante e distribuído)
 
 import streamlit as st
 import pandas as pd
 import numpy as np
 from io import BytesIO
 
-st.set_page_config(page_title="Relatório de Sangria", layout="centered")
-st.title("🧾 Relatório de Sangria")
+st.set_page_config(page_title="Relatório de Sangria", layout="wide")
+st.markdown("""
+    <h1 style='text-align: center;'>🧾 Relatório de Sangria</h1>
+""", unsafe_allow_html=True)
 
 uploaded_file = st.file_uploader(
     label="📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de sangria",
@@ -76,11 +78,13 @@ if uploaded_file:
 
         periodo_min = pd.to_datetime(df["Data"], dayfirst=True).min().strftime("%d/%m/%Y")
         periodo_max = pd.to_datetime(df["Data"], dayfirst=True).max().strftime("%d/%m/%Y")
-        valor_total = df["Valor(R$)"] .sum()
+        valor_total = df["Valor(R$)"].sum()
+
+        col1, col2 = st.columns(2)
+        col1.metric("📅 Período processado", f"{periodo_min} até {periodo_max}")
+        col2.metric("💰 Valor total de sangria", f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
         st.success("✅ Relatório gerado com sucesso!")
-        st.markdown(f"**Período processado:** {periodo_min} até {periodo_max}")
-        st.markdown(f"**Valor total de sangria:** R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
