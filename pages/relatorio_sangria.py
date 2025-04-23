@@ -1,4 +1,4 @@
-# pages/relatorio_sangria.py (versão totalmente em português, sem Google Sheets)
+# pages/relatorio_sangria.py (versão totalmente em português, com upload traduzido)
 
 import streamlit as st
 import pandas as pd
@@ -8,7 +8,11 @@ from io import BytesIO
 st.set_page_config(page_title="Relatório de Sangria", layout="centered")
 st.title("🧾 Relatório de Sangria")
 
-uploaded_file = st.file_uploader("Selecione o arquivo Excel com os dados de sangria:", type=["xlsx", "xlsm"])
+uploaded_file = st.file_uploader(
+    label="Selecione ou arraste o arquivo Excel com os dados de sangria:",
+    type=["xlsx", "xlsm"],
+    help="Apenas arquivos .xlsx ou .xlsm, limite de 200MB."
+)
 
 if uploaded_file:
     try:
@@ -72,7 +76,7 @@ if uploaded_file:
 
         periodo_min = pd.to_datetime(df["Data"], dayfirst=True).min().strftime("%d/%m/%Y")
         periodo_max = pd.to_datetime(df["Data"], dayfirst=True).max().strftime("%d/%m/%Y")
-        valor_total = df["Valor(R$)"].sum()
+        valor_total = df["Valor(R$)"] .sum()
 
         st.success("✅ Relatório gerado com sucesso!")
         st.markdown(f"**Período processado:** {periodo_min} até {periodo_max}")
