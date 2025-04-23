@@ -83,7 +83,7 @@ if uploaded_file:
         df_final["Data"] = df_final["Data"].dt.strftime("%d/%m/%Y")
 
         # Formatar valores numéricos com duas casas decimais
-        colunas_valores = ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket"]
+        colunas_valores = ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas"]
         for col_val in colunas_valores:
             df_final[col_val] = pd.to_numeric(df_final[col_val], errors="coerce").round(2)
 
