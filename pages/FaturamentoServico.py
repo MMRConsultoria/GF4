@@ -1,4 +1,4 @@
-# pages/FaturamentoServico.py (sem tabela externa – corrigido)
+# pages/FaturamentoServico.py (sem tabela externa – corrigido e compatível com Streamlit Cloud)
 
 import streamlit as st
 import pandas as pd
@@ -77,7 +77,7 @@ if uploaded_file:
 
             def to_excel(df):
                 output = BytesIO()
-                writer = pd.ExcelWriter(output, engine='xlsxwriter')
+                writer = pd.ExcelWriter(output, engine='openpyxl')
                 df.to_excel(writer, index=False, sheet_name='Faturamento Servico')
                 writer.close()
                 output.seek(0)
