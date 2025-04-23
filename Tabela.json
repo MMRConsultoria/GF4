@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "projetosangria",
+  "private_key_id": "0ef74d93479921bfdb14ed8b4efa96bbcd8ac0ed",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC0WVt4KpG2EaPh\nAPNSuBy5SPfIv6yah4EB1JDKM4Ul11iICiwwMf1e2gSGWgHiP9M6XFaAjadVU4Gc\nWT3rncA0ANlo0NmSEmrr8yAaWvUQFe1XgpbTjy+cBJADW3AVpL0ru1UUeqBsdbwc\nxDQnbdQb9BwxlK+6Ot3F9CsesxdoShXrF9ePeDGiYIj8EgOBB5TIFatDFkW08zD1\n+9ienQcrwFhClpefgzK8N+dNdyDNQmbE3mKQKSp4r2zSnq8E8it4uw8pextbAPFo\n5Tf66qxxOTMs1SK5W9Uhn+F80IRfQS0B5zSSnV92F1hPoPG0cJw5TPS6/nAXPaMk\nP/70mV3NAgMBAAECggEAMlMi9oeubEdE2wLoYwM0JLHLTs3JjL9WDNwzYPD6bQJH\n1oI8LWCtqnucup7AGtGjkAv3KV0dve4U4zt1z1sQKJK6GAj7RUr1YgzQPvp1mrz7\noykyDCvO5bLSOtWXk7qJ/PuDtLi5Ljq2OLK5OO1pPDmkamNqm8VUYCoPpDvmQre8\nujIC71UZ9M6FmULmjClo+k8fD4thuXP6C3ZpnuV0pbkG+84Gm4NPtS5rTwwR7k52\nuN6iLv6iYis4+5MiN5lbD57ZRthLwVeGJoqp5iZE+SQdxyYOJyJ8PCQzmjg+W3Dk\nQV3gAZvbzRFb9BgQnxrt5WuQDPtaHZ7PrvwncKYTQwKBgQD0OVGY5y+uDNDgtSHk\n+gK+iSdb+qtVJG5tdoJmyPxyt2bFjW7z8z/3oC5KPiu/XkT/SX8oEPB2jGFV6JAR\ntkb2VWgetfdsUPqS0Y1s4oTWeQu7nyqJvK5m+gYb7stf3IZEcZTmknuIYtX0XqQB\ntrmreNwJNfEriFoZfwdPvoURFwKBgQC9C5KBBSK8EesXOe7pOgxKChlCY0grmyed\n5gIKyxBxPtSnNgMaqSYo3pFZ9TBOu60ERNltx3bIDkyagRf9ToG8AEstr39dH82H\nNRFxrLYBF+6oAYV7pnU8Dw4RpTti4QV7wXnTGYjbepO8r7SE/0SLKKP3Z2k8yg/j\nWfslwSJuuwKBgHMU93BXsE4R1/OrJtehP93M/3EGQ+oRCsAmEfihSOQ9q/33UYs+\n2quzHVz6wt6ga17ooTSeFtGmAM/ckNbnz7SQNkoScQ7nccvxVvUyIGp4C6FTtVXG\nRWBc/Lf45Hi9j798zi+AYxm3iR5n4ly0X/V/NCBa/NQIonxVMXrQSh/tAoGASVTJ\n2b5yQN36gaH5aQMZbUcJkVUN08x1y6xDMoiesi8bMlmjTp46rTPY0jpoKMJoVPWY\nGht7mhLh6DUXZy0i6hh7ERe4ohkKEt6lC6FhYH82Fnmwm8xwQYHdhT7BEJQVGnJs\nnVSUX/7mfBT0Q3r5zblQEVJN4kTHcPugjn6iqq0CgYEAsHYp+EyLJLjbh9KQp4b1\nvnVV/bRoAzQO7PWdsIG00lqqI6zOon/CA8Sz2QS4dy+qRKaBb34ryrcH3eSa3qov\nNlQFupxvienkqeX3Ghm9OWjWu5dgbfJhh/fmOHUd8ZyMKajjEDQ4k2gbTRZIlDTa\neiiJurXQkvFw737/KrZfrjk=\n-----END PRIVATE KEY-----\n",
+  "client_email": "sangria@projetosangria.iam.gserviceaccount.com",
+  "client_id": "101891116808969008137",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sangria%40projetosangria.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
