@@ -9,9 +9,9 @@ st.set_page_config(page_title="Relatório de Sangria", layout="centered")
 st.title("🧾 Relatório de Sangria")
 
 uploaded_file = st.file_uploader(
-    label="Selecione ou arraste o arquivo Excel com os dados de sangria:",
+    label="📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de sangria",
     type=["xlsx", "xlsm"],
-    help="Apenas arquivos .xlsx ou .xlsm, limite de 200MB."
+    help="Somente arquivos .xlsx ou .xlsm. Tamanho máximo: 200MB."
 )
 
 if uploaded_file:
