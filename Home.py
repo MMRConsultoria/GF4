@@ -1,4 +1,4 @@
-# pages/home.py – Página inicial com notícias e cotação
+# pages/home.py – Página inicial com notícias e cotação (sem acesso direto aos relatórios)
 
 import streamlit as st
 
@@ -12,7 +12,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("""
-Explore abaixo as principais notícias do mercado financeiro e internacional, além da cotação atualizada do dólar. Faça login para acessar os relatórios exclusivos.
+Bem-vindo ao portal de inteligência da MMR Consultoria.
+Aqui você encontra informações econômicas e, após login, pode acessar os relatórios personalizados da sua empresa.
 """)
 
 st.subheader("📰 Últimas notícias")
@@ -28,4 +29,4 @@ st.subheader("💵 Cotação do Dólar Hoje")
 st.markdown("- **Dólar comercial:** R$ 5,72")
 st.markdown("- **Variação do dia:** -1,45%")
 
-st.info("🔐 Para acessar os relatórios financeiros e operacionais, use o menu lateral e faça login na plataforma.")
+st.warning("🔐 Para acessar os relatórios da sua empresa, vá até a aba 'login' no menu lateral.")
