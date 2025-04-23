@@ -94,10 +94,14 @@ if uploaded_file:
         }
         df_final["Mês"] = df_final["Mês"].str.lower().map(meses)
 
+        # Ordenar por Data e Loja
+        df_final["Data_Ordenada"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors="coerce")
+        df_final = df_final.sort_values(by=["Data_Ordenada", "Loja"]).drop(columns="Data_Ordenada")
+
         st.success("✅ Relatório processado com sucesso!")
 
-        # Mostrar total dos valores na tela
-        totalizador = df_final[colunas_valores].sum().round(2)
+        # Mostrar total dos valores na tela (sem incluir Ticket)
+        totalizador = df_final[["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas"]].sum().round(2)
         st.subheader("📊 Totais Gerais")
         st.dataframe(pd.DataFrame(totalizador).transpose())
 
