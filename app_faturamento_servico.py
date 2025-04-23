@@ -58,6 +58,7 @@ if uploaded_file:
                 "Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket", "Mês", "Ano"
             ])
 
+            df_final["Data"] = pd.to_datetime(df_final["Data"], errors='coerce')
             df_final.insert(1, "Dia da Semana", df_final["Data"].dt.day_name(locale='pt_BR'))
 
             # Conectar com a aba "Tabela" do Google Sheets (igual sangria)
