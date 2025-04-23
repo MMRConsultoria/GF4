@@ -19,7 +19,7 @@ if uploaded_file:
         xls = pd.ExcelFile(uploaded_file)
         df_dados = pd.read_excel(xls, sheet_name="Sheet")
     except Exception as e:
-        st.error(f"Erro ao ler o arquivo: {e}")
+        st.error(f"❌ Não foi possível ler o arquivo enviado. Verifique se ele está no formato correto (.xlsx ou .xlsm). Detalhes técnicos: {e}")
     else:
         df = df_dados.copy()
         df["Loja"] = np.nan
