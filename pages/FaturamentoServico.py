@@ -1,4 +1,4 @@
-# pages/FaturamentoServico.py (corrigido: leitura correta da linha 4 com nomes das lojas)
+# pages/FaturamentoServico.py (corrigido: primeira loja começa na coluna D / índice 3)
 
 import streamlit as st
 import pandas as pd
@@ -24,10 +24,10 @@ if uploaded_file:
             st.stop()
 
         df = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None, skiprows=4)
-        linha_lojas = df_raw.iloc[3, 4:].dropna()
+        linha_lojas = df_raw.iloc[3, 3:].dropna()  # primeira loja começa na coluna D (índice 3)
 
         registros = []
-        col = 4
+        col = 3
         while col < df.shape[1]:
             nome_loja = str(df_raw.iloc[3, col]).strip()
             if re.match(r"^\d+\s*-?\s*", nome_loja):
