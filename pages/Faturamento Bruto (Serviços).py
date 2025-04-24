@@ -80,6 +80,10 @@ if uploaded_file:
             "Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket", "Mês", "Ano"
         ])
 
+        df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.lower()
+        df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
+        df_final = pd.merge(df_final, df_empresa, on="Loja", how="left")
+        
         dias_traducao = {
             "Monday": "segunda-feira",
             "Tuesday": "terça-feira",
@@ -134,6 +138,11 @@ if uploaded_file:
             file_name="faturamento_servico.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-
+        colunas_finais = [
+        "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo",
+        "Código Grupo Everest", "Fat.Total", "Serv/Tx", "Fat.Real",
+        "Ticket", "Mês", "Ano"
+]
+        df_final = df_final[colunas_finais] 
     except Exception as e:
         st.error(f"Erro ao processar o arquivo: {e}")
