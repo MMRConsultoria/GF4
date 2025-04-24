@@ -14,14 +14,25 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Conexão com Google Sheets via secrets
+# Conexão com Google Sheets via secrets (correção: usar from_json_keyfile_dict)
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+
+#from io import StringIO
+#credentials = ServiceAccountCredentials.from_json_keyfile_name(
+ #   filename=StringIO(st.secrets["GOOGLE_SERVICE_ACCOUNT"]),
+  #  scopes=scope
+#)
+
+#json da Google Shett consultoriaGF4
+import json
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-gc = gspread.authorize(credentials)
 
-# Leitura das tabelas auxiliares
+
+
+gc = gspread.authorize(credentials)
 planilha = gc.open("Tabela")
+
 df_empresa = pd.DataFrame(planilha.worksheet("Tabela_Empresa").get_all_records())
 df_descricoes = pd.DataFrame(
     planilha.worksheet("Tabela_Descrição_Sangria").get_all_values(),
@@ -123,7 +134,6 @@ if uploaded_file:
         df = df[colunas_ordenadas]
 
         df = df.sort_values(by=["Data", "Loja"])
-
         periodo_min = pd.to_datetime(df["Data"], dayfirst=True).min().strftime("%d/%m/%Y")
         periodo_max = pd.to_datetime(df["Data"], dayfirst=True).max().strftime("%d/%m/%Y")
         valor_total = df["Valor(R$)"].sum()
@@ -140,4 +150,3 @@ if uploaded_file:
         output.seek(0)
 
         st.download_button("📥 Baixar relatório de sangria", data=output, file_name="Sangria_estruturada.xlsx")
-
