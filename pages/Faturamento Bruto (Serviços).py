@@ -1,21 +1,14 @@
-pages/FaturamentoServico.py (corrigido: primeira loja começa na coluna D / índice 3)
+# pages/FaturamentoServico.py (corrigido: primeira loja começa na coluna D / índice 3)
 
 import streamlit as st
 import pandas as pd
 import numpy as np
-import json
 from io import BytesIO
+from datetime import datetime
+import re
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-
-
-st.set_page_config(page_title="Relatório de Faturamento", layout="wide")
-st.markdown("""
-    <div style='display: flex; align-items: center; gap: 10px;'>
-        <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
-        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório de Faturamento</h1>
-    </div>
-""", unsafe_allow_html=True)
+import json
 
 
 # Conexão com Google Sheets via secrets
@@ -26,11 +19,11 @@ gc = gspread.authorize(credentials)
 planilha = gc.open("Tabela")
 df_empresa = pd.DataFrame(planilha.worksheet("Tabela_Empresa").get_all_records())
 
-uploaded_file = st.file_uploader(
-    label="📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de faturamento",
-    type=["xlsx", "xlsm"],
-    help="Somente arquivos .xlsx ou .xlsm. Tamanho máximo: 200MB."
-)
+st.set_page_config(page_title="Faturamento por Serviço", layout="wide")
+st.title("📋 Relatório de Faturamento por Serviço")
+
+uploaded_file = st.file_uploader("Envie o arquivo Excel com a aba 'FaturamentoDiarioPorLoja'", type=["xlsx"])
+
 if uploaded_file:
     try:
         xls = pd.ExcelFile(uploaded_file)
@@ -143,6 +136,4 @@ if uploaded_file:
         )
 
     except Exception as e:
-        st.error(f"Erro ao processar o arquivo: {e}")GOOGLE_SERVICE_ACCOUNT = '''
-{\n  "type": "service_account",\n  "project_id": "projetosangria",\n  "private_key_id": "30ff2b50039e7e052194b3ca0c07cbe16c997ee1",\n  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCrjO2oXZfSkcli\nTXdmwElySdPwJBuweqHHo4WgJwhzyoKlH81G3Hiqeh65tdyku09Z6LvkmRIAncWu\nXZiv2AH6w049nSTIYLk8QY4yeN0oTEvoxMhsiEjbapIMikob0eTwncQuogDc+xjM\nkAh/cnnyMxhxkQiV/qhw5SnDKunGwtczAT/47dR6zgICYxIDSZjAw8kQGHi2ncHB\nbMkpGUiYc9UDAlNPI5pz4JOAuPBEKAxx/tINw3r+ieo0K1vwJTP46BAGl0ui7oGs\npfDOmf7/Ki4OQoW/wW6FpLRjIYApUiv4gHMvPdihDAdJJCD2sFIlVQxrAc+N9PXx\no4CPp1NbAgMBAAECggEAMF+c5Ez/8rCJSN7vPFocW83VpXGJHUp3NAQ4OeDH0V7Z\nWBaPm9uvauLkpxlRDmKDDadC1EMVgHb8tx5NX8hZRoysE1Ose5RKp2MU5caPFj3t\nacWTfocvhC+Y31BfdVjKZc8W8s9bzvQ/Ge/DdayiFlmyGtP6x9D3Tl5QWGhRY2o3\nOoyzJLAZEUtfTg4SbNGlz+huTf0tzKvTygVbn68TWSwzxsYZr+g6jbJiwnUUY9bJ\nz5V4860S9ZE20+YtUl7+UCYpbgFDJBU13bS/hotLdfR6uivaRb0UB0Ar+dI2YliE\nSC3LOaYbrulP/BZiAYBb+ObAYxo6iwkXOiEx1v/HAQKBgQDe9/GfqR7jdFEaigp0\nTLvf6i05IrK5OlVgCYJEMNBpljlE5a6uy3xWUPq06n0HMHNMsdSqiCkd3YgqiGS6\n057sjSp+zslmgttaPVcEq4Ju6/DdwcVSNPAx2MQeOpc/iwv+cMPzphFf56cLztnn\nW04E+xMb88Sga3t9vZGFTpKtowKBgQDE9vYrQ5KvZi1TR9ecrPdpBkQikUF04FU7\nEjh11AIf1iCsOOVBzIxNXQLmDkHMzfRkybSQdHPtYhzW33XvAxYd/DDpX/7c2bKZ\nw2Lop+3doi+NRRVo78kfW7Jwj9oKsgQJK7mR1Er8FxTDGuT1rKO4wZp3+dzNGDp9\nsy2Fcnwu6QKBgFW9ADPGA7OxObK73DNGgoQi94rd9d3WOZg5b9cq8il388Ozko1y\nf/htIUrKVJOcJOocA8wjmbP7SO4aDqns0FLkIbArcjSyIwk7Ryfrj7d5kOClL2xi\nIO76DMgW/awYmt8Xm7IobMv1Nz4KJ66YZJLzvTBld3m8evsqFzgss6iDAoGBAI1W\nekeJcdUTiSrdvsbbB58BtBrqCQKJiB+fb4x92hhmW4O6QCj7UyKgv9e+G1GP6PP6\nGewe5KFPakp2h/Y/TLuvoJmXHRf1z8evAWbaOkJ0g5LoI/jtOHGcJ2vGjjxmiabb\nDYqrwDMtjOSEhBAXFlUZ+HJnhh5WaIKS9PNxt9MhAoGBAN0I6j7RBQgUkYALtvTR\n4ZW44Iiq9kAiE7dIwJwIsfe3p+En43g/zaxEARN3OAFLiqlNtxLsP9e1ZLYxiqcd\niJu0qFQP6XQy/5dQBwTk/OfKyq0Ln+6aCgtXwvbXqH1q0WXcxNg5Sx5ppPCkF7/g\n6DIHieYAcQGeijg1/VB4Y+ij\n-----END PRIVATE KEY-----\n",\n  "client_email": "sangria@projetosangria.iam.gserviceaccount.com",\n  "client_id": "101891116808969008137",\n  "auth_uri": "https://accounts.google.com/o/oauth2/auth",\n  "token_uri": "https://oauth2.googleapis.com/token",\n  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",\n  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sangria%40projetosangria.iam.gserviceaccount.com",\n  "universe_domain": "googleapis.com"\n}
-''' 
+        st.error(f"Erro ao processar o arquivo: {e}")
