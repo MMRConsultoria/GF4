@@ -139,9 +139,9 @@ if uploaded_file:
         #st.dataframe(df_final.head(50))
 
         # Lojas sem código Everest
-        lojas_sem_codigo = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
-        if len(lojas_sem_codigo) > 0:
-        st.warning(f"⚠️ Lojas sem código Everest cadastrado: {', '.join(lojas_sem_codigo)}")
+        #lojas_sem_codigo = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
+       # if len(lojas_sem_codigo) > 0:
+       # st.warning(f"⚠️ Lojas sem código Everest cadastrado: {', '.join(lojas_sem_codigo)}")
 
 
         
