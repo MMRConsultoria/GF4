@@ -112,28 +112,28 @@ if uploaded_file:
                     return row["Descrição Agrupada"]
             return "Outros"
 
-        df["Descrição Agrupada"] = df["Descrição"].apply(mapear_descricao)
+       df["Descrição Agrupada"] = df["Descrição"].apply(mapear_descricao)
+
         # Reorganizar colunas conforme a ordem desejada
-colunas_ordenadas = [
-    "Data",
-    "Dia da Semana",
-    "Loja",
-    "Código Everest",
-    "Grupo",
-    "Código Grupo Everest",
-    "Funcionário",
-    "Hora",
-    "Descrição",
-    "Descrição Agrupada",
-    "Meio de recebimento",
-    "Valor(R$)",
-    "Mês",
-    "Ano"
-]
-df = df[colunas_ordenadas]
+        colunas_ordenadas = [
+            "Data",
+            "Dia da Semana",
+            "Loja",
+            "Código Everest",
+            "Grupo",
+            "Código Grupo Everest",
+            "Funcionário",
+            "Hora",
+            "Descrição",
+            "Descrição Agrupada",
+            "Meio de recebimento",
+            "Valor(R$)",
+            "Mês",
+            "Ano"
+        ]
+        df = df[colunas_ordenadas]
 
         df = df.sort_values(by=["Data", "Loja"])
-
         periodo_min = pd.to_datetime(df["Data"], dayfirst=True).min().strftime("%d/%m/%Y")
         periodo_max = pd.to_datetime(df["Data"], dayfirst=True).max().strftime("%d/%m/%Y")
         valor_total = df["Valor(R$)"].sum()
