@@ -6,6 +6,18 @@ import numpy as np
 from io import BytesIO
 from datetime import datetime
 import re
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import json
+
+
+# Conexão com Google Sheets via secrets
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+gc = gspread.authorize(credentials)
+planilha = gc.open("Tabela")
+df_empresa = pd.DataFrame(planilha.worksheet("Tabela_Empresa").get_all_records())
 
 st.set_page_config(page_title="Faturamento por Serviço", layout="wide")
 st.title("📋 Relatório de Faturamento por Serviço")
@@ -68,6 +80,10 @@ if uploaded_file:
             "Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket", "Mês", "Ano"
         ])
 
+        df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.lower()
+        df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
+        df_final = pd.merge(df_final, df_empresa, on="Loja", how="left")
+        
         dias_traducao = {
             "Monday": "segunda-feira",
             "Tuesday": "terça-feira",
@@ -97,6 +113,13 @@ if uploaded_file:
         # Ordenar por Data e Loja
         df_final["Data_Ordenada"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors="coerce")
         df_final = df_final.sort_values(by=["Data_Ordenada", "Loja"]).drop(columns="Data_Ordenada")
+        # Reordenar colunas finais
+        colunas_finais = [
+        "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo",
+        "Código Grupo Everest", "Fat.Total", "Serv/Tx", "Fat.Real",
+        "Ticket", "Mês", "Ano"
+]
+        df_final = df_final[colunas_finais]
 
         st.success("✅ Relatório processado com sucesso!")
 
@@ -122,6 +145,6 @@ if uploaded_file:
             file_name="faturamento_servico.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-
+       
     except Exception as e:
         st.error(f"Erro ao processar o arquivo: {e}")
