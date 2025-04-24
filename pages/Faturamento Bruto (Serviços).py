@@ -113,6 +113,13 @@ if uploaded_file:
         # Ordenar por Data e Loja
         df_final["Data_Ordenada"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors="coerce")
         df_final = df_final.sort_values(by=["Data_Ordenada", "Loja"]).drop(columns="Data_Ordenada")
+        # Reordenar colunas finais
+        colunas_finais = [
+        "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo",
+        "Código Grupo Everest", "Fat.Total", "Serv/Tx", "Fat.Real",
+        "Ticket", "Mês", "Ano"
+]
+        df_final = df_final[colunas_finais]
 
         st.success("✅ Relatório processado com sucesso!")
 
@@ -138,11 +145,6 @@ if uploaded_file:
             file_name="faturamento_servico.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-        colunas_finais = [
-        "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo",
-        "Código Grupo Everest", "Fat.Total", "Serv/Tx", "Fat.Real",
-        "Ticket", "Mês", "Ano"
-]
-        df_final = df_final[colunas_finais] 
+       
     except Exception as e:
         st.error(f"Erro ao processar o arquivo: {e}")
