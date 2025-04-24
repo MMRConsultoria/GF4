@@ -10,7 +10,6 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 
-
 # Conexão com Google Sheets via secrets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
@@ -36,7 +35,7 @@ if uploaded_file:
             st.stop()
 
         df = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None, skiprows=4)
-        linha_lojas = df_raw.iloc[3, 3:].dropna()  # primeira loja começa na coluna D (índice 3)
+        linha_lojas = df_raw.iloc[3, 3:].dropna()
 
         registros = []
         col = 3
@@ -83,7 +82,7 @@ if uploaded_file:
         df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.lower()
         df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
         df_final = pd.merge(df_final, df_empresa, on="Loja", how="left")
-        
+
         dias_traducao = {
             "Monday": "segunda-feira",
             "Tuesday": "terça-feira",
@@ -98,33 +97,29 @@ if uploaded_file:
         df_final.insert(1, "Dia da Semana", df_final["Data"].dt.day_name().map(dias_traducao))
         df_final["Data"] = df_final["Data"].dt.strftime("%d/%m/%Y")
 
-        # Formatar valores numéricos com duas casas decimais
         colunas_valores = ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas"]
         for col_val in colunas_valores:
             df_final[col_val] = pd.to_numeric(df_final[col_val], errors="coerce").round(2)
 
-        # Traduzir o mês para abreviado em português
         meses = {
             "jan": "jan", "feb": "fev", "mar": "mar", "apr": "abr", "may": "mai", "jun": "jun",
             "jul": "jul", "aug": "ago", "sep": "set", "oct": "out", "nov": "nov", "dec": "dez"
         }
         df_final["Mês"] = df_final["Mês"].str.lower().map(meses)
 
-        # Ordenar por Data e Loja
         df_final["Data_Ordenada"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors="coerce")
         df_final = df_final.sort_values(by=["Data_Ordenada", "Loja"]).drop(columns="Data_Ordenada")
-        # Reordenar colunas finais
+
         colunas_finais = [
-        "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo",
-        "Código Grupo Everest", "Fat.Total", "Serv/Tx", "Fat.Real",
-        "Ticket", "Mês", "Ano"
-]
+            "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo",
+            "Código Grupo Everest", "Fat.Total", "Serv/Tx", "Fat.Real",
+            "Ticket", "Mês", "Ano"
+        ]
         df_final = df_final[colunas_finais]
 
         st.success("✅ Relatório processado com sucesso!")
 
-        # Mostrar total dos valores na tela (sem incluir Ticket)
-        totalizador = df_final[["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas"]].sum().round(2)
+        totalizador = df_final[["Fat.Total", "Serv/Tx", "Fat.Real"]].sum().round(2)
         st.subheader("📊 Totais Gerais")
         st.dataframe(pd.DataFrame(totalizador).transpose())
 
@@ -140,11 +135,11 @@ if uploaded_file:
 
         excel_data = to_excel(df_final)
         st.download_button(
-            label="📥 Baixar Relatório Excel",
+            label="📅 Baixar Relatório Excel",
             data=excel_data,
             file_name="faturamento_servico.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-       
+
     except Exception as e:
         st.error(f"Erro ao processar o arquivo: {e}")
