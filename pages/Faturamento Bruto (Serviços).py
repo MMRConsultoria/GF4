@@ -3,9 +3,12 @@ pages/FaturamentoServico.py (corrigido: primeira loja começa na coluna D / índ
 import streamlit as st
 import pandas as pd
 import numpy as np
+import json
 from io import BytesIO
 from datetime import datetime
-import re
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
 
 st.set_page_config(page_title="Faturamento por Serviço", layout="wide")
 st.title("📋 Relatório de Faturamento por Serviço")
