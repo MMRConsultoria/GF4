@@ -13,7 +13,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 st.set_page_config(page_title="Faturamento por Serviço", layout="wide")
 st.title("📋 Relatório de Faturamento por Serviço")
 
-uploaded_file = st.file_uploader("Envie o arquivo Excel com a aba 'FaturamentoDiarioPorLoja'", type=["xlsx"])
+#uploaded_file = st.file_uploader("Envie o arquivo Excel com a aba 'FaturamentoDiarioPorLoja'", type=["xlsx"])
 
 # Conexão com Google Sheets via secrets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
