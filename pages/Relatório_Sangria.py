@@ -131,7 +131,7 @@ if uploaded_file:
             "Mês",
             "Ano"
         ]
-        df = df[colunas_ordenadas]
+         df = df[colunas_ordenadas]
 
         df = df.sort_values(by=["Data", "Loja"])
         periodo_min = pd.to_datetime(df["Data"], dayfirst=True).min().strftime("%d/%m/%Y")
