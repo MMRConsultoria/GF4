@@ -103,6 +103,9 @@ if uploaded_file:
         df["Ano"] = df["Data"].dt.year
         df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
 
+        #fazer o procv sem acento espaço maiusculas e etc
+        df["Loja"] = df["Loja"].astype(str).str.strip().str.lower()
+        df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
         df = pd.merge(df, df_empresa, on="Loja", how="left")
 
         def mapear_descricao(desc):
