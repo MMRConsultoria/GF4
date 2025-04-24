@@ -23,14 +23,13 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
   #  scopes=scope
 #)
 
-
+#json da Google Shett consultoriaGF4
 import json
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 
 
-#credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-#credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+
 gc = gspread.authorize(credentials)
 planilha = gc.open("Tabela")
 
@@ -114,6 +113,24 @@ if uploaded_file:
             return "Outros"
 
         df["Descrição Agrupada"] = df["Descrição"].apply(mapear_descricao)
+        # Reorganizar colunas conforme a ordem desejada
+colunas_ordenadas = [
+    "Data",
+    "Dia da Semana",
+    "Loja",
+    "Código Everest",
+    "Grupo",
+    "Código Grupo Everest",
+    "Funcionário",
+    "Hora",
+    "Descrição",
+    "Descrição Agrupada",
+    "Meio de recebimento",
+    "Valor(R$)",
+    "Mês",
+    "Ano"
+]
+df = df[colunas_ordenadas]
 
         df = df.sort_values(by=["Data", "Loja"])
 
