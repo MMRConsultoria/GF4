@@ -36,21 +36,23 @@ if uploaded_file:
         st.error(f"❌ Não foi possível ler o arquivo enviado. Detalhes: {e}")
     else:
         col_fixas = list(range(3))
-        linha_inicio_dados = 4  # Começa na linha 4 (index 4)
+        linha_inicio_dados = 4
 
         blocos = []
         col = 3
         while col < df_raw.shape[1]:
-            if pd.notna(df_raw.iloc[3, col]):  # linha 4 tem os nomes das lojas (index 3)
+            if pd.notna(df_raw.iloc[3, col]):
                 nome_loja = df_raw.iloc[3, col]
-                bloco_cols = col_fixas + [col + i for i in range(5)]
+                bloco_cols = col_fixas + [col + i for i in range(5) if (col + i) < df_raw.shape[1]]
                 df_bloco = df_raw.iloc[linha_inicio_dados:, bloco_cols].copy()
-                df_bloco.columns = ["Data", "Código", "Grupo", "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]
-                df_bloco.insert(2, "Loja", nome_loja)
-                blocos.append(df_bloco)
+
+                if df_bloco.shape[1] == 7:
+                    df_bloco.columns = ["Data", "Código", "Grupo", "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]
+                    df_bloco.insert(2, "Loja", nome_loja)
+                    blocos.append(df_bloco)
                 col += 5
             else:
-                break
+                col += 1
 
         if not blocos:
             st.error("❌ Nenhum bloco de loja foi identificado. Verifique se a linha 4 contém os nomes das lojas.")
