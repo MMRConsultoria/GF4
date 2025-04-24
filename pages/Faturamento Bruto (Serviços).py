@@ -119,11 +119,28 @@ if uploaded_file:
 
         st.success("✅ Relatório processado com sucesso!")
 
+        # Mostrar período processado
+        periodo_min = df_final["Data"].min()
+        periodo_max = df_final["Data"].max()
+        st.metric("📅 Período processado", f"{periodo_min} até {periodo_max}")
+
+        # Totalizador formatado em R$
+        totalizador = df_final[["Fat.Total", "Serv/Tx", "Fat.Real"]].sum().round(2)
+        totalizador = totalizador.apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+        st.subheader("📊 Totais Gerais")
+        st.write(totalizador.to_frame().transpose())    
+
+        # Lojas sem código Everest
+        lojas_sem_codigo = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
+        if len(lojas_sem_codigo) > 0:
+        st.warning(f"⚠️ Lojas sem código Everest cadastrado: {', '.join(lojas_sem_codigo)}")  
+        
         totalizador = df_final[["Fat.Total", "Serv/Tx", "Fat.Real"]].sum().round(2)
         st.subheader("📊 Totais Gerais")
         st.dataframe(pd.DataFrame(totalizador).transpose())
 
-        st.dataframe(df_final.head(50))
+        #st.dataframe(df_final.head(50))
 
         def to_excel(df):
             output = BytesIO()
