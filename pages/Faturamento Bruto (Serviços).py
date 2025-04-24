@@ -118,7 +118,20 @@ if uploaded_file:
         df_final = df_final[colunas_finais]
 
         st.success("✅ Relatório processado com sucesso!")
+       
+        # Mostrar período processado
+        periodo_min = df_final["Data"].min()
+        periodo_max = df_final["Data"].max()
+        st.metric("📅 Período processado", f"{periodo_min} até {periodo_max}")
 
+        # Totalizador formatado em R$
+        totalizador = df_final[["Fat.Total", "Serv/Tx", "Fat.Real"]].sum().round(2)
+        totalizador = totalizador.apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+        st.subheader("📊 Totais Gerais")
+        st.write(totalizador.to_frame().transpose())
+
+        
         totalizador = df_final[["Fat.Total", "Serv/Tx", "Fat.Real"]].sum().round(2)
         st.subheader("📊 Totais Gerais")
         st.dataframe(pd.DataFrame(totalizador).transpose())
