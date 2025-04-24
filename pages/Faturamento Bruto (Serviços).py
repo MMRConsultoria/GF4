@@ -123,7 +123,7 @@ if uploaded_file:
         st.subheader("📊 Totais Gerais")
         st.dataframe(pd.DataFrame(totalizador).transpose())
 
-        st.dataframe(df_final.head(50))
+        #st.dataframe(df_final.head(50))
 
         def to_excel(df):
             output = BytesIO()
