@@ -143,7 +143,7 @@ if uploaded_file:
         if len(lojas_sem_codigo) > 0:
             st.warning(
                 f"⚠️ Lojas sem código Everest cadastrado: {', '.join(lojas_sem_codigo)}\n\n"
-                "🔗 Atualize os dados na [planilha de empresas](https://docs.google.com/spreadsheets/d/SEU_ID_AQUI/edit)"
+                "🔗 Atualize os dados na [planilha de empresas](https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=sharing)"
     )
 
         
