@@ -9,10 +9,14 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 
-st.set_page_config(page_title="Faturamento por Serviço", layout="wide")
-st.title("📋 Relatório de Faturamento por Serviço")
+st.set_page_config(page_title="Relatório de Faturamento", layout="wide")
+st.markdown("""
+    <div style='display: flex; align-items: center; gap: 10px;'>
+        <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
+        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório de Faturamento</h1>
+    </div>
+""", unsafe_allow_html=True)
 
-#uploaded_file = st.file_uploader("Envie o arquivo Excel com a aba 'FaturamentoDiarioPorLoja'", type=["xlsx"])
 
 # Conexão com Google Sheets via secrets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -27,12 +31,6 @@ uploaded_file = st.file_uploader(
     type=["xlsx", "xlsm"],
     help="Somente arquivos .xlsx ou .xlsm. Tamanho máximo: 200MB."
 )
-
-
-
-
-
-
 if uploaded_file:
     try:
         xls = pd.ExcelFile(uploaded_file)
