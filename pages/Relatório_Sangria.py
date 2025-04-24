@@ -142,14 +142,7 @@ if uploaded_file:
         col2.metric("💰 Valor total de sangria", f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
         st.success("✅ Relatório gerado com sucesso!")
-        # Lojas sem código Everest
-        lojas_sem_codigo = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
-        if len(lojas_sem_codigo) > 0:
-            st.warning(
-                f"⚠️ Lojas sem código Everest cadastrado: {', '.join(lojas_sem_codigo)}\n\n"
-            "🔗 Atualize os dados na [planilha de empresas](https://docs.google.com/spreadsheets/d/SEU_ID_AQUI/edit)"
-    )
-
+       
         
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
