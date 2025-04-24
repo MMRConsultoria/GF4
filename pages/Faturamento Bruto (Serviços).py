@@ -14,12 +14,26 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
+
+# Conexão com Google Sheets via secrets (correção: usar from_json_keyfile_dict)
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+
+#json da Google Shett consultoriaGF4
+import json
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+
+
+
 gc = gspread.authorize(credentials)
 planilha = gc.open("Tabela")
+
 df_empresa = pd.DataFrame(planilha.worksheet("Tabela_Empresa").get_all_records())
+
+
+
+
+
 
 uploaded_file = st.file_uploader(
     label="📁 Envie o arquivo de faturamento",
