@@ -30,7 +30,7 @@ uploaded_file = st.file_uploader(
 if uploaded_file:
     try:
         xls = pd.ExcelFile(uploaded_file)
-        df = pd.read_excel(xls, sheet_name="Sheet")
+        df = pd.read_excel(xls, sheet_name=xls.sheet_names[0])#pega sempre a primeira planilha
     except Exception as e:
         st.error(f"❌ Erro ao ler o arquivo enviado: {e}")
     else:
