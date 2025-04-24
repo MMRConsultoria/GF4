@@ -132,9 +132,9 @@ if uploaded_file:
         st.write(totalizador.to_frame().transpose())
 
         
-        totalizador = df_final[["Fat.Total", "Serv/Tx", "Fat.Real"]].sum().round(2)
-        st.subheader("📊 Totais Gerais")
-        st.dataframe(pd.DataFrame(totalizador).transpose())
+        #totalizador = df_final[["Fat.Total", "Serv/Tx", "Fat.Real"]].sum().round(2)
+        #st.subheader("📊 Totais Gerais")
+        #st.dataframe(pd.DataFrame(totalizador).transpose())
 
         #st.dataframe(df_final.head(50))
 
