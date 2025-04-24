@@ -1,15 +1,18 @@
-# pages/FaturamentoServico.py (corrigido: primeira loja começa na coluna D / índice 3)
-
 import streamlit as st
 import pandas as pd
 import numpy as np
+import json
 from io import BytesIO
-from datetime import datetime
-import re
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import json
 
+st.set_page_config(page_title="Relatório de Faturamento", layout="wide")
+st.markdown("""
+    <div style='display: flex; align-items: center; gap: 10px;'>
+        <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
+        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório de Faturamento</h1>
+    </div>
+""", unsafe_allow_html=True)
 
 # Conexão com Google Sheets via secrets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -19,132 +22,95 @@ gc = gspread.authorize(credentials)
 planilha = gc.open("Tabela")
 df_empresa = pd.DataFrame(planilha.worksheet("Tabela_Empresa").get_all_records())
 
-st.set_page_config(page_title="Faturamento por Serviço", layout="wide")
-st.title("📋 Relatório de Faturamento por Serviço")
-
-uploaded_file = st.file_uploader("Envie o arquivo Excel com a aba 'FaturamentoDiarioPorLoja'", type=["xlsx"])
+uploaded_file = st.file_uploader(
+    label="📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de faturamento",
+    type=["xlsx", "xlsm"],
+    help="Somente arquivos .xlsx ou .xlsm. Tamanho máximo: 200MB."
+)
 
 if uploaded_file:
     try:
         xls = pd.ExcelFile(uploaded_file)
         df_raw = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None)
+    except Exception as e:
+        st.error(f"❌ Não foi possível ler o arquivo enviado. Detalhes: {e}")
+    else:
+        col_fixas = list(range(3))
+        linha_inicio_dados = 4
 
-        # Validação da célula B1
-        texto_b1 = str(df_raw.iloc[0, 1]).strip().lower()
-        if texto_b1 != "faturamento diário sintético multi-loja":
-            st.error("❌ ERRO: A célula B1 deve conter 'Faturamento diário sintético multi-loja'. Verifique o arquivo.")
-            st.stop()
-
-        df = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None, skiprows=4)
-        linha_lojas = df_raw.iloc[3, 3:].dropna()  # primeira loja começa na coluna D (índice 3)
-
-        registros = []
+        blocos = []
         col = 3
-        while col < df.shape[1]:
-            nome_loja = str(df_raw.iloc[3, col]).strip()
-            if re.match(r"^\d+\s*-?\s*", nome_loja):
-                nome_loja = nome_loja.split("-", 1)[-1].strip()
+        while col < df_raw.shape[1]:
+            if pd.notna(df_raw.iloc[3, col]):
+                nome_loja = df_raw.iloc[3, col]
+                bloco_cols = col_fixas + [col + i for i in range(5) if (col + i) < df_raw.shape[1]]
+                df_bloco = df_raw.iloc[linha_inicio_dados:, bloco_cols].copy()
 
-                header_col = str(df.iloc[0, col]).strip().lower()
-                if "fat.total" in header_col:
-                    for i in range(1, df.shape[0]):
-                        linha = df.iloc[i]
-                        valor_data = str(df.iloc[i, 2]).strip().lower()
-                        valor_check = str(df.iloc[i, 1]).strip().lower()
-
-                        if valor_data in ["subtotal"] or valor_check in ["total"]:
-                            continue
-
-                        try:
-                            data = pd.to_datetime(valor_data, dayfirst=True)
-                        except:
-                            continue
-
-                        valores = linha[col:col+5].values
-                        if pd.isna(valores).all():
-                            continue
-
-                        registros.append([
-                            data,
-                            nome_loja,
-                            *valores,
-                            data.strftime("%b"),
-                            data.year
-                        ])
-
+                if df_bloco.shape[1] == 7:
+                    df_bloco.columns = ["Data", "Código", "Grupo", "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]
+                    df_bloco.insert(2, "Loja", nome_loja)
+                    blocos.append(df_bloco)
                 col += 5
             else:
                 col += 1
 
-        df_final = pd.DataFrame(registros, columns=[
-            "Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket", "Mês", "Ano"
-        ])
+        if not blocos:
+            st.error("❌ Nenhum bloco de loja foi identificado. Verifique se a linha 4 contém os nomes das lojas.")
+        else:
+            df = pd.concat(blocos, ignore_index=True)
+            df.dropna(subset=["Data"], inplace=True)
 
-        df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.lower()
-        df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
-        df_final = pd.merge(df_final, df_empresa, on="Loja", how="left")
-        
-        dias_traducao = {
-            "Monday": "segunda-feira",
-            "Tuesday": "terça-feira",
-            "Wednesday": "quarta-feira",
-            "Thursday": "quinta-feira",
-            "Friday": "sexta-feira",
-            "Saturday": "sábado",
-            "Sunday": "domingo"
-        }
+            df["Data"] = pd.to_datetime(df["Data"], errors="coerce")
+            df = df[df["Data"].notna()]
 
-        df_final["Data"] = pd.to_datetime(df_final["Data"], errors='coerce')
-        df_final.insert(1, "Dia da Semana", df_final["Data"].dt.day_name().map(dias_traducao))
-        df_final["Data"] = df_final["Data"].dt.strftime("%d/%m/%Y")
+            dias_semana = {
+                0: 'segunda-feira', 1: 'terça-feira', 2: 'quarta-feira',
+                3: 'quinta-feira', 4: 'sexta-feira', 5: 'sábado', 6: 'domingo'
+            }
+            df["Dia da Semana"] = df["Data"].dt.dayofweek.map(dias_semana)
+            df["Mês"] = df["Data"].dt.month.map({
+                1: 'jan', 2: 'fev', 3: 'mar', 4: 'abr', 5: 'mai', 6: 'jun',
+                7: 'jul', 8: 'ago', 9: 'set', 10: 'out', 11: 'nov', 12: 'dez'
+            })
+            df["Ano"] = df["Data"].dt.year
+            df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
 
-        # Formatar valores numéricos com duas casas decimais
-        colunas_valores = ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas"]
-        for col_val in colunas_valores:
-            df_final[col_val] = pd.to_numeric(df_final[col_val], errors="coerce").round(2)
+            df["Loja"] = df["Loja"].astype(str).str.strip().str.lower()
+            df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
+            df = pd.merge(df, df_empresa, on="Loja", how="left")
 
-        # Traduzir o mês para abreviado em português
-        meses = {
-            "jan": "jan", "feb": "fev", "mar": "mar", "apr": "abr", "may": "mai", "jun": "jun",
-            "jul": "jul", "aug": "ago", "sep": "set", "oct": "out", "nov": "nov", "dec": "dez"
-        }
-        df_final["Mês"] = df_final["Mês"].str.lower().map(meses)
+            colunas_finais = [
+                "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo",
+                "Código Grupo Everest", "Fat.Total", "Serv/Tx", "Fat.Real",
+                "Ticket", "Mês", "Ano"
+            ]
+            df = df[colunas_finais]
+            df = df.sort_values(by=["Data", "Loja"])
 
-        # Ordenar por Data e Loja
-        df_final["Data_Ordenada"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors="coerce")
-        df_final = df_final.sort_values(by=["Data_Ordenada", "Loja"]).drop(columns="Data_Ordenada")
-        # Reordenar colunas finais
-        colunas_finais = [
-        "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo",
-        "Código Grupo Everest", "Fat.Total", "Serv/Tx", "Fat.Real",
-        "Ticket", "Mês", "Ano"
-]
-        df_final = df_final[colunas_finais]
+            periodo_min = df["Data"].min()
+            periodo_max = df["Data"].max()
 
-        st.success("✅ Relatório processado com sucesso!")
+            st.success("✅ Relatório de faturamento gerado com sucesso!")
 
-        # Mostrar total dos valores na tela (sem incluir Ticket)
-        totalizador = df_final[["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas"]].sum().round(2)
-        st.subheader("📊 Totais Gerais")
-        st.dataframe(pd.DataFrame(totalizador).transpose())
+            col1, col2 = st.columns(2)
+            col1.metric("📅 Período processado", f"{periodo_min} até {periodo_max}")
+            col2.metric("🏪 Total de lojas", df["Loja"].nunique())
 
-        st.dataframe(df_final.head(50))
+            totalizador = df[["Fat.Total", "Serv/Tx", "Fat.Real"]].sum().round(2)
+            totalizador = totalizador.apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
-        def to_excel(df):
+            st.subheader("📊 Totais Gerais")
+            st.write(totalizador.to_frame().transpose())
+
+            lojas_sem_codigo = df[df["Código Everest"].isna()]["Loja"].unique()
+            if len(lojas_sem_codigo) > 0:
+                st.warning(f"⚠️ Lojas sem código Everest cadastrado: {', '.join(lojas_sem_codigo)}")
+
             output = BytesIO()
-            writer = pd.ExcelWriter(output, engine='openpyxl')
-            df.to_excel(writer, index=False, sheet_name='Faturamento Servico')
-            writer.close()
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False, sheet_name="Faturamento")
             output.seek(0)
-            return output
 
-        excel_data = to_excel(df_final)
-        st.download_button(
-            label="📥 Baixar Relatório Excel",
-            data=excel_data,
-            file_name="faturamento_servico.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-       
-    except Exception as e:
-        st.error(f"Erro ao processar o arquivo: {e}")
+            st.download_button("📥 Baixar relatório", data=output, file_name="Faturamento_transformado.xlsx")
+
+
