@@ -41,18 +41,25 @@ if uploaded_file:
                 df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()
                 df_temp.columns = ["Data", "Valor (R$)"]
 
-                # Alinha com a coluna A (usada para identificar subtotais)
+                # DEBUG: Ver primeiras 10 linhas da coluna A
                 coluna_a = df_raw.iloc[linha_inicio_dados:, 0].reset_index(drop=True)
+                st.write(f"🔍 Coluna A - primeiras 10 linhas (coluna de controle):", coluna_a.head(10))
+
                 df_temp = df_temp.reset_index(drop=True)
 
-                # Remove linhas com coluna A vazia
-                filtro_validas = ~coluna_a.astype(str).str.strip().isin(["", "nan"])
+                # DEBUG: Mostrar linhas antes do filtro
+                st.write(f"🟡 Coluna {col}: Antes do filtro - Total de linhas:", len(df_temp))
+
+                # Filtro seguro: remove apenas se estiver completamente vazia ou "nan"
+                filtro_validas = coluna_a.astype(str).str.strip().str.lower().ne("") & coluna_a.astype(str).str.strip().str.lower().ne("nan")
                 df_temp = df_temp[filtro_validas]
+
+                # DEBUG: Mostrar linhas após o filtro
+                st.write(f"🟢 Coluna {col}: Depois do filtro - Total de linhas:", len(df_temp))
 
                 # Remove linhas com "total" ou "subtotal" na coluna Data
                 df_temp = df_temp[~df_temp["Data"].astype(str).str.lower().str.contains("total|subtotal")]
 
-                # Adiciona colunas extras
                 df_temp.insert(1, "Meio de Pagamento", meio_pgto)
                 df_temp.insert(2, "Loja", loja_atual)
 
