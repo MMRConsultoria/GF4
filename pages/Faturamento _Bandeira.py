@@ -47,13 +47,35 @@ if uploaded_file:
         blocos = []
         col = 3
 
-        while col < df_raw.shape[1]:
+       
+
+        for col in range(3, df_raw.shape[1]):
             loja_nome = df_raw.iloc[3, col]
             meio_pagamento = df_raw.iloc[4, col]
+
             if pd.isna(loja_nome) or pd.isna(meio_pagamento):
-                col += 1
                 continue
 
+            if any(palavra in str(loja_nome).lower() for palavra in ["total", "serv", "real"]) or \
+               any(palavra in str(meio_pagamento).lower() for palavra in ["total", "serv", "real"]):
+                continue
+
+        df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()
+        df_temp.columns = ["Data", "Valor (R$)"]
+        df_temp.insert(1, "Meio de Pagamento", meio_pagamento)
+        df_temp.insert(2, "Loja", loja_nome)
+        blocos.append(df_temp)
+
+
+
+
+
+
+
+
+
+
+            
             if any(palavra in str(loja_nome).lower() for palavra in ["total", "serv", "real"]) or \
                any(palavra in str(meio_pagamento).lower() for palavra in ["total", "serv", "real"]):
                 col += 1
