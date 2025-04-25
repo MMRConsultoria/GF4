@@ -3,11 +3,10 @@ import pandas as pd
 import re
 from io import BytesIO
 
-st.set_page_config(page_title="Teste de Blocos - Faturamento", layout="wide")
-st.title("🧪 Teste de Identificação de Blocos")
+st.set_page_config(page_title="Relatório de Faturamento por Meio de Pagamento", layout="wide")
+st.title("📊 Identificação de Blocos - Faturamento por Meio")
 
-# Upload do arquivo
-uploaded_file = st.file_uploader("📁 Envie o arquivo de Faturamento (.xlsx)", type=["xlsx", "xlsm"])
+uploaded_file = st.file_uploader("📁 Envie o arquivo Excel com os dados", type=["xlsx", "xlsm"])
 
 if uploaded_file:
     try:
@@ -17,7 +16,7 @@ if uploaded_file:
     else:
         linha_inicio_dados = 6
         blocos = []
-        col = 3  # Começa na coluna D (índice 3)
+        col = 3  # Começa na coluna D (índice 3), pois A, B, C são fixas e só a C interessa
         loja_atual = None
 
         while col < df_raw.shape[1]:
@@ -39,8 +38,12 @@ if uploaded_file:
                 continue
 
             try:
-                df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()
+                df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()  # Apenas col C (Data) e atual
                 df_temp.columns = ["Data", "Valor (R$)"]
+
+                # Remove linhas com "total" ou "subtotal"
+                df_temp = df_temp[~df_temp["Data"].astype(str).str.lower().str.contains("total|subtotal")]
+
                 df_temp.insert(1, "Meio de Pagamento", meio_pgto)
                 df_temp.insert(2, "Loja", loja_atual)
                 blocos.append(df_temp)
@@ -54,7 +57,7 @@ if uploaded_file:
             st.success("✅ Blocos identificados com sucesso!")
             st.dataframe(df_final, use_container_width=True)
 
-            # Botão para download em Excel
+            # Botão para baixar Excel
             output = BytesIO()
             with pd.ExcelWriter(output, engine="openpyxl") as writer:
                 df_final.to_excel(writer, index=False, sheet_name="FaturamentoPorMeio")
