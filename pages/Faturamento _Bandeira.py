@@ -53,17 +53,10 @@ if uploaded_file:
                 coluna_a = df_raw.iloc[linha_inicio_dados:, 0].values
                 df_temp = df_temp[~pd.Series(coluna_a).astype(str).str.strip().isin(["", "nan"])]
 
+                # Remove linhas com "total" ou "subtotal" na coluna Data
+                df_temp = df_temp[~df_temp["Data"].astype(str).str.lower().str.contains("total|subtotal")]
 
-
-
-
-
-
-
-
-
-
-                
+ 
                 df_temp.insert(1, "Meio de Pagamento", meio_pgto)
                 df_temp.insert(2, "Loja", loja_atual)
                 blocos.append(df_temp)
