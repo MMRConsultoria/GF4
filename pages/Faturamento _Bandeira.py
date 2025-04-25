@@ -5,22 +5,24 @@ import re
 st.set_page_config(page_title="Teste de Blocos - Faturamento", layout="wide")
 st.title("🧪 Teste de Identificação de Blocos")
 
+# Upload do arquivo
 uploaded_file = st.file_uploader("📁 Envie o arquivo de Faturamento (.xlsx)", type=["xlsx", "xlsm"])
 
 if uploaded_file:
     try:
-        df_raw = pd.read_excel(uploaded_file, sheet_name="FaturamentoPorMeioDePagamento", header=None)
+        df_raw = pd.read_excel(uploaded_file, sheet_name=0, header=None)
     except Exception as e:
         st.error(f"❌ Erro ao ler o arquivo: {e}")
     else:
         linha_inicio_dados = 6
         blocos = []
-        col = 3
+        col = 3  # Começa na coluna D (índice 3)
         loja_atual = None
 
         while col < df_raw.shape[1]:
             valor_linha4 = str(df_raw.iloc[3, col]).strip()
 
+            # Verifica se é uma nova loja no formato "número - nome"
             match = re.match(r"^\d+\s*-\s*(.+)$", valor_linha4)
             if match:
                 loja_atual = match.group(1).strip().lower()
@@ -30,6 +32,7 @@ if uploaded_file:
                 col += 1
                 continue
 
+            # Verifica palavras proibidas nas linhas 3, 4 e 5
             linha3 = str(df_raw.iloc[2, col]).strip().lower()
             linha5 = meio_pgto.lower()
 
