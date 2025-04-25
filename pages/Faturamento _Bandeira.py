@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import re
 import json
 from io import BytesIO
 import gspread
@@ -73,7 +74,23 @@ if uploaded_file:
             df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
             df = df[df["Data"].notna()]
 
-            df["Loja"] = df["Loja"].astype(str).str.strip().str.lower()
+            #df["Loja"] = df["Loja"].astype(str).str.strip().str.lower()
+            # Remove prefixos como "1 - ", "12 - ", etc. e padroniza
+            df["Loja"] = (
+                df["Loja"]
+                .astype(str)
+                .str.strip()
+                .str.replace(r"^\d+\s*-\s*", "", regex=True)  # remove número e hífen
+                .str.lower()
+                )
+
+            df_empresa["Loja"] = (
+                df_empresa["Loja"]
+                .astype(str)
+                .str.strip()
+                .str.lower()
+                  )
+              
             df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
             df = pd.merge(df, df_empresa, on="Loja", how="left")
 
