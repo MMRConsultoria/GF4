@@ -88,12 +88,28 @@ if uploaded_file:
             df = df.dropna(how="any")
 
             # 📅 Ordena por Data e Loja
-            df = df.sort_values(by=["Data", "Loja"])
+            #df = df.sort_values(by=["Data", "Loja"])
             
-            df = df[df["Data"].notna() & ~df["Data"].astype(str).str.lower().str.contains("total|subtotal")]
+            #df = df[df["Data"].notna() & ~df["Data"].astype(str).str.lower().str.contains("total|subtotal")]
+            #df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
+            #df = df[df["Data"].notna()]
+
+            # Remove linhas com "total" ou "subtotal" na coluna Data
+            df = df[~df["Data"].astype(str).str.lower().str.contains("total|subtotal")]
+    
+            # Converte a coluna Data
             df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
+
+            # Remove datas inválidas
             df = df[df["Data"].notna()]
 
+            # Ordena agora sim por Data real e Loja
+            df = df.sort_values(by=["Data", "Loja"])
+
+            # (Opcional) Formata a data para exibição
+            df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
+
+        
             # Padroniza nome da loja (remove prefixos como "1 - ", etc.)
             df["Loja"] = (
                 df["Loja"]
