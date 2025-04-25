@@ -46,14 +46,17 @@ if uploaded_file:
         blocos = []
 
         for col in range(3, df_raw.shape[1]):
-            loja_nome = df_raw.iloc[3, col]
-            meio_pagamento = df_raw.iloc[4, col]
-
-            if pd.isna(loja_nome) or pd.isna(meio_pagamento):
+            try:
+                loja_nome = str(df_raw.iloc[3, col]).strip()
+                meio_pagamento = str(df_raw.iloc[4, col]).strip() or str(df_raw.iloc[5, col]).strip()
+            except Exception:
                 continue
 
-            if any(palavra in str(loja_nome).lower() for palavra in ["total", "serv", "real"]) or \
-               any(palavra in str(meio_pagamento).lower() for palavra in ["total", "serv", "real"]):
+            if not loja_nome or not meio_pagamento or loja_nome.lower() == 'nan' or meio_pagamento.lower() == 'nan':
+                continue
+
+            if any(palavra in loja_nome.lower() for palavra in ["total", "serv", "real"]) or \
+               any(palavra in meio_pagamento.lower() for palavra in ["total", "serv", "real"]):
                 continue
 
             df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()
