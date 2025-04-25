@@ -42,12 +42,8 @@ if uploaded_file:
             st.error("❌ A célula B1 deve conter 'Faturamento diário por meio de pagamento'.")
             st.stop()
 
-        col_fixas = list(range(3))
         linha_inicio_dados = 6
         blocos = []
-        col = 3
-
-       
 
         for col in range(3, df_raw.shape[1]):
             loja_nome = df_raw.iloc[3, col]
@@ -60,117 +56,14 @@ if uploaded_file:
                any(palavra in str(meio_pagamento).lower() for palavra in ["total", "serv", "real"]):
                 continue
 
-        df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()
-        df_temp.columns = ["Data", "Valor (R$)"]
-        df_temp.insert(1, "Meio de Pagamento", meio_pagamento)
-        df_temp.insert(2, "Loja", loja_nome)
-        blocos.append(df_temp)
-
-
-
-
-
-
-
-
-
-
-            
-            if any(palavra in str(loja_nome).lower() for palavra in ["total", "serv", "real"]) or \
-               any(palavra in str(meio_pagamento).lower() for palavra in ["total", "serv", "real"]):
-                col += 1
-                continue
-
             df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()
             df_temp.columns = ["Data", "Valor (R$)"]
             df_temp.insert(1, "Meio de Pagamento", meio_pagamento)
             df_temp.insert(2, "Loja", loja_nome)
             blocos.append(df_temp)
-            col += 1
 
         if not blocos:
             st.error("❌ Nenhum dado válido encontrado na planilha.")
         else:
             df = pd.concat(blocos, ignore_index=True)
-            df = df[df["Data"].notna() & ~df["Data"].astype(str).str.lower().str.contains("total|subtotal")]
-            df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
-            df = df[df["Data"].notna()]
-
-            #df["Loja"] = df["Loja"].astype(str).str.strip().str.lower()
-            # Remove prefixos como "1 - ", "12 - ", etc. e padroniza
-            df["Loja"] = (
-                df["Loja"]
-                .astype(str)
-                .str.strip()
-                .str.replace(r"^\d+\s*-\s*", "", regex=True)  # remove número e hífen
-                .str.lower()
-                )
-
-            df_empresa["Loja"] = (
-                df_empresa["Loja"]
-                .astype(str)
-                .str.strip()
-                .str.lower()
-                  )
-              
-            df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
-            df = pd.merge(df, df_empresa, on="Loja", how="left")
-
-            # Tradução manual dos dias da semana
-            dias_semana = {
-                'Monday': 'segunda-feira',
-                'Tuesday': 'terça-feira',
-                'Wednesday': 'quarta-feira',
-                'Thursday': 'quinta-feira',
-                'Friday': 'sexta-feira',
-                'Saturday': 'sábado',
-                'Sunday': 'domingo'
-            }
-
-            # Tradução dos meses para abreviações em português
-            meses = {
-                1: 'jan', 2: 'fev', 3: 'mar', 4: 'abr', 5: 'mai', 6: 'jun',
-                7: 'jul', 8: 'ago', 9: 'set', 10: 'out', 11: 'nov', 12: 'dez'
-            }
-
-            df["Dia da Semana"] = df["Data"].dt.day_name().map(dias_semana)
-            df["Mês"] = df["Data"].dt.month.map(meses)
-            df["Ano"] = df["Data"].dt.year
-            df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
-
-            for col in ["Código Everest", "Grupo", "Código Grupo Everest"]:
-                if col not in df.columns:
-                    df[col] = np.nan
-
-            df = df[[
-                "Data", "Dia da Semana", "Meio de Pagamento", "Loja",
-                "Código Everest", "Grupo", "Código Grupo Everest",
-                "Valor (R$)", "Mês", "Ano"
-            ]]
-
-            df = df.sort_values(by=["Data", "Loja"])
-
-            periodo_min = df["Data"].min()
-            periodo_max = df["Data"].max()
-            valor_total = df["Valor (R$)"].sum()
-
-            col1, col2 = st.columns(2)
-            col1.metric("📅 Período processado", f"{periodo_min} até {periodo_max}")
-            col2.metric("💰 Valor total", f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
-            lojas_sem_codigo = df[df["Código Everest"].isna()]["Loja"].unique()
-            if len(lojas_sem_codigo) > 0:
-                st.warning(
-                    f"⚠️ Lojas sem código Everest cadastrado: {', '.join(lojas_sem_codigo)}\n\n"
-                    "🔗 Atualize os dados na [planilha de empresas](https://docs.google.com/spreadsheets/d/SEU_ID_AQUI/edit)"
-                )
-
-            st.success("✅ Relatório de faturamento por meio de pagamento gerado com sucesso!")
-
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df.to_excel(writer, index=False, sheet_name="FaturamentoPorMeio")
-            output.seek(0)
-
-            st.download_button("📥 Baixar relatório", data=output, file_name="FaturamentoPorMeio_transformado.xlsx")
-
+            df =
