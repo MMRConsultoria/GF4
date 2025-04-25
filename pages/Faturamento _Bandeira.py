@@ -86,6 +86,9 @@ if uploaded_file:
             df = pd.concat(blocos, ignore_index=True)
             # 🔥 Remove linhas com qualquer célula em branco
             df = df.dropna(how="any")
+
+            # 📅 Ordena por Data e Loja
+            df = df.sort_values(by=["Data", "Loja"])
             
             df = df[df["Data"].notna() & ~df["Data"].astype(str).str.lower().str.contains("total|subtotal")]
             df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
