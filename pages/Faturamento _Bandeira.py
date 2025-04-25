@@ -89,7 +89,7 @@ if uploaded_file:
 
             # Converte a coluna Data para datetime
         if  df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
-                df = df[df["Data"].notna()]
+            df = df[df["Data"].notna()]
 
             # Gera a coluna 'Dia da Semana' antes de formatar a data
             dias_semana = {
