@@ -104,7 +104,7 @@ if uploaded_file:
 
             # Ordenação e formatação final
             df = df.sort_values(by=["Data", "Loja"])
-            df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
+            df["Data Formatada"] = df["Data"].dt.strftime("%d/%m/%Y")
 
             # Padroniza nome da loja
             df["Loja"] = (
@@ -135,10 +135,10 @@ if uploaded_file:
             df["Ano"] = pd.to_datetime(df["Data"], dayfirst=True).dt.year
 
             df = df[[
-                "Data", "Dia da Semana", "Meio de Pagamento", "Loja",
+                "Data Formatada", "Dia da Semana", "Meio de Pagamento", "Loja",
                 "Código Everest", "Grupo", "Código Grupo Everest",
                 "Valor (R$)", "Mês", "Ano"
-            ]]
+           ]].rename(columns={"Data Formatada": "Data"})
 
             periodo_min = df["Data"].min()
             periodo_max = df["Data"].max()
