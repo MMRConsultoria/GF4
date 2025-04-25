@@ -87,6 +87,31 @@ if uploaded_file:
             # 🔥 Remove linhas com qualquer célula em branco
             df = df.dropna(how="any")
 
+            # Converte a coluna Data para datetime
+            df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
+            df = df[df["Data"].notna()]
+
+            # Gera a coluna 'Dia da Semana' antes de formatar a data
+            dias_semana = {
+                'Monday': 'segunda-feira',
+                'Tuesday': 'terça-feira',
+                'Wednesday': 'quarta-feira',
+                'Thursday': 'quinta-feira',
+                'Friday': 'sexta-feira',
+                'Saturday': 'sábado',
+                'Sunday': 'domingo'
+            }
+            df["Dia da Semana"] = df["Data"].dt.day_name().map(dias_semana)
+
+            # Ordena por Data e Loja
+            df = df.sort_values(by=["Data", "Loja"])
+
+            # Formata a data para exibição
+            df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
+
+
+            
+
             # 📅 Ordena por Data e Loja
             #df = df.sort_values(by=["Data", "Loja"])
             
