@@ -14,7 +14,7 @@ if uploaded_file:
     except Exception as e:
         st.error(f"❌ Erro ao ler o arquivo: {e}")
     else:
-        linha_inicio_dados = 6
+        linha_inicio_dados = 5
         blocos = []
         col = 3  # Começa na coluna D (índice 3), pois A, B, C são fixas e só a C interessa
         loja_atual = None
