@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import re
+from io import BytesIO
 
 st.set_page_config(page_title="Teste de Blocos - Faturamento", layout="wide")
 st.title("🧪 Teste de Identificação de Blocos")
@@ -21,8 +22,6 @@ if uploaded_file:
 
         while col < df_raw.shape[1]:
             valor_linha4 = str(df_raw.iloc[3, col]).strip()
-
-            # Verifica se é uma nova loja no formato "número - nome"
             match = re.match(r"^\d+\s*-\s*(.+)$", valor_linha4)
             if match:
                 loja_atual = match.group(1).strip().lower()
@@ -32,7 +31,6 @@ if uploaded_file:
                 col += 1
                 continue
 
-            # Verifica palavras proibidas nas linhas 3, 4 e 5
             linha3 = str(df_raw.iloc[2, col]).strip().lower()
             linha5 = meio_pgto.lower()
 
@@ -55,5 +53,18 @@ if uploaded_file:
             df_final = pd.concat(blocos, ignore_index=True)
             st.success("✅ Blocos identificados com sucesso!")
             st.dataframe(df_final, use_container_width=True)
+
+            # Botão para download em Excel
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine="openpyxl") as writer:
+                df_final.to_excel(writer, index=False, sheet_name="FaturamentoPorMeio")
+            output.seek(0)
+
+            st.download_button(
+                label="📥 Baixar resultado em Excel",
+                data=output,
+                file_name="FaturamentoPorMeio_resultado.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
         else:
             st.warning("⚠️ Nenhum dado válido foi identificado.")
