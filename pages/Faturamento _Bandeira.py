@@ -87,10 +87,12 @@ if uploaded_file:
             df = pd.concat(blocos, ignore_index=True)
             df = df.dropna(how="any")
             df = df[~df["Data"].astype(str).str.lower().str.contains("total|subtotal")]
+
+            # Converte e trata datas
             df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
             df = df[df["Data"].notna()]
 
-            # Dia da semana
+            # Tradução de dia da semana
             dias_semana = {
                 'Monday': 'segunda-feira',
                 'Tuesday': 'terça-feira',
@@ -102,9 +104,15 @@ if uploaded_file:
             }
             df["Dia da Semana"] = df["Data"].dt.day_name().map(dias_semana)
 
-            # Ordenação e formatação final
+            # Ordena
             df = df.sort_values(by=["Data", "Loja"])
-          
+
+            # Salva período ANTES de formatar data
+            periodo_min = df["Data"].min().strftime("%d/%m/%Y")
+            periodo_max = df["Data"].max().strftime("%d/%m/%Y")
+
+            # Formata data para exibição
+            df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
 
             # Padroniza nome da loja
             df["Loja"] = (
@@ -135,19 +143,14 @@ if uploaded_file:
             df["Ano"] = pd.to_datetime(df["Data"], dayfirst=True).dt.year
 
             df = df[[
-                "Data Formatada", "Dia da Semana", "Meio de Pagamento", "Loja",
+                "Data", "Dia da Semana", "Meio de Pagamento", "Loja",
                 "Código Everest", "Grupo", "Código Grupo Everest",
                 "Valor (R$)", "Mês", "Ano"
-           ]].rename(columns={"Data Formatada": "Data"})
-
-            periodo_min = df["Data"].min()
-            periodo_max = df["Data"].max()
-            df["Data Formatada"] = df["Data"].dt.strftime("%d/%m/%Y")
-            valor_total = df["Valor (R$)"].sum()
+            ]]
 
             col1, col2 = st.columns(2)
             col1.metric("📅 Período processado", f"{periodo_min} até {periodo_max}")
-            col2.metric("💰 Valor total", f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            col2.metric("💰 Valor total", f"R$ {df['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
             lojas_sem_codigo = df[df["Código Everest"].isna()]["Loja"].unique()
             if len(lojas_sem_codigo) > 0:
