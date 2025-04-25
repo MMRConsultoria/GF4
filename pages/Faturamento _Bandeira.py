@@ -14,9 +14,9 @@ if uploaded_file:
     except Exception as e:
         st.error(f"❌ Erro ao ler o arquivo: {e}")
     else:
-        linha_inicio_dados = 5  # Linha 6 da planilha (índice 5)
+        linha_inicio_dados = 5  # Linha 6 da planilha (index 5)
         blocos = []
-        col = 3  # Começa na coluna D (índice 3), pois só a coluna C (índice 2) é fixa
+        col = 3  # Começa na coluna D (índice 3)
         loja_atual = None
 
         while col < df_raw.shape[1]:
@@ -38,18 +38,10 @@ if uploaded_file:
                 continue
 
             try:
-                # Captura a coluna de data (C) e valor (col atual)
-                df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()
+                df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()  # Coluna C (Data) e atual
                 df_temp.columns = ["Data", "Valor (R$)"]
 
-                # Pega a coluna A para identificar linhas vazias (subtotais)
-                df_linhaA = df_raw.iloc[linha_inicio_dados:, 0].reset_index(drop=True)
-                df_temp = df_temp.reset_index(drop=True)
-
-                # Remove linhas com coluna A vazia (subtotal visual)
-                df_temp = df_temp[~df_linhaA.astype(str).str.strip().str.lower().isin(["", "nan"])]
-
-                # Remove linhas com "total" ou "subtotal" na coluna Data
+                # Remove linhas com "total" ou "subtotal"
                 df_temp = df_temp[~df_temp["Data"].astype(str).str.lower().str.contains("total|subtotal")]
 
                 df_temp.insert(1, "Meio de Pagamento", meio_pgto)
