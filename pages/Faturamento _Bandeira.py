@@ -104,7 +104,7 @@ if uploaded_file:
 
             # Ordenação e formatação final
             df = df.sort_values(by=["Data", "Loja"])
-            df["Data Formatada"] = df["Data"].dt.strftime("%d/%m/%Y")
+          
 
             # Padroniza nome da loja
             df["Loja"] = (
@@ -142,6 +142,7 @@ if uploaded_file:
 
             periodo_min = df["Data"].min()
             periodo_max = df["Data"].max()
+            df["Data Formatada"] = df["Data"].dt.strftime("%d/%m/%Y")
             valor_total = df["Valor (R$)"].sum()
 
             col1, col2 = st.columns(2)
