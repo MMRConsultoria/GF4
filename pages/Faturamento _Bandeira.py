@@ -41,7 +41,10 @@ if uploaded_file:
                 df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()  # Apenas col C (Data) e atual
                 df_temp.columns = ["Data", "Valor (R$)"]
 
-                # Remove linhas com "total" ou "subtotal"
+               # Remove linhas com "total" ou "subtotal" ou com coluna A vazia (linha subtotal)
+                df_linhaA = df_raw.iloc[linha_inicio_dados:, 0].reset_index(drop=True)  # coluna A (índice 0)
+                df_temp = df_temp.reset_index(drop=True)
+                df_temp = df_temp[~df_linhaA.astype(str).str.strip().str.lower().isin(["", "nan"])]
                 df_temp = df_temp[~df_temp["Data"].astype(str).str.lower().str.contains("total|subtotal")]
 
                 df_temp.insert(1, "Meio de Pagamento", meio_pgto)
