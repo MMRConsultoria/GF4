@@ -7,6 +7,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 st.set_page_config(page_title="Relatório de Faturamento", layout="wide")
+
 st.markdown("""
     <div style='display: flex; align-items: center; gap: 10px;'>
         <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
@@ -14,7 +15,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Conexão com Google Sheets via secrets
+# Conexão com Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
@@ -22,6 +23,7 @@ gc = gspread.authorize(credentials)
 planilha = gc.open("Tabela")
 df_empresa = pd.DataFrame(planilha.worksheet("Tabela_Empresa").get_all_records())
 
+# Upload do arquivo Excel
 uploaded_file = st.file_uploader(
     label="📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de faturamento",
     type=["xlsx", "xlsm"],
@@ -41,9 +43,9 @@ if uploaded_file:
 
         col_fixas = list(range(3))
         linha_inicio_dados = 6
-
         blocos = []
         col = 3
+
         while col < df_raw.shape[1]:
             loja_nome = df_raw.iloc[3, col]
             meio_pagamento = df_raw.iloc[4, col]
@@ -68,18 +70,32 @@ if uploaded_file:
         else:
             df = pd.concat(blocos, ignore_index=True)
             df = df[df["Data"].notna() & ~df["Data"].astype(str).str.lower().str.contains("total|subtotal")]
-            df["Data"] = pd.to_datetime(df["Data"], errors="coerce")
+            df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
             df = df[df["Data"].notna()]
 
             df["Loja"] = df["Loja"].astype(str).str.strip().str.lower()
             df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
             df = pd.merge(df, df_empresa, on="Loja", how="left")
 
-            df["Dia da Semana"] = df["Data"].dt.day_name(locale='pt_BR').str.lower()
-            df["Mês"] = df["Data"].dt.month.map({
+            # Tradução manual dos dias da semana
+            dias_semana = {
+                'Monday': 'segunda-feira',
+                'Tuesday': 'terça-feira',
+                'Wednesday': 'quarta-feira',
+                'Thursday': 'quinta-feira',
+                'Friday': 'sexta-feira',
+                'Saturday': 'sábado',
+                'Sunday': 'domingo'
+            }
+
+            # Tradução dos meses para abreviações em português
+            meses = {
                 1: 'jan', 2: 'fev', 3: 'mar', 4: 'abr', 5: 'mai', 6: 'jun',
                 7: 'jul', 8: 'ago', 9: 'set', 10: 'out', 11: 'nov', 12: 'dez'
-            })
+            }
+
+            df["Dia da Semana"] = df["Data"].dt.day_name().map(dias_semana)
+            df["Mês"] = df["Data"].dt.month.map(meses)
             df["Ano"] = df["Data"].dt.year
             df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
 
@@ -118,3 +134,4 @@ if uploaded_file:
             output.seek(0)
 
             st.download_button("📥 Baixar relatório", data=output, file_name="FaturamentoPorMeio_transformado.xlsx")
+
