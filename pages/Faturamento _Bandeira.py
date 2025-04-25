@@ -36,33 +36,28 @@ if uploaded_file:
             if any(palavra in texto for texto in [linha3, valor_linha4.lower(), linha5] for palavra in ["total", "serv/tx", "total real"]):
                 col += 1
                 continue
-
             try:
                 df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()  # Coluna C (Data) e atual
                 df_temp.columns = ["Data", "Valor (R$)"]
 
-                # Remove linhas com "total" ou "subtotal"
-               #df_temp = df_temp[~df_temp["Data"].astype(str).str.lower().str.contains("total|subtotal")]
+                # Alinha índice da coluna A com df_temp
+                coluna_a = df_raw.iloc[linha_inicio_dados:, 0].reset_index(drop=True)
+                df_temp = df_temp.reset_index(drop=True)
 
-               
-
-                # Remove linhas com "total" ou "subtotal" na coluna Data
-                df_temp = df_temp[~df_temp["Data"].astype(str).str.lower().str.contains("total|subtotal")]
-                
-                # Captura as mesmas linhas da coluna A (identificadores)
-                coluna_a = df_raw.iloc[linha_inicio_dados:, 0].values
-                df_temp = df_temp[~pd.Series(coluna_a).astype(str).str.strip().isin(["", "nan"])]
+                # Remove linhas com coluna A vazia ou nula
+                filtro_linhas_validas = ~coluna_a.astype(str).str.strip().isin(["", "nan"])
+                df_temp = df_temp[filtro_linhas_validas]
 
                 # Remove linhas com "total" ou "subtotal" na coluna Data
                 df_temp = df_temp[~df_temp["Data"].astype(str).str.lower().str.contains("total|subtotal")]
 
- 
                 df_temp.insert(1, "Meio de Pagamento", meio_pgto)
                 df_temp.insert(2, "Loja", loja_atual)
                 blocos.append(df_temp)
-            except Exception as e:
+        except Exception as e:
                 st.warning(f"⚠️ Erro ao processar coluna {col}: {e}")
-
+                          
+               
             col += 1
 
         if blocos:
