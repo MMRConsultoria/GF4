@@ -11,6 +11,8 @@ uploaded_file = st.file_uploader("📁 Envie o arquivo Excel com os dados", type
 if uploaded_file:
     try:
         df_raw = pd.read_excel(uploaded_file, sheet_name=0, header=None)
+        df_raw = df_raw[~df_raw.iloc[:, 1].astype(str).str.lower().str.contains("total|subtotal", na=False)]
+    
     except Exception as e:
         st.error(f"❌ Erro ao ler o arquivo: {e}")
     else:
