@@ -42,8 +42,30 @@ if uploaded_file:
                 df_temp.columns = ["Data", "Valor (R$)"]
 
                 # Remove linhas com "total" ou "subtotal"
+               #df_temp = df_temp[~df_temp["Data"].astype(str).str.lower().str.contains("total|subtotal")]
+
+                # Pega a coluna A para identificar linhas vazias (subtotal visual)
+                df_linhaA = df_raw.iloc[linha_inicio_dados:, 0].reset_index(drop=True)
+                df_temp = df_temp.reset_index(drop=True)
+
+                # Remove linhas com coluna A vazia
+                df_temp = df_temp[~df_linhaA.astype(str).str.strip().isin(["", "nan"])]
+
+                # Remove linhas com "total" ou "subtotal" na coluna Data
                 df_temp = df_temp[~df_temp["Data"].astype(str).str.lower().str.contains("total|subtotal")]
 
+
+
+
+
+
+
+
+
+
+
+
+                
                 df_temp.insert(1, "Meio de Pagamento", meio_pgto)
                 df_temp.insert(2, "Loja", loja_atual)
                 blocos.append(df_temp)
