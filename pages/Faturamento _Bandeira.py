@@ -21,7 +21,6 @@ if uploaded_file:
         while col < df_raw.shape[1]:
             valor_linha4 = str(df_raw.iloc[3, col]).strip()
 
-            # Verifica se é uma nova loja (ex: "30 - Central fase 1")
             match = re.match(r"^\d+\s*-\s*(.+)$", valor_linha4)
             if match:
                 loja_atual = match.group(1).strip().lower()
@@ -31,7 +30,6 @@ if uploaded_file:
                 col += 1
                 continue
 
-            # Verifica palavras proibidas nas linhas 3, 4 e 5
             linha3 = str(df_raw.iloc[2, col]).strip().lower()
             linha5 = meio_pgto.lower()
 
@@ -39,16 +37,20 @@ if uploaded_file:
                 col += 1
                 continue
 
-            # Bloco válido
-            df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()
-            df_temp.columns = ["Data", "Valor (R$)"]
-            df_temp.insert(1, "Meio de Pagamento", meio_pgto)
-            df_temp.insert(2, "Loja", loja_atual)
-            blocos.append(df_temp)
+            try:
+                df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()
+                df_temp.columns = ["Data", "Valor (R$)"]
+                df_temp.insert(1, "Meio de Pagamento", meio_pgto)
+                df_temp.insert(2, "Loja", loja_atual)
+                blocos.append(df_temp)
+            except Exception as e:
+                st.warning(f"⚠️ Erro ao processar coluna {col}: {e}")
 
             col += 1
 
         if blocos:
             df_final = pd.concat(blocos, ignore_index=True)
             st.success("✅ Blocos identificados com sucesso!")
-            st.dataframe
+            st.dataframe(df_final, use_container_width=True)
+        else:
+            st.warning("⚠️ Nenhum dado válido foi identificado.")
