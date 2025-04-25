@@ -35,6 +35,10 @@ if uploaded_file:
     try:
         xls = pd.ExcelFile(uploaded_file)
         df_raw = pd.read_excel(xls, sheet_name="FaturamentoPorMeioDePagamento", header=None)
+
+        # 🔥 Remove linhas com "total" ou "subtotal" na coluna B
+        df_raw = df_raw[~df_raw.iloc[:, 1].astype(str).str.lower().str.contains("total|subtotal", na=False)]
+
     except Exception as e:
         st.error(f"❌ Não foi possível ler o arquivo enviado. Detalhes: {e}")
     else:
@@ -42,12 +46,9 @@ if uploaded_file:
             st.error("❌ A célula B1 deve conter 'Faturamento diário por meio de pagamento'.")
             st.stop()
 
-      # Nova leitura de blocos com limpeza de linhas da coluna B
-        df_raw = df_raw[~df_raw.iloc[:, 1].astype(str).str.lower().str.contains("total|subtotal", na=False)]
-        
-        linha_inicio_dados = 5  # Linha 6 (index 5)
+        linha_inicio_dados = 5
         blocos = []
-        col = 3  # Começa na coluna D
+        col = 3
         loja_atual = None
 
         while col < df_raw.shape[1]:
@@ -84,14 +85,12 @@ if uploaded_file:
             st.error("❌ Nenhum dado válido encontrado na planilha.")
         else:
             df = pd.concat(blocos, ignore_index=True)
-            # 🔥 Remove linhas com qualquer célula em branco
             df = df.dropna(how="any")
-
-            # Converte a coluna Data para datetime
-        if  df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
+            df = df[~df["Data"].astype(str).str.lower().str.contains("total|subtotal")]
+            df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
             df = df[df["Data"].notna()]
 
-            # Gera a coluna 'Dia da Semana' antes de formatar a data
+            # Dia da semana
             dias_semana = {
                 'Monday': 'segunda-feira',
                 'Tuesday': 'terça-feira',
@@ -103,39 +102,11 @@ if uploaded_file:
             }
             df["Dia da Semana"] = df["Data"].dt.day_name().map(dias_semana)
 
-            # Ordena por Data e Loja
+            # Ordenação e formatação final
             df = df.sort_values(by=["Data", "Loja"])
-
-            # Formata a data para exibição
             df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
 
-
-            
-
-            # 📅 Ordena por Data e Loja
-            #df = df.sort_values(by=["Data", "Loja"])
-            
-            #df = df[df["Data"].notna() & ~df["Data"].astype(str).str.lower().str.contains("total|subtotal")]
-            #df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
-            #df = df[df["Data"].notna()]
-
-            # Remove linhas com "total" ou "subtotal" na coluna Data
-            df = df[~df["Data"].astype(str).str.lower().str.contains("total|subtotal")]
-    
-            # Converte a coluna Data
-            df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
-
-            # Remove datas inválidas
-            df = df[df["Data"].notna()]
-
-            # Ordena agora sim por Data real e Loja
-            df = df.sort_values(by=["Data", "Loja"])
-
-            # (Opcional) Formata a data para exibição
-            df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
-
-        
-            # Padroniza nome da loja (remove prefixos como "1 - ", etc.)
+            # Padroniza nome da loja
             df["Loja"] = (
                 df["Loja"]
                 .astype(str)
@@ -143,7 +114,6 @@ if uploaded_file:
                 .str.replace(r"^\d+\s*-\s*", "", regex=True)
                 .str.lower()
             )
-
             df_empresa["Loja"] = (
                 df_empresa["Loja"]
                 .astype(str)
@@ -153,40 +123,22 @@ if uploaded_file:
 
             df = pd.merge(df, df_empresa, on="Loja", how="left")
 
-            # Tradução manual dos dias da semana
-            dias_semana = {
-                'Monday': 'segunda-feira',
-                'Tuesday': 'terça-feira',
-                'Wednesday': 'quarta-feira',
-                'Thursday': 'quinta-feira',
-                'Friday': 'sexta-feira',
-                'Saturday': 'sábado',
-                'Sunday': 'domingo'
-            }
-
-            # Tradução dos meses para abreviações em português
-            meses = {
-                1: 'jan', 2: 'fev', 3: 'mar', 4: 'abr', 5: 'mai', 6: 'jun',
-                7: 'jul', 8: 'ago', 9: 'set', 10: 'out', 11: 'nov', 12: 'dez'
-            }
-
-            df["Dia da Semana"] = df["Data"].dt.day_name().map(dias_semana)
-            df["Mês"] = df["Data"].dt.month.map(meses)
-            df["Ano"] = df["Data"].dt.year
-            df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
-
-            # Garante que colunas do merge estejam presentes
             for col in ["Código Everest", "Grupo", "Código Grupo Everest"]:
                 if col not in df.columns:
                     df[col] = np.nan
+
+            # Mês e ano
+            df["Mês"] = pd.to_datetime(df["Data"], dayfirst=True).dt.month.map({
+                1: 'jan', 2: 'fev', 3: 'mar', 4: 'abr', 5: 'mai', 6: 'jun',
+                7: 'jul', 8: 'ago', 9: 'set', 10: 'out', 11: 'nov', 12: 'dez'
+            })
+            df["Ano"] = pd.to_datetime(df["Data"], dayfirst=True).dt.year
 
             df = df[[
                 "Data", "Dia da Semana", "Meio de Pagamento", "Loja",
                 "Código Everest", "Grupo", "Código Grupo Everest",
                 "Valor (R$)", "Mês", "Ano"
             ]]
-
-            df = df.sort_values(by=["Data", "Loja"])
 
             periodo_min = df["Data"].min()
             periodo_max = df["Data"].max()
