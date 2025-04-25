@@ -42,28 +42,61 @@ if uploaded_file:
             st.error("❌ A célula B1 deve conter 'Faturamento diário por meio de pagamento'.")
             st.stop()
 
-        linha_inicio_dados = 6
-        blocos = []
 
-        for col in range(3, df_raw.shape[1]):
-            try:
-                loja_nome = str(df_raw.iloc[3, col]).strip()
-                meio_pagamento = str(df_raw.iloc[4, col]).strip() or str(df_raw.iloc[5, col]).strip()
-            except Exception:
-                continue
+      linha_inicio_dados = 6
+    blocos = []
 
-            if not loja_nome or not meio_pagamento or loja_nome.lower() == 'nan' or meio_pagamento.lower() == 'nan':
-                continue
+    for col in range(3, df_raw.shape[1]):
+        # Verifica os conteúdos das linhas 3, 4 e 5
+        linha3 = str(df_raw.iloc[2, col]).strip().lower()
+        linha4 = str(df_raw.iloc[3, col]).strip().lower()
+        linha5 = str(df_raw.iloc[4, col]).strip().lower()
 
-            if any(palavra in loja_nome.lower() for palavra in ["total", "serv", "real"]) or \
-               any(palavra in meio_pagamento.lower() for palavra in ["total", "serv", "real"]):
-                continue
+        if any(palavra in linha for linha in [linha3, linha4, linha5] for palavra in ["total", "serv/tx", "total real"]):
+            continue
 
-            df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()
-            df_temp.columns = ["Data", "Valor (R$)"]
-            df_temp.insert(1, "Meio de Pagamento", meio_pagamento)
-            df_temp.insert(2, "Loja", loja_nome)
-            blocos.append(df_temp)
+        if not linha5 or linha5 == "nan":
+            continue
+
+        # Identifica nome da loja a partir da linha 4
+        loja_nome_raw = str(df_raw.iloc[3, col]).strip()
+        match = re.match(r"^\d+\s*-\s*(.+)$", loja_nome_raw)
+        if match:
+            loja_nome = match.group(1).strip()
+        else:
+            continue  # pula colunas sem o formato esperado de loja
+
+        meio_pagamento = str(df_raw.iloc[4, col]).strip()
+
+        # Captura dados da coluna
+        df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()
+        df_temp.columns = ["Data", "Valor (R$)"]
+        df_temp.insert(1, "Meio de Pagamento", meio_pagamento)
+        df_temp.insert(2, "Loja", loja_nome)
+        blocos.append(df_temp)
+
+ #       linha_inicio_dados = 6
+ #       blocos = []
+
+ #       for col in range(3, df_raw.shape[1]):
+ #           try:
+ #               loja_nome = str(df_raw.iloc[3, col]).strip()
+ #               meio_pagamento = str(df_raw.iloc[4, col]).strip() or str(df_raw.iloc[5, col]).strip()
+ #           except Exception:
+ #               continue
+
+ #           if not loja_nome or not meio_pagamento or loja_nome.lower() == 'nan' or meio_pagamento.lower() == 'nan':
+ #               continue
+
+ #           if any(palavra in loja_nome.lower() for palavra in ["total", "serv", "real"]) or \
+ #              any(palavra in meio_pagamento.lower() for palavra in ["total", "serv", "real"]):
+ #               continue
+
+ #           df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()
+ #           df_temp.columns = ["Data", "Valor (R$)"]
+ #           df_temp.insert(1, "Meio de Pagamento", meio_pagamento)
+ #           df_temp.insert(2, "Loja", loja_nome)
+ #           blocos.append(df_temp)
 
         if not blocos:
             st.error("❌ Nenhum dado válido encontrado na planilha.")
