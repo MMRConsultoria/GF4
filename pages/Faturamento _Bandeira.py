@@ -11,6 +11,10 @@ uploaded_file = st.file_uploader("📁 Envie o arquivo Excel com os dados", type
 if uploaded_file:
     try:
         df_raw = pd.read_excel(uploaded_file, sheet_name=0, header=None)
+
+        # 🔥 Remove linhas com "total" ou "subtotal" na coluna B (índice 1)
+        df_raw = df_raw[~df_raw.iloc[:, 1].astype(str).str.lower().str.contains("total|subtotal", na=False)]
+
     except Exception as e:
         st.error(f"❌ Erro ao ler o arquivo: {e}")
     else:
@@ -38,31 +42,14 @@ if uploaded_file:
                 continue
 
             try:
-                df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()
+                df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()  # Coluna C (Data) e atual
                 df_temp.columns = ["Data", "Valor (R$)"]
 
-                # DEBUG: Ver primeiras 10 linhas da coluna A
-                coluna_a = df_raw.iloc[linha_inicio_dados:, 0].reset_index(drop=True)
-                st.write(f"🔍 Coluna A - primeiras 10 linhas (coluna de controle):", coluna_a.head(10))
-
-                df_temp = df_temp.reset_index(drop=True)
-
-                # DEBUG: Mostrar linhas antes do filtro
-                st.write(f"🟡 Coluna {col}: Antes do filtro - Total de linhas:", len(df_temp))
-
-                # Filtro seguro: remove apenas se estiver completamente vazia ou "nan"
-                filtro_validas = coluna_a.astype(str).str.strip().str.lower().ne("") & coluna_a.astype(str).str.strip().str.lower().ne("nan")
-                df_temp = df_temp[filtro_validas]
-
-                # DEBUG: Mostrar linhas após o filtro
-                st.write(f"🟢 Coluna {col}: Depois do filtro - Total de linhas:", len(df_temp))
-
-                # Remove linhas com "total" ou "subtotal" na coluna Data
+                # Remove linhas com "total" ou "subtotal"
                 df_temp = df_temp[~df_temp["Data"].astype(str).str.lower().str.contains("total|subtotal")]
 
                 df_temp.insert(1, "Meio de Pagamento", meio_pgto)
                 df_temp.insert(2, "Loja", loja_atual)
-
                 blocos.append(df_temp)
             except Exception as e:
                 st.warning(f"⚠️ Erro ao processar coluna {col}: {e}")
