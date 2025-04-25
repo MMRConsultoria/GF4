@@ -84,6 +84,9 @@ if uploaded_file:
             st.error("❌ Nenhum dado válido encontrado na planilha.")
         else:
             df = pd.concat(blocos, ignore_index=True)
+            # 🔥 Remove linhas com qualquer célula em branco
+            df = df.dropna(how="any")
+            
             df = df[df["Data"].notna() & ~df["Data"].astype(str).str.lower().str.contains("total|subtotal")]
             df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
             df = df[df["Data"].notna()]
