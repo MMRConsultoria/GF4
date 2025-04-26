@@ -1,5 +1,7 @@
 streamlit
 pandas
-openpyxl
+numpy
 gspread
 oauth2client
+xlsxwriter
+gspread-dataframe
