@@ -105,7 +105,7 @@ if uploaded_file:
 
         # Traduzir meses
         meses = {
-            "jan": "jan", "feb": "fev", "mar": "mar", "apr": "abr", "may": "mai", "jun": "jun",
+            "jan": "jan", "feb": "fev", "mar": "abr", "apr": "abr", "may": "mai", "jun": "jun",
             "jul": "jul", "aug": "ago", "sep": "set", "oct": "out", "nov": "nov", "dec": "dez"
         }
         df_final["Mês"] = df_final["Mês"].str.lower().map(meses)
@@ -122,16 +122,26 @@ if uploaded_file:
         ]
         df_final = df_final[colunas_finais]
 
-        # Mensagem sucesso
+        # =============================
+        # 📢 Mensagens de sucesso
+        # =============================
         st.success("✅ Relatório processado com sucesso!")
 
-        # Mostrar totais gerais
-        totalizador = df_final[["Fat.Total", "Serv/Tx", "Fat.Real"]].sum().round(2)
-        st.subheader("📊 Totais Gerais")
-        st.dataframe(pd.DataFrame(totalizador).transpose())
+        # Mostrar período inicial e final
+        datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
+        if not datas_validas.empty:
+            data_inicial = datas_validas.min().strftime("%d/%m/%Y")
+            data_final = datas_validas.max().strftime("%d/%m/%Y")
+            st.info(f"📅 Período processado: **{data_inicial}** até **{data_final}**")
+        else:
+            st.warning("⚠️ Não foi possível identificar o período de datas.")
 
-        # Mostrar primeiros dados
-        #st.dataframe(df_final.head(50))
+        # Mostrar totais gerais formatados em reais
+        totalizador = df_final[["Fat.Total", "Serv/Tx", "Fat.Real"]].sum().round(2)
+        totalizador_formatado = totalizador.apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+        st.subheader("💰 Totais Gerais (R$)")
+        st.dataframe(pd.DataFrame([totalizador_formatado]))
 
         # =============================
         # Função para gerar o Excel
@@ -155,12 +165,11 @@ if uploaded_file:
         )
 
         # =============================
-        # Atualizar Google Sheets - VERSÃO CLEAN
+        # Atualizar Google Sheets (CLEAN)
         # =============================
         st.markdown("---")
         st.subheader("🔄 Atualizar Google Sheets?")
 
-        # Controle para permitir só uma atualização por sessão
         if 'atualizou_google' not in st.session_state:
             st.session_state.atualizou_google = False
 
@@ -187,4 +196,4 @@ if uploaded_file:
             st.info("✅ Dados já foram atualizados no Google Sheets nesta sessão.")
 
     except Exception as e:
-        st.error(f"Erro ao processar o arquivo: {e}")
+        st.error(f"❌ Erro ao processar o arquivo: {e}")
