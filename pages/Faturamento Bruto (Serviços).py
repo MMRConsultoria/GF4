@@ -201,7 +201,7 @@ if uploaded_file:
                         valores_existentes = aba_destino.get_all_values()
                         primeira_linha_vazia = len(valores_existentes) + 1
 
-                        rows = df_final.values.tolist()
+                        rows = df_final.fillna("").values.tolist()
                         aba_destino.update(f"A{primeira_linha_vazia}", rows)
 
                         st.success("✅ Dados atualizados com sucesso no Google Sheets!")
