@@ -218,26 +218,32 @@ with aba3:
             if st.button("📤 Atualizar no Google Sheets"):
                 with st.spinner('🔄 Atualizando...'):
                     try:
+                        # Abrir planilha e aba de destino
                         planilha_destino = gc.open("Faturamento Sistema Externo")
                         aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
+                        # Buscar os dados existentes (ignorando cabeçalho)
                         dados_existentes = pd.DataFrame(aba_destino.get_all_records())
 
+                        # Limpar espaços em colunas importantes
                         if not dados_existentes.empty:
                             for col in ["Data", "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]:
                                 if col in dados_existentes.columns:
                                     dados_existentes[col] = dados_existentes[col].astype(str).str.strip()
 
+                        # Preparar novos dados (sem cabeçalho)
                         novos_dados = df_final.copy()
                         for col in ["Data", "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]:
                             novos_dados[col] = novos_dados[col].astype(str).str.strip()
 
+                        # Definir chaves de comparação
                         colunas_chave = [
                             "Data", "Loja", "Código Everest", "Grupo",
                             "Código Grupo Everest", "Fat.Total", "Serv/Tx",
                             "Fat.Real", "Ticket", "Mês", "Ano"
                         ]
 
+                        # Identificar registros que ainda não existem
                         merged = pd.merge(novos_dados, dados_existentes, on=colunas_chave, how="left", indicator=True)
                         registros_novos = merged[merged["_merge"] == "left_only"].drop(columns="_merge")
 
@@ -245,11 +251,16 @@ with aba3:
                             st.info("✅ Nenhum novo registro para atualizar.")
                             st.session_state.atualizou_google = True
                         else:
+                            # Pegar só os valores (sem cabeçalho) para envio
                             rows = registros_novos.fillna("").values.tolist()
-                            primeira_linha_vazia = len(dados_existentes) + 2
+
+                            # Detectar primeira linha vazia (considerando cabeçalho fixo)
+                            primeira_linha_vazia = len(dados_existentes) + 2  # Cabeçalho está na linha 1
+
+                            # Atualizar apenas os dados
                             aba_destino.update(f"A{primeira_linha_vazia}", rows)
 
-                            st.success(f"✅ {len(rows)} novo(s) registro(s) atualizado(s) no Google Sheets!")
+                            st.success(f"✅ {len(rows)} novo(s) registro(s) enviado(s) para o Google Sheets!")
                             st.session_state.atualizou_google = True
 
                             registros_ignorados = len(novos_dados) - len(rows)
@@ -263,7 +274,5 @@ with aba3:
             st.info("✅ Dados já foram atualizados nesta sessão.")
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-
-
 
 
