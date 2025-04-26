@@ -91,7 +91,7 @@ if uploaded_file:
         df_final = pd.merge(df_final, df_empresa, on="Loja", how="left")
 
         # =============================
-        # 🎯 NOVO: Mostrar empresas não localizadas
+        # 🎯 Empresas não localizadas
         # =============================
         empresas_nao_localizadas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
 
@@ -105,13 +105,18 @@ if uploaded_file:
         else:
             st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
 
-        # Link para a planilha de empresas
+        # =============================
+        # 🔗 Links para as planilhas
+        # =============================
         st.markdown("""
-🔗 [Clique aqui para abrir a Tabela_Empresa no Google Sheets](https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=sharing)
+🔗 [Clique aqui para abrir a **Tabela_Empresa** no Google Sheets](https://docs.google.com/spreadsheets/d/ID_DA_TABELA_EMPRESA/edit)
+""")
+        st.markdown("""
+🔗 [Clique aqui para abrir a **Faturamento Sistema Externo** no Google Sheets](https://docs.google.com/spreadsheets/d/ID_DO_FATURAMENTO_SISTEMA_EXTERNO/edit)
 """)
 
         # =============================
-        # Processamento normal continua
+        # Continuação do processamento
         # =============================
         dias_traducao = {
             "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
@@ -160,7 +165,7 @@ if uploaded_file:
         st.dataframe(pd.DataFrame([totalizador_formatado]))
 
         # =============================
-        # Gerar Excel para Download
+        # Função para gerar o Excel
         # =============================
         def to_excel(df):
             output = BytesIO()
