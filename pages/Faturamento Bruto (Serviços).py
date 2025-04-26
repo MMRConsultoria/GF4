@@ -206,7 +206,7 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (com verificação de duplicados, baseado na ordem das colunas)
+# 🔄 Aba 3 - Atualizar Google Sheets (verificação linha a linha)
 # ================================
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
@@ -228,51 +228,26 @@ with aba3:
                         # Ler dados existentes
                         dados_raw = aba_destino.get_all_values()
 
-                        # ✅ Corrigido: Verificação segura para cabeçalho vazio
-                        if not dados_raw or not any(dados_raw[0]) or all(col == '' for col in dados_raw[0]):
-                            dados_existentes = pd.DataFrame()
-                        else:
-                            dados_existentes = pd.DataFrame(dados_raw[1:], columns=dados_raw[0])
+                        # Preparar dados existentes: tudo a partir da linha 2 (dados, não cabeçalho)
+                        dados_existentes = [ [str(cell).strip() for cell in row] for row in dados_raw[1:] ]
 
-                        # Normalizar ambos: dados existentes e novos dados
-                        if not dados_existentes.empty:
-                            dados_existentes = dados_existentes.applymap(lambda x: str(x).strip())
+                        # Preparar novos dados
+                        novos_dados = [ [str(cell).strip() for cell in row] for row in df_final.values.tolist() ]
 
-                        # Gerar novos dados para comparar
-                        if not dados_raw or not any(dados_raw[0]) or all(col == '' for col in dados_raw[0]):
-                            # Se o cabeçalho for vazio, usa colunas genéricas
-                            novos_dados = pd.DataFrame(df_final.values)
-                        else:
-                            novos_dados = pd.DataFrame(df_final.values, columns=dados_raw[0])
+                        # Filtrar apenas os novos registros
+                        registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
 
-                        novos_dados = novos_dados.applymap(lambda x: str(x).strip())
-
-                        # Verificar se existem colunas suficientes
-                        if not dados_existentes.empty and novos_dados.shape[1] != dados_existentes.shape[1]:
-                            st.error("❌ As colunas do arquivo enviado não correspondem às da planilha Google. Verifique o modelo.")
-                            st.stop()
-
-                        # Comparar os dois: queremos só os que NÃO existem ainda
-                        if not dados_existentes.empty:
-                            df_merge = novos_dados.merge(dados_existentes.drop_duplicates(), how='left', indicator=True)
-                            registros_novos = df_merge[df_merge["_merge"] == "left_only"].drop(columns="_merge")
-                        else:
-                            registros_novos = novos_dados
-
-                        if registros_novos.empty:
+                        if not registros_novos:
                             st.info("✅ Nenhum novo registro para atualizar. Tudo já existe no Google Sheets!")
                             st.session_state.atualizou_google = True
                         else:
-                            # Convertendo registros novos para lista para atualizar
-                            rows = registros_novos.values.tolist()
-
-                            # Achar a primeira linha vazia
+                            # Descobrir onde colar
                             primeira_linha_vazia = len(dados_raw) + 1  # linha após os dados
 
                             # Atualizar
-                            aba_destino.update(f"A{primeira_linha_vazia}", rows)
+                            aba_destino.update(f"A{primeira_linha_vazia}", registros_novos)
 
-                            st.success(f"✅ {len(rows)} novo(s) registro(s) enviado(s) para o Google Sheets!")
+                            st.success(f"✅ {len(registros_novos)} novo(s) registro(s) enviado(s) para o Google Sheets!")
                             st.session_state.atualizou_google = True
 
                     except Exception as e:
@@ -282,4 +257,3 @@ with aba3:
             st.info("✅ Dados já foram atualizados nesta sessão.")
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-
