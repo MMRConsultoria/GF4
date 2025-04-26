@@ -205,7 +205,6 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-
 # ================================
 # 🔄 Aba 3 - Atualizar Google Sheets (com verificação de duplicados, baseado na ordem das colunas)
 # ================================
@@ -229,28 +228,36 @@ with aba3:
                         # Ler dados existentes
                         dados_raw = aba_destino.get_all_values()
 
-                        # Se existir apenas o cabeçalho (1 linha), considerar que ainda não tem dados
-                        if len(dados_raw) <= 1:
+                        # ✅ Corrigido: Verificação segura para cabeçalho vazio
+                        if not dados_raw or not any(dados_raw[0]) or all(col == '' for col in dados_raw[0]):
                             dados_existentes = pd.DataFrame()
                         else:
                             dados_existentes = pd.DataFrame(dados_raw[1:], columns=dados_raw[0])
 
                         # Normalizar ambos: dados existentes e novos dados
-                        # Transformar tudo para string e tirar espaços
                         if not dados_existentes.empty:
                             dados_existentes = dados_existentes.applymap(lambda x: str(x).strip())
-                        
-                        novos_dados = pd.DataFrame(df_final.values, columns=dados_raw[0])
+
+                        # Gerar novos dados para comparar
+                        if not dados_raw or not any(dados_raw[0]) or all(col == '' for col in dados_raw[0]):
+                            # Se o cabeçalho for vazio, usa colunas genéricas
+                            novos_dados = pd.DataFrame(df_final.values)
+                        else:
+                            novos_dados = pd.DataFrame(df_final.values, columns=dados_raw[0])
+
                         novos_dados = novos_dados.applymap(lambda x: str(x).strip())
 
                         # Verificar se existem colunas suficientes
-                        if novos_dados.shape[1] != dados_existentes.shape[1]:
+                        if not dados_existentes.empty and novos_dados.shape[1] != dados_existentes.shape[1]:
                             st.error("❌ As colunas do arquivo enviado não correspondem às da planilha Google. Verifique o modelo.")
                             st.stop()
 
                         # Comparar os dois: queremos só os que NÃO existem ainda
-                        df_merge = novos_dados.merge(dados_existentes.drop_duplicates(), how='left', indicator=True)
-                        registros_novos = df_merge[df_merge["_merge"] == "left_only"].drop(columns="_merge")
+                        if not dados_existentes.empty:
+                            df_merge = novos_dados.merge(dados_existentes.drop_duplicates(), how='left', indicator=True)
+                            registros_novos = df_merge[df_merge["_merge"] == "left_only"].drop(columns="_merge")
+                        else:
+                            registros_novos = novos_dados
 
                         if registros_novos.empty:
                             st.info("✅ Nenhum novo registro para atualizar. Tudo já existe no Google Sheets!")
@@ -275,3 +282,4 @@ with aba3:
             st.info("✅ Dados já foram atualizados nesta sessão.")
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
+
