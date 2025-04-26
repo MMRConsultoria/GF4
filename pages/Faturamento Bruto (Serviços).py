@@ -131,7 +131,7 @@ if uploaded_file:
         st.dataframe(pd.DataFrame(totalizador).transpose())
 
         # Mostrar primeiros dados
-        st.dataframe(df_final.head(50))
+        #st.dataframe(df_final.head(50))
 
         # =============================
         # Função para gerar o Excel
