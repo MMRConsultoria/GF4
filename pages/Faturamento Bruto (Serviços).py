@@ -30,6 +30,9 @@ st.title("📋 Relatório de Faturamento por Serviço")
 uploaded_file = st.file_uploader("📄 Envie o arquivo Excel com a aba 'FaturamentoDiarioPorLoja'", type=["xlsx"])
 
 if uploaded_file:
+    # 🔥 Resetar atualização do Google Sheets toda vez que novo arquivo é carregado
+    st.session_state.atualizou_google = False
+
     try:
         xls = pd.ExcelFile(uploaded_file)
         df_raw = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None)
@@ -105,14 +108,12 @@ if uploaded_file:
         else:
             st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
 
-        # =============================
         # 🔗 Links para as planilhas
-        # =============================
         st.markdown("""
-🔗 [Clique aqui para abrir a **Tabela_Empresa** no Google Sheets](https://docs.google.com/spreadsheets/d/ID_DA_TABELA_EMPRESA/edit)
+🔗 [Clique aqui para abrir a **Tabela_Empresa** no Google Sheets](https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link)
 """)
         st.markdown("""
-🔗 [Clique aqui para abrir a **Faturamento Sistema Externo** no Google Sheets](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=drive_link)
+🔗 [Clique aqui para abrir a **Faturamento Sistema Externo** no Google Sheets](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
 """)
 
         # =============================
