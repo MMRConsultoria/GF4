@@ -223,7 +223,8 @@ with aba3:
                         aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
                         # Buscar os dados existentes (ignorando cabeçalho)
-                        dados_existentes = pd.DataFrame(aba_destino.get_all_records())
+                       dados_raw = aba_destino.get_all_values()
+                       dados_existentes = pd.DataFrame(dados_raw[1:], columns=dados_raw[0])
 
                         # Limpar espaços em colunas importantes
                         if not dados_existentes.empty:
