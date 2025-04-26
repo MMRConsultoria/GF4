@@ -30,7 +30,6 @@ st.title("📋 Relatório de Faturamento por Serviço")
 uploaded_file = st.file_uploader("📄 Envie o arquivo Excel com a aba 'FaturamentoDiarioPorLoja'", type=["xlsx"])
 
 if uploaded_file:
-    # 🔥 Resetar atualização do Google Sheets toda vez que novo arquivo é carregado
     st.session_state.atualizou_google = False
 
     try:
@@ -66,7 +65,7 @@ if uploaded_file:
                         if pd.isna(valor_data) or valor_check in ["total", "subtotal"]:
                             continue
 
-                        data = valor_data  # Já tratado
+                        data = valor_data
 
                         valores = linha[col:col+5].values
                         if pd.isna(valores).all():
@@ -93,9 +92,7 @@ if uploaded_file:
         df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
         df_final = pd.merge(df_final, df_empresa, on="Loja", how="left")
 
-        # =============================
         # 🎯 Empresas não localizadas
-        # =============================
         empresas_nao_localizadas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
 
         st.markdown("---")
@@ -116,9 +113,7 @@ if uploaded_file:
 🔗 [Clique aqui para abrir a **Faturamento Sistema Externo** no Google Sheets](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
 """)
 
-        # =============================
         # Continuação do processamento
-        # =============================
         dias_traducao = {
             "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
             "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
@@ -145,9 +140,7 @@ if uploaded_file:
         ]
         df_final = df_final[colunas_finais]
 
-        # =============================
         # 📢 Mensagens de sucesso
-        # =============================
         st.success("✅ Relatório processado com sucesso!")
 
         datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
@@ -164,9 +157,7 @@ if uploaded_file:
         st.subheader("💰 Totais Gerais (R$)")
         st.dataframe(pd.DataFrame([totalizador_formatado]))
 
-        # =============================
         # Função para gerar o Excel
-        # =============================
         def to_excel(df):
             output = BytesIO()
             with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -183,7 +174,7 @@ if uploaded_file:
         )
 
         # =============================
-        # Atualizar Google Sheets (CLEAN)
+        # 🔄 Atualizar Google Sheets (COM CHECAGEM DE DUPLICADOS)
         # =============================
         st.markdown("---")
         st.subheader("🔄 Atualizar Google Sheets?")
@@ -198,14 +189,37 @@ if uploaded_file:
                         planilha_destino = gc.open("Faturamento Sistema Externo")
                         aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
-                        valores_existentes = aba_destino.get_all_values()
-                        primeira_linha_vazia = len(valores_existentes) + 1
+                        # Baixar dados existentes
+                        dados_existentes = pd.DataFrame(aba_destino.get_all_records())
 
-                        rows = df_final.fillna("").values.tolist()
-                        aba_destino.update(f"A{primeira_linha_vazia}", rows)
+                        if not dados_existentes.empty:
+                            for col in ["Data", "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]:
+                                if col in dados_existentes.columns:
+                                    dados_existentes[col] = dados_existentes[col].astype(str).str.strip()
 
-                        st.success("✅ Dados atualizados com sucesso no Google Sheets!")
-                        st.session_state.atualizou_google = True
+                        novos_dados = df_final.copy()
+                        for col in ["Data", "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]:
+                            novos_dados[col] = novos_dados[col].astype(str).str.strip()
+
+                        colunas_chave = ["Data", "Loja", "Código Everest", "Grupo", "Código Grupo Everest", "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket", "Mês", "Ano"]
+
+                        merged = pd.merge(novos_dados, dados_existentes, on=colunas_chave, how="left", indicator=True)
+                        registros_novos = merged[merged["_merge"] == "left_only"].drop(columns="_merge")
+
+                        if registros_novos.empty:
+                            st.info("✅ Nenhum novo registro para atualizar no Google Sheets (todos já existem).")
+                            st.session_state.atualizou_google = True
+                        else:
+                            rows = registros_novos.fillna("").values.tolist()
+                            primeira_linha_vazia = len(dados_existentes) + 2
+                            aba_destino.update(f"A{primeira_linha_vazia}", rows)
+
+                            st.success(f"✅ {len(rows)} novo(s) registro(s) atualizados no Google Sheets!")
+                            st.session_state.atualizou_google = True
+
+                            registros_ignorados = len(novos_dados) - len(rows)
+                            if registros_ignorados > 0:
+                                st.warning(f"⚠️ {registros_ignorados} registro(s) já existiam e foram ignorados para evitar duplicação.")
 
                     except Exception as e:
                         st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
