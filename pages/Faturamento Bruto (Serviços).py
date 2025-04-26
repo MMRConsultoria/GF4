@@ -45,6 +45,9 @@ if uploaded_file:
 
         df = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None, skiprows=4)
 
+        # 👉 Trata a coluna de datas logo aqui
+        df.iloc[:, 2] = pd.to_datetime(df.iloc[:, 2], dayfirst=True, errors='coerce')
+
         registros = []
         col = 3  # Começa na coluna D (índice 3)
 
@@ -57,16 +60,13 @@ if uploaded_file:
                 if "fat.total" in header_col:
                     for i in range(1, df.shape[0]):
                         linha = df.iloc[i]
-                        valor_data = str(df.iloc[i, 2]).strip().lower()
+                        valor_data = df.iloc[i, 2]
                         valor_check = str(df.iloc[i, 1]).strip().lower()
 
-                        if valor_data in ["subtotal"] or valor_check in ["total"]:
+                        if pd.isna(valor_data) or valor_check in ["total", "subtotal"]:
                             continue
 
-                        try:
-                            data = pd.to_datetime(valor_data, dayfirst=True)
-                        except:
-                            continue
+                        data = valor_data  # Já tratado
 
                         valores = linha[col:col+5].values
                         if pd.isna(valores).all():
@@ -123,7 +123,6 @@ if uploaded_file:
             "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
             "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
         }
-        df_final["Data"] = pd.to_datetime(df_final["Data"], errors='coerce')
         df_final.insert(1, "Dia da Semana", df_final["Data"].dt.day_name().map(dias_traducao))
         df_final["Data"] = df_final["Data"].dt.strftime("%d/%m/%Y")
 
