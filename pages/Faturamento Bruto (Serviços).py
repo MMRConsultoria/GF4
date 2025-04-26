@@ -5,7 +5,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from io import BytesIO
 
-# Função para gerar Excel em memória
+# Função para gerar o Excel em memória
 def to_excel(df):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -14,63 +14,71 @@ def to_excel(df):
     output.seek(0)
     return output
 
-# Começo do app
+# Configurações iniciais do app
 st.set_page_config(page_title="Relatório de Faturamento", layout="wide")
 st.title("📊 Relatório de Faturamento")
 
-# Aqui você deve carregar/processar seu arquivo e gerar o df_final
-# Exemplo de simulação (você já deve ter seu df_final real antes desse ponto):
-# df_final = seu_dataframe_processado
+# =============================
+# Começo do app - Upload e processamento
+# =============================
 
-# ---------------------------
-# Bloco principal
-# ---------------------------
-try:
-    # Processo de geração do arquivo para download
-    excel_data = to_excel(df_final)
-    st.download_button(
-        label="📅 Baixar Relatório Excel",
-        data=excel_data,
-        file_name="faturamento_servico.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+uploaded_file = st.file_uploader("📄 Envie seu arquivo Excel", type=["xlsx"])
 
-except Exception as e:
-    st.error(f"Erro ao processar o arquivo: {e}")
+if uploaded_file:
+    try:
+        # (1) Carregar o arquivo
+        df = pd.read_excel(uploaded_file)
 
-# ---------------------------
-# Bloco adicional: Atualizar Google Sheets
-# ---------------------------
+        # (2) Processar para gerar o df_final
+        # Aqui você faz seus tratamentos — exemplo:
+        df_final = df.copy()  # (troque pelo seu processamento real)
 
-st.markdown("---")  # Linha para separar visualmente
+        # =============================
+        # Gerar o arquivo Excel para download
+        # =============================
 
-st.subheader("🔄 Atualizar Google Sheets?")
+        excel_data = to_excel(df_final)
+        st.download_button(
+            label="📅 Baixar Relatório Excel",
+            data=excel_data,
+            file_name="faturamento_servico.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
-# Botão para atualizar o Google Sheets
-if st.button("📤 Atualizar tabela 'Fat Sistema Externo' no Google Sheets"):
-    with st.spinner('🔄 Atualizando a planilha no Google Sheets...'):
-        try:
-            # Configurar conexão com o Google Sheets
-            scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-            credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
-            credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-            gc = gspread.authorize(credentials)
+        # =============================
+        # Botão para Atualizar Google Sheets
+        # =============================
 
-            # Abrir a planilha e a aba
-            planilha = gc.open("Faturamento Sistema Externo")
-            aba = planilha.worksheet("Fat Sistema Externo")
+        st.markdown("---")  # Linha de separação
+        st.subheader("🔄 Atualizar Google Sheets?")
 
-            # Descobrir a próxima linha vazia
-            valores_existentes = aba.get_all_values()
-            primeira_linha_vazia = len(valores_existentes) + 1
+        if st.button("📤 Atualizar tabela 'Fat Sistema Externo' no Google Sheets"):
+            with st.spinner('🔄 Atualizando a planilha no Google Sheets...'):
+                try:
+                    # Conexão com Google Sheets
+                    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+                    credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
+                    credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+                    gc = gspread.authorize(credentials)
 
-            # Preparar os dados do df_final
-            rows = df_final.values.tolist()
+                    # Abre a planilha e aba
+                    planilha = gc.open("Faturamento Sistema Externo")
+                    aba = planilha.worksheet("Fat Sistema Externo")
 
-            # Atualizar a planilha a partir da linha vazia
-            aba.update(f"A{primeira_linha_vazia}", rows)
+                    # Achar a primeira linha vazia
+                    valores_existentes = aba.get_all_values()
+                    primeira_linha_vazia = len(valores_existentes) + 1
 
-            st.success("✅ Dados atualizados com sucesso no Google Sheets!")
+                    # Preparar os dados para colar
+                    rows = df_final.values.tolist()
 
-        except Exception as e:
-            st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
+                    # Atualizar o Google Sheets
+                    aba.update(f"A{primeira_linha_vazia}", rows)
+
+                    st.success("✅ Dados atualizados com sucesso no Google Sheets!")
+
+                except Exception as e:
+                    st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
+
+    except Exception as e:
+        st.error(f"Erro ao processar o arquivo: {e}")
