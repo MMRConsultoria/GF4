@@ -2,6 +2,6 @@ streamlit
 pandas
 numpy
 gspread
+gspread-dataframe
 oauth2client
 xlsxwriter
-gspread-dataframe
