@@ -50,10 +50,6 @@ st.markdown("""
 # ================================
 aba1, aba2, aba3 = st.tabs(["📄 Upload e Processamento", "📥 Download Excel", "🔄 Atualizar Google Sheets"])
 
-# Variável para guardar o dataframe final
-df_final = None
-uploaded_file = None
-
 # ================================
 # 📄 Aba 1 - Upload e Processamento
 # ================================
@@ -160,26 +156,27 @@ with aba1:
             ]
             df_final = df_final[colunas_finais]
 
-            # Mostrar Período processado
+            # Salvar no session_state para usar em outras abas
+            st.session_state.df_final = df_final
+
+            # 📅 Período
             datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
             if not datas_validas.empty:
                 data_inicial = datas_validas.min().strftime("%d/%m/%Y")
                 data_final = datas_validas.max().strftime("%d/%m/%Y")
                 st.info(f"📅 Período processado: **{data_inicial}** até **{data_final}**")
-            else:
-                st.warning("⚠️ Não foi possível identificar o período de datas.")
 
-            # Mostrar Totais Gerais
+            # 💰 Totais
             totalizador = df_final[["Fat.Total", "Serv/Tx", "Fat.Real"]].sum().round(2)
             totalizador_formatado = totalizador.apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             st.subheader("💰 Totais Gerais (R$)")
             st.dataframe(pd.DataFrame([totalizador_formatado]))
 
-            # Links úteis
+            # 🔗 Links
             st.markdown("""
-🔗 [Clique aqui para abrir a **Tabela_Empresa**](https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link)
+🔗 [Tabela_Empresa](https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link)
 
-🔗 [Clique aqui para abrir o **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
+🔗 [Faturamento Sistema Externo](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
 """)
 
         except Exception as e:
