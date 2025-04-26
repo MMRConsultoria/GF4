@@ -112,7 +112,7 @@ if uploaded_file:
 🔗 [Clique aqui para abrir a **Tabela_Empresa** no Google Sheets](https://docs.google.com/spreadsheets/d/ID_DA_TABELA_EMPRESA/edit)
 """)
         st.markdown("""
-🔗 [Clique aqui para abrir a **Faturamento Sistema Externo** no Google Sheets](https://docs.google.com/spreadsheets/d/ID_DO_FATURAMENTO_SISTEMA_EXTERNO/edit)
+🔗 [Clique aqui para abrir a **Faturamento Sistema Externo** no Google Sheets](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=drive_link)
 """)
 
         # =============================
