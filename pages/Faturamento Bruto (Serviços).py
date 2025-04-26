@@ -107,7 +107,7 @@ if uploaded_file:
 
         # Link para a planilha de empresas
         st.markdown("""
-🔗 [Clique aqui para abrir a Tabela_Empresa no Google Sheets](https://docs.google.com/spreadsheets/d/SEU_ID_AQUI/edit)
+🔗 [Clique aqui para abrir a Tabela_Empresa no Google Sheets](https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=sharing)
 """)
 
         # =============================
