@@ -165,3 +165,40 @@ if uploaded_file:
 
     except Exception as e:
         st.error(f"Erro ao processar o arquivo: {e}")
+
+        st.markdown("---")  # Uma linha horizontal para separar visualmente
+
+        st.subheader("🔄 Atualizar Google Sheets?")
+
+        # Botão para atualizar o Google Sheets
+    if st.button("📤 Atualizar tabela 'Fat Sistema Externo' no Google Sheets"):
+        with st.spinner('🔄 Atualizando a planilha no Google Sheets...'):
+        try:
+            # Conectar ao Google Sheets
+            scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+            credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
+            credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+            gc = gspread.authorize(credentials)
+
+            # Abrir a planilha e aba
+            planilha = gc.open("Faturamento Sistema Externo")
+            aba = planilha.worksheet("Fat Sistema Externo")
+
+            # Descobrir a primeira linha vazia
+            valores_existentes = aba.get_all_values()
+            primeira_linha_vazia = len(valores_existentes) + 1
+
+            # Prepara os dados do df_final
+            rows = df_final.values.tolist()
+
+            # Atualiza a partir da próxima linha disponível
+            aba.update(f"A{primeira_linha_vazia}", rows)
+
+            st.success("✅ Dados atualizados com sucesso no Google Sheets!")
+
+        except Exception as e:
+            st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
+
+
+
+
