@@ -157,7 +157,8 @@ with aba1:
             df_final = df_final[colunas_finais]
 
             st.session_state.df_final = df_final
-
+            st.session_state.atualizou_google = False
+            
             datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
             if not datas_validas.empty:
                 data_inicial = datas_validas.min().strftime("%d/%m/%Y")
@@ -216,8 +217,7 @@ with aba3:
 
         if 'atualizou_google' not in st.session_state:
             st.session_state.atualizou_google = False
-            st.session_state.atualizou_google = False  # 🔥 Resetar a flag
-
+           
         if not st.session_state.atualizou_google:
             if st.button("📤 Atualizar no Google Sheets"):
                 with st.spinner('🔄 Atualizando...'):
