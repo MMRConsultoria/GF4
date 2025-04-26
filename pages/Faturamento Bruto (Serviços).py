@@ -90,7 +90,29 @@ if uploaded_file:
         df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
         df_final = pd.merge(df_final, df_empresa, on="Loja", how="left")
 
-        # Traduzir dias da semana
+        # =============================
+        # 🎯 NOVO: Mostrar empresas não localizadas
+        # =============================
+        empresas_nao_localizadas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
+
+        st.markdown("---")
+        st.subheader("🏢 Empresas não localizadas")
+
+        if len(empresas_nao_localizadas) > 0:
+            st.warning(f"⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s) na Tabela_Empresa:")
+            for loja in empresas_nao_localizadas:
+                st.text(f"🔎 {loja}")
+        else:
+            st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
+
+        # Link para a planilha de empresas
+        st.markdown("""
+🔗 [Clique aqui para abrir a Tabela_Empresa no Google Sheets](https://docs.google.com/spreadsheets/d/SEU_ID_AQUI/edit)
+""")
+
+        # =============================
+        # Processamento normal continua
+        # =============================
         dias_traducao = {
             "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
             "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
@@ -99,22 +121,18 @@ if uploaded_file:
         df_final.insert(1, "Dia da Semana", df_final["Data"].dt.day_name().map(dias_traducao))
         df_final["Data"] = df_final["Data"].dt.strftime("%d/%m/%Y")
 
-        # Corrigir colunas de valores
         for col_val in ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas"]:
             df_final[col_val] = pd.to_numeric(df_final[col_val], errors="coerce").round(2)
 
-        # Traduzir meses
         meses = {
-            "jan": "jan", "feb": "fev", "mar": "abr", "apr": "abr", "may": "mai", "jun": "jun",
+            "jan": "jan", "feb": "fev", "mar": "mar", "apr": "abr", "may": "mai", "jun": "jun",
             "jul": "jul", "aug": "ago", "sep": "set", "oct": "out", "nov": "nov", "dec": "dez"
         }
         df_final["Mês"] = df_final["Mês"].str.lower().map(meses)
 
-        # Ordenar os dados
         df_final["Data_Ordenada"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors="coerce")
         df_final = df_final.sort_values(by=["Data_Ordenada", "Loja"]).drop(columns="Data_Ordenada")
 
-        # Organizar colunas finais
         colunas_finais = [
             "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo",
             "Código Grupo Everest", "Fat.Total", "Serv/Tx", "Fat.Real",
@@ -127,7 +145,6 @@ if uploaded_file:
         # =============================
         st.success("✅ Relatório processado com sucesso!")
 
-        # Mostrar período inicial e final
         datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
         if not datas_validas.empty:
             data_inicial = datas_validas.min().strftime("%d/%m/%Y")
@@ -136,7 +153,6 @@ if uploaded_file:
         else:
             st.warning("⚠️ Não foi possível identificar o período de datas.")
 
-        # Mostrar totais gerais formatados em reais
         totalizador = df_final[["Fat.Total", "Serv/Tx", "Fat.Real"]].sum().round(2)
         totalizador_formatado = totalizador.apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
@@ -144,7 +160,7 @@ if uploaded_file:
         st.dataframe(pd.DataFrame([totalizador_formatado]))
 
         # =============================
-        # Função para gerar o Excel
+        # Gerar Excel para Download
         # =============================
         def to_excel(df):
             output = BytesIO()
@@ -153,9 +169,6 @@ if uploaded_file:
             output.seek(0)
             return output
 
-        # =============================
-        # Gerar Excel para Download
-        # =============================
         excel_data = to_excel(df_final)
         st.download_button(
             label="📅 Baixar Relatório Excel",
