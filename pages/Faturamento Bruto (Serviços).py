@@ -228,7 +228,8 @@ with aba3:
                         # 🔥 Correção: ler manualmente o cabeçalho + dados
                         dados_raw = aba_destino.get_all_values()
                         dados_existentes = pd.DataFrame(dados_raw[1:], columns=dados_raw[0])
-
+                        # Corrigir cabeçalhos
+                        dados_existentes.columns = dados_existentes.columns.str.strip().str.lower()
                         # Limpar espaços das colunas críticas
                         if not dados_existentes.empty:
                             for col in ["Data", "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]:
