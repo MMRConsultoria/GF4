@@ -207,7 +207,7 @@ with aba2:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (versão final corrigida, com tratamento de NaN)
+# 🔄 Aba 3 - Atualizar Google Sheets (versão final corrigida, com tratamento de NaN e Ano)
 # ================================
 import math
 
@@ -243,16 +243,16 @@ with aba3:
                             for idx, valor in enumerate(linha):
                                 if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
                                     if isinstance(valor, (int, float)) and not math.isnan(valor):
-                                        valor = round(valor, 2)  # número real com 2 casas
+                                        valor = round(valor, 2)  # número real
                                     else:
                                         valor = ""  # vazio se NaN
-                                elif idx in [3, 5]:  # Código Everest, Código Grupo Everest
+                                elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano
                                     if isinstance(valor, (int, float)) and not math.isnan(valor):
-                                        valor = int(valor)  # inteiro
+                                        valor = int(valor)  # número inteiro
                                     else:
                                         valor = ""  # vazio se NaN
                                 else:
-                                    valor = str(valor).strip()  # textos
+                                    valor = str(valor).strip()
                                 nova_linha.append(valor)
                             novos_dados.append(nova_linha)
 
@@ -284,4 +284,3 @@ with aba3:
             st.info("✅ Dados já foram atualizados nesta sessão.")
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-
