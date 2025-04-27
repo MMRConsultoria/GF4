@@ -234,13 +234,16 @@ with aba3:
                         # Pega os dados e formata valores
                         novos_dados_raw = df_final.values.tolist()
 
-                        # Formatar números corretamente (padrão BR)
+                        # Formatar apenas colunas certas
                         novos_dados = []
                         for linha in novos_dados_raw:
                             nova_linha = []
-                            for valor in linha:
-                                if isinstance(valor, (int, float)):
-                                    valor = f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                            for idx, valor in enumerate(linha):
+                                if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket => formatar com vírgula
+                                    if isinstance(valor, (int, float)):
+                                        valor = f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                                # Código Everest (idx 3), Código Grupo Everest (idx 5), Ano (idx 11)
+                                # ficam como número puro (não formata)
                                 nova_linha.append(str(valor).strip())
                             novos_dados.append(nova_linha)
 
