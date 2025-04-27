@@ -300,13 +300,9 @@ with aba3:
                                         valor = int(valor)  # número inteiro
                                     else:
                                         valor = ""  # vazio se NaN
-                               #alterei aqui
-                               #elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano
-                               #     if isinstance(valor, (int, float)) and not math.isnan(valor):
-                               #         valor = int(valor)
-                               #até aqui 
-                                    else:
-                                         valor = str(valor).strip()
+                             
+                                else:
+                                    valor = str(valor).strip()
                                 nova_linha.append(valor)
                             novos_dados.append(nova_linha)
                             
