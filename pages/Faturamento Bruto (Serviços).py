@@ -279,56 +279,68 @@ with aba3:
                             [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
                             for row in dados_raw[1:]
                         ]
-# 🔥 Preparar novos dados
-novos_dados_raw = df_final.values.tolist()
 
-novos_dados = []
-for linha in novos_dados_raw:
-    nova_linha = []
-    for idx, valor in enumerate(linha):
-        if pd.isna(valor):
-            valor = ""
-        elif isinstance(valor, (int, float)):
-            valor = str(round(valor, 2))  # Sempre transformar número em string
-        elif isinstance(valor, pd.Timestamp) or isinstance(valor, datetime):
-            valor = valor.strftime('%d/%m/%Y')
-        else:
-            valor = str(valor).strip()
-        nova_linha.append(valor)
-    novos_dados.append(nova_linha)
+                      # Preparar novos dados
+                        novos_dados_raw = df_final.values.tolist()
 
-# 🔥 Normalizar novos dados para comparar corretamente
-novos_dados_normalizados = [
-    [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
-    for row in novos_dados
-]
+                        novos_dados = []
+                        for linha in novos_dados_raw:
+                            nova_linha = []
+                            for idx, valor in enumerate(linha):
+                                
+                               #if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
+                               #    if isinstance(valor, (int, float)) and not math.isnan(valor):
+                               #        valor = round(valor, 2)  # número real
+                               #    else:
+                               #        valor = ""  # vazio se NaN
+                               #elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano
+                               #    if isinstance(valor, (int, float)) and not math.isnan(valor):
+                               #        valor = int(valor)  # número inteiro
+                               #    else:
+                               #        valor = ""  # vazio se NaN
+                               
+                                   if pd.isna(valor):
+                                        valor = ""
+                                   elif isinstance(valor, (int, float)):
+                                        valor = str(round(valor, 2))  # Sempre transformar número em string
+                                   elif isinstance(valor, pd.Timestamp) or isinstance(valor, datetime):
+                                        valor = valor.strftime('%d/%m/%Y'
+                               
+                                    else:
+                                        valor = str(valor).strip()
+                                nova_linha.append(valor)
+                            novos_dados.append(nova_linha)
+                            
+                      # 🔥 Normalizar novos dados para comparar corretamente
+                    novos_dados_normalizados = [
+                        [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
+                        for row in novos_dados
+                    ]
+                    
+                    # Verificar novos registros
+                    registros_novos = [
+                        linha_original for linha_original, linha_normalizada in zip(novos_dados, novos_dados_normalizados)
+                        if linha_normalizada not in dados_existentes
+                    ]
+                    total_novos = len(registros_novos)
+                    total_existentes = len(novos_dados) - total_novos
 
-# 🔥 Verificar novos registros
-registros_novos = [
-    linha_original for linha_original, linha_normalizada in zip(novos_dados, novos_dados_normalizados)
-    if linha_normalizada not in dados_existentes
-]
+                    if total_novos == 0:
+                        st.info(f"✅ Nenhum novo registro para atualizar. {total_existentes} registro(s) já existiam no Google Sheets.")
+                        st.session_state.atualizou_google = True
+                    else:
+                        # Descobrir onde colar
+                        primeira_linha_vazia = len(dados_raw) + 1  # linha após os dados
 
-total_novos = len(registros_novos)
-total_existentes = len(novos_dados) - total_novos
+                        # Atualizar
+                        aba_destino.update(f"A{primeira_linha_vazia}", registros_novos)
 
-if total_novos == 0:
-    st.info(f"✅ Nenhum novo registro para atualizar. {total_existentes} registro(s) já existiam no Google Sheets.")
-    st.session_state.atualizou_google = True
-else:
-    # Descobrir onde colar
-    primeira_linha_vazia = len(dados_raw) + 1  # linha após os dados
+                        st.success(f"✅ {total_novos} novo(s) registro(s) enviado(s) para o Google Sheets!")
+                        if total_existentes > 0:
+                           st.warning(f"⚠️ {total_existentes} registro(s) já existiam e não foram importados.")
+                        st.session_state.atualizou_google = True
 
-    # Atualizar
-    aba_destino.update(f"A{primeira_linha_vazia}", registros_novos)
-
-    st.success(f"✅ {total_novos} novo(s) registro(s) enviado(s) para o Google Sheets!")
-    if total_existentes > 0:
-        st.warning(f"⚠️ {total_existentes} registro(s) já existiam e não foram importados.")
-    st.session_state.atualizou_google = True
-
-except Exception as e:
-    st.error(f"❌ Erro ao atualizar: {e}")
-    st.session_state.atualizou_google = False
-
-                     
+                except Exception as e:
+                    st.error(f"❌ Erro ao atualizar: {e}")
+                    st.session_state.atualizou_google = False
+               
