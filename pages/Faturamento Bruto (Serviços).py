@@ -56,7 +56,7 @@ aba1, aba2, aba3 = st.tabs(["📄 Upload e Processamento", "📥 Download Excel"
 
 with aba1:
     st.markdown("""
-        <div style='display: flex; align-items: center; gap: 10px;'>
+        <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
             <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
             <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório de Faturamento por Serviço</h1>
         </div>
