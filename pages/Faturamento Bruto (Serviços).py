@@ -1,4 +1,4 @@
-# pages/FaturamentoServico.py
+        # pages/FaturamentoServico.py
 
 import streamlit as st
 import pandas as pd
@@ -334,7 +334,47 @@ with aba3:
                                 "pattern": "dd/MM/yyyy"
                             }
                         })
-                        
+                        # 🔥 Formatar coluna D como Número inteiro
+                        aba_destino.format("D:D", {
+                            "numberFormat": {
+                                "type": "NUMBER",
+                                "pattern": "0"
+                            }
+                        })
+
+                        # 🔥 Formatar coluna E como Número inteiro
+                        aba_destino.format("E:E", {
+                            "numberFormat": {
+                                "type": "NUMBER",
+                                    "pattern": "0"
+                            }
+                        })
+
+                        # 🔥 Formatar colunas G, H, I, J como Contabilidade (moeda)
+                        for coluna in ["G", "H", "I", "J"]:
+                            aba_destino.format(f"{coluna}:{coluna}", {
+                                "numberFormat": {
+                                    "type": "ACCOUNTING",
+                                    "pattern": "[$R$-416]#,##0.00"
+                                }
+                            })
+
+                        # 🔥 Formatar coluna K como Texto (não precisa pattern especial, só garantir texto)
+                        aba_destino.format("K:K", {
+                            "numberFormat": {
+                                "type": "TEXT"
+                            }
+                        })
+
+                        # 🔥 Formatar coluna L como Ano (4 dígitos)
+                        aba_destino.format("L:L", {
+                            "numberFormat": {
+                                "type": "NUMBER",
+                                "pattern": "0000"
+                            }
+                        })
+
+                      
                         # Atualizar
                         aba_destino.update(f"A{primeira_linha_vazia}", registros_novos)
 
