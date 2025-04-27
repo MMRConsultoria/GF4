@@ -299,7 +299,7 @@ with aba3:
                                         valor = ""  # vazio se NaN
                                #alterei aqui
                                 elif isinstance(valor, pd.Timestamp) or isinstance(valor, datetime):
-                                    valor = valor.strftime('%d/%m/%Y')  # Formatar data certinha 
+                                    valor = valor.date()  # transforma em data pura 
                                #até aqui 
                                 else:
                                     valor = str(valor).strip()
