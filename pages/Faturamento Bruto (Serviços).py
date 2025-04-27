@@ -335,7 +335,7 @@ with aba3:
                             }
                         })
                         # 🔥 Formatar coluna D e F como Número inteiro
-                        aba_destino.format("D:D" {
+                        aba_destino.format("D:D", {
                             "numberFormat": {
                                 "type": "NUMBER",
                                 "pattern": "0"
