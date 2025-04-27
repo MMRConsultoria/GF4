@@ -326,7 +326,4 @@ with aba3:
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar: {e}")
                     st.session_state.atualizou_google = False
-                else:
-                    st.info("✅ Dados já foram atualizados nesta sessão.")
-                finally:
-                    st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")                       
+               
