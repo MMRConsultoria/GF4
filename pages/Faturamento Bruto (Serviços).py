@@ -334,16 +334,16 @@ with aba3:
                                 "pattern": "dd/MM/yyyy"
                             }
                         })
-                        # 🔥 Formatar coluna D como Número inteiro
-                        aba_destino.format("D:D", {
+                        # 🔥 Formatar coluna D e F como Número inteiro
+                        aba_destino.format("D:D" {
                             "numberFormat": {
                                 "type": "NUMBER",
                                 "pattern": "0"
                             }
                         })
-
+                                                      
                         # 🔥 Formatar coluna E como Número inteiro
-                        aba_destino.format("E:E", {
+                        aba_destino.format("F:F", {
                             "numberFormat": {
                                 "type": "NUMBER",
                                     "pattern": "0"
