@@ -301,7 +301,7 @@ with aba3:
                                     valor = str(valor).strip()
                                 nova_linha.append(valor)
                             novos_dados.append(nova_linha)
-                      # Verificar novos registros
+                    # Verificar novos registros
                 try:
                     registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
 
@@ -312,7 +312,7 @@ with aba3:
                         st.info(f"✅ Nenhum novo registro para atualizar. {total_existentes} registro(s) já existiam no Google Sheets.")
                         st.session_state.atualizou_google = True
                     else:
-                      # Descobrir onde colar
+                        # Descobrir onde colar
                         primeira_linha_vazia = len(dados_raw) + 1  # linha após os dados
 
                         # Atualizar
