@@ -272,34 +272,52 @@ with aba3:
                         planilha_destino = gc.open("Faturamento Sistema Externo")
                         aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
-                        # Ler dados existentes
-                        dados_raw = aba_destino.get_all_values()
+        # 🔥 Corrigir leitura dos dados existentes
+        dados_raw = aba_destino.get_all_values()
 
-                        # Preparar dados existentes (linhas sem cabeçalho)
-                        dados_existentes = [ [str(cell).strip() for cell in row] for row in dados_raw[1:] ]
+        if len(dados_raw) <= 1:
+            dados_existentes = []
+        else:
+            dados_existentes = [
+                [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
+                for row in dados_raw[1:]
+                ]
 
-                        # Preparar novos dados
-                        novos_dados_raw = df_final.values.tolist()
+        # 🔥 Corrigir preparação dos novos dados
+        novos_dados_raw = df_final.values.tolist()
 
-                        novos_dados = []
-                        for linha in novos_dados_raw:
-                            nova_linha = []
-                            for idx, valor in enumerate(linha):
-                                if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
-                                    if isinstance(valor, (int, float)) and not math.isnan(valor):
-                                        valor = round(valor, 2)  # número real
-                                    else:
-                                        valor = ""  # vazio se NaN
-                                elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano
-                                    if isinstance(valor, (int, float)) and not math.isnan(valor):
-                                        valor = int(valor)  # número inteiro
-                                    else:
-                                        valor = ""  # vazio se NaN
-                                else:
-                                    valor = str(valor).strip()
-                                nova_linha.append(valor)
-                            novos_dados.append(nova_linha)
+        novos_dados = []
+        for linha in novos_dados_raw:
+            nova_linha = []
+            for idx, valor in enumerate(linha):
+                if idx in [6, 7, 8, 9]:  # Valores monetários
+                    if isinstance(valor, (int, float)) and not math.isnan(valor):
+                        valor = round(valor, 2)
+                    else:
+                        valor = ""
+            elif idx in [3, 5, 11]:  # Inteiros
+                    if isinstance(valor, (int, float)) and not math.isnan(valor):
+                        valor = int(valor)
+                    else:
+                        valor = ""
+            else:
+                valor = str(valor).strip()
+            # 🔥 Normalizar tudo para comparar
+            nova_linha.append(str(valor).strip().replace(",", "").replace(".", ""))
+            novos_dados.append(nova_linha)
 
+        # 🔥 Agora sim comparar corretamente
+        registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
+
+        total_novos = len(registros_novos)
+        total_existentes = len(novos_dados) - total_novos
+
+
+
+
+
+
+                        
                         # Verificar novos registros
                         registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
 
