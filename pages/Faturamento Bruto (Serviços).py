@@ -69,7 +69,7 @@ import time
 
 with aba1:
     # 🔹 Upload do Arquivo
-    uploaded_file = st.file_uploader("📄 Envie o arquivo Excel com a aba 'FaturamentoDiarioPorLoja'", type=["xlsx"])
+    uploaded_file = st.file_uploader("📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de faturamento", type=["xlsx"])
 
     if uploaded_file:
         # 🔹 Resetar atualização Google Sheets
