@@ -158,11 +158,11 @@ with aba1:
             st.session_state.atualizou_google = False
 
             # 📢 AQUI mostramos o nome do arquivo + Período + Valor Total
-            st.markdown(f"""
-                <div style='font-size:10px; font-weight: bold; margin-bottom:10px;'>
-                    📄 Arquivo selecionado: {uploaded_file.name}
-                </div>
-            """, unsafe_allow_html=True)
+           # st.markdown(f"""
+           #     <div style='font-size:10px; font-weight: bold; margin-bottom:10px;'>
+           #         📄 Arquivo selecionado: {uploaded_file.name}
+           #     </div>
+           # """, unsafe_allow_html=True)
 
             datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
 
