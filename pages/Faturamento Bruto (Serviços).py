@@ -51,16 +51,15 @@ st.markdown("""
 aba1, aba2, aba3 = st.tabs(["📄 Upload e Processamento", "📥 Download Excel", "🔄 Atualizar Google Sheets"])
 
 # ================================
-# 📋 Aba 1 - Upload e Processamento (voltando para a base que estava funcionando)
+# 📋 Aba 1 - Upload e Processamento (com cabeçalho bonito no topo)
 # ================================
-
 import pandas as pd
 import re
 import math
 import time
 
 with aba1:
-    # Cabeçalho bonito no topo
+    # ✅ Cabeçalho bonito
     st.markdown("""
         <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
             <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
@@ -68,11 +67,11 @@ with aba1:
         </div>
     """, unsafe_allow_html=True)
 
-    # Upload do Arquivo
+    # 🔹 Upload do Arquivo
     uploaded_file = st.file_uploader("📄 Envie o arquivo Excel com a aba 'FaturamentoDiarioPorLoja'", type=["xlsx"])
 
     if uploaded_file:
-        # Resetar atualização Google Sheets
+        # 🔹 Resetar atualização Google Sheets
         st.session_state.atualizou_google = False
 
         try:
@@ -133,9 +132,16 @@ with aba1:
             # Ajustes de nomes e merge
             df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.lower()
             df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
-            df_final = pd.merge(df_final, df_empresa, on="Loja", how="_
+            df_final = pd.merge(df_final, df_empresa, on="Loja", how="left")
 
+            # Guardar no session_state para as próximas abas
+            st.session_state.df_final = df_final
+            st.session_state.atualizou_google = False
 
+            st.success("✅ Arquivo processado com sucesso!")
+
+        except Exception as e:
+            st.error(f"❌ Erro ao processar o arquivo: {e}")
 
 
 
