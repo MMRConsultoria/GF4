@@ -66,7 +66,7 @@ aba1, aba2, aba3 = st.tabs(["📄 Upload e Processamento", "📥 Download Excel"
 with aba1:
     st.header("📄 Upload e Processamento")
 
-      uploaded_file = st.file_uploader("📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de faturamento", type=["xlsx"])
+    uploaded_file = st.file_uploader("📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de faturamento", type=["xlsx"])
 
     if uploaded_file is None:
         st.info("📂 Envie um arquivo para iniciar o processamento.")
