@@ -326,7 +326,15 @@ with aba3:
                     else:
                         # Descobrir onde colar
                         primeira_linha_vazia = len(dados_raw) + 1  # linha após os dados
-
+                       
+                        # 🔥 Formatar a coluna de Data antes de atualizar
+                        aba_destino.format(f"A{primeira_linha_vazia}:A{primeira_linha_vazia + len(registros_novos) - 1}", {
+                            "numberFormat": {
+                                "type": "DATE",
+                                "pattern": "dd/MM/yyyy"
+                            }
+                        })
+                        
                         # Atualizar
                         aba_destino.update(f"A{primeira_linha_vazia}", registros_novos)
 
