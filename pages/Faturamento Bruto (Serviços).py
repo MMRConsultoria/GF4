@@ -196,16 +196,15 @@ with aba1:
             empresas_nao_localizadas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
 
             if len(empresas_nao_localizadas) > 0:
-                st.warning(f"⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s):")
-                for loja in empresas_nao_localizadas:
-                    st.text(f"🔎 {loja}")
+                # Construir a mensagem com o link direto
+                mensagem = f"""
+                ⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s): 
+                ✏️ Atualize a tabela clicando 
+                <a href='https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
+                """
 
-               # ✏️ Mensagem de orientação com link
-                st.markdown("""
-                    <div style='margin-top: 10px; font-size:18px;'>
-                    ✏️ Atualize a tabela de empresas clicando <a href='https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
-                    </div>
-                    """, unsafe_allow_html=True)
+                st.markdown(mensagem, unsafe_allow_html=True)
+
 
             else:
                 st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
