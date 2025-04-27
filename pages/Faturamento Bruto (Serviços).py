@@ -287,7 +287,10 @@ with aba3:
                         for linha in novos_dados_raw:
                             nova_linha = []
                             for idx, valor in enumerate(linha):
-                                if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
+                                 if idx == 0:  # Data (coluna A)
+                                    if isinstance(valor, str):
+                                        valor = datetime.strptime(valor, "%d/%m/%Y")
+                                elif idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
                                     if isinstance(valor, (int, float)) and not math.isnan(valor):
                                         valor = round(valor, 2)  # número real
                                     else:
@@ -298,11 +301,12 @@ with aba3:
                                     else:
                                         valor = ""  # vazio se NaN
                                #alterei aqui
-                                elif isinstance(valor, pd.Timestamp) or isinstance(valor, datetime):
-                                    valor = valor.date()  # transforma em data pura 
+                               #elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano
+                               #     if isinstance(valor, (int, float)) and not math.isnan(valor):
+                               #         valor = int(valor)
                                #até aqui 
-                                else:
-                                    valor = str(valor).strip()
+                                    else:
+                                         valor = str(valor).strip()
                                 nova_linha.append(valor)
                             novos_dados.append(nova_linha)
                             
