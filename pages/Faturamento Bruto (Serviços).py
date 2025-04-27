@@ -328,7 +328,7 @@ with aba3:
                         primeira_linha_vazia = len(dados_raw) + 1  # linha após os dados
                        
                         # 🔥 Formatar a coluna de Data antes de atualizar
-                        aba_destino.format(f"A{primeira_linha_vazia}:A{primeira_linha_vazia + len(registros_novos) - 1}", {
+                        aba_destino.format("A:A", {
                             "numberFormat": {
                                 "type": "DATE",
                                 "pattern": "dd/MM/yyyy"
