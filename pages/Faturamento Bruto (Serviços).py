@@ -265,7 +265,7 @@ with aba3:
         if 'atualizou_google' not in st.session_state:
             st.session_state.atualizou_google = False
 
-        if not st.session_state.atualizou_google:
+       # if not st.session_state.atualizou_google:
             if st.button("📤 Atualizar no Google Sheets"):
                 with st.spinner('🔄 Atualizando...'):
                     try:
