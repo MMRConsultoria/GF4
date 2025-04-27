@@ -250,6 +250,7 @@ with aba2:
 # 🔄 Aba 3 - Atualizar Google Sheets (versão final corrigida, sem duplicar)
 # ================================
 import math
+from datetime import datetime  # 🔴🔴🔴 ADICIONAR ESSA IMPORTAÇÃO 🔴🔴🔴
 
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
@@ -280,36 +281,39 @@ with aba3:
                             for row in dados_raw[1:]
                         ]
 
-		# Preparar novos dados
-		  novos_dados_raw = df_final.values.tolist()
-		  novos_dados = []
-		    for linha in novos_dados_raw:
-			nova_linha = []
-    			for idx, valor in enumerate(linha):
-				if idx == 0:  # Data (coluna A)
-           				if isinstance(valor, str):
-                				valor = datetime.strptime(valor, "%d/%m/%Y")
-        			elif idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
-            				if isinstance(valor, (int, float)) and not math.isnan(valor):
-                				valor = round(valor, 2)  # número real
-           				else:
-               					valor = ""  # vazio se NaN
-        			elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano
-            				if isinstance(valor, (int, float)) and not math.isnan(valor):
-                				valor = int(valor)  # número inteiro
-            				else:
-                				valor = ""  # vazio se NaN
-       				else:
-            				valor = str(valor).strip()
-        			nova_linha.append(valor)
+                    # Preparar novos dados
+                    novos_dados_raw = df_final.values.tolist()
+                    novos_dados = []
+                    for linha in novos_dados_raw:
+                        nova_linha = []
+                        for idx, valor in enumerate(linha):
+                            if idx == 0:  # Data (coluna A)
+                                if isinstance(valor, str):
+🔴🔴🔴 ALTERAÇÃO AQUI 🔴🔴🔴
+# Aqui a alteração importante:
+                                    valor = datetime.strptime(valor, "%d/%m/%Y")
+🔴🔴🔴 FIM DA ALTERAÇÃO 🔴🔴🔴
+                            elif idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
+                                if isinstance(valor, (int, float)) and not math.isnan(valor):
+                                    valor = round(valor, 2)  # número real
+                                else:
+                                    valor = ""  # vazio se NaN
+                            elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano
+                                if isinstance(valor, (int, float)) and not math.isnan(valor):
+                                    valor = int(valor)  # número inteiro
+                                else:
+                                    valor = ""  # vazio se NaN
+                            else:
+                                valor = str(valor).strip()
+                        nova_linha.append(valor)
                     novos_dados.append(nova_linha)
-                            
-                      # 🔥 Normalizar novos dados para comparar corretamente
+
+                    # 🔥 Normalizar novos dados para comparar corretamente
                     novos_dados_normalizados = [
                         [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
                         for row in novos_dados
                     ]
-                    
+
                     # Verificar novos registros
                     registros_novos = [
                         linha_original for linha_original, linha_normalizada in zip(novos_dados, novos_dados_normalizados)
@@ -332,23 +336,22 @@ with aba3:
                                 "pattern": "dd/MM/yyyy"
                             }
                         })
-                        # 🔥 Formatar coluna D e F como Número inteiro
+                        # 🔥 Formatar coluna D como Número inteiro
                         aba_destino.format("D:D", {
                             "numberFormat": {
                                 "type": "NUMBER",
                                 "pattern": "0"
                             }
                         })
-                                                      
-                        # 🔥 Formatar coluna E como Número inteiro
-                        aba_destino.format("F:F", {
+                        # 🔥 Formatar coluna F como Número inteiro (e não E!)
+                        aba_destino.format("F:F", {  # 🔴🔴🔴 CONFERIDO, DEIXAR COMO F 🔴🔴🔴
                             "numberFormat": {
                                 "type": "NUMBER",
-                                    "pattern": "0"
+                                "pattern": "0"
                             }
                         })
 
-                        # 🔥 Formatar colunas G, H, I, J como Contabilidade (moeda)
+                        # 🔥 Formatar colunas G, H, I, J como Moeda
                         for coluna in ["G", "H", "I", "J"]:
                             aba_destino.format(f"{coluna}:{coluna}", {
                                 "numberFormat": {
@@ -357,7 +360,7 @@ with aba3:
                                 }
                             })
 
-                        # 🔥 Formatar coluna K como Texto (não precisa pattern especial, só garantir texto)
+                        # 🔥 Formatar coluna K como Texto
                         aba_destino.format("K:K", {
                             "numberFormat": {
                                 "type": "TEXT"
@@ -372,16 +375,16 @@ with aba3:
                             }
                         })
 
-                      
                         # Atualizar
                         aba_destino.update(f"A{primeira_linha_vazia}", registros_novos)
 
                         st.success(f"✅ {total_novos} novo(s) registro(s) enviado(s) para o Google Sheets!")
                         if total_existentes > 0:
-                           st.warning(f"⚠️ {total_existentes} registro(s) já existiam e não foram importados.")
+                            st.warning(f"⚠️ {total_existentes} registro(s) já existiam e não foram importados.")
                         st.session_state.atualizou_google = True
 
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar: {e}")
                     st.session_state.atualizou_google = False
-               
+
+
