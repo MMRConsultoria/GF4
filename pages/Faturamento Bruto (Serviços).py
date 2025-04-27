@@ -297,6 +297,10 @@ with aba3:
                                         valor = int(valor)  # número inteiro
                                     else:
                                         valor = ""  # vazio se NaN
+                               #alterei aqui
+                                elif isinstance(valor, pd.Timestamp) or isinstance(valor, datetime):
+                                    valor = valor.strftime('%d/%m/%Y')  # Formatar data certinha 
+                               #até aqui 
                                 else:
                                     valor = str(valor).strip()
                                 nova_linha.append(valor)
