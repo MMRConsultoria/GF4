@@ -246,13 +246,8 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 
-# ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (versão final corrigida, sem duplicar)
-# ================================
 import math
-🔴🔴🔴 Adicionado 🔴🔴🔴
 from datetime import datetime
-🔴🔴🔴 Fim 🔴🔴🔴
 
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
@@ -287,9 +282,7 @@ with aba3:
                         for idx, valor in enumerate(linha):
                             if idx == 0:  # Data (coluna A)
                                 if isinstance(valor, str):
-🔴🔴🔴 Alterado 🔴🔴🔴
                                     valor = datetime.strptime(valor, "%d/%m/%Y")
-🔴🔴🔴 Fim da alteração 🔴🔴🔴
                             elif idx in [6, 7, 8, 9]:
                                 if isinstance(valor, (int, float)) and not math.isnan(valor):
                                     valor = round(valor, 2)
@@ -324,25 +317,15 @@ with aba3:
                     else:
                         primeira_linha_vazia = len(dados_raw) + 1
 
-                        aba_destino.format("A:A", {
-                            "numberFormat": {"type": "DATE", "pattern": "dd/MM/yyyy"}
-                        })
-                        aba_destino.format("D:D", {
-                            "numberFormat": {"type": "NUMBER", "pattern": "0"}
-                        })
-                        aba_destino.format("F:F", {
-                            "numberFormat": {"type": "NUMBER", "pattern": "0"}
-                        })
+                        aba_destino.format("A:A", {"numberFormat": {"type": "DATE", "pattern": "dd/MM/yyyy"}})
+                        aba_destino.format("D:D", {"numberFormat": {"type": "NUMBER", "pattern": "0"}})
+                        aba_destino.format("F:F", {"numberFormat": {"type": "NUMBER", "pattern": "0"}})
                         for coluna in ["G", "H", "I", "J"]:
                             aba_destino.format(f"{coluna}:{coluna}", {
                                 "numberFormat": {"type": "CURRENCY", "pattern": "[$R$-416]#,##0.00"}
                             })
-                        aba_destino.format("K:K", {
-                            "numberFormat": {"type": "TEXT"}
-                        })
-                        aba_destino.format("L:L", {
-                            "numberFormat": {"type": "NUMBER", "pattern": "0000"}
-                        })
+                        aba_destino.format("K:K", {"numberFormat": {"type": "TEXT"}})
+                        aba_destino.format("L:L", {"numberFormat": {"type": "NUMBER", "pattern": "0000"}})
 
                         aba_destino.update(f"A{primeira_linha_vazia}", registros_novos)
 
