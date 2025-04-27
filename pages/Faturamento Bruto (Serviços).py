@@ -280,27 +280,29 @@ with aba3:
                             for row in dados_raw[1:]
                         ]
 
-                    # 🔥 Preparar e normalizar novos dados
-                    novos_dados_raw = df_final.values.tolist()
-                    novos_dados = []
+                      # 🔥 Preparar novos dados corretamente
+                        novos_dados_raw = df_final.values.tolist()
+                        novos_dados = []
 
-                    for linha in novos_dados_raw:
-                        nova_linha = []
-                        for idx, valor in enumerate(linha):
-                            if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket (valores monetários)
-                                if isinstance(valor, (int, float)) and not math.isnan(valor):
-                                    valor = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                        for linha in novos_dados_raw:
+                            nova_linha = []
+                            for idx, valor in enumerate(linha):
+                                if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket (R$ com vírgula)
+                                    if isinstance(valor, (int, float)) and not math.isnan(valor):
+                                        valor = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                                    else:
+                                        valor = ""
+                                elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano (inteiros)
+                                    if isinstance(valor, (int, float)) and not math.isnan(valor):
+                                        valor = int(valor)
+                                    else:
+                                        valor = ""
                                 else:
-                                    valor = ""
-                            elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano (inteiros)
-                                if isinstance(valor, (int, float)) and not math.isnan(valor):
-                                    valor = int(valor)
-                                else:
-                                    valor = ""
-                            else:
-                                valor = str(valor).strip()
-                            nova_linha.append(valor)
+                                        valor = str(valor).strip()
+                                nova_linha.append(valor)
                         novos_dados.append(nova_linha)
+
+
 
                     # 🔥 Verificar registros novos (sem duplicados)
                     registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
