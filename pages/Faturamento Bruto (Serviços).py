@@ -302,7 +302,7 @@ with aba3:
                                 nova_linha.append(valor)
                             novos_dados.append(nova_linha)
 
-                         # Verificar novos registros
+                        # Verificar novos registros
                         registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
 
                         total_novos = len(registros_novos)
