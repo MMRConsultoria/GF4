@@ -301,17 +301,16 @@ with aba3:
                                     valor = str(valor).strip()
                                 nova_linha.append(valor)
                             novos_dados.append(nova_linha)
-                    # Verificar novos registros
-                    registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
-
-
-
-                     # 🔥 Normalizar novos dados para comparar corretamente
+                            
+                      # 🔥 Normalizar novos dados para comparar corretamente
                     novos_dados_normalizados = [
                         [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
                         for row in novos_dados
                     ]
-
+                    
+                    # Verificar novos registros
+                    registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
+                  
                     total_novos = len(registros_novos)
                     total_existentes = len(novos_dados) - total_novos
 
