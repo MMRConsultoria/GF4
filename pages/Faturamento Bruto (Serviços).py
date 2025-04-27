@@ -262,13 +262,15 @@ with aba3:
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final
 
-       # if 'atualizou_google' not in st.session_state:
-       #     st.session_state.atualizou_google = False
-
-       # if not st.session_state.atualizou_google:
         if st.button("📤 Atualizar no Google Sheets"):
-             with st.spinner('🔄 Atualizando...'):
-                 try:
+            with st.spinner('🔄 Atualizando...'):
+                try:
+                    # 🔥 Aqui você mantém seu código de abrir planilha, comparar e atualizar
+                except Exception as e:
+                    st.error(f"❌ Erro ao atualizar: {e}")
+    else:
+        st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
+
                         # Abrir a planilha e aba de destino
                         planilha_destino = gc.open("Faturamento Sistema Externo")
                         aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
