@@ -158,7 +158,11 @@ with aba1:
             st.session_state.atualizou_google = False
 
             # 📢 AQUI mostramos o nome do arquivo + Período + Valor Total
-            st.markdown(f"<h3>📄 Arquivo selecionado: {uploaded_file.name}</h1>", unsafe_allow_html=True)
+            st.markdown(f"""
+                <div style='font-size:10px; font-weight: bold; margin-bottom:10px;'>
+                    📄 Arquivo selecionado: {uploaded_file.name}
+                </div>
+            """, unsafe_allow_html=True)
 
             datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
 
@@ -173,12 +177,12 @@ with aba1:
 
                 with col1:
                     st.markdown(f"""
-                        <div style='font-size:15px; font-weight: bold; margin-bottom:10px;'>📅 Período processado</div>
+                        <div style='font-size:20px; font-weight: bold; margin-bottom:10px;'>📅 Período processado</div>
                         <div style='font-size:20px; color:#000;'>{data_inicial} até {data_final}</div>
                     """, unsafe_allow_html=True)
                 with col2:
                    st.markdown(f"""
-                        <div style='font-size:15px; font-weight: bold; margin-bottom:10px;'>💰 Valor total</div>
+                        <div style='font-size:20px; font-weight: bold; margin-bottom:10px;'>💰 Valor total</div>
                         <div style='font-size:20px; color:green;'>{valor_total_formatado}</div>
                     """, unsafe_allow_html=True)
             else:
