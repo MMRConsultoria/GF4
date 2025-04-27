@@ -286,30 +286,27 @@ with aba3:
                                 for row in dados_raw[1:]
                             ]
 
-                        # ================================
-                        # 🔥 Preparar e normalizar novos dados
-                        # ================================
+                        # 🔥 Preparar novos dados corretamente
                         novos_dados_raw = df_final.values.tolist()
                         novos_dados = []
 
                         for linha in novos_dados_raw:
                             nova_linha = []
                             for idx, valor in enumerate(linha):
-                                if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
+                                if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket (R$ com vírgula)
                                     if isinstance(valor, (int, float)) and not math.isnan(valor):
-                                        valor = round(valor, 2)
+                                        valor = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                                     else:
                                         valor = ""
-                                elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano
+                                elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano (inteiros)
                                     if isinstance(valor, (int, float)) and not math.isnan(valor):
                                         valor = int(valor)
                                     else:
                                         valor = ""
                                 else:
-                                    valor = str(valor).strip()
-                                # 🔥 Normalizar para comparação
-                                nova_linha.append(str(valor).strip().replace(",", "").replace(".", ""))
-                            novos_dados.append(nova_linha)
+                                        valor = str(valor).strip()
+                                nova_linha.append(valor)
+                        novos_dados.append(nova_linha)
 
                         # ================================
                         # 🔥 Verificar registros novos (sem duplicados)
