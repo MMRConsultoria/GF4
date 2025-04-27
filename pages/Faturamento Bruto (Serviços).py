@@ -200,12 +200,12 @@ with aba1:
                 for loja in empresas_nao_localizadas:
                     st.text(f"🔎 {loja}")
 
-           # ✏️ Mensagem de orientação com link
-            st.markdown("""
-                <div style='margin-top: 10px; font-size:18px;'>
-                ✏️ Atualize a tabela de empresas clicando <a href='https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
-                </div>
-            """, unsafe_allow_html=True)
+               # ✏️ Mensagem de orientação com link
+                st.markdown("""
+                    <div style='margin-top: 10px; font-size:18px;'>
+                    ✏️ Atualize a tabela de empresas clicando <a href='https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
+                    </div>
+                    """, unsafe_allow_html=True)
 
             else:
                 st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
