@@ -266,9 +266,9 @@ with aba3:
        #     st.session_state.atualizou_google = False
 
        # if not st.session_state.atualizou_google:
-            if st.button("📤 Atualizar no Google Sheets"):
-                with st.spinner('🔄 Atualizando...'):
-                    try:
+        if st.button("📤 Atualizar no Google Sheets"):
+             with st.spinner('🔄 Atualizando...'):
+                 try:
                         # Abrir a planilha e aba de destino
                         planilha_destino = gc.open("Faturamento Sistema Externo")
                         aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
