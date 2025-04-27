@@ -287,7 +287,7 @@ with aba3:
                         for linha in novos_dados_raw:
                             nova_linha = []
                             for idx, valor in enumerate(linha):
-                                 if idx == 0:  # Data (coluna A)
+                                if idx == 0:  # Data (coluna A)
                                     if isinstance(valor, str):
                                         valor = datetime.strptime(valor, "%d/%m/%Y")
                                 elif idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
