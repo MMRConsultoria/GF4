@@ -172,9 +172,15 @@ with aba1:
                 col1, col2 = st.columns(2)
 
                 with col1:
-                    st.markdown(f"<h2>📅 Período processado</h3><h2>{data_inicial} até {data_final}</h2>", unsafe_allow_html=True)
+                    st.markdown(f"""
+                        <div style='font-size:24px; font-weight: bold; margin-bottom:10px;'>📅 Período processado</div>
+                        <div style='font-size:30px; color:#000;'>{data_inicial} até {data_final}</div>
+                    """, unsafe_allow_html=True)
                 with col2:
-                    st.markdown(f"<h2>💰 Valor total</h3><h2>{valor_total_formatado}</h2>", unsafe_allow_html=True)
+                   st.markdown(f"""
+                        <div style='font-size:24px; font-weight: bold; margin-bottom:10px;'>💰 Valor total</div>
+                        <div style='font-size:30px; color:green;'>{valor_total_formatado}</div>
+                    """, unsafe_allow_html=True)
             else:
                 st.warning("⚠️ Não foi possível identificar o período de datas.")
 
