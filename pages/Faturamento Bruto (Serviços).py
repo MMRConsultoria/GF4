@@ -51,7 +51,7 @@ st.markdown("""
 aba1, aba2, aba3 = st.tabs(["📄 Upload e Processamento", "📥 Download Excel", "🔄 Atualizar Google Sheets"])
 
 # ================================
-# 📋 Aba 1 - Upload e Processamento (com cabeçalho bonito no topo)
+# 📋 Aba 1 - Upload e Processamento (com título antes dos botões)
 # ================================
 import pandas as pd
 import re
@@ -59,7 +59,7 @@ import math
 import time
 
 with aba1:
-    # ✅ Cabeçalho bonito
+    # 1. Cabeçalho bonito no topo
     st.markdown("""
         <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
             <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
@@ -67,7 +67,18 @@ with aba1:
         </div>
     """, unsafe_allow_html=True)
 
-    # 🔹 Upload do Arquivo
+    # 2. Botões de ação
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.button("📤 Upload e Processamento", disabled=True)  # Este botão é só ilustrativo
+    with col2:
+        st.button("⬇️ Download Excel", disabled=True)  # Este botão é só ilustrativo
+    with col3:
+        st.button("🔄 Atualizar Google Sheets", disabled=True)  # Este botão é só ilustrativo
+
+    st.markdown("---")
+
+    # 3. Upload do Arquivo
     uploaded_file = st.file_uploader("📄 Envie o arquivo Excel com a aba 'FaturamentoDiarioPorLoja'", type=["xlsx"])
 
     if uploaded_file:
@@ -142,6 +153,7 @@ with aba1:
 
         except Exception as e:
             st.error(f"❌ Erro ao processar o arquivo: {e}")
+
 
 
 
