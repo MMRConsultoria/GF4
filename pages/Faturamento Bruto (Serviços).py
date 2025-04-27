@@ -169,16 +169,28 @@ with aba1:
             st.session_state.df_final = df_final
             st.session_state.atualizou_google = False
             
+           # 📅 e 💰 - Mostrar Período e Valor Total lado a lado (em colunas)
             datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
+
             if not datas_validas.empty:
                 data_inicial = datas_validas.min().strftime("%d/%m/%Y")
                 data_final = datas_validas.max().strftime("%d/%m/%Y")
-                st.info(f"📅 Período processado: **{data_inicial}** até **{data_final}**")
+    
+                valor_total = df_final["Fat.Total"].sum().round(2)
+                valor_total_formatado = f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-            totalizador = df_final[["Fat.Total", "Serv/Tx", "Fat.Real"]].sum().round(2)
-            totalizador_formatado = totalizador.apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            st.subheader("💰 Totais Gerais (R$)")
-            st.dataframe(pd.DataFrame([totalizador_formatado]))
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    st.markdown("### 📅 Período processado")
+                    st.markdown(f"**{data_inicial} até {data_final}**")
+
+                with col2:
+                    st.markdown("### 💰 Valor total")
+                    st.markdown(f"**{valor_total_formatado}**")
+
+            else:
+                st.warning("⚠️ Não foi possível identificar o período de datas.")
 
             st.markdown("""
 🔗 [Clique aqui para abrir a **Tabela_Empresa**](https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link)
