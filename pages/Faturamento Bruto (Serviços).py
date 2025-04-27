@@ -304,6 +304,14 @@ with aba3:
                     # Verificar novos registros
                     registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
 
+
+
+                     # 🔥 Normalizar novos dados para comparar corretamente
+                    novos_dados_normalizados = [
+                        [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
+                        for row in novos_dados
+                    ]
+
                     total_novos = len(registros_novos)
                     total_existentes = len(novos_dados) - total_novos
 
