@@ -282,7 +282,7 @@ with aba3:
                         for idx, valor in enumerate(linha):
                             if idx == 0:  # Data (coluna A)
                                 if isinstance(valor, str):
-                                    valor = datetime.strptime(valor, "%d/%m/%Y")
+                                    valor = datetime.strptime(valor, "%d/%m/%Y").strftime("%d/%m/%Y")
                             elif idx in [6, 7, 8, 9]:
                                 if isinstance(valor, (int, float)) and not math.isnan(valor):
                                     valor = round(valor, 2)
