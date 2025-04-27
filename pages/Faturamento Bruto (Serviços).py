@@ -281,9 +281,9 @@ with aba3:
                         ]
 
 		# Preparar novos dados
-		novos_dados_raw = df_final.values.tolist()
-		novos_dados = []
-		for linha in novos_dados_raw:
+		  novos_dados_raw = df_final.values.tolist()
+		  novos_dados = []
+		    for linha in novos_dados_raw:
 			nova_linha = []
     			for idx, valor in enumerate(linha):
 				if idx == 0:  # Data (coluna A)
@@ -302,7 +302,7 @@ with aba3:
        				else:
             				valor = str(valor).strip()
         			nova_linha.append(valor)
-			novos_dados.append(nova_linha)
+                    novos_dados.append(nova_linha)
                             
                       # 🔥 Normalizar novos dados para comparar corretamente
                     novos_dados_normalizados = [
