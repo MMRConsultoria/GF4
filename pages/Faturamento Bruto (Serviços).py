@@ -247,17 +247,18 @@ with aba2:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (versão final corrigida, com tratamento de NaN e Ano)
+# 🔄 Aba 3 - Atualizar Google Sheets (versão final corrigida, sem duplicar)
 # ================================
 import math
 
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
 
+    # 🔗 Link para abrir o Faturamento Sistema Externo
     st.markdown("""
     🔗 [Clique aqui para abrir o **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
     """)
-    
+
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final
 
@@ -272,53 +273,47 @@ with aba3:
                         planilha_destino = gc.open("Faturamento Sistema Externo")
                         aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
-        # 🔥 Corrigir leitura dos dados existentes
-        dados_raw = aba_destino.get_all_values()
+                        # ================================
+                        # 🔥 Ler e normalizar dados existentes
+                        # ================================
+                        dados_raw = aba_destino.get_all_values()
 
-        if len(dados_raw) <= 1:
-            dados_existentes = []
-        else:
-            dados_existentes = [
-                [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
-                for row in dados_raw[1:]
-                ]
+                        if len(dados_raw) <= 1:
+                            dados_existentes = []
+                        else:
+                            dados_existentes = [
+                                [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
+                                for row in dados_raw[1:]
+                            ]
 
-        # 🔥 Corrigir preparação dos novos dados
-        novos_dados_raw = df_final.values.tolist()
+                        # ================================
+                        # 🔥 Preparar e normalizar novos dados
+                        # ================================
+                        novos_dados_raw = df_final.values.tolist()
+                        novos_dados = []
 
-        novos_dados = []
-        for linha in novos_dados_raw:
-            nova_linha = []
-            for idx, valor in enumerate(linha):
-                if idx in [6, 7, 8, 9]:  # Valores monetários
-                    if isinstance(valor, (int, float)) and not math.isnan(valor):
-                        valor = round(valor, 2)
-                    else:
-                        valor = ""
-            elif idx in [3, 5, 11]:  # Inteiros
-                    if isinstance(valor, (int, float)) and not math.isnan(valor):
-                        valor = int(valor)
-                    else:
-                        valor = ""
-            else:
-                valor = str(valor).strip()
-            # 🔥 Normalizar tudo para comparar
-            nova_linha.append(str(valor).strip().replace(",", "").replace(".", ""))
-            novos_dados.append(nova_linha)
+                        for linha in novos_dados_raw:
+                            nova_linha = []
+                            for idx, valor in enumerate(linha):
+                                if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
+                                    if isinstance(valor, (int, float)) and not math.isnan(valor):
+                                        valor = round(valor, 2)
+                                    else:
+                                        valor = ""
+                                elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano
+                                    if isinstance(valor, (int, float)) and not math.isnan(valor):
+                                        valor = int(valor)
+                                    else:
+                                        valor = ""
+                                else:
+                                    valor = str(valor).strip()
+                                # 🔥 Normalizar para comparação
+                                nova_linha.append(str(valor).strip().replace(",", "").replace(".", ""))
+                            novos_dados.append(nova_linha)
 
-        # 🔥 Agora sim comparar corretamente
-        registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
-
-        total_novos = len(registros_novos)
-        total_existentes = len(novos_dados) - total_novos
-
-
-
-
-
-
-                        
-                        # Verificar novos registros
+                        # ================================
+                        # 🔥 Verificar registros novos (sem duplicados)
+                        # ================================
                         registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
 
                         total_novos = len(registros_novos)
@@ -331,12 +326,12 @@ with aba3:
                             # Descobrir onde colar
                             primeira_linha_vazia = len(dados_raw) + 1  # linha após os dados
 
-                            # Atualizar
+                            # Atualizar no Google Sheets
                             aba_destino.update(f"A{primeira_linha_vazia}", registros_novos)
 
                             st.success(f"✅ {total_novos} novo(s) registro(s) enviado(s) para o Google Sheets!")
                             if total_existentes > 0:
-                                st.warning(f"⚠️ {total_existentes} registro(s) já existiam e não foram importados.")
+                                st.warning(f"⚠️ {total_existentes} registro(s) já existiam e foram ignorados.")
                             st.session_state.atualizou_google = True
 
                     except Exception as e:
