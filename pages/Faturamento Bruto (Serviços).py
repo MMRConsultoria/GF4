@@ -250,9 +250,9 @@ with aba2:
 # 🔄 Aba 3 - Atualizar Google Sheets (versão final corrigida, sem duplicar)
 # ================================
 import math
-🔴🔴🔴 ADICIONADO: 🔴🔴🔴
+🔴🔴🔴 Adicionado 🔴🔴🔴
 from datetime import datetime
-🔴🔴🔴 FIM 🔴🔴🔴
+🔴🔴🔴 Fim 🔴🔴🔴
 
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
@@ -287,17 +287,15 @@ with aba3:
                         for idx, valor in enumerate(linha):
                             if idx == 0:  # Data (coluna A)
                                 if isinstance(valor, str):
-🔴🔴🔴 ALTERADO AQUI 🔴🔴🔴
-# Antes você apenas passava string para string
-# Agora convertendo para tipo datetime
+🔴🔴🔴 Alterado 🔴🔴🔴
                                     valor = datetime.strptime(valor, "%d/%m/%Y")
-🔴🔴🔴 FIM DA ALTERAÇÃO 🔴🔴🔴
-                            elif idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
+🔴🔴🔴 Fim da alteração 🔴🔴🔴
+                            elif idx in [6, 7, 8, 9]:
                                 if isinstance(valor, (int, float)) and not math.isnan(valor):
                                     valor = round(valor, 2)
                                 else:
                                     valor = ""
-                            elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano
+                            elif idx in [3, 5, 11]:
                                 if isinstance(valor, (int, float)) and not math.isnan(valor):
                                     valor = int(valor)
                                 else:
