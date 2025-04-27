@@ -206,7 +206,7 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (com contagem de registros novos e duplicados)
+# 🔄 Aba 3 - Atualizar Google Sheets (versão final corrigida)
 # ================================
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
@@ -228,32 +228,27 @@ with aba3:
                         # Ler dados existentes
                         dados_raw = aba_destino.get_all_values()
 
-                        # Preparar dados existentes (linhas existentes sem o cabeçalho)
+                        # Preparar dados existentes (linha por linha sem cabeçalho)
                         dados_existentes = [ [str(cell).strip() for cell in row] for row in dados_raw[1:] ]
 
-                        # Pega os dados e formata valores
+                        # Preparar novos dados do df_final
                         novos_dados_raw = df_final.values.tolist()
 
-
-
-
-
-                        
-                       novos_dados = []
-                       for linha in novos_dados_raw:
-                           nova_linha = []
+                        novos_dados = []
+                        for linha in novos_dados_raw:
+                            nova_linha = []
                             for idx, valor in enumerate(linha):
-                            if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
-                                if isinstance(valor, (int, float)):
-                                    valor = round(valor, 2)  # Número real com 2 casas decimais
-                            elif idx in [3, 5]:  # Código Everest, Código Grupo Everest
-                                if isinstance(valor, (int, float)):
-                                    valor = int(valor)  # Número inteiro, sem casas decimais
-                            else:
-                                valor = str(valor).strip()  # Para textos
-                            nova_linha.append(valor)
-                        novos_dados.append(nova_linha)
-                    
+                                if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
+                                    if isinstance(valor, (int, float)):
+                                        valor = round(valor, 2)  # manter número real com 2 casas
+                                elif idx in [3, 5]:  # Código Everest, Código Grupo Everest
+                                    if isinstance(valor, (int, float)):
+                                        valor = int(valor)  # número inteiro
+                                else:
+                                    valor = str(valor).strip()
+                                nova_linha.append(valor)
+                            novos_dados.append(nova_linha)
+
                         # Verificar novos registros
                         registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
 
