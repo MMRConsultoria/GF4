@@ -64,16 +64,11 @@ aba1, aba2, aba3 = st.tabs(["📄 Upload e Processamento", "📥 Download Excel"
 # 📄 Aba 1 - Upload e Processamento
 # ================================
 with aba1:
-   #st.header("📄 Upload e Processamento")
-
     uploaded_file = st.file_uploader("📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de faturamento", type=["xlsx"])
 
-    if uploaded_file is None:
-        st.info("📂 Envie um arquivo para iniciar o processamento.")
-    else:
-        st.success("✅ Arquivo enviado!")
-
+    if uploaded_file:
         try:
+            # Processamento normal (o seu que já estava funcionando)
             xls = pd.ExcelFile(uploaded_file)
             df_raw = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None)
 
@@ -85,9 +80,9 @@ with aba1:
             df = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None, skiprows=4)
             df.iloc[:, 2] = pd.to_datetime(df.iloc[:, 2], dayfirst=True, errors='coerce')
 
+            # 🔹 Continuação do processamento (registros, colunas, etc.)
             registros = []
             col = 3
-
             while col < df.shape[1]:
                 nome_loja = str(df_raw.iloc[3, col]).strip()
                 if re.match(r"^\d+\s*-?\s*", nome_loja):
@@ -127,25 +122,18 @@ with aba1:
                 "Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket", "Mês", "Ano"
             ])
 
+            # Ajustes
             df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.lower()
             df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
             df_final = pd.merge(df_final, df_empresa, on="Loja", how="left")
 
-            empresas_nao_localizadas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
-
-            if len(empresas_nao_localizadas) > 0:
-                st.warning(f"⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s):")
-                for loja in empresas_nao_localizadas:
-                    st.text(f"🔎 {loja}")
-            else:
-                st.success("✅ Todas as empresas foram localizadas!")
-
+            # Adiciona Dia da Semana
             dias_traducao = {
                 "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
                 "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
             }
-            df_final.insert(1, "Dia da Semana", df_final["Data"].dt.day_name().map(dias_traducao))
-            df_final["Data"] = df_final["Data"].dt.strftime("%d/%m/%Y")
+            df_final.insert(1, "Dia da Semana", pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.day_name().map(dias_traducao))
+            df_final["Data"] = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.strftime("%d/%m/%Y")
 
             for col_val in ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas"]:
                 df_final[col_val] = pd.to_numeric(df_final[col_val], errors="coerce").round(2)
@@ -168,30 +156,29 @@ with aba1:
 
             st.session_state.df_final = df_final
             st.session_state.atualizou_google = False
-            
-           # 📅 e 💰 - Mostrar Período e Valor Total lado a lado (em colunas)
+
+            # 📢 AQUI mostramos o nome do arquivo + Período + Valor Total
+            st.markdown(f"<h3>📄 Arquivo selecionado: {uploaded_file.name}</h3>", unsafe_allow_html=True)
+
             datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
 
             if not datas_validas.empty:
                 data_inicial = datas_validas.min().strftime("%d/%m/%Y")
                 data_final = datas_validas.max().strftime("%d/%m/%Y")
-    
+                
                 valor_total = df_final["Fat.Total"].sum().round(2)
                 valor_total_formatado = f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
                 col1, col2 = st.columns(2)
 
                 with col1:
-                    st.markdown("### 📅 Período processado")
-                    st.markdown(f"**{data_inicial} até {data_final}**")
-
+                    st.markdown(f"<h3>📅 Período processado</h3><h2>{data_inicial} até {data_final}</h2>", unsafe_allow_html=True)
                 with col2:
-                    st.markdown("### 💰 Valor total")
-                    st.markdown(f"**{valor_total_formatado}**")
-
+                    st.markdown(f"<h3>💰 Valor total</h3><h2>{valor_total_formatado}</h2>", unsafe_allow_html=True)
             else:
                 st.warning("⚠️ Não foi possível identificar o período de datas.")
 
+            # 🔗 Links úteis
             st.markdown("""
 🔗 [Clique aqui para abrir a **Tabela_Empresa**](https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link)
 
