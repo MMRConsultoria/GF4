@@ -280,27 +280,28 @@ with aba3:
                             for row in dados_raw[1:]
                         ]
 
-                      # 🔥 Preparar novos dados corretamente
+                      # Preparar novos dados
                         novos_dados_raw = df_final.values.tolist()
-                        novos_dados = []
 
+                        novos_dados = []
                         for linha in novos_dados_raw:
                             nova_linha = []
                             for idx, valor in enumerate(linha):
-                                if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket (R$ com vírgula)
+                                if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
                                     if isinstance(valor, (int, float)) and not math.isnan(valor):
-                                        valor = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                                        valor = round(valor, 2)  # número real
                                     else:
-                                        valor = ""
-                                elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano (inteiros)
+                                        valor = ""  # vazio se NaN
+                                elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano
                                     if isinstance(valor, (int, float)) and not math.isnan(valor):
-                                        valor = int(valor)
+                                        valor = int(valor)  # número inteiro
                                     else:
-                                        valor = ""
+                                        valor = ""  # vazio se NaN
                                 else:
-                                        valor = str(valor).strip()
+                                    valor = str(valor).strip()
                                 nova_linha.append(valor)
-                        novos_dados.append(nova_linha)
+                            novos_dados.append(nova_linha)
+
 
 
 
