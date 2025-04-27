@@ -309,9 +309,10 @@ with aba3:
                     ]
                     
                     # Verificar novos registros
-                    registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
-                    #registros_novos = [linha for linha in novos_dados_normalizados if linha not in dados_existentes]
-                  
+                    registros_novos = [
+                        linha_original for linha_original, linha_normalizada in zip(novos_dados, novos_dados_normalizados)
+                        if linha_normalizada not in dados_existentes
+                    ]
                     total_novos = len(registros_novos)
                     total_existentes = len(novos_dados) - total_novos
 
