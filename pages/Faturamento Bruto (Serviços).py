@@ -68,10 +68,11 @@ with aba1:
 
     if uploaded_file:
         try:
-            # Processamento normal (o seu que já estava funcionando)
+            # 🔹 Carregar o arquivo
             xls = pd.ExcelFile(uploaded_file)
             df_raw = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None)
 
+            # 🔹 Validar B1
             texto_b1 = str(df_raw.iloc[0, 1]).strip().lower()
             if texto_b1 != "faturamento diário sintético multi-loja":
                 st.error(f"❌ A célula B1 está com '{texto_b1}'. Corrija para 'Faturamento diário sintético multi-loja'.")
@@ -80,7 +81,7 @@ with aba1:
             df = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None, skiprows=4)
             df.iloc[:, 2] = pd.to_datetime(df.iloc[:, 2], dayfirst=True, errors='coerce')
 
-            # 🔹 Continuação do processamento (registros, colunas, etc.)
+            # 🔹 Processamento dos registros
             registros = []
             col = 3
             while col < df.shape[1]:
@@ -118,16 +119,16 @@ with aba1:
             if len(registros) == 0:
                 st.warning("⚠️ Nenhum registro encontrado.")
 
+            # 🔹 Montar df_final
             df_final = pd.DataFrame(registros, columns=[
                 "Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket", "Mês", "Ano"
             ])
 
-            # Ajustes
             df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.lower()
             df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
             df_final = pd.merge(df_final, df_empresa, on="Loja", how="left")
 
-            # Adiciona Dia da Semana
+            # 🔹 Ajustar dados
             dias_traducao = {
                 "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
                 "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
@@ -157,13 +158,15 @@ with aba1:
             st.session_state.df_final = df_final
             st.session_state.atualizou_google = False
 
-            # 📢 AQUI mostramos o nome do arquivo + Período + Valor Total
-           # st.markdown(f"""
-           #     <div style='font-size:10px; font-weight: bold; margin-bottom:10px;'>
-           #         📄 Arquivo selecionado: {uploaded_file.name}
-           #     </div>
-           # """, unsafe_allow_html=True)
+            # 🔥 Agora exibir:
+            # 📄 Nome do Arquivo
+            st.markdown(f"""
+                <div style='font-size:24px; font-weight: bold; margin-bottom:10px;'>
+                    📄 Arquivo selecionado: {uploaded_file.name}
+                </div>
+            """, unsafe_allow_html=True)
 
+            # 📅 e 💰 Período e Valor Total
             datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
 
             if not datas_validas.empty:
@@ -177,16 +180,27 @@ with aba1:
 
                 with col1:
                     st.markdown(f"""
-                        <div style='font-size:20px; font-weight: bold; margin-bottom:10px;'>📅 Período processado</div>
-                        <div style='font-size:20px; color:#000;'>{data_inicial} até {data_final}</div>
+                        <div style='font-size:24px; font-weight: bold; margin-bottom:10px;'>📅 Período processado</div>
+                        <div style='font-size:30px; color:#000;'>{data_inicial} até {data_final}</div>
                     """, unsafe_allow_html=True)
+
                 with col2:
-                   st.markdown(f"""
-                        <div style='font-size:20px; font-weight: bold; margin-bottom:10px;'>💰 Valor total</div>
-                        <div style='font-size:20px; color:green;'>{valor_total_formatado}</div>
+                    st.markdown(f"""
+                        <div style='font-size:24px; font-weight: bold; margin-bottom:10px;'>💰 Valor total</div>
+                        <div style='font-size:30px; color:green;'>{valor_total_formatado}</div>
                     """, unsafe_allow_html=True)
             else:
                 st.warning("⚠️ Não foi possível identificar o período de datas.")
+
+            # 🔎 Empresas não localizadas
+            empresas_nao_localizadas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
+
+            if len(empresas_nao_localizadas) > 0:
+                st.warning(f"⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s):")
+                for loja in empresas_nao_localizadas:
+                    st.text(f"🔎 {loja}")
+            else:
+                st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
 
             # 🔗 Links úteis
             st.markdown("""
