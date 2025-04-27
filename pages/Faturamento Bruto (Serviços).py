@@ -234,6 +234,11 @@ with aba3:
                         # Pega os dados e formata valores
                         novos_dados_raw = df_final.values.tolist()
 
+
+
+
+
+                        
                         # Corrigir apenas as colunas G,H,I,J para valor em vírgula, sem separador de milhar
                         novos_dados = []
                         for linha in novos_dados_raw:
@@ -241,11 +246,11 @@ with aba3:
                             for idx, valor in enumerate(linha):
                                 if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
                                     if isinstance(valor, (int, float)):
-                                        valor = f"{valor:.2f}".replace(".", ",")  # formato 1000,50
+                                        valor = round(valor, 2)  # manter como número real
                                 else:
-                                    valor = str(valor).strip()
+                                    valor = str(valor).strip()  # transformar os outros em texto
                                 nova_linha.append(valor)
-                            novos_dados.append(nova_linha)    
+                            novos_dados.append(nova_linha)
                       
                         # Verificar novos registros
                         registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
