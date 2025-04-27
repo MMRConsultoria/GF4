@@ -265,78 +265,63 @@ with aba3:
         if st.button("📤 Atualizar no Google Sheets"):
             with st.spinner('🔄 Atualizando...'):
                 try:
-                    # 🔥 Aqui você mantém seu código de abrir planilha, comparar e atualizar
-                except Exception as e:
-                    st.error(f"❌ Erro ao atualizar: {e}")
-    else:
-        st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
+                    # Abrir a planilha e aba de destino
+                    planilha_destino = gc.open("Faturamento Sistema Externo")
+                    aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
-                        # Abrir a planilha e aba de destino
-                        planilha_destino = gc.open("Faturamento Sistema Externo")
-                        aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
+                    # 🔥 Ler e normalizar dados existentes
+                    dados_raw = aba_destino.get_all_values()
 
-                        # ================================
-                        # 🔥 Ler e normalizar dados existentes
-                        # ================================
-                        dados_raw = aba_destino.get_all_values()
+                    if len(dados_raw) <= 1:
+                        dados_existentes = []
+                    else:
+                        dados_existentes = [
+                            [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
+                            for row in dados_raw[1:]
+                        ]
 
-                        if len(dados_raw) <= 1:
-                            dados_existentes = []
-                        else:
-                            dados_existentes = [
-                                [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
-                                for row in dados_raw[1:]
-                            ]
+                    # 🔥 Preparar e normalizar novos dados
+                    novos_dados_raw = df_final.values.tolist()
+                    novos_dados = []
 
-                        # 🔥 Preparar novos dados corretamente
-                        novos_dados_raw = df_final.values.tolist()
-                        novos_dados = []
-
-                        for linha in novos_dados_raw:
-                            nova_linha = []
-                            for idx, valor in enumerate(linha):
-                                if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket (R$ com vírgula)
-                                    if isinstance(valor, (int, float)) and not math.isnan(valor):
-                                        valor = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                                    else:
-                                        valor = ""
-                                elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano (inteiros)
-                                    if isinstance(valor, (int, float)) and not math.isnan(valor):
-                                        valor = int(valor)
-                                    else:
-                                        valor = ""
+                    for linha in novos_dados_raw:
+                        nova_linha = []
+                        for idx, valor in enumerate(linha):
+                            if idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket (valores monetários)
+                                if isinstance(valor, (int, float)) and not math.isnan(valor):
+                                    valor = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                                 else:
-                                        valor = str(valor).strip()
-                                nova_linha.append(valor)
+                                    valor = ""
+                            elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano (inteiros)
+                                if isinstance(valor, (int, float)) and not math.isnan(valor):
+                                    valor = int(valor)
+                                else:
+                                    valor = ""
+                            else:
+                                valor = str(valor).strip()
+                            nova_linha.append(valor)
                         novos_dados.append(nova_linha)
 
-                        # ================================
-                        # 🔥 Verificar registros novos (sem duplicados)
-                        # ================================
-                        registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
+                    # 🔥 Verificar registros novos (sem duplicados)
+                    registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
 
-                        total_novos = len(registros_novos)
-                        total_existentes = len(novos_dados) - total_novos
+                    total_novos = len(registros_novos)
+                    total_existentes = len(novos_dados) - total_novos
 
-                        if total_novos == 0:
-                            st.info(f"✅ Nenhum novo registro para atualizar. {total_existentes} registro(s) já existiam no Google Sheets.")
-                            st.session_state.atualizou_google = True
-                        else:
-                            # Descobrir onde colar
-                            primeira_linha_vazia = len(dados_raw) + 1  # linha após os dados
+                    if total_novos == 0:
+                        st.info(f"✅ Nenhum novo registro para atualizar. {total_existentes} registro(s) já existiam no Google Sheets.")
+                    else:
+                        primeira_linha_vazia = len(dados_raw) + 1  # linha após os dados existentes
+                        aba_destino.update(f"A{primeira_linha_vazia}", registros_novos)
 
-                            # Atualizar no Google Sheets
-                            aba_destino.update(f"A{primeira_linha_vazia}", registros_novos)
+                        st.success(f"✅ {total_novos} novo(s) registro(s) enviado(s) para o Google Sheets!")
+                        if total_existentes > 0:
+                            st.warning(f"⚠️ {total_existentes} registro(s) já existiam e foram ignorados.")
 
-                            st.success(f"✅ {total_novos} novo(s) registro(s) enviado(s) para o Google Sheets!")
-                            if total_existentes > 0:
-                                st.warning(f"⚠️ {total_existentes} registro(s) já existiam e foram ignorados.")
-                            st.session_state.atualizou_google = True
+                except Exception as e:
+                    st.error(f"❌ Erro ao atualizar: {e}")
 
-                    except Exception as e:
-                        st.error(f"❌ Erro ao atualizar: {e}")
-                        st.session_state.atualizou_google = False
-        else:
-            st.info("✅ Dados já foram atualizados nesta sessão.")
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
+
+
