@@ -158,7 +158,7 @@ with aba1:
             st.session_state.atualizou_google = False
 
             # 📢 AQUI mostramos o nome do arquivo + Período + Valor Total
-            st.markdown(f"<h3>📄 Arquivo selecionado: {uploaded_file.name}</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h3>📄 Arquivo selecionado: {uploaded_file.name}</h1>", unsafe_allow_html=True)
 
             datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
 
@@ -172,9 +172,9 @@ with aba1:
                 col1, col2 = st.columns(2)
 
                 with col1:
-                    st.markdown(f"<h3>📅 Período processado</h3><h2>{data_inicial} até {data_final}</h2>", unsafe_allow_html=True)
+                    st.markdown(f"<h2>📅 Período processado</h3><h2>{data_inicial} até {data_final}</h2>", unsafe_allow_html=True)
                 with col2:
-                    st.markdown(f"<h3>💰 Valor total</h3><h2>{valor_total_formatado}</h2>", unsafe_allow_html=True)
+                    st.markdown(f"<h2>💰 Valor total</h3><h2>{valor_total_formatado}</h2>", unsafe_allow_html=True)
             else:
                 st.warning("⚠️ Não foi possível identificar o período de datas.")
 
