@@ -231,8 +231,18 @@ with aba3:
                         # Preparar dados existentes (linhas existentes sem o cabeçalho)
                         dados_existentes = [ [str(cell).strip() for cell in row] for row in dados_raw[1:] ]
 
-                        # Preparar novos dados
-                        novos_dados = [ [str(cell).strip() for cell in row] for row in df_final.values.tolist() ]
+                        # Pega os dados e formata valores
+                        novos_dados_raw = df_final.values.tolist()
+
+                        # Formatar números corretamente (padrão BR)
+                        novos_dados = []
+                        for linha in novos_dados_raw:
+                            nova_linha = []
+                            for valor in linha:
+                                if isinstance(valor, (int, float)):
+                                    valor = f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                                nova_linha.append(str(valor).strip())
+                            novos_dados.append(nova_linha)
 
                         # Verificar novos registros
                         registros_novos = [linha for linha in novos_dados if linha not in dados_existentes]
