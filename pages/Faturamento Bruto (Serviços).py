@@ -61,12 +61,14 @@ aba1, aba2, aba3 = st.tabs(["📄 Upload e Processamento", "📥 Download Excel"
 # ================================
 # 📋 Aba 1 - Upload e Processamento (com cabeçalho bonito no topo)
 # ================================
+
 import pandas as pd
 import re
 import math
 import time
 
-      # 🔹 Upload do Arquivo
+with aba1:
+    # 🔹 Upload do Arquivo
     uploaded_file = st.file_uploader("📄 Envie o arquivo Excel com a aba 'FaturamentoDiarioPorLoja'", type=["xlsx"])
 
     if uploaded_file:
