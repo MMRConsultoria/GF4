@@ -66,16 +66,7 @@ import re
 import math
 import time
 
-with aba1:
-    # ✅ Cabeçalho bonito
-    st.markdown("""
-        <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
-            <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
-            <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório de Faturamento por Serviço</h1>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # 🔹 Upload do Arquivo
+       # 🔹 Upload do Arquivo
     uploaded_file = st.file_uploader("📄 Envie o arquivo Excel com a aba 'FaturamentoDiarioPorLoja'", type=["xlsx"])
 
     if uploaded_file:
