@@ -250,12 +250,13 @@ with aba2:
 # 🔄 Aba 3 - Atualizar Google Sheets (versão final corrigida, sem duplicar)
 # ================================
 import math
-from datetime import datetime  # 🔴🔴🔴 ADICIONAR ESSA IMPORTAÇÃO 🔴🔴🔴
+🔴🔴🔴 ADICIONADO: 🔴🔴🔴
+from datetime import datetime
+🔴🔴🔴 FIM 🔴🔴🔴
 
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
 
-    # 🔗 Link para abrir o Faturamento Sistema Externo
     st.markdown("""
     🔗 [Clique aqui para abrir o **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
     """)
@@ -266,11 +267,9 @@ with aba3:
         if st.button("📤 Atualizar no Google Sheets"):
             with st.spinner('🔄 Atualizando...'):
                 try:
-                    # Abrir a planilha e aba de destino
                     planilha_destino = gc.open("Faturamento Sistema Externo")
                     aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
-                    # 🔥 Ler e normalizar dados existentes
                     dados_raw = aba_destino.get_all_values()
 
                     if len(dados_raw) <= 1:
@@ -281,7 +280,6 @@ with aba3:
                             for row in dados_raw[1:]
                         ]
 
-                    # Preparar novos dados
                     novos_dados_raw = df_final.values.tolist()
                     novos_dados = []
                     for linha in novos_dados_raw:
@@ -289,36 +287,36 @@ with aba3:
                         for idx, valor in enumerate(linha):
                             if idx == 0:  # Data (coluna A)
                                 if isinstance(valor, str):
-🔴🔴🔴 ALTERAÇÃO AQUI 🔴🔴🔴
-# Aqui a alteração importante:
+🔴🔴🔴 ALTERADO AQUI 🔴🔴🔴
+# Antes você apenas passava string para string
+# Agora convertendo para tipo datetime
                                     valor = datetime.strptime(valor, "%d/%m/%Y")
 🔴🔴🔴 FIM DA ALTERAÇÃO 🔴🔴🔴
                             elif idx in [6, 7, 8, 9]:  # Fat.Total, Serv/Tx, Fat.Real, Ticket
                                 if isinstance(valor, (int, float)) and not math.isnan(valor):
-                                    valor = round(valor, 2)  # número real
+                                    valor = round(valor, 2)
                                 else:
-                                    valor = ""  # vazio se NaN
+                                    valor = ""
                             elif idx in [3, 5, 11]:  # Código Everest, Código Grupo Everest, Ano
                                 if isinstance(valor, (int, float)) and not math.isnan(valor):
-                                    valor = int(valor)  # número inteiro
+                                    valor = int(valor)
                                 else:
-                                    valor = ""  # vazio se NaN
+                                    valor = ""
                             else:
                                 valor = str(valor).strip()
-                        nova_linha.append(valor)
-                    novos_dados.append(nova_linha)
+                            nova_linha.append(valor)
+                        novos_dados.append(nova_linha)
 
-                    # 🔥 Normalizar novos dados para comparar corretamente
                     novos_dados_normalizados = [
                         [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
                         for row in novos_dados
                     ]
 
-                    # Verificar novos registros
                     registros_novos = [
                         linha_original for linha_original, linha_normalizada in zip(novos_dados, novos_dados_normalizados)
                         if linha_normalizada not in dados_existentes
                     ]
+
                     total_novos = len(registros_novos)
                     total_existentes = len(novos_dados) - total_novos
 
@@ -326,56 +324,28 @@ with aba3:
                         st.info(f"✅ Nenhum novo registro para atualizar. {total_existentes} registro(s) já existiam no Google Sheets.")
                         st.session_state.atualizou_google = True
                     else:
-                        # Descobrir onde colar
-                        primeira_linha_vazia = len(dados_raw) + 1  # linha após os dados
-                       
-                        # 🔥 Formatar a coluna de Data antes de atualizar
-                        aba_destino.format("A:A", {
-                            "numberFormat": {
-                                "type": "DATE",
-                                "pattern": "dd/MM/yyyy"
-                            }
-                        })
-                        # 🔥 Formatar coluna D como Número inteiro
-                        aba_destino.format("D:D", {
-                            "numberFormat": {
-                                "type": "NUMBER",
-                                "pattern": "0"
-                            }
-                        })
-                        # 🔥 Formatar coluna F como Número inteiro (e não E!)
-                        aba_destino.format("F:F", {  # 🔴🔴🔴 CONFERIDO, DEIXAR COMO F 🔴🔴🔴
-                            "numberFormat": {
-                                "type": "NUMBER",
-                                "pattern": "0"
-                            }
-                        })
+                        primeira_linha_vazia = len(dados_raw) + 1
 
-                        # 🔥 Formatar colunas G, H, I, J como Moeda
+                        aba_destino.format("A:A", {
+                            "numberFormat": {"type": "DATE", "pattern": "dd/MM/yyyy"}
+                        })
+                        aba_destino.format("D:D", {
+                            "numberFormat": {"type": "NUMBER", "pattern": "0"}
+                        })
+                        aba_destino.format("F:F", {
+                            "numberFormat": {"type": "NUMBER", "pattern": "0"}
+                        })
                         for coluna in ["G", "H", "I", "J"]:
                             aba_destino.format(f"{coluna}:{coluna}", {
-                                "numberFormat": {
-                                    "type": "CURRENCY",
-                                    "pattern": "[$R$-416]#,##0.00"
-                                }
+                                "numberFormat": {"type": "CURRENCY", "pattern": "[$R$-416]#,##0.00"}
                             })
-
-                        # 🔥 Formatar coluna K como Texto
                         aba_destino.format("K:K", {
-                            "numberFormat": {
-                                "type": "TEXT"
-                            }
+                            "numberFormat": {"type": "TEXT"}
                         })
-
-                        # 🔥 Formatar coluna L como Ano (4 dígitos)
                         aba_destino.format("L:L", {
-                            "numberFormat": {
-                                "type": "NUMBER",
-                                "pattern": "0000"
-                            }
+                            "numberFormat": {"type": "NUMBER", "pattern": "0000"}
                         })
 
-                        # Atualizar
                         aba_destino.update(f"A{primeira_linha_vazia}", registros_novos)
 
                         st.success(f"✅ {total_novos} novo(s) registro(s) enviado(s) para o Google Sheets!")
@@ -386,5 +356,5 @@ with aba3:
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar: {e}")
                     st.session_state.atualizou_google = False
-
-
+    else:
+        st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
