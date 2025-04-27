@@ -354,7 +354,7 @@ with aba3:
                         for coluna in ["G", "H", "I", "J"]:
                             aba_destino.format(f"{coluna}:{coluna}", {
                                 "numberFormat": {
-                                    "type": "ACCOUNTING",
+                                    "type": "CURRENCY",
                                     "pattern": "[$R$-416]#,##0.00"
                                 }
                             })
