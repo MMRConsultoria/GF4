@@ -309,6 +309,13 @@ with aba3:
                     if novos_dados:
                         primeira_linha_vazia = len(valores_existentes) + 1
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
+
+
+                        # Aplicar a formatação de moeda no Google Sheets
+                        for i in range(1, len(novos_dados[0]) + 1):  # Colunas de 1 a N
+                            aba_destino.format(f"{chr(64 + i)}2:{chr(64 + i)}", {"numberFormat": {"type": "CURRENCY", "pattern": "[$R$-416]#,##0.00"}})
+                        
+                        
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
                     else:
                         st.info("✅ Não há novos dados para atualizar.")
