@@ -325,26 +325,26 @@ with aba3:
                     # 🔥 Correção: transformar a coluna de Data (coluna A) para número serial antes de comparar
                    
                     if len(dados_raw) <= 1:
-   						dados_existentes = []
-					else:
-   						dados_existentes = []
-   						for row in dados_raw[1:]:  # Pular cabeçalho
-       						if len(row) >= 10:
-           						nova_row = []
-            					for idx, cell in enumerate(row):
-               						if idx == 0:  # Data (coluna A)
-                   						try:
-                        					data_dt = pd.to_datetime(cell, dayfirst=True, errors='coerce')
-                        					if pd.isna(data_dt):
-                           						nova_row.append("")
-                       						else:
-                            					serial = str(int((data_dt - pd.Timestamp("1899-12-30")).days))
-                            					nova_row.append(serial)
-                   						except:
-                       						nova_row.append("")
-									else:
-										nova_row.append(str(cell).strip().replace(",", "").replace(".", "").lower())
-								dados_existentes.append(nova_row)
+			dados_existentes = []
+		    else:
+			dados_existentes = []
+			for row in dados_raw[1:]:  # Pular cabeçalho
+				if len(row) >= 10:
+					nova_row = []
+					for idx, cell in enumerate(row):
+						if idx == 0:  # Data (coluna A)
+							try:
+								data_dt = pd.to_datetime(cell, dayfirst=True, errors='coerce')
+								if pd.isna(data_dt):
+									nova_row.append("")
+								else:
+									serial = str(int((data_dt - pd.Timestamp("1899-12-30")).days))
+									nova_row.append(serial)
+							except:
+								nova_row.append("")
+						else:
+							nova_row.append(str(cell).strip().replace(",", "").replace(".", "").lower())
+					dados_existentes.append(nova_row)
 
                             
                     novos_dados_raw = df_final.values.tolist()
