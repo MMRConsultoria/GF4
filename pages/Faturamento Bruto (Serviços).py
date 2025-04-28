@@ -245,17 +245,9 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-        # ================================
+# ================================
 # 🔄 Aba 3 - Atualizar Google Sheets (Sem erro JSON)
 # ================================
-
-import streamlit as st
-import pandas as pd
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-import json
-
-# 🔹 ABA 3
 
 with aba3:
     st.header("📤 Atualizar Banco de Dados (Sem erro JSON e sem aspas na data)")
@@ -294,4 +286,3 @@ with aba3:
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
-
