@@ -290,9 +290,9 @@ with aba3:
         for col in ['Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
             df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
             
-        # Converter todo o DataFrame para string, para evitar problemas com o Timestamp, mas sem afetar as colunas G, H, I e J?
-        df_final['Data'] = df_final['Data'].astype(str)?
-        df_final = df_final.applymap(str)?
+        # Converter todo o DataFrame para string, para evitar problemas com o Timestamp, mas sem afetar as colunas G, H, I e J
+        df_final['Data'] = df_final['Data'].astype(str)
+        df_final = df_final.applymap(str)
 
         # Conectar ao Google Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
