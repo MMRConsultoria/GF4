@@ -246,6 +246,51 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # ================================
+# 🛠️ Função para gerar chave simples
+# ================================
+from datetime import datetime, timedelta
+
+def gerar_chave_indices(linha):
+    """Gera chave normalizada baseada em Data (A), Loja (C) e Fat.Total (G)."""
+    linha_normalizada = []
+
+    for idx, cell in enumerate(linha):
+        if idx == 0:  # Data
+            try:
+                if isinstance(cell, (int, float)):
+                    data = datetime(1899, 12, 30) + timedelta(days=float(cell))
+                    valor = data.strftime("%d/%m/%Y")
+                else:
+                    data = pd.to_datetime(cell, dayfirst=True, errors='coerce')
+                    valor = data.strftime("%d/%m/%Y") if not pd.isna(data) else ""
+            except:
+                valor = ""
+            linha_normalizada.append(valor)
+
+        elif idx == 2:  # Loja
+            try:
+                valor = str(cell).strip().lower()
+            except:
+                valor = ""
+            linha_normalizada.append(valor)
+
+        elif idx == 6:  # Fat.Total
+            try:
+                valor = str(cell).strip()
+                valor = valor.replace(".", "").replace(",", ".")
+                valor = float(valor)
+                valor = f"{valor:.2f}".replace(".", ",")
+            except:
+                valor = "0,00"
+            linha_normalizada.append(valor)
+
+    chave = "".join(linha_normalizada)
+    return chave
+
+
+
+
+# ================================
 # 🔗 Parte 1 - Link e Botão Atualizar
 # ================================
 
