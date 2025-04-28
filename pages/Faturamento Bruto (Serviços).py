@@ -290,6 +290,13 @@ with aba3:
 
         # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
         df_final = df_final.applymap(str)
+
+          # Aqui, garantimos que os valores nas colunas G, H, I e J sejam numéricos
+        # e substituímos o ponto por vírgula, como foi feito manualmente
+        for col in ['Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
+            df_final[col] = df_final[col].apply(lambda x: x.replace('.', ',') if isinstance(x, str) else x)
+
+
         
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
