@@ -260,4 +260,31 @@ with aba3:
 
     # 📤 Botão para atualizar
     if st.button("📤 Atualizar no Google Sheets"):
-        st.info("🚧 Atualização ainda não implementada. Em breve...")
+        with st.spinner('🔄 Atualizando...'):
+            try:
+                # 🔹 Abrir a planilha e a aba
+                planilha_destino = gc.open("Faturamento Sistema Externo")
+                aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
+
+                # 🔹 Buscar dados já existentes
+                dados_existentes = aba_destino.get_all_values()
+                primeira_linha_vazia = len(dados_existentes) + 1
+
+                # 🔹 Carregar df_final do session_state
+                if 'df_final' in st.session_state:
+                    df_final = st.session_state.df_final.copy()
+
+                    # 🔹 Ignorar a primeira linha (cabeçalho)
+                    dados_para_colar = df_final.iloc[1:].values.tolist()
+
+                    if dados_para_colar:
+                        # 🔹 Atualizar direto no Google Sheets
+                        aba_destino.update(f"A{primeira_linha_vazia}", dados_para_colar)
+                        st.success(f"✅ {len(dados_para_colar)} linhas coladas com sucesso no Google Sheets!")
+                    else:
+                        st.warning("⚠️ Não há dados para colar (após remover o cabeçalho).")
+                else:
+                    st.warning("⚠️ Nenhum dado encontrado. Faça o upload primeiro.")
+
+            except Exception as e:
+                st.error(f"❌ Erro ao atualizar: {e}")
