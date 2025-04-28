@@ -246,7 +246,7 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # ================================
-# 🔄 Aba 3 - Atualizar, Tratar e Atualizar o Google Sheets
+# 🔄 Aba 3 - Atualizar Google Sheets de forma Segura (Só Novos)
 # ================================
 
 import streamlit as st
@@ -295,91 +295,71 @@ def gerar_chave_indices(linha):
     chave = f"{data}{loja}{fat_total_str}"
     return chave
 
-@st.cache_data
-def convert_df_to_excel(df):
-    from io import BytesIO
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name='Dados Limpos')
-    processed_data = output.getvalue()
-    return processed_data
-
 # 🔹 ABA 3
 
 with aba3:
-    st.header("🔄 Atualizar Relatório Tratado")
+    st.header("🔄 Atualizar Banco de Dados - Só Novos Registros")
 
     # 🔗 Link para abrir o Google Sheets
     st.markdown("""
     🔗 [Clique aqui para abrir o **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
     """, unsafe_allow_html=True)
 
-    atualizar = st.button("🔄 Buscar e Tratar Dados")
+    if 'df_final' in st.session_state:
+        df_final = st.session_state.df_final.copy()
 
-    if atualizar:
-        with st.spinner('🔄 Buscando e tratando dados...'):
-            try:
-                # 🔹 Conectar ao Google Sheets
-                scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-                credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-                credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-                gc = gspread.authorize(credentials)
+        if st.button("🔍 Verificar novos registros"):
+            with st.spinner('🔄 Buscando dados atuais no Google Sheets...'):
+                try:
+                    # Conectar ao Google Sheets
+                    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+                    credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+                    credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+                    gc = gspread.authorize(credentials)
 
-                planilha = gc.open("Faturamento Sistema Externo")
-                aba = planilha.worksheet("Fat Sistema Externo")
+                    planilha = gc.open("Faturamento Sistema Externo")
+                    aba = planilha.worksheet("Fat Sistema Externo")
 
-                dados_raw = aba.get_all_values()
-                df_raw = pd.DataFrame(dados_raw[1:], columns=dados_raw[0])  # Usa cabeçalho real da linha 0
+                    dados_sheets = aba.get_all_values()
 
-                st.subheader("📥 Dados brutos importados")
-                st.dataframe(df_raw)
+                    if not dados_sheets or len(dados_sheets) < 2:
+                        st.warning("⚠️ Banco de dados vazio ou sem estrutura correta no Google Sheets.")
+                        dados_existentes = pd.DataFrame()
+                    else:
+                        dados_existentes = pd.DataFrame(dados_sheets[1:], columns=dados_sheets[0])
 
-                # 🔥 Gerar chave e limpar duplicados
-                st.subheader("✨ Dados Tratados e Deduplicados")
-                df_raw['Chave'] = df_raw.apply(gerar_chave_indices, axis=1)
-                df_tratado = df_raw.drop_duplicates(subset=['Chave']).drop(columns=['Chave'])
+                    # Gerar chaves
+                    if not dados_existentes.empty:
+                        dados_existentes['Chave'] = dados_existentes.apply(gerar_chave_indices, axis=1)
+                        chaves_existentes = set(dados_existentes['Chave'])
+                    else:
+                        chaves_existentes = set()
 
-                total_antes = len(df_raw)
-                total_depois = len(df_tratado)
-                duplicados = total_antes - total_depois
+                    df_final['Chave'] = df_final.apply(gerar_chave_indices, axis=1)
 
-                st.success(f"✅ {total_depois} registro(s) final(is) após remoção de {duplicados} duplicado(s).")
+                    # Selecionar apenas registros novos
+                    novos_registros = df_final[~df_final['Chave'].isin(chaves_existentes)].drop(columns=['Chave'])
 
-                st.dataframe(df_tratado)
+                    total_novos = len(novos_registros)
 
-                # 🔥 Opção de download
-                excel_file = convert_df_to_excel(df_tratado)
+                    if total_novos == 0:
+                        st.success("✅ Nenhum novo registro para adicionar. Banco de dados já está atualizado.")
+                    else:
+                        st.success(f"✅ Encontrados {total_novos} registro(s) novo(s) para adicionar.")
+                        st.dataframe(novos_registros)
 
-                st.download_button(
-                    label="📥 Baixar Relatório Tratado (.xlsx)",
-                    data=excel_file,
-                    file_name="Relatorio_Limpo.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+                        confirmar = st.checkbox("✅ Confirmo que desejo adicionar os novos registros.")
 
-                # 🔥 Botão para Atualizar o Google Sheets
-                atualizar_sheets = st.button("📤 Atualizar Google Sheets com Dados Tratados")
+                        if confirmar:
+                            with st.spinner('📤 Atualizando Google Sheets...'):
+                                try:
+                                    linha_inicio = len(dados_existentes) + 2 if not dados_existentes.empty else 2
+                                    aba.update(f"A{linha_inicio}", novos_registros.values.tolist())
+                                    st.success(f"🚀 {total_novos} registro(s) novo(s) adicionado(s) ao Google Sheets com sucesso!")
+                                except Exception as e:
+                                    st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
-                if atualizar_sheets:
-                    with st.spinner('🔄 Atualizando o Google Sheets...'):
-                        try:
-                            # Limpar dados antigos (exceto cabeçalho)
-                            aba.resize(rows=1)
-
-                            # Preparar novos dados para inserir (inclui cabeçalho)
-                            novos_dados = [df_tratado.columns.tolist()] + df_tratado.values.tolist()
-
-                            # Atualizar o Google Sheets
-                            aba.update('A1', novos_dados)
-
-                            st.success(f"✅ Google Sheets atualizado com {len(df_tratado)} registros corretos!")
-
-                            st.markdown("""
-                            🔗 [Clique aqui para abrir o **Faturamento Sistema Externo Atualizado**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
-                            """, unsafe_allow_html=True)
-
-                        except Exception as e:
-                            st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
-
-            except Exception as e:
-                st.error(f"❌ Erro ao buscar/tratar dados: {e}")
+                except Exception as e:
+                    st.error(f"❌ Erro ao buscar dados: {e}")
+    else:
+        st.warning("⚠️ Primeiro faça o upload e o processamento do arquivo na Aba 1.")
