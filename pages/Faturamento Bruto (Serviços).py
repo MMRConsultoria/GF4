@@ -356,4 +356,12 @@ with aba3:
                             aba_destino.update(f"A{primeira_linha_vazia}", novos_registros)
                             st.success(f"🚀 {total_novos} registro(s) colado(s) com sucesso no Google Sheets!")
                             st.markdown("""
-                            🔗 [Clique aqui para abrir o **Faturamento**
+                            🔗 [Clique aqui para abrir o **Faturamento Sistema Externo atualizado**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
+                            """, unsafe_allow_html=True)
+                        else:
+                            st.info("⏳ Aguardando confirmação para atualizar.")
+                else:
+                    st.warning("⚠️ Nenhum dado encontrado. Faça o upload e o processamento primeiro.")
+
+            except Exception as e:
+                st.error(f"❌ Erro ao verificar/atualizar: {e}")
