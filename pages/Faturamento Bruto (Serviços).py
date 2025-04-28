@@ -246,19 +246,20 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets com verificação profissional
+# 🔄 Aba 3 - Atualizar e Mostrar Relatório Tratado
 # ================================
 
 import streamlit as st
-from datetime import datetime, timedelta
 import pandas as pd
+from datetime import datetime, timedelta
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import json
 
-# ================================
 # 🔹 Funções auxiliares
-# ================================
 
 def normalizar_data(cell):
-    """Normaliza datas: se for número serial, converte; se for texto válido, ajusta."""
+    """Normaliza datas: serial ou texto."""
     try:
         if isinstance(cell, (int, float)):
             data = datetime(1899, 12, 30) + timedelta(days=float(cell))
@@ -272,7 +273,7 @@ def normalizar_data(cell):
         return str(cell).strip()
 
 def gerar_chave_indices(linha):
-    """Gera chave segura baseada em Data (A), Loja (C) e Fat.Total (G)."""
+    """Gera chave segura Data + Loja + Fat.Total"""
     try:
         data = normalizar_data(linha[0])
     except:
@@ -294,74 +295,67 @@ def gerar_chave_indices(linha):
     chave = f"{data}{loja}{fat_total_str}"
     return chave
 
-# ================================
-# 🔹 Interface da Aba 3
-# ================================
+@st.cache_data
+def convert_df_to_excel(df):
+    from io import BytesIO
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Dados Limpos')
+    processed_data = output.getvalue()
+    return processed_data
+
+# 🔹 ABA 3
 
 with aba3:
-    st.header("🔄 Atualizar Google Sheets")
+    st.header("🔄 Atualizar Relatório Tratado")
 
+    # 🔗 Link para abrir o Google Sheets
     st.markdown("""
     🔗 [Clique aqui para abrir o **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
     """, unsafe_allow_html=True)
 
-    verificar = st.button("🔍 Verificar novos registros")
+    atualizar = st.button("🔄 Buscar e Limpar Dados")
 
-    if verificar:
-        with st.spinner('🔄 Verificando registros...'):
+    if atualizar:
+        with st.spinner('🔄 Buscando e tratando dados...'):
             try:
                 # 🔹 Conectar ao Google Sheets
-                planilha_destino = gc.open("Faturamento Sistema Externo")
-                aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
+                scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+                credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+                credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+                gc = gspread.authorize(credentials)
 
-                # 🔹 Buscar dados existentes
-                dados_existentes = aba_destino.get_all_values()
-                primeira_linha_vazia = len(dados_existentes) + 1
+                planilha = gc.open("Faturamento Sistema Externo")
+                aba = planilha.worksheet("Fat Sistema Externo")
 
-                chaves_existentes = set()
-                for linha in dados_existentes[1:]:  # Ignora cabeçalho
-                    if len(linha) >= 7:
-                        chave = gerar_chave_indices(linha)
-                        chaves_existentes.add(chave)
+                dados_raw = aba.get_all_values()
+                df_raw = pd.DataFrame(dados_raw[1:], columns=dados_raw[0])  # Cabeçalho na linha 0
 
-                # 🔹 Preparar novos registros
-                if 'df_final' in st.session_state:
-                    df_final = st.session_state.df_final.copy()
-                    df_sem_nan = df_final.iloc[1:].fillna("")
-                    
-                    novos_registros = []
-                    duplicados = []
+                st.subheader("📥 Dados brutos importados")
+                st.dataframe(df_raw)
 
-                    for linha_nova in df_sem_nan.values.tolist():
-                        chave_nova = gerar_chave_indices(linha_nova)
-                        if chave_nova not in chaves_existentes:
-                            novos_registros.append(linha_nova)
-                        else:
-                            duplicados.append(linha_nova)
+                # 🔥 Gerar chave e limpar duplicados
+                st.subheader("✨ Dados Tratados e Deduplicados")
+                df_raw['Chave'] = df_raw.apply(gerar_chave_indices, axis=1)
+                df_tratado = df_raw.drop_duplicates(subset=['Chave']).drop(columns=['Chave'])
 
-                    total_novos = len(novos_registros)
-                    total_duplicados = len(duplicados)
+                total_antes = len(df_raw)
+                total_depois = len(df_tratado)
+                duplicados = total_antes - total_depois
 
-                    if total_novos == 0:
-                        st.warning("⚠️ Todos os registros já existem. Nenhum novo para adicionar.")
-                    else:
-                        # 🔥 Mostra Resumo
-                        st.success(f"✅ {total_novos} registro(s) novo(s) serão adicionados.")
-                        if total_duplicados > 0:
-                            st.warning(f"⚠️ {total_duplicados} registro(s) já existem e não serão colados.")
+                st.success(f"✅ {total_depois} registro(s) final(is) após remoção de {duplicados} duplicado(s).")
 
-                        confirmar = st.checkbox("✅ Confirmo que desejo adicionar os registros novos.")
+                st.dataframe(df_tratado)
 
-                        if confirmar:
-                            aba_destino.update(f"A{primeira_linha_vazia}", novos_registros)
-                            st.success(f"🚀 {total_novos} registro(s) colado(s) com sucesso no Google Sheets!")
-                            st.markdown("""
-                            🔗 [Clique aqui para abrir o **Faturamento Sistema Externo atualizado**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
-                            """, unsafe_allow_html=True)
-                        else:
-                            st.info("⏳ Aguardando confirmação para atualizar.")
-                else:
-                    st.warning("⚠️ Nenhum dado encontrado. Faça o upload e o processamento primeiro.")
+                # 🔥 Opção de download
+                excel_file = convert_df_to_excel(df_tratado)
+
+                st.download_button(
+                    label="📥 Baixar Relatório Tratado (.xlsx)",
+                    data=excel_file,
+                    file_name="Relatorio_Limpo.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
 
             except Exception as e:
-                st.error(f"❌ Erro ao verificar/atualizar: {e}")
+                st.error(f"❌ Erro ao buscar/tratar dados: {e}")
