@@ -257,7 +257,14 @@ with aba3:
 
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
+      
+        # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
+        df_final = df_final.applymap(str)
 
+         # Eliminar duplicação
+        df_final = df_final.drop_duplicates()
+
+        
         # Função para garantir que os valores sejam números reais com vírgula como separador decimal
         def format_monetary(value):
             try:
@@ -277,8 +284,7 @@ with aba3:
         df_final['Fat.Real'] = df_final['Fat.Real'].apply(format_monetary)
         df_final['Ticket'] = df_final['Ticket'].apply(format_monetary)
 
-        # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
-        df_final = df_final.applymap(str)
+      
 
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
