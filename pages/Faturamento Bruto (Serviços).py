@@ -256,33 +256,30 @@ with aba3:
         df_final = st.session_state.df_final.copy()
 
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
-        #df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
+        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
 
-       # Função para garantir que os valores sejam números reais com vírgula como separador decimal
-        def format_monetary(value):
-            try:
-                # Verificar se o valor é numérico antes de aplicar a formatação
-                if value is not None and value != '':
-                    value = float(str(value).replace(',', '.'))  # Convertendo para número com ponto
-                    # Formatando para garantir que tenha vírgula
-                    return f"{value:.2f}".replace(".", ",")
-                else:
-                    # Se o valor não for numérico, retornar 0.00
-                    return "0,00"
-            except (ValueError, TypeError):
-                # Se não puder converter, retorna 0,00
-                return "0,00"
+       # Criar a coluna "M" com a concatenação de "Data", "Fat.Total" e "Loja" como string para verificação de duplicação
+        df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
+                         df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+
+        # Não converter para string, apenas utilizar "M" para verificação de duplicação
+        df_final['M'] = df_final['M'].apply(str)
+
+       # Formatando os valores monetários (convertendo para valores numéricos)
+        df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+        df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+        df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+        df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+
+        # Converter as colunas de "Data", "Fat.Total", "Serv/Tx", "Fat.Real", etc. para valores numéricos e não string
+        for col in ['Data', 'Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
+            df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
 
         
-        # Formatando os valores monetários
-        df_final['Fat.Total'] = df_final['Fat.Total'].apply(format_monetary)
-        df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(format_monetary)
-        df_final['Fat.Real'] = df_final['Fat.Real'].apply(format_monetary)
-        df_final['Ticket'] = df_final['Ticket'].apply(format_monetary)
-
-        # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
-        df_final = df_final.applymap(str)
-        #df_final = df_final.applymap(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+      
+        
+       
+       
 
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
@@ -305,7 +302,8 @@ with aba3:
                     novos_dados = []
                     rows = df_final.fillna("").values.tolist()
                     for linha in rows:
-                        if tuple(linha) not in dados_existentes:
+                        chave_m = linha[-1]  # A chave da coluna M (última coluna)
+                        if chave_m not in dados_existentes:
                             novos_dados.append(linha)
                             dados_existentes.add(tuple(linha))  # Adiciona a linha para não enviar novamente
 
