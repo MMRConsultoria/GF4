@@ -245,28 +245,42 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-# ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (sem duplicar, comparando com dados atuais)
+        # ================================
+# 🔄 Aba 3 - Atualizar Google Sheets (comparando colunas A, C e G direto)
 # ================================
 
 import math
 import pandas as pd
 from datetime import datetime
 
-def gerar_chave(df):
-    """Gera a chave Data + Loja + Fat.Total"""
-    df = df.copy()
-    
-    # 🔥 Garantir que Data esteja no formato correto
-    df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors='coerce').dt.strftime("%d/%m/%Y")
-    
-    # 🔥 Garantir que Fat.Total esteja no formato com vírgula
-    df["Fat.Total"] = pd.to_numeric(df["Fat.Total"], errors='coerce').fillna(0).round(2)
-    df["Fat.Total_Texto"] = df["Fat.Total"].map(lambda x: f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-    
-    # 🔥 Gerar a chave como no Excel
-    df["Chave"] = df["Data"].astype(str) + df["Loja"].astype(str) + df["Fat.Total_Texto"]
-    return df
+def gerar_chave_indices(linha):
+    """Concatena valores da coluna A (Data), C (Loja), G (Fat.Total)"""
+    chave = ""
+    try:
+        # A -> índice 0 -> Data
+        data = pd.to_datetime(linha[0], dayfirst=True, errors='coerce')
+        data_str = data.strftime("%d/%m/%Y") if not pd.isna(data) else ""
+    except:
+        data_str = ""
+
+    # C -> índice 2 -> Loja
+    loja_str = str(linha[2]).strip() if len(linha) > 2 else ""
+
+    # G -> índice 6 -> Fat.Total
+    if len(linha) > 6:
+        fat_total = linha[6]
+        try:
+            if isinstance(fat_total, (int, float)):
+                fat_total_str = f"{fat_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            else:
+                fat_total_str = str(fat_total).strip()
+        except:
+            fat_total_str = ""
+    else:
+        fat_total_str = ""
+
+    chave = f"{data_str}{loja_str}{fat_total_str}"
+    return chave
 
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
@@ -281,47 +295,68 @@ with aba3:
         if st.button("📤 Atualizar no Google Sheets"):
             with st.spinner('🔄 Atualizando...'):
                 try:
-                    # 📥 Conectar com planilha
                     planilha_destino = gc.open("Faturamento Sistema Externo")
                     aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
-                    
-                    # 📥 Buscar dados atuais
+
+                    # 📥 Baixar dados (ignorar a primeira linha que é o cabeçalho)
                     dados_raw = aba_destino.get_all_values()
-                    
-                    if not dados_raw or len(dados_raw) <= 1:
-                        df_existente = pd.DataFrame(columns=df_final.columns)  # Nenhum dado ainda
-                    else:
-                        header = dados_raw[0]
-                        valores = dados_raw[1:]
-                        df_existente = pd.DataFrame(valores, columns=header)
-                    
-                    # 🔥 Preparar df_existente
-                    if not df_existente.empty:
-                        df_existente["Fat.Total"] = pd.to_numeric(df_existente["Fat.Total"], errors='coerce')
-                        df_existente["Data"] = pd.to_datetime(df_existente["Data"], dayfirst=True, errors='coerce')
+                    valores = dados_raw[1:]  # Ignorar linha 1 (índice 0)
 
-                    # 🔥 Preparar df_final (arquivo novo)
-                    df_final_copy = df_final.copy()
-                    df_final_copy["Fat.Total"] = pd.to_numeric(df_final_copy["Fat.Total"], errors='coerce')
-                    df_final_copy["Data"] = pd.to_datetime(df_final_copy["Data"], dayfirst=True, errors='coerce')
+                    chaves_existentes = set()
+                    for row in valores:
+                        chave = gerar_chave_indices(row)
+                        chaves_existentes.add(chave)
 
-                    # 🔥 Gerar chaves
-                    df_existente_chave = gerar_chave(df_existente)
-                    df_final_chave = gerar_chave(df_final_copy)
+                    # 📥 Preparar novos dados
+                    novos_dados_raw = df_final.fillna("").values.tolist()
 
-                    # 🔥 Filtrar registros realmente novos
-                    chaves_existentes = set(df_existente_chave["Chave"].dropna())
-                    df_para_enviar = df_final_chave[~df_final_chave["Chave"].isin(chaves_existentes)].drop(columns=["Fat.Total_Texto", "Chave"])
+                    registros_para_enviar = []
 
-                    total_novos = df_para_enviar.shape[0]
+                    for linha in novos_dados_raw:
+                        nova_linha = []
+                        for idx, valor in enumerate(linha):
+                            if idx == 0:  # Data
+                                if isinstance(valor, str):
+                                    data_dt = pd.to_datetime(valor, dayfirst=True, errors='coerce')
+                                elif isinstance(valor, datetime):
+                                    data_dt = valor
+                                else:
+                                    data_dt = None
+
+                                if data_dt and not pd.isna(data_dt):
+                                    valor = data_dt.strftime("%d/%m/%Y")
+                                else:
+                                    valor = ""
+                            elif idx in [6, 7, 8, 9]:  # Valores monetários
+                                if isinstance(valor, (int, float)) and not math.isnan(valor):
+                                    valor = round(valor, 2)
+                                else:
+                                    valor = ""
+                            elif idx in [3, 5, 11]:  # Valores inteiros
+                                if isinstance(valor, (int, float)) and not math.isnan(valor):
+                                    valor = int(valor)
+                                else:
+                                    valor = ""
+                            else:
+                                if pd.isna(valor):
+                                    valor = ""
+                                else:
+                                    valor = str(valor).strip()
+                            nova_linha.append(valor)
+
+                        chave_linha = gerar_chave_indices(nova_linha)
+
+                        if chave_linha not in chaves_existentes:
+                            registros_para_enviar.append(nova_linha)
+                            chaves_existentes.add(chave_linha)
+
+                    total_novos = len(registros_para_enviar)
 
                     if total_novos == 0:
                         st.info("✅ Nenhum novo registro para atualizar. Tudo já existe no Google Sheets.")
                         st.session_state.atualizou_google = True
                     else:
                         primeira_linha_vazia = len(dados_raw) + 1
-
-                        registros_para_enviar = df_para_enviar.values.tolist()
 
                         # 📈 Formatar colunas
                         aba_destino.format("A:A", {"numberFormat": {"type": "DATE", "pattern": "dd/MM/yyyy"}})
@@ -334,7 +369,6 @@ with aba3:
                         aba_destino.format("K:K", {"numberFormat": {"type": "TEXT"}})
                         aba_destino.format("L:L", {"numberFormat": {"type": "NUMBER", "pattern": "0000"}})
 
-                        # 📤 Atualizar Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", registros_para_enviar)
 
                         st.success(f"✅ {total_novos} novo(s) registro(s) enviado(s) para o Google Sheets!")
