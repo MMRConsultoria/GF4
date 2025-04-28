@@ -263,33 +263,44 @@ with aba3:
         df_final['M'] = df_final['M'].apply(str)
 
         # Garantir que as colunas de valores monetários sejam enviadas como números, sem aspas e sem formatação extra
-        def format_monetary(value):
-            try:
+        #def format_monetary(value):
+        #    try:
                 # Verificar se o valor é numérico antes de aplicar a formatação
-                if value is not None and value != '':
-                    value = float(str(value).replace(',', '.'))  # Convertendo para número com ponto
+         #       if value is not None and value != '':
+         #           value = float(str(value).replace(',', '.'))  # Convertendo para número com ponto
                     # Formatando para garantir que tenha vírgula
-                    return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                else:
+         #           return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+         #       else:
                     # Se o valor não for numérico, retornar 0.00
-                    return "0,00"
-            except (ValueError, TypeError):
+        #            return "0,00"
+        #    except (ValueError, TypeError):
                 # Se não puder converter, retorna 0,00
-                return "0,00"
+        #        return "0,00"
 
         
         # Formatando os valores monetários
-        df_final['Fat.Total'] = df_final['Fat.Total'].apply(format_monetary)
-        df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(format_monetary)
-        df_final['Fat.Real'] = df_final['Fat.Real'].apply(format_monetary)
-        df_final['Ticket'] = df_final['Ticket'].apply(format_monetary)
+        #df_final['Fat.Total'] = df_final['Fat.Total'].apply(format_monetary)
+        #df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(format_monetary)
+        #df_final['Fat.Real'] = df_final['Fat.Real'].apply(format_monetary)
+        #df_final['Ticket'] = df_final['Ticket'].apply(format_monetary)
 
         # Não aplicar formatação de moeda no Google Sheets; enviar como números puros
         # Converter a coluna "Data" para string para facilitar a manipulação no Google Sheets
-        df_final['Data'] = df_final['Data'].astype(str)
+        #df_final['Data'] = df_final['Data'].astype(str)
 
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
         df_final = df_final.applymap(str)
+        # Formatando os valores monetários (não convertendo para string, mantendo como numérico)
+        df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+        df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+        df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+        df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+
+        # Converter as colunas de "Data", "Fat.Total", "Serv/Tx", "Fat.Real", etc. para valores numéricos e não string
+        for col in ['Data', 'Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
+            df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
+     
+        
 
         # Conectar ao Google Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
