@@ -245,6 +245,7 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
+
 # ================================
 # 🔄 Aba 3 - Atualizar Google Sheets (Evitar duplicação e erro de Timestamp)
 # ================================
@@ -256,9 +257,9 @@ with aba3:
         df_final = st.session_state.df_final.copy()
 
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
-        #df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
+        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
 
-       # Função para garantir que os valores sejam números reais com vírgula como separador decimal
+        # Função para garantir que os valores sejam números reais com vírgula como separador decimal
         def format_monetary(value):
             try:
                 # Verificar se o valor é numérico antes de aplicar a formatação
@@ -269,20 +270,17 @@ with aba3:
                 else:
                     # Se o valor não for string, retornar como está
                     return value
-                except (ValueError, TypeError):
+            except (ValueError, TypeError):
                 # Se não puder converter, retornar o valor original
                 return value
 
-        
-        # Formatando os valores monetários
+        # Formatando as colunas monetárias
         df_final['Fat.Total'] = df_final['Fat.Total'].apply(format_monetary)
         df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(format_monetary)
         df_final['Fat.Real'] = df_final['Fat.Real'].apply(format_monetary)
         df_final['Ticket'] = df_final['Ticket'].apply(format_monetary)
 
-        # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
-        df_final = df_final.applymap(str)
-        #df_final = df_final.applymap(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+        # Não estamos mais aplicando `applymap(str)` a todo o DataFrame. Só formatamos as colunas monetárias.
 
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
@@ -299,11 +297,12 @@ with aba3:
                     # Obter dados já existentes no Google Sheets
                     valores_existentes = aba_destino.get_all_values()
 
-                    # Criar um conjunto de linhas já existentes
+                    # Criar um conjunto de linhas já existentes para comparação
                     dados_existentes = set([tuple(linha) for linha in valores_existentes[1:]])  # Ignorando cabeçalho
 
                     novos_dados = []
                     rows = df_final.fillna("").values.tolist()
+
                     for linha in rows:
                         if tuple(linha) not in dados_existentes:
                             novos_dados.append(linha)
@@ -312,7 +311,7 @@ with aba3:
                     if novos_dados:
                         primeira_linha_vazia = len(valores_existentes) + 1
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
-    
+
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
                     else:
                         st.info("✅ Não há novos dados para atualizar.")
@@ -322,3 +321,4 @@ with aba3:
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
