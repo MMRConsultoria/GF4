@@ -247,25 +247,22 @@ with aba2:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Completa, corrigida e sem duplicar)
+# 🔄 Aba 3 - Atualizar Google Sheets (versão sem duplicar e sem confundir datas)
 # ================================
+
 import math
 from datetime import datetime
-import pandas as pd
-
-# Função para normalizar linhas
 
 def normalizar_linha(linha):
     linha_normalizada = []
     for idx, cell in enumerate(linha):
-        if idx == 0:  # Data (coluna A)
+        if idx == 0:  # Coluna de Data
             try:
                 data_dt = pd.to_datetime(cell, dayfirst=True, errors='coerce')
                 if pd.isna(data_dt):
                     linha_normalizada.append("")
                 else:
-                    serial = (data_dt - pd.Timestamp('1899-12-30')).days
-                    linha_normalizada.append(str(int(serial)))
+                    linha_normalizada.append(data_dt.strftime("%d/%m/%Y"))  # Sempre comparar como texto
             except:
                 linha_normalizada.append("")
         else:
@@ -277,8 +274,7 @@ with aba3:
 
     st.markdown("""
     🔗 [Clique aqui para abrir o **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
-    """
-    )
+    """)
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final
@@ -299,7 +295,6 @@ with aba3:
                             if len(row) >= 10:
                                 dados_existentes.append(normalizar_linha(row))
 
-                    # Preparar novos dados
                     novos_dados_raw = df_final.values.tolist()
                     novos_dados = []
                     for linha in novos_dados_raw:
@@ -307,48 +302,45 @@ with aba3:
                         for idx, valor in enumerate(linha):
                             if idx == 0:  # Data
                                 if isinstance(valor, str):
-                                    data_dt = datetime.strptime(valor, "%d/%m/%Y")
+                                    data_dt = pd.to_datetime(valor, dayfirst=True, errors='coerce')
                                 elif isinstance(valor, datetime):
                                     data_dt = valor
                                 else:
                                     data_dt = None
 
                                 if data_dt:
-                                    valor = (data_dt - datetime(1899, 12, 30)).days
+                                    valor = data_dt.strftime("%d/%m/%Y")  # Formatar para comparar como texto
                                 else:
                                     valor = ""
-                            elif idx in [6,7,8,9]:
+                            elif idx in [6, 7, 8, 9]:
                                 if isinstance(valor, (int, float)) and not math.isnan(valor):
-                                    valor = round(valor,2)
+                                    valor = round(valor, 2)
                                 else:
                                     valor = ""
-                            elif idx in [3,5,11]:
-                                if isinstance(valor, (int,float)) and not math.isnan(valor):
+                            elif idx in [3, 5, 11]:
+                                if isinstance(valor, (int, float)) and not math.isnan(valor):
                                     valor = int(valor)
                                 else:
                                     valor = ""
                             else:
                                 valor = str(valor).strip()
                             nova_linha.append(valor)
-                        novos_dados.append(nova_linha)
+                        novos_dados.append(normalizar_linha(nova_linha))
 
-                    novos_dados_normalizados = [normalizar_linha(row) for row in novos_dados]
-
+                    # 🔥 Comparação final: comparar listas normalizadas
                     registros_novos = [
-                        linha_original for linha_original, linha_normalizada in zip(novos_dados, novos_dados_normalizados)
+                        linha_original for linha_original, linha_normalizada in zip(novos_dados_raw, novos_dados)
                         if linha_normalizada not in dados_existentes
                     ]
 
                     total_novos = len(registros_novos)
-                    total_existentes = len(novos_dados) - total_novos
 
                     if total_novos == 0:
-                        st.info(f"✅ Nenhum novo registro para atualizar. {total_existentes} registro(s) já existiam no Google Sheets.")
+                        st.info(f"✅ Nenhum novo registro para atualizar. Tudo já existe no Google Sheets.")
                         st.session_state.atualizou_google = True
                     else:
                         primeira_linha_vazia = len(dados_raw) + 1
 
-                        # Formatar colunas
                         aba_destino.format("A:A", {"numberFormat": {"type": "DATE", "pattern": "dd/MM/yyyy"}})
                         aba_destino.format("D:D", {"numberFormat": {"type": "NUMBER", "pattern": "0"}})
                         aba_destino.format("F:F", {"numberFormat": {"type": "NUMBER", "pattern": "0"}})
@@ -359,17 +351,13 @@ with aba3:
                         aba_destino.format("K:K", {"numberFormat": {"type": "TEXT"}})
                         aba_destino.format("L:L", {"numberFormat": {"type": "NUMBER", "pattern": "0000"}})
 
-                        # Atualizar dados
                         aba_destino.update(f"A{primeira_linha_vazia}", registros_novos)
 
                         st.success(f"✅ {total_novos} novo(s) registro(s) enviado(s) para o Google Sheets!")
-                        if total_existentes > 0:
-                            st.warning(f"⚠️ {total_existentes} registro(s) já existiam e não foram importados.")
                         st.session_state.atualizou_google = True
 
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar: {e}")
                     st.session_state.atualizou_google = False
-
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
