@@ -205,7 +205,7 @@ if uploaded_file:
                         aba_destino.update(f"A{primeira_linha_vazia}", rows)
 
                         st.success("✅ Dados atualizados com sucesso no Google Sheets!")
-                        st.session_state.atualizou_google = True
+                        st.session_state.atualizou_google = False
 
                     except Exception as e:
                         st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
