@@ -247,7 +247,7 @@ with aba2:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Início do zero)
+# 🔄 Aba 3 - Atualizar Google Sheets (Corrigido NaN)
 # ================================
 
 with aba3:
@@ -275,7 +275,8 @@ with aba3:
                     df_final = st.session_state.df_final.copy()
 
                     # 🔹 Ignorar a primeira linha (cabeçalho)
-                    dados_para_colar = df_final.iloc[1:].values.tolist()
+                    df_sem_nan = df_final.iloc[1:].fillna("")
+                    dados_para_colar = df_sem_nan.values.tolist()
 
                     if dados_para_colar:
                         # 🔹 Atualizar direto no Google Sheets
