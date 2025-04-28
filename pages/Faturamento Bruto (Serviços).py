@@ -251,45 +251,12 @@ with aba2:
 import math
 from datetime import datetime
 
-# 🔥 AQUI VOCÊ JÁ INCLUI ESTA FUNÇÃO:
-#def normalizar_linha(linha):
-#    linha_normalizada = []
-#    for idx, cell in enumerate(linha):
-#        if idx == 0 and isinstance(cell, (int, float)):  # Se for data (serial number)
-#            linha_normalizada.append(int(cell))
-#        else:
-#            linha_normalizada.append(str(cell).strip().replace(",", "").replace(".", "").lower())
-#    return linha_normalizada
-# 🔥 FIM DA FUNÇÃO
-
-#inicio
-#def normalizar_linha(linha):
-#    linha_normalizada = []
-#    for idx, cell in enumerate(linha):
-#        if idx == 0:  # Coluna Data (A)
-#            if isinstance(cell, (int, float)):
-#                # Se já for número (serial de data)
-#                linha_normalizada.append(int(cell))
-#            elif isinstance(cell, str):
-#                try:
-#                    data_dt = datetime.strptime(cell.strip(), "%d/%m/%Y")
-#                    serial = (data_dt - datetime(1899, 12, 30)).days
-#                    linha_normalizada.append(serial)
-#                except Exception:
-#                    linha_normalizada.append(cell.strip().lower())
-#            else:
-#                linha_normalizada.append(str(cell).strip().lower())
-#        else:
-#            linha_normalizada.append(str(cell).strip().replace(",", "").replace(".", "").lower())
-#    return linha_normalizada
-#fim
-
+# Função para normalizar linha
 def normalizar_linha(linha):
     linha_normalizada = []
     for idx, cell in enumerate(linha):
         if idx == 0:  # Coluna Data (A)
             try:
-                # Tentar converter tanto novos quanto antigos para serial de data
                 data_dt = pd.to_datetime(cell, dayfirst=True, errors='coerce')
                 if pd.isna(data_dt):
                     linha_normalizada.append(str(cell).strip().lower())
@@ -301,8 +268,6 @@ def normalizar_linha(linha):
         else:
             linha_normalizada.append(str(cell).strip().replace(",", "").replace(".", "").lower())
     return linha_normalizada
-
-
 
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
@@ -322,52 +287,46 @@ with aba3:
 
                     dados_raw = aba_destino.get_all_values()
 
-                    # 🔥 Correção: transformar a coluna de Data (coluna A) para número serial antes de comparar
-                   
+                    # 🔥 Corrigir coluna de Data (serial) para comparação
                     if len(dados_raw) <= 1:
-			dados_existentes = []
-		    else:
-			dados_existentes = []
-			for row in dados_raw[1:]:  # Pular cabeçalho
-				if len(row) >= 10:
-					nova_row = []
-					for idx, cell in enumerate(row):
-						if idx == 0:  # Data (coluna A)
-							try:
-								data_dt = pd.to_datetime(cell, dayfirst=True, errors='coerce')
-								if pd.isna(data_dt):
-									nova_row.append("")
-								else:
-									serial = str(int((data_dt - pd.Timestamp("1899-12-30")).days))
-									nova_row.append(serial)
-							except:
-								nova_row.append("")
-						else:
-							nova_row.append(str(cell).strip().replace(",", "").replace(".", "").lower())
-					dados_existentes.append(nova_row)
+                        dados_existentes = []
+                    else:
+                        dados_existentes = []
+                        for row in dados_raw[1:]:  # Pular cabeçalho
+                            if len(row) >= 10:
+                                nova_row = []
+                                for idx, cell in enumerate(row):
+                                    if idx == 0:  # Data (coluna A)
+                                        try:
+                                            data_dt = pd.to_datetime(cell, dayfirst=True, errors='coerce')
+                                            if pd.isna(data_dt):
+                                                nova_row.append("")
+                                            else:
+                                                serial = str(int((data_dt - pd.Timestamp("1899-12-30")).days))
+                                                nova_row.append(serial)
+                                        except:
+                                            nova_row.append("")
+                                    else:
+                                        nova_row.append(str(cell).strip().replace(",", "").replace(".", "").lower())
+                                dados_existentes.append(nova_row)
 
-                            
+                    # 🔹 Preparar novos dados
                     novos_dados_raw = df_final.values.tolist()
                     novos_dados = []
                     for linha in novos_dados_raw:
                         nova_linha = []
                         for idx, valor in enumerate(linha):
-                            if idx == 0:  # Data (coluna A)
+                            if idx == 0:  # Data
                                 if isinstance(valor, str):
-                                    #valor = datetime.strptime(valor, "%d/%m/%Y").strftime("%d/%m/%Y")
-                                    #valor = (data_dt - datetime(1899, 12, 30)).days
                                     data_dt = datetime.strptime(valor, "%d/%m/%Y")
                                 elif isinstance(valor, datetime):
                                     data_dt = valor
                                 else:
                                     data_dt = None
-
                                 if data_dt:
                                     valor = (data_dt - datetime(1899, 12, 30)).days
                                 else:
                                     valor = ""
-
-                                
                             elif idx in [6, 7, 8, 9]:
                                 if isinstance(valor, (int, float)) and not math.isnan(valor):
                                     valor = round(valor, 2)
@@ -383,38 +342,21 @@ with aba3:
                             nova_linha.append(valor)
                         novos_dados.append(nova_linha)
 
-                    #novos_dados_normalizados = [
-                        #[str(cell).strip().replace(",", "").replace(".", "") for cell in row]
-                        #for row in novos_dados
-                    #]
-
-                    # 🔥 Nova normalização usando a função que você criou
+                    # 🔹 Normalizar ambos para comparar
                     dados_existentes_normalizados = [normalizar_linha(row) for row in dados_existentes]
                     novos_dados_normalizados = [normalizar_linha(row) for row in novos_dados]
 
-
-
-
-                            
-                    #registros_novos = [
-                    #    linha_original for linha_original, linha_normalizada in zip(novos_dados, novos_dados_normalizados)
-                    #    if linha_normalizada not in dados_existentes
-                    #]
-
-                    # 🔥 Nova verificação segura
+                    # 🔥 Filtrar registros realmente novos
                     registros_novos = [
-                         linha_original for linha_original, linha_normalizada in zip(novos_dados, novos_dados_normalizados)
-                         if linha_normalizada not in dados_existentes_normalizados
-                    ]    
-
-
-
+                        linha_original for linha_original, linha_normalizada in zip(novos_dados, novos_dados_normalizados)
+                        if linha_normalizada not in dados_existentes_normalizados
+                    ]
 
                     total_novos = len(registros_novos)
                     total_existentes = len(novos_dados) - total_novos
 
                     if total_novos == 0:
-                        st.info(f"✅ Nenhum novo registro para atualizar. {total_existentes} registro(s) já existiam no Google Sheets.")
+                        st.info(f"✅ Nenhum novo registro para atualizar. {total_existentes} registro(s) já existiam.")
                         st.session_state.atualizou_google = True
                     else:
                         primeira_linha_vazia = len(dados_raw) + 1
