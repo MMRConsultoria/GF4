@@ -262,7 +262,7 @@ with aba3:
          # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
         df_final = df_final.applymap(str)
         
-        # Ajustar valores monetários (Fat.Total, Serv/Tx, etc.)
+         # Ajustar valores monetários (Fat.Total, Serv/Tx, etc.)
         for col in ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket"]:
             df_final[col] = df_final[col].apply(lambda x: f"R$ {float(x.replace(',', '.')):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         
