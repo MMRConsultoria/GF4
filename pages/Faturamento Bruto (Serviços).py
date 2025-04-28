@@ -246,7 +246,7 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # ================================
-# 🔄 Aba 3 - Atualizar e Mostrar Relatório Tratado
+# 🔄 Aba 3 - Atualizar, Tratar e Atualizar o Google Sheets
 # ================================
 
 import streamlit as st
@@ -314,7 +314,7 @@ with aba3:
     🔗 [Clique aqui para abrir o **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
     """, unsafe_allow_html=True)
 
-    atualizar = st.button("🔄 Buscar e Limpar Dados")
+    atualizar = st.button("🔄 Buscar e Tratar Dados")
 
     if atualizar:
         with st.spinner('🔄 Buscando e tratando dados...'):
@@ -329,7 +329,7 @@ with aba3:
                 aba = planilha.worksheet("Fat Sistema Externo")
 
                 dados_raw = aba.get_all_values()
-                df_raw = pd.DataFrame(dados_raw[1:], columns=dados_raw[0])  # Cabeçalho na linha 0
+                df_raw = pd.DataFrame(dados_raw[1:], columns=dados_raw[0])  # Usa cabeçalho real da linha 0
 
                 st.subheader("📥 Dados brutos importados")
                 st.dataframe(df_raw)
@@ -356,6 +356,30 @@ with aba3:
                     file_name="Relatorio_Limpo.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
+
+                # 🔥 Botão para Atualizar o Google Sheets
+                atualizar_sheets = st.button("📤 Atualizar Google Sheets com Dados Tratados")
+
+                if atualizar_sheets:
+                    with st.spinner('🔄 Atualizando o Google Sheets...'):
+                        try:
+                            # Limpar dados antigos (exceto cabeçalho)
+                            aba.resize(rows=1)
+
+                            # Preparar novos dados para inserir (inclui cabeçalho)
+                            novos_dados = [df_tratado.columns.tolist()] + df_tratado.values.tolist()
+
+                            # Atualizar o Google Sheets
+                            aba.update('A1', novos_dados)
+
+                            st.success(f"✅ Google Sheets atualizado com {len(df_tratado)} registros corretos!")
+
+                            st.markdown("""
+                            🔗 [Clique aqui para abrir o **Faturamento Sistema Externo Atualizado**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
+                            """, unsafe_allow_html=True)
+
+                        except Exception as e:
+                            st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
             except Exception as e:
                 st.error(f"❌ Erro ao buscar/tratar dados: {e}")
