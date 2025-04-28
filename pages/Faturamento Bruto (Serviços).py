@@ -262,16 +262,16 @@ with aba3:
         def format_monetary(value):
             try:
                 # Verificar se o valor é numérico antes de aplicar a formatação
-                if value is not None and value != '':
-                    value = float(str(value).replace(',', '.'))  # Convertendo para número com ponto
-                    # Formatando para garantir que tenha vírgula
+                if isinstance(value, str):
+                    value = float(value.replace(',', '.'))  # Convertendo para número com ponto
+                    # Formatando para garantir que tenha vírgula sem ponto de milhar
                     return f"{value:.2f}".replace(".", ",")
                 else:
-                    # Se o valor não for numérico, retornar 0.00
-                    return "0,00"
+                    # Se o valor não for string, retornar como está
+                    return value
             except (ValueError, TypeError):
-                # Se não puder converter, retorna 0,00
-                return "0,00"
+                # Se não puder converter, retornar o valor original
+                return value
 
         
         # Formatando os valores monetários
