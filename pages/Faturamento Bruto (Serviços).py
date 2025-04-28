@@ -297,13 +297,18 @@ with aba3:
                 novos_dados.append(linha)
                 dados_existentes.add(chave_m)  # Adiciona a chave da linha para não enviar novamente
 
-        # Enviar os novos dados para o Google Sheets
-        if novos_dados:
-            primeira_linha_vazia = len(valores_existentes) + 1
-            aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
-            st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
-        else:
-            st.info("✅ Não há novos dados para atualizar.")
+       # Adicionar o botão de atualização do Google Sheets
+        if st.button("📥 Enviar dados para o Google Sheets"):
+            with st.spinner("🔄 Atualizando o Google Sheets..."):
+                try:
+                    if novos_dados:
+                        primeira_linha_vazia = len(valores_existentes) + 1
+                        aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
+                        st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
+                    else:
+                        st.info("✅ Não há novos dados para atualizar.")
+                except Exception as e:
+                    st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
