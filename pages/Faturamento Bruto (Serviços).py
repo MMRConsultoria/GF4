@@ -246,7 +246,7 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Com verificação de duplicação)
+# 🔄 Aba 3 - Atualizar Google Sheets (Evitar erro JSON e duplicação)
 # ================================
 
 with aba3:
@@ -255,10 +255,10 @@ with aba3:
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
 
-        # Garantir que a coluna 'Data' seja datetime (sem formatar para string)
-        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y')
+        # Garantir que todas as colunas de 'Data' sejam convertidas para string
+        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
 
-        # Verificar duplicação: Gerar chave de duplicação
+        # Função para gerar chave única (para verificar duplicação)
         def gerar_chave(linha):
             """Gera chave para verificar duplicação: Data + Loja + Fat.Total"""
             try:
@@ -269,7 +269,6 @@ with aba3:
             except:
                 return ""
 
-        # Obter dados existentes no Google Sheets
         if st.button("📥 Enviar todos os registros para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
@@ -282,7 +281,7 @@ with aba3:
                     planilha_destino = gc.open("Faturamento Sistema Externo")
                     aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
-                    # Obter dados já existentes
+                    # Obter dados existentes
                     valores_existentes = aba_destino.get_all_values()
                     chaves_existentes = set([gerar_chave(linha) for linha in valores_existentes[1:]])  # Ignorar cabeçalho
 
