@@ -245,18 +245,16 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Evitar Duplicados - Simples)
+# 🔄 Aba 3 - Atualizar Google Sheets (Modelo Correto)
 # ================================
 
-def gerar_chave_simples(linha):
-    """Gera chave simples: Data (A), Loja (C), Fat.Total (G)"""
+def gerar_chave_indices(linha):
+    """Normaliza Data (A), Loja (C) e Fat.Total (G) baseado em índices fixos"""
     try:
-        data = pd.to_datetime(linha[0], dayfirst=True, errors='coerce')
-        data_str = data.strftime("%d/%m/%Y") if not pd.isna(data) else ""
+        data = str(linha[0]).strip()
     except:
-        data_str = ""
+        data = ""
 
     try:
         loja = str(linha[2]).strip().lower()
@@ -271,7 +269,7 @@ def gerar_chave_simples(linha):
     except:
         fat_total_str = "0,00"
 
-    chave = f"{data_str}|{loja}|{fat_total_str}"
+    chave = f"{data}{loja}{fat_total_str}"
     return chave
 
 with aba3:
@@ -284,42 +282,34 @@ with aba3:
     if st.button("📤 Atualizar no Google Sheets"):
         with st.spinner('🔄 Atualizando...'):
             try:
-                # 🔹 Abrir planilha e aba
                 planilha_destino = gc.open("Faturamento Sistema Externo")
                 aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
-                # 🔹 Buscar dados já existentes
                 dados_existentes = aba_destino.get_all_values()
                 primeira_linha_vazia = len(dados_existentes) + 1
 
-                # 🔹 Criar conjunto de chaves existentes
                 chaves_existentes = set()
-                for linha in dados_existentes[1:]:  # Ignorar o cabeçalho
-                    if len(linha) >= 7:  # Precisa ter pelo menos até a coluna G
-                        chave_existente = gerar_chave_simples(linha)
-                        chaves_existentes.add(chave_existente)
+                for linha in dados_existentes[1:]:  # Ignora o cabeçalho
+                    if len(linha) >= 7:
+                        chave = gerar_chave_indices(linha)
+                        chaves_existentes.add(chave)
 
-                # 🔹 Carregar df_final do session_state
                 if 'df_final' in st.session_state:
                     df_final = st.session_state.df_final.copy()
-
-                    # 🔹 Ignorar a primeira linha (cabeçalho)
                     df_sem_nan = df_final.iloc[1:].fillna("")
                     dados_para_colar = []
 
                     for linha_nova in df_sem_nan.values.tolist():
-                        chave_nova = gerar_chave_simples(linha_nova)
+                        chave_nova = gerar_chave_indices(linha_nova)
                         if chave_nova not in chaves_existentes:
                             dados_para_colar.append(linha_nova)
                             chaves_existentes.add(chave_nova)
 
                     if dados_para_colar:
-                        # 🔹 Atualizar no Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", dados_para_colar)
                         st.success(f"✅ {len(dados_para_colar)} novo(s) registro(s) colado(s) no Google Sheets!")
                     else:
                         st.info("⚠️ Nenhum novo registro encontrado para atualizar.")
-
                 else:
                     st.warning("⚠️ Nenhum dado encontrado. Faça o upload primeiro.")
 
