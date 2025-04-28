@@ -322,6 +322,21 @@ with aba3:
 
                     dados_raw = aba_destino.get_all_values()
 
+                    # 🔥 Correção: transformar a coluna de Data (coluna A) para número serial antes de comparar
+                    for i in range(1, len(dados_raw)):  # Pula o cabeçalho (linha 0)
+                         try:
+                            if dados_raw[i][0]:  # Se a célula de data não estiver vazia
+                                data_dt = pd.to_datetime(dados_raw[i][0], dayfirst=True, errors='coerce')
+                                if not pd.isna(data_dt):
+                                    dados_raw[i][0] = str((data_dt - pd.Timestamp('1899-12-30')).days)
+                                else:
+                                    dados_raw[i][0] = str(dados_raw[i][0]).strip().lower()
+                         except:
+                            dados_raw[i][0] = str(dados_raw[i][0]).strip().lower()
+                    
+
+
+                    
                     if len(dados_raw) <= 1:
                         dados_existentes = []
                     else:
