@@ -493,7 +493,7 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-  # ================================
+# ================================
 # 🔄 Aba 3 - Atualizar Google Sheets (Evitar duplicação e erro de Timestamp)
 # ================================
 
@@ -502,18 +502,13 @@ with aba3:
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
-        
-      
-        
+
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
-        
-       
-     
 
-         # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
+        # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
         df_final = df_final.applymap(str)
-                
+
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
@@ -529,7 +524,7 @@ with aba3:
                     # Obter dados já existentes no Google Sheets
                     valores_existentes = aba_destino.get_all_values()
 
-                    # Criar um conjunto de linhas já existentes
+                    # Criar um conjunto de linhas já existentes para comparação
                     dados_existentes = set([tuple(linha) for linha in valores_existentes[1:]])  # Ignorando cabeçalho
 
                     novos_dados = []
