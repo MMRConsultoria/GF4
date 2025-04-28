@@ -274,12 +274,13 @@ with aba3:
                     valores_existentes = aba_destino.get_all_values()
 
                     # Preparar os dados para envio (sem duplicação)
-                    rows = df_final.fillna("").values.tolist()
+                  #  rows = df_final.fillna("").values.tolist()
 
                     # Criar um conjunto de linhas já existentes
                     dados_existentes = set([tuple(linha) for linha in valores_existentes[1:]])  # Ignorando cabeçalho
 
                     novos_dados = []
+                    rows = df_final.fillna("").values.tolist()
                     for linha in rows:
                         if tuple(linha) not in dados_existentes:
                             novos_dados.append(linha)
