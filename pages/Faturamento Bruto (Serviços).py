@@ -245,3 +245,14 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
+
+# ================================
+# 🔄 Aba 3 - Atualizar Google Sheets (com normalização real de Data, Loja, Fat.Total)
+# ================================
+ st.markdown("""
+    🔗 [Clique aqui para abrir o **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
+    """)
+  if st.button("📤 Atualizar no Google Sheets"):
+            with st.spinner('🔄 Atualizando...'):
+                try:
+
