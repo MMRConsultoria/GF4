@@ -258,20 +258,22 @@ with aba3:
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
 
-        # Função para formatar valores monetários de maneira segura (sem transformar para string)
+       # Função para garantir que os valores sejam números reais com vírgula como separador decimal
         def format_monetary(value):
             try:
                 # Verificar se o valor é numérico antes de aplicar a formatação
                 if value is not None and value != '':
-                    value = float(str(value).replace(',', '.'))  # Mantendo como numérico
-                    return value
+                    value = float(str(value).replace(',', '.'))  # Convertendo para número com ponto
+                    # Formatando para garantir que tenha vírgula
+                    return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                 else:
-                    # Se o valor não for numérico, retornar 0
-                    return 0.0
+                    # Se o valor não for numérico, retornar 0.00
+                    return "0,00"
             except (ValueError, TypeError):
-                # Se não puder converter, retorna 0.0
-                return 0.0
+                # Se não puder converter, retorna 0,00
+                return "0,00"
 
+        
         # Formatando os valores monetários
         df_final['Fat.Total'] = df_final['Fat.Total'].apply(format_monetary)
         df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(format_monetary)
@@ -309,16 +311,7 @@ with aba3:
                     if novos_dados:
                         primeira_linha_vazia = len(valores_existentes) + 1
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
-
-
-                       # Aplique a formatação de moeda brasileira somente para as colunas monetárias
-                        aba_destino.format("G2:G", {"numberFormat": {"type": "CURRENCY", "pattern": "[$R$-416]#,##0.00"}})  # Fat.Total
-                        aba_destino.format("H2:H", {"numberFormat": {"type": "CURRENCY", "pattern": "[$R$-416]#,##0.00"}})  # Serv/Tx
-                        aba_destino.format("I2:I", {"numberFormat": {"type": "CURRENCY", "pattern": "[$R$-416]#,##0.00"}})  # Fat.Real
-                        aba_destino.format("J2:J", {"numberFormat": {"type": "CURRENCY", "pattern": "[$R$-416]#,##0.00"}})  # Ticket
-
-                        
-                        
+    
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
                     else:
                         st.info("✅ Não há novos dados para atualizar.")
