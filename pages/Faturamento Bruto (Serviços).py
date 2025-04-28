@@ -246,67 +246,89 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets com aviso de duplicados
+# 🔄 Aba 3 - Atualizar Google Sheets com verificação profissional
 # ================================
 
 import streamlit as st
 from datetime import datetime, timedelta
+import pandas as pd
+
+# ================================
+# 🔹 Funções auxiliares
+# ================================
+
+def normalizar_data(cell):
+    """Normaliza datas: se for número serial, converte; se for texto válido, ajusta."""
+    try:
+        if isinstance(cell, (int, float)):
+            data = datetime(1899, 12, 30) + timedelta(days=float(cell))
+            return data.strftime("%d/%m/%Y")
+        else:
+            data = pd.to_datetime(cell, dayfirst=True, errors='coerce')
+            if pd.isna(data):
+                return str(cell).strip()
+            return data.strftime("%d/%m/%Y")
+    except:
+        return str(cell).strip()
 
 def gerar_chave_indices(linha):
-    """Gera chave para comparar registros (Data + Loja + Fat.Total)."""
+    """Gera chave segura baseada em Data (A), Loja (C) e Fat.Total (G)."""
     try:
-        if isinstance(linha[0], (int, float)):
-            data = datetime(1899, 12, 30) + timedelta(days=float(linha[0]))
-        else:
-            data = pd.to_datetime(linha[0], dayfirst=True, errors='coerce')
-        data_str = data.strftime("%d/%m/%Y") if not pd.isna(data) else ""
+        data = normalizar_data(linha[0])
     except:
-        data_str = ""
+        data = ""
 
     try:
-        loja_str = str(linha[2]).strip().lower()
+        loja = str(linha[2]).strip().lower()
     except:
-        loja_str = ""
+        loja = ""
 
     try:
-        fat = str(linha[6]).strip()
-        fat = fat.replace(".", "").replace(",", ".")
-        fat_float = float(fat)
-        fat_str = f"{fat_float:.2f}".replace(".", ",")
+        fat_total = str(linha[6]).strip()
+        fat_total = fat_total.replace(".", "").replace(",", ".")
+        fat_total_float = float(fat_total)
+        fat_total_str = f"{fat_total_float:.2f}".replace(".", ",")
     except:
-        fat_str = "0,00"
+        fat_total_str = "0,00"
 
-    return f"{data_str}{loja_str}{fat_str}"
+    chave = f"{data}{loja}{fat_total_str}"
+    return chave
+
+# ================================
+# 🔹 Interface da Aba 3
+# ================================
 
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
 
-    # 🔗 Link para abrir a planilha
     st.markdown("""
     🔗 [Clique aqui para abrir o **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
     """, unsafe_allow_html=True)
 
-    verificar = st.button("🔍 Verificar registros antes de atualizar")
+    verificar = st.button("🔍 Verificar novos registros")
 
     if verificar:
-        with st.spinner('🔄 Verificando...'):
+        with st.spinner('🔄 Verificando registros...'):
             try:
-                # Abrir planilha e aba
+                # 🔹 Conectar ao Google Sheets
                 planilha_destino = gc.open("Faturamento Sistema Externo")
                 aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
+                # 🔹 Buscar dados existentes
                 dados_existentes = aba_destino.get_all_values()
                 primeira_linha_vazia = len(dados_existentes) + 1
 
                 chaves_existentes = set()
-                for linha in dados_existentes[1:]:
+                for linha in dados_existentes[1:]:  # Ignora cabeçalho
                     if len(linha) >= 7:
                         chave = gerar_chave_indices(linha)
                         chaves_existentes.add(chave)
 
+                # 🔹 Preparar novos registros
                 if 'df_final' in st.session_state:
                     df_final = st.session_state.df_final.copy()
                     df_sem_nan = df_final.iloc[1:].fillna("")
+                    
                     novos_registros = []
                     duplicados = []
 
@@ -323,7 +345,7 @@ with aba3:
                     if total_novos == 0:
                         st.warning("⚠️ Todos os registros já existem. Nenhum novo para adicionar.")
                     else:
-                        # Mostra resumo
+                        # 🔥 Mostra Resumo
                         st.success(f"✅ {total_novos} registro(s) novo(s) serão adicionados.")
                         if total_duplicados > 0:
                             st.warning(f"⚠️ {total_duplicados} registro(s) já existem e não serão colados.")
@@ -331,13 +353,7 @@ with aba3:
                         confirmar = st.checkbox("✅ Confirmo que desejo adicionar os registros novos.")
 
                         if confirmar:
-                            if novos_registros:
-                                aba_destino.update(f"A{primeira_linha_vazia}", novos_registros)
-                                st.success(f"🚀 {total_novos} registro(s) novo(s) colado(s) com sucesso no Google Sheets!")
-                        else:
-                            st.info("⏳ Aguardando confirmação para atualizar...")
-                else:
-                    st.warning("⚠️ Nenhum dado encontrado. Faça o upload primeiro.")
-
-            except Exception as e:
-                st.error(f"❌ Erro ao verificar/atualizar: {e}")
+                            aba_destino.update(f"A{primeira_linha_vazia}", novos_registros)
+                            st.success(f"🚀 {total_novos} registro(s) colado(s) com sucesso no Google Sheets!")
+                            st.markdown("""
+                            🔗 [Clique aqui para abrir o **Faturamento**
