@@ -245,21 +245,18 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-        # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Evitar erro JSON e duplicação)
+   # ================================
+# 🔄 Aba 3 - Atualizar Google Sheets (Verificação de duplicação pela linha inteira)
 # ================================
 
 with aba3:
-    st.header("📤 Atualizar Banco de Dados (Evitar erro JSON e duplicação)")
+    st.header("📤 Atualizar Banco de Dados (Evitar duplicação pela linha inteira)")
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
 
         # Garantir que a coluna 'Data' seja datetime (sem formatar para string)
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y')
-
-        # Convertendo a Data para string antes de enviar para o Google Sheets
-        df_final['Data'] = df_final['Data'].dt.strftime('%d/%m/%Y')
 
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
@@ -275,18 +272,18 @@ with aba3:
 
                     # Obter dados já existentes no Google Sheets
                     valores_existentes = aba_destino.get_all_values()
-                    # Gerar uma lista de dados já existentes para comparação (considerando Data, Loja, Fat.Total)
-                    dados_existentes = set([f"{linha[0]}|{linha[1]}|{linha[6]}" for linha in valores_existentes[1:]])  # Ignorando cabeçalho
 
                     # Preparar os dados para envio (sem duplicação)
                     rows = df_final.fillna("").values.tolist()
+
+                    # Criar um conjunto de linhas já existentes
+                    dados_existentes = set([tuple(linha) for linha in valores_existentes[1:]])  # Ignorando cabeçalho
+
                     novos_dados = []
                     for linha in rows:
-                        # Criar uma chave simples para comparar
-                        chave = f"{linha[0]}|{linha[1]}|{linha[6]}"
-                        if chave not in dados_existentes:
+                        if tuple(linha) not in dados_existentes:
                             novos_dados.append(linha)
-                            dados_existentes.add(chave)  # Adiciona a chave para não enviar novamente
+                            dados_existentes.add(tuple(linha))  # Adiciona a linha para não enviar novamente
 
                     if novos_dados:
                         primeira_linha_vazia = len(valores_existentes) + 1
@@ -300,4 +297,3 @@ with aba3:
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
-
