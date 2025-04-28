@@ -251,41 +251,30 @@ with aba2:
 from datetime import datetime, timedelta
 
 def gerar_chave_indices(linha):
-    """Gera chave normalizada baseada em Data (A), Loja (C) e Fat.Total (G)."""
-    linha_normalizada = []
+    """Gera chave para comparar registros (Data + Loja + Fat.Total)."""
+    try:
+        if isinstance(linha[0], (int, float)):
+            data = datetime(1899, 12, 30) + timedelta(days=float(linha[0]))
+        else:
+            data = pd.to_datetime(linha[0], dayfirst=True, errors='coerce')
+        data_str = data.strftime("%d/%m/%Y") if not pd.isna(data) else ""
+    except:
+        data_str = ""
 
-    for idx, cell in enumerate(linha):
-        if idx == 0:  # Data
-            try:
-                if isinstance(cell, (int, float)):
-                    data = datetime(1899, 12, 30) + timedelta(days=float(cell))
-                    valor = data.strftime("%d/%m/%Y")
-                else:
-                    data = pd.to_datetime(cell, dayfirst=True, errors='coerce')
-                    valor = data.strftime("%d/%m/%Y") if not pd.isna(data) else ""
-            except:
-                valor = ""
-            linha_normalizada.append(valor)
+    try:
+        loja_str = str(linha[2]).strip().lower()
+    except:
+        loja_str = ""
 
-        elif idx == 2:  # Loja
-            try:
-                valor = str(cell).strip().lower()
-            except:
-                valor = ""
-            linha_normalizada.append(valor)
+    try:
+        fat = str(linha[6]).strip()
+        fat = fat.replace(".", "").replace(",", ".")
+        fat_float = float(fat)
+        fat_str = f"{fat_float:.2f}".replace(".", ",")
+    except:
+        fat_str = "0,00"
 
-        elif idx == 6:  # Fat.Total
-            try:
-                valor = str(cell).strip()
-                valor = valor.replace(".", "").replace(",", ".")
-                valor = float(valor)
-                valor = f"{valor:.2f}".replace(".", ",")
-            except:
-                valor = "0,00"
-            linha_normalizada.append(valor)
-
-    chave = "".join(linha_normalizada)
-    return chave
+    return f"{data_str}{loja_str}{fat_str}"
 
 
 
@@ -312,36 +301,36 @@ with aba3:
 if atualizar:
     with st.spinner('🔄 Atualizando...'):
         try:
-            # Conexão com a planilha
+            # Conectar ao Google Sheets
             planilha_destino = gc.open("Faturamento Sistema Externo")
             aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
-            # Ler dados já existentes
+            # Buscar dados existentes
             dados_existentes = aba_destino.get_all_values()
             primeira_linha_vazia = len(dados_existentes) + 1
 
-            # Montar chaves dos registros existentes
+            # Criar chaves dos registros existentes
             chaves_existentes = set()
             for linha in dados_existentes[1:]:  # Ignora o cabeçalho
                 if len(linha) >= 7:
                     chave = gerar_chave_indices(linha)
                     chaves_existentes.add(chave)
 
-            # Carregar df_final para comparar
+            # Preparar novos registros
             if 'df_final' in st.session_state:
                 df_final = st.session_state.df_final.copy()
                 df_sem_nan = df_final.iloc[1:].fillna("")
 
-                dados_para_colar = []
+                novos_registros = []
                 for linha_nova in df_sem_nan.values.tolist():
                     chave_nova = gerar_chave_indices(linha_nova)
                     if chave_nova not in chaves_existentes:
-                        dados_para_colar.append(linha_nova)
+                        novos_registros.append(linha_nova)
                         chaves_existentes.add(chave_nova)
 
-                if dados_para_colar:
-                    aba_destino.update(f"A{primeira_linha_vazia}", dados_para_colar)
-                    st.success(f"✅ {len(dados_para_colar)} novo(s) registro(s) colado(s) no Google Sheets!")
+                if novos_registros:
+                    aba_destino.update(f"A{primeira_linha_vazia}", novos_registros)
+                    st.success(f"✅ {len(novos_registros)} novo(s) registro(s) colado(s) no Google Sheets!")
                 else:
                     st.info("⚠️ Nenhum novo registro encontrado para atualizar.")
             else:
@@ -349,4 +338,3 @@ if atualizar:
 
         except Exception as e:
             st.error(f"❌ Erro ao atualizar: {e}")
-
