@@ -260,7 +260,12 @@ with aba3:
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
         
-       
+        # Formatando os valores monetários
+        df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: f"R$ {float(x.replace(',', '.')):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: f"R$ {float(x.replace(',', '.')):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: f"R$ {float(x.replace(',', '.')):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        df_final['Ticket'] = df_final['Ticket'].apply(lambda x: f"R$ {float(x.replace(',', '.')):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
      
 
          # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
