@@ -279,11 +279,11 @@ with aba3:
         df_final['Fat.Real'] = df_final['Fat.Real'].apply(format_monetary)
         df_final['Ticket'] = df_final['Ticket'].apply(format_monetary)
 
-        # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
-        df_final = df_final.applymap(str)
-
         # Criar a coluna M com a chave única para verificar duplicações
         df_final['M'] = df_final['Data'] + df_final['Loja'] + df_final['Fat.Total']  # Exemplo de chave para duplicação
+
+        # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
+        df_final = df_final.applymap(str)
 
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
