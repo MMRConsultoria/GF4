@@ -311,9 +311,12 @@ with aba3:
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
 
 
-                        # Aplicar a formatação de moeda no Google Sheets
-                        for i in range(1, len(novos_dados[0]) + 1):  # Colunas de 1 a N
-                            aba_destino.format(f"{chr(64 + i)}2:{chr(64 + i)}", {"numberFormat": {"type": "CURRENCY", "pattern": "[$R$-416]#,##0.00"}})
+                       # Aplique a formatação de moeda brasileira somente para as colunas monetárias
+                        aba_destino.format("G2:G", {"numberFormat": {"type": "CURRENCY", "pattern": "[$R$-416]#,##0.00"}})  # Fat.Total
+                        aba_destino.format("H2:H", {"numberFormat": {"type": "CURRENCY", "pattern": "[$R$-416]#,##0.00"}})  # Serv/Tx
+                        aba_destino.format("I2:I", {"numberFormat": {"type": "CURRENCY", "pattern": "[$R$-416]#,##0.00"}})  # Fat.Real
+                        aba_destino.format("J2:J", {"numberFormat": {"type": "CURRENCY", "pattern": "[$R$-416]#,##0.00"}})  # Ticket
+
                         
                         
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
