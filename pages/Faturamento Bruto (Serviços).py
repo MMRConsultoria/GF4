@@ -246,7 +246,7 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets com Confirmação (Corrigido)
+# 🔄 Aba 3 - Atualizar Google Sheets de forma Segura (Só Novos)
 # ================================
 
 import streamlit as st
@@ -298,8 +298,9 @@ def gerar_chave_indices(linha):
 # 🔹 ABA 3
 
 with aba3:
-    st.header("🔄 Atualizar Banco de Dados - Apenas Novos Registros")
+    st.header("🔄 Atualizar Banco de Dados - Só Novos Registros")
 
+    # 🔗 Link para abrir o Google Sheets
     st.markdown("""
     🔗 [Clique aqui para abrir o **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
     """, unsafe_allow_html=True)
@@ -347,44 +348,18 @@ with aba3:
                         st.success(f"✅ Encontrados {total_novos} registro(s) novo(s) para adicionar.")
                         st.dataframe(novos_registros)
 
-                        # Guardar no session_state para usar depois
-                        st.session_state['novos_registros'] = novos_registros
-                        st.session_state['linha_inicio'] = len(dados_existentes) + 2 if not dados_existentes.empty else 2
+                        confirmar = st.checkbox("✅ Confirmo que desejo adicionar os novos registros.")
+
+                        if confirmar:
+                            with st.spinner('📤 Atualizando Google Sheets...'):
+                                try:
+                                    linha_inicio = len(dados_existentes) + 2 if not dados_existentes.empty else 2
+                                    aba.update(f"A{linha_inicio}", novos_registros.values.tolist())
+                                    st.success(f"🚀 {total_novos} registro(s) novo(s) adicionado(s) ao Google Sheets com sucesso!")
+                                except Exception as e:
+                                    st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
                 except Exception as e:
                     st.error(f"❌ Erro ao buscar dados: {e}")
-
-        # Se já temos novos registros guardados, mostrar botão de confirmar
-        if 'novos_registros' in st.session_state:
-            confirmar = st.checkbox("✅ Confirmo que desejo adicionar os novos registros.")
-
-            if confirmar:
-                if st.button("📤 Atualizar Google Sheets"):
-                    with st.spinner('📤 Atualizando o Google Sheets...'):
-                        try:
-                            # Conectar novamente
-                            scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-                            credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-                            credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-                            gc = gspread.authorize(credentials)
-
-                            planilha = gc.open("Faturamento Sistema Externo")
-                            aba = planilha.worksheet("Fat Sistema Externo")
-
-                            # Atualizar
-                            novos_registros = st.session_state['novos_registros']
-                            linha_inicio = st.session_state['linha_inicio']
-
-                            aba.update(f"A{linha_inicio}", novos_registros.values.tolist())
-
-                            st.success(f"🚀 {len(novos_registros)} registro(s) novo(s) adicionado(s) ao Google Sheets com sucesso!")
-
-                            # Limpar o session_state
-                            del st.session_state['novos_registros']
-                            del st.session_state['linha_inicio']
-
-                        except Exception as e:
-                            st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
-
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento do arquivo na Aba 1.")
