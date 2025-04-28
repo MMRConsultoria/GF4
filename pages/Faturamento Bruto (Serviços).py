@@ -245,11 +245,7 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-        # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Evitar duplicação e erro de Timestamp)
-# ================================
-
-with aba3:
+        with aba3:
     st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
 
     if 'df_final' in st.session_state:
@@ -297,7 +293,7 @@ with aba3:
                 novos_dados.append(linha)
                 dados_existentes.add(chave_m)  # Adiciona a chave da linha para não enviar novamente
 
-       # Adicionar o botão de atualização do Google Sheets
+        # Adicionar o botão de atualização do Google Sheets
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
