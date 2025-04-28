@@ -247,34 +247,38 @@ with aba2:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (versão final corrigida, sem duplicar)
+# 🔄 Aba 3 - Atualizar Google Sheets (Completa, corrigida e sem duplicar)
 # ================================
 import math
 from datetime import datetime
+import pandas as pd
+
+# Função para normalizar linhas
 
 def normalizar_linha(linha):
-    normalizada = []
+    linha_normalizada = []
     for idx, cell in enumerate(linha):
-        if idx == 0:
+        if idx == 0:  # Data (coluna A)
             try:
-                dt = pd.to_datetime(cell, dayfirst=True, errors='coerce')
-                if pd.isna(dt):
-                    normalizada.append(str(cell).strip().lower())
+                data_dt = pd.to_datetime(cell, dayfirst=True, errors='coerce')
+                if pd.isna(data_dt):
+                    linha_normalizada.append("")
                 else:
-                    serial = str(int((dt - pd.Timestamp('1899-12-30')).days))
-                    normalizada.append(serial)
+                    serial = (data_dt - pd.Timestamp('1899-12-30')).days
+                    linha_normalizada.append(str(int(serial)))
             except:
-                normalizada.append(str(cell).strip().lower())
+                linha_normalizada.append("")
         else:
-            normalizada.append(str(cell).strip().replace(",", "").replace(".", "").lower())
-    return normalizada
+            linha_normalizada.append(str(cell).strip().replace(",", "").replace(".", "").lower())
+    return linha_normalizada
 
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
 
     st.markdown("""
     🔗 [Clique aqui para abrir o **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
-    """)
+    """
+    )
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final
@@ -287,71 +291,64 @@ with aba3:
 
                     dados_raw = aba_destino.get_all_values()
 
-                    # Correção datas existentes
-                    for i in range(1, len(dados_raw)):
-                        try:
-                            if dados_raw[i][0]:
-                                data_dt = pd.to_datetime(dados_raw[i][0], dayfirst=True, errors='coerce')
-                                if not pd.isna(data_dt):
-                                    dados_raw[i][0] = str(int((data_dt - pd.Timestamp('1899-12-30')).days))
-                                else:
-                                    dados_raw[i][0] = str(dados_raw[i][0]).strip().lower()
-                        except:
-                            dados_raw[i][0] = str(dados_raw[i][0]).strip().lower()
+                    if len(dados_raw) <= 1:
+                        dados_existentes = []
+                    else:
+                        dados_existentes = []
+                        for row in dados_raw[1:]:
+                            if len(row) >= 10:
+                                dados_existentes.append(normalizar_linha(row))
 
-                    dados_existentes_normalizados = set(
-                        tuple(normalizar_linha(row)) for row in dados_raw[1:] if len(row) >= 10
-                    )
-
+                    # Preparar novos dados
                     novos_dados_raw = df_final.values.tolist()
-                    novos_dados_normalizados = []
-                    novos_dados_linhas_originais = []
-
+                    novos_dados = []
                     for linha in novos_dados_raw:
                         nova_linha = []
                         for idx, valor in enumerate(linha):
-                            if idx == 0:
+                            if idx == 0:  # Data
                                 if isinstance(valor, str):
-                                    dt = datetime.strptime(valor, "%d/%m/%Y")
+                                    data_dt = datetime.strptime(valor, "%d/%m/%Y")
                                 elif isinstance(valor, datetime):
-                                    dt = valor
+                                    data_dt = valor
                                 else:
-                                    dt = None
-                                if dt:
-                                    valor = (dt - datetime(1899, 12, 30)).days
-                                else:
-                                    valor = ""
-                            elif idx in [6, 7, 8, 9]:
-                                if isinstance(valor, (int, float)) and not math.isnan(valor):
-                                    valor = round(valor, 2)
+                                    data_dt = None
+
+                                if data_dt:
+                                    valor = (data_dt - datetime(1899, 12, 30)).days
                                 else:
                                     valor = ""
-                            elif idx in [3, 5, 11]:
+                            elif idx in [6,7,8,9]:
                                 if isinstance(valor, (int, float)) and not math.isnan(valor):
+                                    valor = round(valor,2)
+                                else:
+                                    valor = ""
+                            elif idx in [3,5,11]:
+                                if isinstance(valor, (int,float)) and not math.isnan(valor):
                                     valor = int(valor)
                                 else:
                                     valor = ""
                             else:
                                 valor = str(valor).strip()
                             nova_linha.append(valor)
+                        novos_dados.append(nova_linha)
 
-                        chave_normalizada = tuple(normalizar_linha(nova_linha))
-                        novos_dados_normalizados.append(chave_normalizada)
-                        novos_dados_linhas_originais.append(nova_linha)
+                    novos_dados_normalizados = [normalizar_linha(row) for row in novos_dados]
 
                     registros_novos = [
-                        linha_original for linha_original, chave in zip(novos_dados_linhas_originais, novos_dados_normalizados)
-                        if chave not in dados_existentes_normalizados
+                        linha_original for linha_original, linha_normalizada in zip(novos_dados, novos_dados_normalizados)
+                        if linha_normalizada not in dados_existentes
                     ]
 
                     total_novos = len(registros_novos)
+                    total_existentes = len(novos_dados) - total_novos
 
                     if total_novos == 0:
-                        st.info(f"✅ Nenhum novo registro para atualizar.")
+                        st.info(f"✅ Nenhum novo registro para atualizar. {total_existentes} registro(s) já existiam no Google Sheets.")
                         st.session_state.atualizou_google = True
                     else:
                         primeira_linha_vazia = len(dados_raw) + 1
 
+                        # Formatar colunas
                         aba_destino.format("A:A", {"numberFormat": {"type": "DATE", "pattern": "dd/MM/yyyy"}})
                         aba_destino.format("D:D", {"numberFormat": {"type": "NUMBER", "pattern": "0"}})
                         aba_destino.format("F:F", {"numberFormat": {"type": "NUMBER", "pattern": "0"}})
@@ -362,14 +359,17 @@ with aba3:
                         aba_destino.format("K:K", {"numberFormat": {"type": "TEXT"}})
                         aba_destino.format("L:L", {"numberFormat": {"type": "NUMBER", "pattern": "0000"}})
 
+                        # Atualizar dados
                         aba_destino.update(f"A{primeira_linha_vazia}", registros_novos)
 
                         st.success(f"✅ {total_novos} novo(s) registro(s) enviado(s) para o Google Sheets!")
+                        if total_existentes > 0:
+                            st.warning(f"⚠️ {total_existentes} registro(s) já existiam e não foram importados.")
                         st.session_state.atualizou_google = True
 
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar: {e}")
                     st.session_state.atualizou_google = False
+
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-
