@@ -279,18 +279,18 @@ with aba3:
         df_final['Fat.Real'] = df_final['Fat.Real'].apply(format_monetary)
         df_final['Ticket'] = df_final['Ticket'].apply(format_monetary)
 
-        # Converter G, H, I, J para valores numéricos reais (sem formatação monetária)
-        df_final['Fat.Total'] = pd.to_numeric(df_final['Fat.Total'].str.replace(",", "."), errors='coerce')
-        df_final['Serv/Tx'] = pd.to_numeric(df_final['Serv/Tx'].str.replace(",", "."), errors='coerce')
-        df_final['Fat.Real'] = pd.to_numeric(df_final['Fat.Real'].str.replace(",", "."), errors='coerce')
-        df_final['Ticket'] = pd.to_numeric(df_final['Ticket'].str.replace(",", "."), errors='coerce')
+        # Garantir que as colunas G, H, I e J sejam convertidas corretamente para valores numéricos
+        df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+        df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+        df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+        df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
 
         # Criar a coluna M com a chave única para verificar duplicações
         df_final['M'] = df_final['Data'] + df_final['Loja'] + df_final['Fat.Total'].astype(str)  # Exemplo de chave para duplicação
 
         # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
         df_final = df_final.applymap(str)
-
+        
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
