@@ -189,7 +189,7 @@ if uploaded_file:
         st.subheader("🔄 Atualizar Google Sheets?")
 
         if 'atualizou_google' not in st.session_state:
-            st.session_state.atualizou_google = False
+            st.session_state.atualizou_google = True
 
         if not st.session_state.atualizou_google:
             if st.button("📤 Atualizar tabela 'Fat Sistema Externo' no Google Sheets"):
@@ -209,7 +209,7 @@ if uploaded_file:
 
                     except Exception as e:
                         st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
-                        st.session_state.atualizou_google = False
+                        st.session_state.atualizou_google = True
         else:
             st.info("✅ Dados já foram atualizados no Google Sheets nesta sessão.")
 
