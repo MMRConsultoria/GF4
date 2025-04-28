@@ -263,28 +263,44 @@ from datetime import datetime
 # 🔥 FIM DA FUNÇÃO
 
 #inicio
+#def normalizar_linha(linha):
+#    linha_normalizada = []
+#    for idx, cell in enumerate(linha):
+#        if idx == 0:  # Coluna Data (A)
+#            if isinstance(cell, (int, float)):
+#                # Se já for número (serial de data)
+#                linha_normalizada.append(int(cell))
+#            elif isinstance(cell, str):
+#                try:
+#                    data_dt = datetime.strptime(cell.strip(), "%d/%m/%Y")
+#                    serial = (data_dt - datetime(1899, 12, 30)).days
+#                    linha_normalizada.append(serial)
+#                except Exception:
+#                    linha_normalizada.append(cell.strip().lower())
+#            else:
+#                linha_normalizada.append(str(cell).strip().lower())
+#        else:
+#            linha_normalizada.append(str(cell).strip().replace(",", "").replace(".", "").lower())
+#    return linha_normalizada
+#fim
+
 def normalizar_linha(linha):
     linha_normalizada = []
     for idx, cell in enumerate(linha):
         if idx == 0:  # Coluna Data (A)
-            if isinstance(cell, (int, float)):
-                # Se já for número (serial de data)
-                linha_normalizada.append(int(cell))
-            elif isinstance(cell, str):
-                try:
-                    data_dt = datetime.strptime(cell.strip(), "%d/%m/%Y")
-                    serial = (data_dt - datetime(1899, 12, 30)).days
-                    linha_normalizada.append(serial)
-                except Exception:
-                    linha_normalizada.append(cell.strip().lower())
-            else:
+            try:
+                # Tentar converter tanto novos quanto antigos para serial de data
+                data_dt = pd.to_datetime(cell, dayfirst=True, errors='coerce')
+                if pd.isna(data_dt):
+                    linha_normalizada.append(str(cell).strip().lower())
+                else:
+                    serial = (data_dt - pd.Timestamp('1899-12-30')).days
+                    linha_normalizada.append(str(int(serial)))
+            except:
                 linha_normalizada.append(str(cell).strip().lower())
         else:
             linha_normalizada.append(str(cell).strip().replace(",", "").replace(".", "").lower())
     return linha_normalizada
-#fim
-
-
 
 
 
