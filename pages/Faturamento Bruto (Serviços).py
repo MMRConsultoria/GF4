@@ -245,8 +245,8 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-# ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Sem formatação monetária prévia)
+        # ================================
+# 🔄 Aba 3 - Atualizar Google Sheets (Evitar duplicação e erro de Timestamp)
 # ================================
 
 with aba3:
@@ -258,13 +258,28 @@ with aba3:
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
 
-        # Criar a coluna M (utilizada para verificar duplicação)
-        df_final['M'] = df_final['Data'] + df_final['Loja'] + df_final['Fat.Total'].apply(str)
+        # Função para garantir que os valores sejam números reais com vírgula como separador decimal
+        def format_monetary(value):
+            try:
+                # Verificar se o valor é numérico antes de aplicar a formatação
+                if value is not None and value != '':
+                    # Convertendo para número real, com ponto como separador decimal
+                    value = float(str(value).replace(',', '.'))
+                    return value  # Retorna o valor como número
+                else:
+                    return 0.00  # Se o valor não for numérico, retorna 0.00
+            except (ValueError, TypeError):
+                return 0.00  # Se não puder converter, retorna 0.00
+
+        # Formatando os valores monetários para garantir que sejam enviados como números
+        df_final['Fat.Total'] = df_final['Fat.Total'].apply(format_monetary)
+        df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(format_monetary)
+        df_final['Fat.Real'] = df_final['Fat.Real'].apply(format_monetary)
+        df_final['Ticket'] = df_final['Ticket'].apply(format_monetary)
 
         # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
         df_final = df_final.applymap(str)
 
-        # Enviar os dados para o Google Sheets
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
@@ -297,12 +312,9 @@ with aba3:
                     else:
                         st.info("✅ Não há novos dados para atualizar.")
 
-                    # Depois de enviar os dados, aplique a formatação monetária no Google Sheets
-                    # Exemplo de formatação monetária diretamente no Google Sheets (aplicada manualmente, mas aqui está o código para referência)
-                    # aba_destino.format("G:G", {"numberFormat": {"type": "CURRENCY", "pattern": "[$R$-416]#,##0.00"}})  # Formato monetário para a coluna G
-
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
