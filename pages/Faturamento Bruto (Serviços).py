@@ -245,7 +245,9 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-
+# ================================
+# 🔄 Aba 3 - Atualizar Google Sheets (versão final corrigida, sem duplicar)
+# ================================
 import math
 from datetime import datetime
 
