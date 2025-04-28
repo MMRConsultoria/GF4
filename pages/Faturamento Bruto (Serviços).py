@@ -256,9 +256,9 @@ with aba3:
         df_final = st.session_state.df_final.copy()
 
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
-        #df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
+        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
 
-       # Função para garantir que os valores sejam números reais com vírgula como separador decimal
+        # Função para garantir que os valores sejam números reais com vírgula como separador decimal
         def format_monetary(value):
             try:
                 # Verificar se o valor é numérico antes de aplicar a formatação
@@ -267,13 +267,12 @@ with aba3:
                     # Formatando para garantir que tenha vírgula
                     return f"{value:.2f}".replace(".", ",")
                 else:
-                    # Se o valor não for numérico, retornar 0.00
+                    # Se o valor não for numérico, retornar 0,00
                     return "0,00"
             except (ValueError, TypeError):
                 # Se não puder converter, retorna 0,00
                 return "0,00"
 
-        
         # Formatando os valores monetários
         df_final['Fat.Total'] = df_final['Fat.Total'].apply(format_monetary)
         df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(format_monetary)
@@ -282,7 +281,9 @@ with aba3:
 
         # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
         df_final = df_final.applymap(str)
-        #df_final = df_final.applymap(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+
+        # Criar a coluna M com a chave única para verificar duplicações
+        df_final['M'] = df_final['Data'] + df_final['Loja'] + df_final['Fat.Total']  # Exemplo de chave para duplicação
 
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
@@ -299,20 +300,20 @@ with aba3:
                     # Obter dados já existentes no Google Sheets
                     valores_existentes = aba_destino.get_all_values()
 
-                    # Criar um conjunto de linhas já existentes
-                    dados_existentes = set([tuple(linha) for linha in valores_existentes[1:]])  # Ignorando cabeçalho
+                    # Criar um conjunto de linhas já existentes para comparação (considerando a coluna M)
+                    dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # 12 é o índice da coluna "M", onde as chaves estão
 
                     novos_dados = []
                     rows = df_final.fillna("").values.tolist()
                     for linha in rows:
-                        if tuple(linha) not in dados_existentes:
+                        chave = linha[12]  # Obter a chave da coluna M
+                        if chave not in dados_existentes:
                             novos_dados.append(linha)
-                            dados_existentes.add(tuple(linha))  # Adiciona a linha para não enviar novamente
+                            dados_existentes.add(chave)  # Adiciona a chave para não enviar novamente
 
                     if novos_dados:
                         primeira_linha_vazia = len(valores_existentes) + 1
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
-    
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
                     else:
                         st.info("✅ Não há novos dados para atualizar.")
