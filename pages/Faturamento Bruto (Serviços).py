@@ -256,7 +256,7 @@ with aba3:
         df_final = st.session_state.df_final.copy()
 
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
-        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
+        #df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
 
        # Função para garantir que os valores sejam números reais com vírgula como separador decimal
         def format_monetary(value):
