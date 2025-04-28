@@ -333,14 +333,14 @@ with aba3:
                                nova_row = []
                                for idx, cell in enumerate(row):
                                    if idx == 0:  # Data (coluna A)
-                                       try:
+                                        try:
                                            data_dt = pd.to_datetime(cell, dayfirst=True, errors='coerce')
                                            if pd.isna(data_dt):
                                                nova_row.append("")
                                            else:
                                                serial = str(int((data_dt - pd.Timestamp("1899-12-30")).days))
                                                nova_row.append(serial)
-                                       except:
+                                         except:
                                            nova_row.append("")
                                     else:
                                        nova_row.append(str(cell).strip().replace(",", "").replace(".", "").lower())
