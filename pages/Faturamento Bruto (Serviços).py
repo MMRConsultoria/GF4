@@ -254,15 +254,27 @@ with aba3:
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
-
+        
+        # Novo Verifique os nomes das colunas
+        st.write("Colunas no DataFrame:", df_final.columns)
+        
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
-
+        
+        # novo Verificar os nomes das colunas para garantir que estamos acessando corretamente
+        colunas_monetarias = ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket"]
+        
+        # novo Garantir que as colunas existem
+        for col in colunas_monetarias:
+            if col not in df_final.columns:
+                st.error(f"❌ A coluna {col} não foi encontrada no DataFrame.")
+                break
+        else:
 
          # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
         df_final = df_final.applymap(str)
         
-         # Ajustar valores monetários (Fat.Total, Serv/Tx, etc.)
+         # Novo Ajustar valores monetários (Fat.Total, Serv/Tx, etc.)
         for col in ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket"]:
             df_final[col] = df_final[col].apply(lambda x: f"R$ {float(x.replace(',', '.')):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         
