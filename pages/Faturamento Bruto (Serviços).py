@@ -245,64 +245,40 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-        # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Definitivo e Corrigido)
+# ================================
+# 🔄 Aba 3 - Atualizar Google Sheets sem complicação
 # ================================
 
 import streamlit as st
 import pandas as pd
-from datetime import datetime, timedelta
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 
-# 🔹 Funções auxiliares
-
-def normalizar_linha(data, loja, fat_total):
-    """Normaliza os campos para gerar chave segura."""
-    # Data
+# 🔹 Função para gerar chave simples
+def gerar_chave_simples(data, loja, fat_total):
+    data = str(data).strip()
+    loja = str(loja).strip().lower()
     try:
-        data_formatada = pd.to_datetime(data, dayfirst=True, errors='coerce')
-        if pd.isna(data_formatada):
-            data_final = str(data).strip()
-        else:
-            data_final = data_formatada.strftime("%d/%m/%Y")
-    except:
-        data_final = str(data).strip()
-
-    # Loja
-    try:
-        loja_final = str(loja).strip().lower()
-    except:
-        loja_final = ""
-
-    # Fat.Total
-    try:
-        fat = str(fat_total).strip()
-        fat = fat.replace(".", "").replace(",", ".")
+        fat = str(fat_total).strip().replace(".", "").replace(",", ".")
         fat_float = float(fat)
-        fat_final = f"{fat_float:.2f}".replace(".", ",")
+        fat_total = f"{fat_float:.2f}".replace(".", ",")
     except:
-        fat_final = "0,00"
-
-    return f"{data_final}{loja_final}{fat_final}"
+        fat_total = "0,00"
+    return f"{data}{loja}{fat_total}"
 
 # 🔹 ABA 3
 
 with aba3:
-    st.header("🔄 Atualizar Banco de Dados - Apenas Novos Registros (Corrigido)")
-
-    st.markdown("""
-    🔗 [Clique aqui para abrir o **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
-    """, unsafe_allow_html=True)
+    st.header("🔄 Atualizar Banco - Apenas Novos Registros (Fluxo Simples)")
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
 
-        if st.button("🔍 Verificar novos registros"):
-            with st.spinner('🔄 Buscando dados atuais no Google Sheets...'):
+        if st.button("🔍 Buscar e Verificar novos registros"):
+            with st.spinner("Buscando dados do Google Sheets..."):
                 try:
-                    # Conectar ao Google Sheets
+                    # Conectar
                     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
                     credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
                     credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
@@ -314,75 +290,67 @@ with aba3:
                     dados_sheets = aba.get_all_values()
 
                     if not dados_sheets or len(dados_sheets) < 2:
-                        st.warning("⚠️ Banco de dados vazio ou sem estrutura correta no Google Sheets.")
+                        st.warning("⚠️ Banco de dados vazio no Google Sheets.")
                         dados_existentes = pd.DataFrame()
                     else:
                         dados_existentes = pd.DataFrame(dados_sheets[1:], columns=dados_sheets[0])
 
-                    # 🔥 Normalizar e gerar chaves no banco existente
+                    # Gerar chaves para comparação
                     if not dados_existentes.empty:
                         dados_existentes['Chave'] = dados_existentes.apply(
-                            lambda x: normalizar_linha(x['Data'], x['Loja'], x['Fat.Total']),
+                            lambda x: gerar_chave_simples(x['Data'], x['Loja'], x['Fat.Total']),
                             axis=1
                         )
                         chaves_existentes = set(dados_existentes['Chave'])
                     else:
                         chaves_existentes = set()
 
-                    # 🔥 Normalizar e gerar chaves no df_final
                     df_final['Chave'] = df_final.apply(
-                        lambda x: normalizar_linha(x['Data'], x['Loja'], x['Fat.Total']),
+                        lambda x: gerar_chave_simples(x['Data'], x['Loja'], x['Fat.Total']),
                         axis=1
                     )
 
-                    # 🔥 Selecionar apenas registros novos
                     novos_registros = df_final[~df_final['Chave'].isin(chaves_existentes)].drop(columns=['Chave'])
 
-                    total_novos = len(novos_registros)
-
-                    if total_novos == 0:
-                        st.success("✅ Nenhum novo registro para adicionar. Banco de dados já atualizado.")
+                    if novos_registros.empty:
+                        st.success("✅ Nenhum novo registro encontrado.")
                     else:
-                        st.success(f"✅ Encontrados {total_novos} registro(s) novo(s) para adicionar.")
+                        st.success(f"✅ {len(novos_registros)} novo(s) registro(s) encontrado(s)!")
                         st.dataframe(novos_registros)
 
                         st.session_state['novos_registros'] = novos_registros
-                        st.session_state['linha_inicio'] = len(dados_existentes) + 2 if not dados_existentes.empty else 2
 
                 except Exception as e:
-                    st.error(f"❌ Erro ao buscar dados: {e}")
+                    st.error(f"❌ Erro ao buscar/validar: {e}")
 
-        # Se temos novos registros guardados, mostrar botão para confirmar
         if 'novos_registros' in st.session_state:
-            confirmar = st.checkbox("✅ Confirmo que desejo adicionar os novos registros.")
+            confirmar = st.checkbox("✅ Confirmo que desejo adicionar novos registros.")
 
             if confirmar:
-                if st.button("📤 Atualizar Google Sheets"):
-                    with st.spinner('📤 Atualizando o Google Sheets...'):
-                        try:
-                            # Conectar novamente
-                            scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-                            credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-                            credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-                            gc = gspread.authorize(credentials)
+                if st.button("📤 Atualizar Google Sheets agora"):
+                    try:
+                        # Reabrir conexão
+                        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+                        credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+                        credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+                        gc = gspread.authorize(credentials)
 
-                            planilha = gc.open("Faturamento Sistema Externo")
-                            aba = planilha.worksheet("Fat Sistema Externo")
+                        planilha = gc.open("Faturamento Sistema Externo")
+                        aba = planilha.worksheet("Fat Sistema Externo")
 
-                            novos_registros = st.session_state['novos_registros']
-                            linha_inicio = st.session_state['linha_inicio']
+                        # Onde começar a inserir
+                        linha_inicio = len(aba.get_all_values()) + 1
 
-                            aba.update(f"A{linha_inicio}", novos_registros.values.tolist())
+                        # Inserir só novos
+                        novos_registros = st.session_state['novos_registros']
+                        aba.update(f"A{linha_inicio}", novos_registros.values.tolist())
 
-                            st.success(f"🚀 {len(novos_registros)} registro(s) novo(s) adicionado(s) ao Google Sheets com sucesso!")
+                        st.success(f"🚀 {len(novos_registros)} registro(s) adicionado(s) com sucesso!")
 
-                            # Limpar session_state
-                            del st.session_state['novos_registros']
-                            del st.session_state['linha_inicio']
+                        del st.session_state['novos_registros']
 
-                        except Exception as e:
-                            st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
+                    except Exception as e:
+                        st.error(f"❌ Erro ao atualizar: {e}")
 
     else:
-        st.warning("⚠️ Primeiro faça o upload e o processamento do arquivo na Aba 1.")
-
+        st.warning("⚠️ Primeiro faça o upload na Aba 1.")
