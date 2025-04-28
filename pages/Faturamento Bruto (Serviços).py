@@ -246,7 +246,7 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Evitar duplicação e erro de Timestamp)
+# 🔄 Aba 3 - Atualizar Google Sheets (Sem formatação monetária prévia)
 # ================================
 
 with aba3:
@@ -261,30 +261,10 @@ with aba3:
         # Criar a coluna M (utilizada para verificar duplicação)
         df_final['M'] = df_final['Data'] + df_final['Loja'] + df_final['Fat.Total'].apply(str)
 
-        # Função para garantir que os valores sejam números reais com vírgula como separador decimal
-        def format_monetary(value):
-            try:
-                # Verificar se o valor é numérico antes de aplicar a formatação
-                if value is not None and value != '':
-                    value = float(str(value).replace(',', '.'))  # Convertendo para número com ponto
-                    # Formatando para garantir que tenha vírgula
-                    return f"{value:.2f}".replace(".", ",")
-                else:
-                    # Se o valor não for numérico, retornar 0,00
-                    return "0,00"
-            except (ValueError, TypeError):
-                # Se não puder converter, retorna 0,00
-                return "0,00"
-
-        # Formatando os valores monetários
-        df_final['Fat.Total'] = df_final['Fat.Total'].apply(format_monetary)
-        df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(format_monetary)
-        df_final['Fat.Real'] = df_final['Fat.Real'].apply(format_monetary)
-        df_final['Ticket'] = df_final['Ticket'].apply(format_monetary)
-
-        # **Converter todo o DataFrame para string para evitar a duplicação**
+        # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
         df_final = df_final.applymap(str)
 
+        # Enviar os dados para o Google Sheets
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
@@ -316,6 +296,10 @@ with aba3:
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
                     else:
                         st.info("✅ Não há novos dados para atualizar.")
+
+                    # Depois de enviar os dados, aplique a formatação monetária no Google Sheets
+                    # Exemplo de formatação monetária diretamente no Google Sheets (aplicada manualmente, mas aqui está o código para referência)
+                    # aba_destino.format("G:G", {"numberFormat": {"type": "CURRENCY", "pattern": "[$R$-416]#,##0.00"}})  # Formato monetário para a coluna G
 
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
