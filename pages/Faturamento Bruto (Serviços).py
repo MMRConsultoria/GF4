@@ -257,6 +257,9 @@ with aba3:
 
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
+         
+        # Criar a coluna M com a chave única para verificar duplicações
+        df_final['M'] = df_final['Data'] + df_final['Loja'] + df_final['Fat.Total'].astype(str)  # Exemplo de chave para duplicação
 
         # Função para garantir que os valores sejam números reais com vírgula como separador decimal
         def format_monetary(value):
@@ -285,8 +288,7 @@ with aba3:
         df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
         df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
 
-        # Criar a coluna M com a chave única para verificar duplicações
-        df_final['M'] = df_final['Data'] + df_final['Loja'] + df_final['Fat.Total'].astype(str)  # Exemplo de chave para duplicação
+       
 
         # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
         df_final = df_final.applymap(str)
