@@ -258,19 +258,19 @@ with aba3:
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
 
-         # Função para formatar valores monetários de maneira segura
+        # Função para formatar valores monetários de maneira segura (sem transformar para string)
         def format_monetary(value):
             try:
                 # Verificar se o valor é numérico antes de aplicar a formatação
                 if value is not None and value != '':
-                    value = str(value).replace(',', '.')
-                    return f"R$ {float(value):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                    value = float(str(value).replace(',', '.'))  # Mantendo como numérico
+                    return value
                 else:
-                    # Se o valor não for numérico, retornar "R$ 0,00"
-                    return "R$ 0,00"
+                    # Se o valor não for numérico, retornar 0
+                    return 0.0
             except (ValueError, TypeError):
-                # Se não puder converter, retorna "R$ 0,00"
-                return "R$ 0,00"
+                # Se não puder converter, retorna 0.0
+                return 0.0
 
         # Formatando os valores monetários
         df_final['Fat.Total'] = df_final['Fat.Total'].apply(format_monetary)
