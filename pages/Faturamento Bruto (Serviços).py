@@ -246,7 +246,7 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
         # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (comparando colunas A, C e G direto)
+# 🔄 Aba 3 - Atualizar Google Sheets (com normalização real de Data, Loja, Fat.Total)
 # ================================
 
 import math
@@ -254,8 +254,7 @@ import pandas as pd
 from datetime import datetime
 
 def gerar_chave_indices(linha):
-    """Concatena valores da coluna A (Data), C (Loja), G (Fat.Total)"""
-    chave = ""
+    """Normaliza Data, Loja e Fat.Total antes de concatenar"""
     try:
         # A -> índice 0 -> Data
         data = pd.to_datetime(linha[0], dayfirst=True, errors='coerce')
@@ -264,20 +263,19 @@ def gerar_chave_indices(linha):
         data_str = ""
 
     # C -> índice 2 -> Loja
-    loja_str = str(linha[2]).strip() if len(linha) > 2 else ""
+    loja_str = str(linha[2]).strip().lower() if len(linha) > 2 else ""
 
     # G -> índice 6 -> Fat.Total
     if len(linha) > 6:
         fat_total = linha[6]
         try:
-            if isinstance(fat_total, (int, float)):
-                fat_total_str = f"{fat_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            else:
-                fat_total_str = str(fat_total).strip()
+            fat_total = str(fat_total).replace(".", "").replace(",", ".")  # Corrige vírgula para ponto
+            fat_total_float = float(fat_total)
+            fat_total_str = f"{fat_total_float:.2f}".replace(".", ",")  # volta vírgula
         except:
-            fat_total_str = ""
+            fat_total_str = "0,00"
     else:
-        fat_total_str = ""
+        fat_total_str = "0,00"
 
     chave = f"{data_str}{loja_str}{fat_total_str}"
     return chave
@@ -298,10 +296,11 @@ with aba3:
                     planilha_destino = gc.open("Faturamento Sistema Externo")
                     aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
-                    # 📥 Baixar dados (ignorar a primeira linha que é o cabeçalho)
+                    # 📥 Baixar dados do Google Sheets (ignorar cabeçalho)
                     dados_raw = aba_destino.get_all_values()
-                    valores = dados_raw[1:]  # Ignorar linha 1 (índice 0)
+                    valores = dados_raw[1:]  # Ignora linha 1 (cabeçalho)
 
+                    # 🔥 Gerar chaves dos dados já existentes
                     chaves_existentes = set()
                     for row in valores:
                         chave = gerar_chave_indices(row)
@@ -369,6 +368,7 @@ with aba3:
                         aba_destino.format("K:K", {"numberFormat": {"type": "TEXT"}})
                         aba_destino.format("L:L", {"numberFormat": {"type": "NUMBER", "pattern": "0000"}})
 
+                        # 📤 Atualizar Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", registros_para_enviar)
 
                         st.success(f"✅ {total_novos} novo(s) registro(s) enviado(s) para o Google Sheets!")
