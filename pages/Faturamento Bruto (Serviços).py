@@ -247,26 +247,30 @@ with aba2:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (versão sem duplicar e sem confundir datas)
+# 🔄 Aba 3 - Atualizar Google Sheets (VERSÃO CORRIGIDA)
 # ================================
 
 import math
+import pandas as pd
 from datetime import datetime
 
 def normalizar_linha(linha):
     linha_normalizada = []
     for idx, cell in enumerate(linha):
-        if idx == 0:  # Coluna de Data
+        if idx == 0:  # Data
             try:
                 data_dt = pd.to_datetime(cell, dayfirst=True, errors='coerce')
                 if pd.isna(data_dt):
                     linha_normalizada.append("")
                 else:
-                    linha_normalizada.append(data_dt.strftime("%d/%m/%Y"))  # Sempre comparar como texto
+                    linha_normalizada.append(data_dt.strftime("%d/%m/%Y"))
             except:
                 linha_normalizada.append("")
         else:
-            linha_normalizada.append(str(cell).strip().replace(",", "").replace(".", "").lower())
+            if pd.isna(cell):
+                linha_normalizada.append("")
+            else:
+                linha_normalizada.append(str(cell).strip().replace(",", "").replace(".", "").lower())
     return linha_normalizada
 
 with aba3:
@@ -295,7 +299,9 @@ with aba3:
                             if len(row) >= 10:
                                 dados_existentes.append(normalizar_linha(row))
 
-                    novos_dados_raw = df_final.values.tolist()
+                    # 🔥 Corrigir NaNs logo aqui
+                    novos_dados_raw = df_final.fillna("").values.tolist()
+
                     novos_dados = []
                     for linha in novos_dados_raw:
                         nova_linha = []
@@ -308,26 +314,28 @@ with aba3:
                                 else:
                                     data_dt = None
 
-                                if data_dt:
-                                    valor = data_dt.strftime("%d/%m/%Y")  # Formatar para comparar como texto
+                                if data_dt and not pd.isna(data_dt):
+                                    valor = data_dt.strftime("%d/%m/%Y")
                                 else:
                                     valor = ""
-                            elif idx in [6, 7, 8, 9]:
+                            elif idx in [6, 7, 8, 9]:  # Valores monetários
                                 if isinstance(valor, (int, float)) and not math.isnan(valor):
                                     valor = round(valor, 2)
                                 else:
                                     valor = ""
-                            elif idx in [3, 5, 11]:
+                            elif idx in [3, 5, 11]:  # Valores inteiros
                                 if isinstance(valor, (int, float)) and not math.isnan(valor):
                                     valor = int(valor)
                                 else:
                                     valor = ""
                             else:
-                                valor = str(valor).strip()
+                                if pd.isna(valor):
+                                    valor = ""
+                                else:
+                                    valor = str(valor).strip()
                             nova_linha.append(valor)
                         novos_dados.append(normalizar_linha(nova_linha))
 
-                    # 🔥 Comparação final: comparar listas normalizadas
                     registros_novos = [
                         linha_original for linha_original, linha_normalizada in zip(novos_dados_raw, novos_dados)
                         if linha_normalizada not in dados_existentes
