@@ -245,18 +245,18 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-   # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Verificação de duplicação pela linha inteira)
+  # ================================
+# 🔄 Aba 3 - Atualizar Google Sheets (Evitar duplicação e erro de Timestamp)
 # ================================
 
 with aba3:
-    st.header("📤 Atualizar Banco de Dados (Evitar duplicação pela linha inteira)")
+    st.header("📤 Atualizar Banco de Dados (Evitar duplicação e erro de Timestamp)")
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
 
-        # Garantir que a coluna 'Data' seja datetime (sem formatar para string)
-        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y')
+        # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
+        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
 
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
