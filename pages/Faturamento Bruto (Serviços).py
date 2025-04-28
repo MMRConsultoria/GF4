@@ -247,7 +247,7 @@ with aba2:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (VERSÃO CORRIGIDA)
+# 🔄 Aba 3 - Atualizar Google Sheets (VERSÃO FINAL SEM DUPLICAR)
 # ================================
 
 import math
@@ -257,7 +257,7 @@ from datetime import datetime
 def normalizar_linha(linha):
     linha_normalizada = []
     for idx, cell in enumerate(linha):
-        if idx == 0:  # Data
+        if idx == 0:  # Coluna de Data
             try:
                 data_dt = pd.to_datetime(cell, dayfirst=True, errors='coerce')
                 if pd.isna(data_dt):
@@ -292,17 +292,19 @@ with aba3:
                     dados_raw = aba_destino.get_all_values()
 
                     if len(dados_raw) <= 1:
-                        dados_existentes = []
+                        dados_existentes_normalizados = []
                     else:
-                        dados_existentes = []
+                        dados_existentes_normalizados = []
                         for row in dados_raw[1:]:
                             if len(row) >= 10:
-                                dados_existentes.append(normalizar_linha(row))
+                                dados_existentes_normalizados.append(normalizar_linha(row))
 
-                    # 🔥 Corrigir NaNs logo aqui
+                    # 🔥 Corrigir NaN logo aqui
                     novos_dados_raw = df_final.fillna("").values.tolist()
 
-                    novos_dados = []
+                    registros_para_enviar = []
+                    registros_para_enviar_normalizados = []
+
                     for linha in novos_dados_raw:
                         nova_linha = []
                         for idx, valor in enumerate(linha):
@@ -334,14 +336,15 @@ with aba3:
                                 else:
                                     valor = str(valor).strip()
                             nova_linha.append(valor)
-                        novos_dados.append(normalizar_linha(nova_linha))
 
-                    registros_novos = [
-                        linha_original for linha_original, linha_normalizada in zip(novos_dados_raw, novos_dados)
-                        if linha_normalizada not in dados_existentes
-                    ]
+                        linha_normalizada = normalizar_linha(nova_linha)
 
-                    total_novos = len(registros_novos)
+                        # 🔥 Só adiciona se não existe já normalizado
+                        if linha_normalizada not in dados_existentes_normalizados:
+                            registros_para_enviar.append(nova_linha)
+                            registros_para_enviar_normalizados.append(linha_normalizada)
+
+                    total_novos = len(registros_para_enviar)
 
                     if total_novos == 0:
                         st.info(f"✅ Nenhum novo registro para atualizar. Tudo já existe no Google Sheets.")
@@ -359,7 +362,7 @@ with aba3:
                         aba_destino.format("K:K", {"numberFormat": {"type": "TEXT"}})
                         aba_destino.format("L:L", {"numberFormat": {"type": "NUMBER", "pattern": "0000"}})
 
-                        aba_destino.update(f"A{primeira_linha_vazia}", registros_novos)
+                        aba_destino.update(f"A{primeira_linha_vazia}", registros_para_enviar)
 
                         st.success(f"✅ {total_novos} novo(s) registro(s) enviado(s) para o Google Sheets!")
                         st.session_state.atualizou_google = True
