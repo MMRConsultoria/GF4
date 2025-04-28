@@ -246,95 +246,50 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # ================================
-# 🛠️ Função para gerar chave simples
+# 🔄 Aba 3 - Atualizar Google Sheets (Colar Tudo)
 # ================================
+
+import streamlit as st
 from datetime import datetime, timedelta
-
-def gerar_chave_indices(linha):
-    """Gera chave para comparar registros (Data + Loja + Fat.Total)."""
-    try:
-        if isinstance(linha[0], (int, float)):
-            data = datetime(1899, 12, 30) + timedelta(days=float(linha[0]))
-        else:
-            data = pd.to_datetime(linha[0], dayfirst=True, errors='coerce')
-        data_str = data.strftime("%d/%m/%Y") if not pd.isna(data) else ""
-    except:
-        data_str = ""
-
-    try:
-        loja_str = str(linha[2]).strip().lower()
-    except:
-        loja_str = ""
-
-    try:
-        fat = str(linha[6]).strip()
-        fat = fat.replace(".", "").replace(",", ".")
-        fat_float = float(fat)
-        fat_str = f"{fat_float:.2f}".replace(".", ",")
-    except:
-        fat_str = "0,00"
-
-    return f"{data_str}{loja_str}{fat_str}"
-
-
-
-
-# ================================
-# 🔗 Parte 1 - Link e Botão Atualizar
-# ================================
 
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
 
+    # 🔗 Link para abrir o Google Sheets
     st.markdown("""
     🔗 [Clique aqui para abrir o **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
     """, unsafe_allow_html=True)
 
-    atualizar = st.button("📤 Atualizar no Google Sheets")
+    # 📤 Botão para colar tudo
+    atualizar = st.button("📤 Colar todos os registros no Google Sheets")
 
+    if atualizar:
+        with st.spinner('🔄 Colando registros no Google Sheets...'):
+            try:
+                # 🔹 Conectar à planilha
+                planilha_destino = gc.open("Faturamento Sistema Externo")
+                aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
+                # 🔹 Buscar dados existentes
+                dados_existentes = aba_destino.get_all_values()
+                primeira_linha_vazia = len(dados_existentes) + 1
 
-# ================================
-# 🔥 Parte 2 - Lógica da Atualização (executa só se clicar)
-# ================================
+                # 🔹 Carregar df_final do session_state
+                if 'df_final' in st.session_state:
+                    df_final = st.session_state.df_final.copy()
+                    # Ignorar cabeçalho (primeira linha)
+                    df_sem_nan = df_final.iloc[1:].fillna("")
 
-if atualizar:
-    with st.spinner('🔄 Atualizando...'):
-        try:
-            # Conectar ao Google Sheets
-            planilha_destino = gc.open("Faturamento Sistema Externo")
-            aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
+                    dados_para_colar = df_sem_nan.values.tolist()
 
-            # Buscar dados existentes
-            dados_existentes = aba_destino.get_all_values()
-            primeira_linha_vazia = len(dados_existentes) + 1
-
-            # Criar chaves dos registros existentes
-            chaves_existentes = set()
-            for linha in dados_existentes[1:]:  # Ignora o cabeçalho
-                if len(linha) >= 7:
-                    chave = gerar_chave_indices(linha)
-                    chaves_existentes.add(chave)
-
-            # Preparar novos registros
-            if 'df_final' in st.session_state:
-                df_final = st.session_state.df_final.copy()
-                df_sem_nan = df_final.iloc[1:].fillna("")
-
-                novos_registros = []
-                for linha_nova in df_sem_nan.values.tolist():
-                    chave_nova = gerar_chave_indices(linha_nova)
-                    if chave_nova not in chaves_existentes:
-                        novos_registros.append(linha_nova)
-                        chaves_existentes.add(chave_nova)
-
-                if novos_registros:
-                    aba_destino.update(f"A{primeira_linha_vazia}", novos_registros)
-                    st.success(f"✅ {len(novos_registros)} novo(s) registro(s) colado(s) no Google Sheets!")
+                    if dados_para_colar:
+                        # 🔹 Atualizar direto no Google Sheets
+                        aba_destino.update(f"A{primeira_linha_vazia}", dados_para_colar)
+                        st.success(f"✅ {len(dados_para_colar)} registro(s) colado(s) com sucesso!")
+                    else:
+                        st.info("⚠️ Nenhum dado para colar. Verifique o arquivo enviado.")
                 else:
-                    st.info("⚠️ Nenhum novo registro encontrado para atualizar.")
-            else:
-                st.warning("⚠️ Nenhum dado encontrado. Faça o upload primeiro.")
+                    st.warning("⚠️ Primeiro, faça o upload e processamento do arquivo na aba 1.")
 
-        except Exception as e:
-            st.error(f"❌ Erro ao atualizar: {e}")
+            except Exception as e:
+                st.error(f"❌ Erro ao atualizar: {e}")
