@@ -214,25 +214,6 @@ if st.button("📤 Atualizar tabela 'Fat Sistema Externo' no Google Sheets"):
 
 else:
     st.info("Clique no botão acima para atualizar os dados no Google Sheets.")
-📢 O que mudou e como agora vai funcionar:
-Sempre terá o botão "📤 Atualizar tabela 'Fat Sistema Externo' no Google Sheets".
-
-Ao clicar no botão, o código vai atualizar os dados no Google Sheets.
-
-Não há mais a necessidade de controlar o estado da atualização com session_state, o que simplifica bastante.
-
-O código agora envia os dados novos do df_final para a próxima linha vazia no Google Sheets.
-
-🚀 Passos para testar:
-Teste o código novamente.
-
-Clique no botão "📤 Atualizar tabela 'Fat Sistema Externo' no Google Sheets".
-
-Verifique se os dados são atualizados corretamente no Google Sheets sem erro.
-
-Se precisar de ajustes adicionais, me avise que ajustamos rapidamente! Estou aqui para te ajudar. 🚀
-
-
 
 
 
