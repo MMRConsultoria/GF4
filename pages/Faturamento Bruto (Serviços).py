@@ -245,11 +245,9 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-# ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Evitar duplicação e erro de Timestamp)
-# ================================
-
-
+# =======================================
+# Atualizar Google Sheets (Evitar duplicação)
+# =======================================
 
 with aba3:
     st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
@@ -264,8 +262,7 @@ with aba3:
         # Não converter para string, apenas utilizar "M" para verificação de duplicação
         df_final['M'] = df_final['M'].apply(str)
 
-
-         # Garantir que as colunas de valores monetários sejam enviadas como números, sem aspas e sem formatação extra
+        # Garantir que as colunas de valores monetários sejam enviadas como números, sem aspas e sem formatação extra
         def format_monetary(value):
             try:
                 # Verificar se o valor é numérico antes de aplicar a formatação
@@ -280,18 +277,18 @@ with aba3:
                 # Se não puder converter, retorna 0,00
                 return "0,00"
 
+        
         # Formatando os valores monetários
         df_final['Fat.Total'] = df_final['Fat.Total'].apply(format_monetary)
         df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(format_monetary)
         df_final['Fat.Real'] = df_final['Fat.Real'].apply(format_monetary)
         df_final['Ticket'] = df_final['Ticket'].apply(format_monetary)
 
-        # **Remover formatação de string e deixar os valores numéricos como são no Excel**
-        for col in ['Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
-            df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
-            
-        # Converter todo o DataFrame para string, para evitar problemas com o Timestamp, mas sem afetar as colunas G, H, I e J
+        # Não aplicar formatação de moeda no Google Sheets; enviar como números puros
+        # Converter a coluna "Data" para string para facilitar a manipulação no Google Sheets
         df_final['Data'] = df_final['Data'].astype(str)
+
+        # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
         df_final = df_final.applymap(str)
 
         # Conectar ao Google Sheets
@@ -337,4 +334,3 @@ with aba3:
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
-
