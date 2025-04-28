@@ -257,9 +257,9 @@ with aba3:
 
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
-         
-        # Criar a coluna M com a chave única para verificar duplicações
-        df_final['M'] = df_final['Data'] + df_final['Loja'] + df_final['Fat.Total'].astype(str)  # Exemplo de chave para duplicação
+
+        # Manter a coluna M com os valores de string (para garantir a duplicação)
+        df_final['M'] = df_final['Data'] + df_final['Loja'] + df_final['Fat.Total'].apply(str)
 
         # Função para garantir que os valores sejam números reais com vírgula como separador decimal
         def format_monetary(value):
@@ -276,30 +276,16 @@ with aba3:
                 # Se não puder converter, retorna 0,00
                 return "0,00"
 
-        # Formatando os valores monetários
+        # Formatando os valores monetários apenas para as colunas que queremos
         df_final['Fat.Total'] = df_final['Fat.Total'].apply(format_monetary)
         df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(format_monetary)
         df_final['Fat.Real'] = df_final['Fat.Real'].apply(format_monetary)
         df_final['Ticket'] = df_final['Ticket'].apply(format_monetary)
 
-        # Garantir que as colunas G, H, I e J sejam convertidas corretamente para valores numéricos
-        df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-        df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-        df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-        df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-
-       
-
-        # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
+        # **Converter para string para garantir que a duplicação seja verificada** 
+        # Convertendo as colunas necessárias para string (sem modificar valores reais das outras)
         df_final = df_final.applymap(str)
 
-          # Aqui, garantimos que os valores nas colunas G, H, I e J sejam numéricos
-        # e substituímos o ponto por vírgula, como foi feito manualmente
-        for col in ['Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
-            df_final[col] = df_final[col].apply(lambda x: x.replace('.', ',') if isinstance(x, str) else x)
-
-
-        
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
@@ -315,16 +301,15 @@ with aba3:
                     # Obter dados já existentes no Google Sheets
                     valores_existentes = aba_destino.get_all_values()
 
-                    # Criar um conjunto de linhas já existentes para comparação (considerando a coluna M)
-                    dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # 12 é o índice da coluna "M", onde as chaves estão
+                    # Criar um conjunto de linhas já existentes para comparação
+                    dados_existentes = set([tuple(linha) for linha in valores_existentes[1:]])  # Ignorando cabeçalho
 
                     novos_dados = []
                     rows = df_final.fillna("").values.tolist()
                     for linha in rows:
-                        chave = linha[12]  # Obter a chave da coluna M
-                        if chave not in dados_existentes:
+                        if tuple(linha) not in dados_existentes:
                             novos_dados.append(linha)
-                            dados_existentes.add(chave)  # Adiciona a chave para não enviar novamente
+                            dados_existentes.add(tuple(linha))  # Adiciona a linha para não enviar novamente
 
                     if novos_dados:
                         primeira_linha_vazia = len(valores_existentes) + 1
