@@ -261,10 +261,10 @@ with aba3:
     """, unsafe_allow_html=True)
 
     # 📤 Botão para colar tudo
-    atualizar = st.button("📤 Colar todos os registros no Google Sheets")
+    atualizar = st.button("📤 Atualizar no Google Sheets")
 
     if atualizar:
-        with st.spinner('🔄 Colando registros no Google Sheets...'):
+        with st.spinner('🔄 Atualizar no Google Sheets'):
             try:
                 # 🔹 Conectar à planilha
                 planilha_destino = gc.open("Faturamento Sistema Externo")
