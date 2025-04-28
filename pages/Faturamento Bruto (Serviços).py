@@ -251,6 +251,17 @@ with aba2:
 import math
 from datetime import datetime
 
+# 🔥 AQUI VOCÊ JÁ INCLUI ESTA FUNÇÃO:
+def normalizar_linha(linha):
+    linha_normalizada = []
+    for idx, cell in enumerate(linha):
+        if idx == 0 and isinstance(cell, (int, float)):  # Se for data (serial number)
+            linha_normalizada.append(int(cell))
+        else:
+            linha_normalizada.append(str(cell).strip().replace(",", "").replace(".", "").lower())
+    return linha_normalizada
+# 🔥 FIM DA FUNÇÃO
+
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
 
@@ -313,15 +324,32 @@ with aba3:
                             nova_linha.append(valor)
                         novos_dados.append(nova_linha)
 
-                    novos_dados_normalizados = [
-                        [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
-                        for row in novos_dados
-                    ]
+                    #novos_dados_normalizados = [
+                        #[str(cell).strip().replace(",", "").replace(".", "") for cell in row]
+                        #for row in novos_dados
+                    #]
 
+                    # 🔥 Nova normalização usando a função que você criou
+                    dados_existentes_normalizados = [normalizar_linha(row) for row in dados_existentes]
+                    novos_dados_normalizados = [normalizar_linha(row) for row in novos_dados]
+
+
+
+
+                            
+                    #registros_novos = [
+                    #    linha_original for linha_original, linha_normalizada in zip(novos_dados, novos_dados_normalizados)
+                    #    if linha_normalizada not in dados_existentes
+                    #]
+
+                    # 🔥 Nova verificação segura
                     registros_novos = [
-                        linha_original for linha_original, linha_normalizada in zip(novos_dados, novos_dados_normalizados)
-                        if linha_normalizada not in dados_existentes
-                    ]
+                         linha_original for linha_original, linha_normalizada in zip(novos_dados, novos_dados_normalizados)
+                         if linha_normalizada not in dados_existentes_normalizados
+                    ]    
+
+
+
 
                     total_novos = len(registros_novos)
                     total_existentes = len(novos_dados) - total_novos
