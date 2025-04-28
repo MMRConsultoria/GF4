@@ -258,6 +258,16 @@ with aba3:
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
 
+         # Função para formatar valores monetários de maneira segura
+        def format_monetary(value):
+            try:
+                # Tenta converter para float, tratando valores inválidos como 0
+                value = float(value.replace(',', '.'))
+                return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            except (ValueError, TypeError):
+                # Se não puder converter, retorna "R$ 0,00"
+                return "R$ 0,00"
+                
         # Formatando os valores monetários
         df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: f"R$ {float(x.replace(',', '.')):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
         df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: f"R$ {float(x.replace(',', '.')):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
