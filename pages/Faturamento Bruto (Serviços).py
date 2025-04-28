@@ -283,11 +283,11 @@ with aba3:
                             if idx == 0:  # Data (coluna A)
                                 if isinstance(valor, str):
                                     valor = datetime.strptime(valor, "%d/%m/%Y").strftime("%d/%m/%Y")
-
-                        🔴🔴🔴 ALTERAÇÃO 🔴🔴🔴
+                                    #valor = (data_dt - datetime(1899, 12, 30)).days
+                        #🔴🔴🔴 ALTERAÇÃO 🔴🔴🔴
                                 # Converter data para número serial do Google Sheets
                                     valor = (data_dt - datetime(1899, 12, 30)).days
-                        🔴🔴🔴 FIM DA ALTERAÇÃO 🔴🔴🔴
+                        #🔴🔴🔴 FIM DA ALTERAÇÃO 🔴🔴🔴
 
                                 
                             elif idx in [6, 7, 8, 9]:
