@@ -340,7 +340,7 @@ with aba3:
                                            else:
                                                serial = str(int((data_dt - pd.Timestamp("1899-12-30")).days))
                                                nova_row.append(serial)
-                                        except:
+                                       except:
                                            nova_row.append("")
                                     else:
                                        nova_row.append(str(cell).strip().replace(",", "").replace(".", "").lower())
