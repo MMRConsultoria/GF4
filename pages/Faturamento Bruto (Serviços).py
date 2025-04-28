@@ -182,36 +182,60 @@ if uploaded_file:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-        # =============================
-        # Atualizar Google Sheets (CLEAN)
-        # =============================
-        st.markdown("---")
-        st.subheader("🔄 Atualizar Google Sheets?")
+       # ================================
+# Atualizar Google Sheets (CLEAN)
+# ================================
+st.markdown("---")
+st.subheader("🔄 Atualizar Google Sheets?")
 
-        if 'atualizou_google' not in st.session_state:
-            st.session_state.atualizou_google = True
+# Se os dados já foram atualizados nesta sessão, exibe uma mensagem, caso contrário, mostra o botão de atualização.
+if st.button("📤 Atualizar tabela 'Fat Sistema Externo' no Google Sheets"):
+    with st.spinner('🔄 Atualizando a planilha no Google Sheets...'):
+        try:
+            # Conectar à planilha
+            planilha_destino = gc.open("Faturamento Sistema Externo")
+            aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
-        if not st.session_state.atualizou_google:
-            if st.button("📤 Atualizar tabela 'Fat Sistema Externo' no Google Sheets"):
-                with st.spinner('🔄 Atualizando a planilha no Google Sheets...'):
-                    try:
-                        planilha_destino = gc.open("Faturamento Sistema Externo")
-                        aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
+            # Pega todos os dados da planilha
+            valores_existentes = aba_destino.get_all_values()
 
-                        valores_existentes = aba_destino.get_all_values()
-                        primeira_linha_vazia = len(valores_existentes) + 1
+            # A primeira linha vazia será após o número de linhas já presentes
+            primeira_linha_vazia = len(valores_existentes) + 1
 
-                        rows = df_final.fillna("").values.tolist()
-                        aba_destino.update(f"A{primeira_linha_vazia}", rows)
+            # Enviar os dados para o Google Sheets
+            rows = df_final.fillna("").values.tolist()
+            aba_destino.update(f"A{primeira_linha_vazia}", rows)
 
-                        st.success("✅ Dados atualizados com sucesso no Google Sheets!")
-                        st.session_state.atualizou_google = False
+            # Mensagem de sucesso
+            st.success("✅ Dados atualizados com sucesso no Google Sheets!")
 
-                    except Exception as e:
-                        st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
-                        st.session_state.atualizou_google = True
-        else:
-            st.info("✅ Dados já foram atualizados no Google Sheets nesta sessão.")
+        except Exception as e:
+            st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
-    except Exception as e:
-        st.error(f"❌ Erro ao processar o arquivo: {e}")
+else:
+    st.info("Clique no botão acima para atualizar os dados no Google Sheets.")
+📢 O que mudou e como agora vai funcionar:
+Sempre terá o botão "📤 Atualizar tabela 'Fat Sistema Externo' no Google Sheets".
+
+Ao clicar no botão, o código vai atualizar os dados no Google Sheets.
+
+Não há mais a necessidade de controlar o estado da atualização com session_state, o que simplifica bastante.
+
+O código agora envia os dados novos do df_final para a próxima linha vazia no Google Sheets.
+
+🚀 Passos para testar:
+Teste o código novamente.
+
+Clique no botão "📤 Atualizar tabela 'Fat Sistema Externo' no Google Sheets".
+
+Verifique se os dados são atualizados corretamente no Google Sheets sem erro.
+
+Se precisar de ajustes adicionais, me avise que ajustamos rapidamente! Estou aqui para te ajudar. 🚀
+
+
+
+
+
+
+
+
