@@ -258,7 +258,7 @@ with aba3:
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
 
-        # Manter a coluna M com os valores de string (para garantir a duplicação)
+        # Criar a coluna M (utilizada para verificar duplicação)
         df_final['M'] = df_final['Data'] + df_final['Loja'] + df_final['Fat.Total'].apply(str)
 
         # Função para garantir que os valores sejam números reais com vírgula como separador decimal
@@ -276,14 +276,13 @@ with aba3:
                 # Se não puder converter, retorna 0,00
                 return "0,00"
 
-        # Formatando os valores monetários apenas para as colunas que queremos
+        # Formatando os valores monetários
         df_final['Fat.Total'] = df_final['Fat.Total'].apply(format_monetary)
         df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(format_monetary)
         df_final['Fat.Real'] = df_final['Fat.Real'].apply(format_monetary)
         df_final['Ticket'] = df_final['Ticket'].apply(format_monetary)
 
-        # **Converter para string para garantir que a duplicação seja verificada** 
-        # Convertendo as colunas necessárias para string (sem modificar valores reais das outras)
+        # **Converter todo o DataFrame para string para evitar a duplicação**
         df_final = df_final.applymap(str)
 
         if st.button("📥 Enviar dados para o Google Sheets"):
