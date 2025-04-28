@@ -257,3 +257,51 @@ with aba3:
     """, unsafe_allow_html=True)
 
     atualizar = st.button("📤 Atualizar no Google Sheets")
+
+
+
+# ================================
+# 🔥 Parte 2 - Lógica da Atualização (executa só se clicar)
+# ================================
+
+if atualizar:
+    with st.spinner('🔄 Atualizando...'):
+        try:
+            # Conexão com a planilha
+            planilha_destino = gc.open("Faturamento Sistema Externo")
+            aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
+
+            # Ler dados já existentes
+            dados_existentes = aba_destino.get_all_values()
+            primeira_linha_vazia = len(dados_existentes) + 1
+
+            # Montar chaves dos registros existentes
+            chaves_existentes = set()
+            for linha in dados_existentes[1:]:  # Ignora o cabeçalho
+                if len(linha) >= 7:
+                    chave = gerar_chave_indices(linha)
+                    chaves_existentes.add(chave)
+
+            # Carregar df_final para comparar
+            if 'df_final' in st.session_state:
+                df_final = st.session_state.df_final.copy()
+                df_sem_nan = df_final.iloc[1:].fillna("")
+
+                dados_para_colar = []
+                for linha_nova in df_sem_nan.values.tolist():
+                    chave_nova = gerar_chave_indices(linha_nova)
+                    if chave_nova not in chaves_existentes:
+                        dados_para_colar.append(linha_nova)
+                        chaves_existentes.add(chave_nova)
+
+                if dados_para_colar:
+                    aba_destino.update(f"A{primeira_linha_vazia}", dados_para_colar)
+                    st.success(f"✅ {len(dados_para_colar)} novo(s) registro(s) colado(s) no Google Sheets!")
+                else:
+                    st.info("⚠️ Nenhum novo registro encontrado para atualizar.")
+            else:
+                st.warning("⚠️ Nenhum dado encontrado. Faça o upload primeiro.")
+
+        except Exception as e:
+            st.error(f"❌ Erro ao atualizar: {e}")
+
