@@ -246,11 +246,11 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Sem erro JSON)
+# 🔄 Aba 3 - Atualizar Google Sheets (Com verificação de duplicação)
 # ================================
 
 with aba3:
-    st.header("📤 Atualizar Banco de Dados (Sem erro JSON e sem aspas na data)")
+    st.header("📤 Atualizar Banco de Dados (Verificação de Duplicação)")
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
@@ -258,9 +258,18 @@ with aba3:
         # Garantir que a coluna 'Data' seja datetime (sem formatar para string)
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y')
 
-        # Convertendo a Data para string antes de enviar para o Google Sheets
-        df_final['Data'] = df_final['Data'].dt.strftime('%d/%m/%Y')
+        # Verificar duplicação: Gerar chave de duplicação
+        def gerar_chave(linha):
+            """Gera chave para verificar duplicação: Data + Loja + Fat.Total"""
+            try:
+                data = str(linha[0]).strip()  # Data
+                loja = str(linha[2]).strip().lower()  # Loja
+                fat_total = str(linha[6]).strip()  # Fat.Total
+                return f"{data}|{loja}|{fat_total}"
+            except:
+                return ""
 
+        # Obter dados existentes no Google Sheets
         if st.button("📥 Enviar todos os registros para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
@@ -270,19 +279,31 @@ with aba3:
                     credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
                     gc = gspread.authorize(credentials)
 
-                    planilha = gc.open("Faturamento Sistema Externo")
-                    aba = planilha.worksheet("Fat Sistema Externo")
+                    planilha_destino = gc.open("Faturamento Sistema Externo")
+                    aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
-                    # Pega a próxima linha vazia
-                    linha_inicio = len(aba.get_all_values()) + 1
+                    # Obter dados já existentes
+                    valores_existentes = aba_destino.get_all_values()
+                    chaves_existentes = set([gerar_chave(linha) for linha in valores_existentes[1:]])  # Ignorar cabeçalho
 
-                    # Enviar todos os registros (data já formatada como string)
-                    aba.update(f"A{linha_inicio}", df_final.values.tolist())
+                    # Preparar os dados para envio (sem duplicação)
+                    rows = df_final.fillna("").values.tolist()
+                    novos_dados = []
+                    for linha in rows:
+                        chave = gerar_chave(linha)
+                        if chave not in chaves_existentes:
+                            novos_dados.append(linha)
+                            chaves_existentes.add(chave)  # Adiciona a chave para não enviar novamente
 
-                    st.success(f"🚀 {len(df_final)} registro(s) enviado(s) com sucesso para o Google Sheets!")
+                    if novos_dados:
+                        primeira_linha_vazia = len(valores_existentes) + 1
+                        aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
+                        st.success("✅ Dados atualizados com sucesso no Google Sheets!")
+                    else:
+                        st.info("✅ Não há novos dados para atualizar.")
 
                 except Exception as e:
-                    st.error(f"❌ Erro ao atualizar: {e}")
+                    st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
