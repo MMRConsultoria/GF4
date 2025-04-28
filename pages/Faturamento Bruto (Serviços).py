@@ -245,76 +245,77 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-# ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Evitar duplicação e erro de Timestamp)
-# ================================
-
 with aba3:
-    st.header("📤 Atualizar Banco de Dados (Evitar duplicação e erro de Timestamp)")
+    st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
 
-        # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
-        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
-
-       # Criar a coluna "M" com a concatenação de "Data", "Fat.Total" e "Loja" como string para verificação de duplicação
+        # Criar a coluna "M" com a concatenação de "Data", "Fat.Total" e "Loja" como string para verificação de duplicação
         df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
                          df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
 
         # Não converter para string, apenas utilizar "M" para verificação de duplicação
         df_final['M'] = df_final['M'].apply(str)
 
-       # Formatando os valores monetários (convertendo para valores numéricos)
+        # Formatando os valores monetários (convertendo para valores numéricos)
         df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
         df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
         df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
         df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
 
-        # Converter as colunas de "Data", "Fat.Total", "Serv/Tx", "Fat.Real", etc. para valores numéricos e não string
-        for col in ['Data', 'Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
+        # **Alteração aqui para garantir que "Data" seja formatada corretamente**
+        # Garantir que a coluna "Data" seja formatada corretamente como string para envio ao Google Sheets
+        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
+
+        # **Alteração aqui para garantir que as outras colunas sejam valores numéricos e não string**
+        # Converter as colunas para valores numéricos (exceto "Data", que é mantida como string)
+        for col in ['Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
             df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
 
-        
-      
-        
-       
-       
+        # **Alteração aqui para garantir que todas as colunas sejam strings, exceto a "Data"**
+        # Converter todo o DataFrame para string, exceto para a coluna "Data"
+        df_final['Data'] = df_final['Data'].astype(str)  # Manter a coluna "Data" como string
+        df_final = df_final.applymap(str)  # **Essa parte mantém todas as outras colunas como string**
 
+        # Conectar ao Google Sheets
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+        credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+        gc = gspread.authorize(credentials)
+
+        planilha_destino = gc.open("Faturamento Sistema Externo")
+        aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
+
+        # Obter dados já existentes na aba
+        valores_existentes = aba_destino.get_all_values()
+
+        # Criar um conjunto de linhas existentes na coluna M (usada para verificar duplicação)
+        dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # Ignorando cabeçalho, coluna M é a 13ª (índice 12)
+
+        novos_dados = []
+        rows = df_final.fillna("").values.tolist()
+
+        # Verificar duplicação somente na coluna "M"
+        for linha in rows:
+            chave_m = linha[-1]  # A chave da coluna M (última coluna)
+            if chave_m not in dados_existentes:
+                novos_dados.append(linha)
+                dados_existentes.add(chave_m)  # Adiciona a chave da linha para não enviar novamente
+
+        # Adicionar o botão de atualização do Google Sheets
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
-                    # Conectar ao Google Sheets
-                    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-                    credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-                    credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-                    gc = gspread.authorize(credentials)
-
-                    planilha_destino = gc.open("Faturamento Sistema Externo")
-                    aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
-
-                    # Obter dados já existentes no Google Sheets
-                    valores_existentes = aba_destino.get_all_values()
-
-                    # Criar um conjunto de linhas já existentes
-                    dados_existentes = set([tuple(linha) for linha in valores_existentes[1:]])  # Ignorando cabeçalho
-
-                    novos_dados = []
-                    rows = df_final.fillna("").values.tolist()
-                    for linha in rows:
-                        chave_m = linha[-1]  # A chave da coluna M (última coluna)
-                        if chave_m not in dados_existentes:
-                            novos_dados.append(linha)
-                            dados_existentes.add(tuple(linha))  # Adiciona a linha para não enviar novamente
-
                     if novos_dados:
+                        # Manter a primeira linha vazia para começar a inserção
                         primeira_linha_vazia = len(valores_existentes) + 1
+                        
+                        # Enviar os novos dados para o Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
-    
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
                     else:
                         st.info("✅ Não há novos dados para atualizar.")
-
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
