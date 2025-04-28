@@ -258,7 +258,7 @@ with aba3:
         # Garantir que todas as colunas de 'Data' sejam convertidas para string antes de enviar
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
 
-         # Função para formatar valores monetários de maneira segura
+        # Função para formatar valores monetários de maneira segura
         def format_monetary(value):
             try:
                 # Tenta converter para float, tratando valores inválidos como 0
@@ -267,12 +267,12 @@ with aba3:
             except (ValueError, TypeError):
                 # Se não puder converter, retorna "R$ 0,00"
                 return "R$ 0,00"
-                
+
         # Formatando os valores monetários
-        df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: f"R$ {float(x.replace(',', '.')):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: f"R$ {float(x.replace(',', '.')):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: f"R$ {float(x.replace(',', '.')):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        df_final['Ticket'] = df_final['Ticket'].apply(lambda x: f"R$ {float(x.replace(',', '.')):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        df_final['Fat.Total'] = df_final['Fat.Total'].apply(format_monetary)
+        df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(format_monetary)
+        df_final['Fat.Real'] = df_final['Fat.Real'].apply(format_monetary)
+        df_final['Ticket'] = df_final['Ticket'].apply(format_monetary)
 
         # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
         df_final = df_final.applymap(str)
