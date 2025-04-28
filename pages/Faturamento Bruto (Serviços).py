@@ -247,36 +247,29 @@ with aba2:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (comparando Data, Loja e Fat.Total)
+# 🔄 Aba 3 - Atualizar Google Sheets (EXATAMENTE como sua concatenação)
 # ================================
 
 import math
 import pandas as pd
 from datetime import datetime
 
-# 🛠️ Função para gerar a chave combinada (Data+Loja+Fat.Total)
-def gerar_chave(linha, colunas_indices):
-    chave = []
-    for idx in colunas_indices:
-        if idx < len(linha):
-            valor = linha[idx]
-            if idx == 0:  # Data
-                try:
-                    data_dt = pd.to_datetime(valor, dayfirst=True, errors='coerce')
-                    if pd.isna(data_dt):
-                        chave.append("")
-                    else:
-                        chave.append(data_dt.strftime("%d/%m/%Y"))
-                except:
-                    chave.append("")
-            else:
-                if pd.isna(valor):
-                    chave.append("")
-                else:
-                    chave.append(str(valor).strip().replace(",", "").replace(".", "").lower())
-        else:
-            chave.append("")
-    return ''.join(chave)  # 🔥 Igual no Excel: concatena sem espaço
+def gerar_chave(linha):
+    """Gera a chave Data + Loja + Fat.Total igual Google Sheets"""
+    try:
+        data_str = pd.to_datetime(linha[0], dayfirst=True, errors='coerce').strftime("%d/%m/%Y")
+    except:
+        data_str = ""
+
+    loja_str = str(linha[2]) if not pd.isna(linha[2]) else ""
+
+    fat_total = linha[6]
+    if isinstance(fat_total, (int, float)):
+        fat_total_str = f"{fat_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    else:
+        fat_total_str = str(fat_total)
+
+    return f"{data_str}{loja_str}{fat_total_str}"
 
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
@@ -291,23 +284,22 @@ with aba3:
         if st.button("📤 Atualizar no Google Sheets"):
             with st.spinner('🔄 Atualizando...'):
                 try:
-                    # 📄 Abrir planilha e aba
                     planilha_destino = gc.open("Faturamento Sistema Externo")
                     aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
                     dados_raw = aba_destino.get_all_values()
 
-                    # 🔥 Gerar chaves já existentes no Google Sheets
+                    # 🔥 Gerar chaves já existentes
                     if len(dados_raw) <= 1:
                         chaves_existentes = set()
                     else:
                         chaves_existentes = set()
                         for row in dados_raw[1:]:
-                            if len(row) >= 7:  # Precisamos até Fat.Total
-                                chave = gerar_chave(row, [0, 2, 6])  # Data (0), Loja (2), Fat.Total (6)
+                            if len(row) >= 7:
+                                chave = gerar_chave(row)
                                 chaves_existentes.add(chave)
 
-                    # 🔥 Gerar novos dados para enviar
+                    # 🔥 Gerar novos dados
                     novos_dados_raw = df_final.fillna("").values.tolist()
 
                     registros_para_enviar = []
@@ -344,7 +336,7 @@ with aba3:
                                     valor = str(valor).strip()
                             nova_linha.append(valor)
 
-                        chave_linha = gerar_chave(nova_linha, [0, 2, 6])
+                        chave_linha = gerar_chave(nova_linha)
 
                         if chave_linha not in chaves_existentes:
                             registros_para_enviar.append(nova_linha)
