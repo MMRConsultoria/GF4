@@ -245,7 +245,7 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-  # ================================
+# ================================
 # 🔄 Aba 3 - Atualizar Google Sheets (Evitar duplicação e erro de Timestamp)
 # ================================
 
@@ -265,7 +265,7 @@ with aba3:
 
          # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
         df_final = df_final.applymap(str)
-                
+   
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
