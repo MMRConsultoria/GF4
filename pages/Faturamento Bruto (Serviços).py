@@ -302,7 +302,10 @@ with aba3:
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
                     if novos_dados:
+                        # Manter a primeira linha vazia para começar a inserção
                         primeira_linha_vazia = len(valores_existentes) + 1
+                        
+                        # Enviar os novos dados para o Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
                     else:
