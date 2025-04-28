@@ -269,7 +269,7 @@ with aba3:
                 else:
                     # Se o valor não for string, retornar como está
                     return value
-            except (ValueError, TypeError):
+                except (ValueError, TypeError):
                 # Se não puder converter, retornar o valor original
                 return value
 
