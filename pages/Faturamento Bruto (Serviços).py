@@ -265,7 +265,7 @@ with aba3:
                 if value is not None and value != '':
                     value = float(str(value).replace(',', '.'))  # Convertendo para número com ponto
                     # Formatando para garantir que tenha vírgula
-                    return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                    return f"{value:.2f}".replace(".", ",")
                 else:
                     # Se o valor não for numérico, retornar 0.00
                     return "0,00"
