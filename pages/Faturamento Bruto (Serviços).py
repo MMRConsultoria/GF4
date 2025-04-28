@@ -282,12 +282,18 @@ with aba3:
                         for idx, valor in enumerate(linha):
                             if idx == 0:  # Data (coluna A)
                                 if isinstance(valor, str):
-                                    valor = datetime.strptime(valor, "%d/%m/%Y").strftime("%d/%m/%Y")
+                                    #valor = datetime.strptime(valor, "%d/%m/%Y").strftime("%d/%m/%Y")
                                     #valor = (data_dt - datetime(1899, 12, 30)).days
-                        #🔴🔴🔴 ALTERAÇÃO 🔴🔴🔴
-                                # Converter data para número serial do Google Sheets
+                                    data_dt = datetime.strptime(valor, "%d/%m/%Y")
+                                elif isinstance(valor, datetime):
+                                    data_dt = valor
+                                else:
+                                    data_dt = None
+
+                                if data_dt:
                                     valor = (data_dt - datetime(1899, 12, 30)).days
-                        #🔴🔴🔴 FIM DA ALTERAÇÃO 🔴🔴🔴
+                                else:
+                                    valor = ""
 
                                 
                             elif idx in [6, 7, 8, 9]:
