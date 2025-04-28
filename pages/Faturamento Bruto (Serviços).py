@@ -245,24 +245,21 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-        import streamlit as st
-import pandas as pd
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-import json
-
-# ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Evitar duplicação simples)
+        # ================================
+# 🔄 Aba 3 - Atualizar Google Sheets (Evitar erro JSON e duplicação)
 # ================================
 
 with aba3:
-    st.header("📤 Atualizar Banco de Dados (Evitar duplicação simples)")
+    st.header("📤 Atualizar Banco de Dados (Evitar erro JSON e duplicação)")
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
 
         # Garantir que a coluna 'Data' seja datetime (sem formatar para string)
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y')
+
+        # Convertendo a Data para string antes de enviar para o Google Sheets
+        df_final['Data'] = df_final['Data'].dt.strftime('%d/%m/%Y')
 
         if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
@@ -303,5 +300,4 @@ with aba3:
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
-
 
