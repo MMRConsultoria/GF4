@@ -245,22 +245,8 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-# 🔥 ABA 3 super simples
-
-import streamlit as st
-import pandas as pd
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-import json
-
-# 🔥 Gerar chave bruta, sem normalizar
-def gerar_chave_excel(linha):
-    try:
-        return str(linha[0]).strip() + str(linha[2]).strip() + str(linha[6]).strip()
-    except:
-        return ""
-# ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Sem aspas na data - Mantém como datetime)
+        # ================================
+# 🔄 Aba 3 - Atualizar Google Sheets (Sem erro JSON)
 # ================================
 
 import streamlit as st
@@ -272,7 +258,7 @@ import json
 # 🔹 ABA 3
 
 with aba3:
-    st.header("📤 Atualizar Banco de Dados (Sem aspas na data, correto)")
+    st.header("📤 Atualizar Banco de Dados (Sem erro JSON e sem aspas na data)")
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
@@ -280,10 +266,13 @@ with aba3:
         # Garantir que a coluna 'Data' seja datetime (sem formatar para string)
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y')
 
+        # Convertendo a Data para string antes de enviar para o Google Sheets
+        df_final['Data'] = df_final['Data'].dt.strftime('%d/%m/%Y')
+
         if st.button("📥 Enviar todos os registros para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
-                    # Conectar
+                    # Conectar ao Google Sheets
                     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
                     credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
                     credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
@@ -295,7 +284,7 @@ with aba3:
                     # Pega a próxima linha vazia
                     linha_inicio = len(aba.get_all_values()) + 1
 
-                    # Enviar todos os registros (agora sem conversão explícita)
+                    # Enviar todos os registros (data já formatada como string)
                     aba.update(f"A{linha_inicio}", df_final.values.tolist())
 
                     st.success(f"🚀 {len(df_final)} registro(s) enviado(s) com sucesso para o Google Sheets!")
@@ -305,3 +294,4 @@ with aba3:
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
