@@ -281,7 +281,7 @@ with aba3:
         df_final['Ticket'] = df_final['Ticket'].apply(format_monetary)
 
         # Converter todo o DataFrame para string, para evitar problemas com o Timestamp
-        #df_final = df_final.applymap(str)
+        df_final = df_final.applymap(str)
         #df_final = df_final.applymap(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
 
         if st.button("📥 Enviar dados para o Google Sheets"):
