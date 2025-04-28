@@ -245,31 +245,26 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
+        import streamlit as st
+import pandas as pd
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import json
+
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Evitar erro JSON e duplicação)
+# 🔄 Aba 3 - Atualizar Google Sheets (Evitar duplicação simples)
 # ================================
 
 with aba3:
-    st.header("📤 Atualizar Banco de Dados (Verificação de Duplicação)")
+    st.header("📤 Atualizar Banco de Dados (Evitar duplicação simples)")
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
 
-        # Garantir que todas as colunas de 'Data' sejam convertidas para string
-        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
+        # Garantir que a coluna 'Data' seja datetime (sem formatar para string)
+        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y')
 
-        # Função para gerar chave única (para verificar duplicação)
-        def gerar_chave(linha):
-            """Gera chave para verificar duplicação: Data + Loja + Fat.Total"""
-            try:
-                data = str(linha[0]).strip()  # Data
-                loja = str(linha[2]).strip().lower()  # Loja
-                fat_total = str(linha[6]).strip()  # Fat.Total
-                return f"{data}|{loja}|{fat_total}"
-            except:
-                return ""
-
-        if st.button("📥 Enviar todos os registros para o Google Sheets"):
+        if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
                     # Conectar ao Google Sheets
@@ -281,23 +276,25 @@ with aba3:
                     planilha_destino = gc.open("Faturamento Sistema Externo")
                     aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
-                    # Obter dados existentes
+                    # Obter dados já existentes no Google Sheets
                     valores_existentes = aba_destino.get_all_values()
-                    chaves_existentes = set([gerar_chave(linha) for linha in valores_existentes[1:]])  # Ignorar cabeçalho
+                    # Gerar uma lista de dados já existentes para comparação (considerando Data, Loja, Fat.Total)
+                    dados_existentes = set([f"{linha[0]}|{linha[1]}|{linha[6]}" for linha in valores_existentes[1:]])  # Ignorando cabeçalho
 
                     # Preparar os dados para envio (sem duplicação)
                     rows = df_final.fillna("").values.tolist()
                     novos_dados = []
                     for linha in rows:
-                        chave = gerar_chave(linha)
-                        if chave not in chaves_existentes:
+                        # Criar uma chave simples para comparar
+                        chave = f"{linha[0]}|{linha[1]}|{linha[6]}"
+                        if chave not in dados_existentes:
                             novos_dados.append(linha)
-                            chaves_existentes.add(chave)  # Adiciona a chave para não enviar novamente
+                            dados_existentes.add(chave)  # Adiciona a chave para não enviar novamente
 
                     if novos_dados:
                         primeira_linha_vazia = len(valores_existentes) + 1
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
-                        st.success("✅ Dados atualizados com sucesso no Google Sheets!")
+                        st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
                     else:
                         st.info("✅ Não há novos dados para atualizar.")
 
@@ -306,3 +303,5 @@ with aba3:
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
+
