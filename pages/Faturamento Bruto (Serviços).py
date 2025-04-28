@@ -260,7 +260,7 @@ def gerar_chave_excel(linha):
     except:
         return ""
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Simples - Sem verificação, sem aspas na data)
+# 🔄 Aba 3 - Atualizar Google Sheets (Sem aspas na data)
 # ================================
 
 import streamlit as st
@@ -272,13 +272,13 @@ import json
 # 🔹 ABA 3
 
 with aba3:
-    st.header("📤 Atualizar Banco de Dados (Simples - Sem verificação, sem aspas na data)")
+    st.header("📤 Atualizar Banco de Dados (Sem aspas na data)")
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
 
-        # Ajuste para garantir que a data não tenha aspas
-        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
+        # Garantir que a coluna 'Data' seja datetime sem aspas
+        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y')
 
         if st.button("📥 Enviar todos os registros para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
@@ -295,7 +295,7 @@ with aba3:
                     # Pega a próxima linha vazia
                     linha_inicio = len(aba.get_all_values()) + 1
 
-                    # Enviar tudo
+                    # Enviar todos os registros
                     aba.update(f"A{linha_inicio}", df_final.values.tolist())
 
                     st.success(f"🚀 {len(df_final)} registro(s) enviado(s) com sucesso para o Google Sheets!")
@@ -305,4 +305,3 @@ with aba3:
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
-
