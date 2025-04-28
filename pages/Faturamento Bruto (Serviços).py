@@ -283,11 +283,13 @@ with aba3:
                     if len(dados_raw) <= 1:
                         dados_existentes = []
                     else:
-                        dados_existentes = [
-                            [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
-                            for row in dados_raw[1:]
-                        ]
+                        #dados_existentes = [
+                        #    [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
+                        #    for row in dados_raw[1:]
+                        #]
+                        dados_existentes = dados_raw[1:]  # Apenas lê os dados crus (não mexe!)
 
+                            
                     novos_dados_raw = df_final.values.tolist()
                     novos_dados = []
                     for linha in novos_dados_raw:
