@@ -247,120 +247,17 @@ with aba2:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Reconstruída)
+# 🔄 Aba 3 - Atualizar Google Sheets (Início do zero)
 # ================================
-
-def gerar_chave(linha):
-    """Gera uma chave única usando Data (A), Loja (C), e Fat.Total (G)"""
-    try:
-        data = pd.to_datetime(linha[0], dayfirst=True, errors='coerce')
-        data_str = data.strftime("%d/%m/%Y") if not pd.isna(data) else ""
-    except Exception:
-        data_str = ""
-
-    try:
-        loja = str(linha[2]).strip().lower()
-    except Exception:
-        loja = ""
-
-    try:
-        fat_total = str(linha[6]).strip()
-        fat_total = fat_total.replace(".", "").replace(",", ".")  # Normaliza para ponto
-        fat_total_float = float(fat_total)
-        fat_total_str = f"{fat_total_float:.2f}".replace(".", ",")  # Volta para vírgula
-    except Exception:
-        fat_total_str = "0,00"
-
-    chave = f"{data_str}|{loja}|{fat_total_str}"
-    return chave
 
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
 
+    # 🔗 Link para abrir a planilha externa
     st.markdown("""
     🔗 [Clique aqui para abrir o **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
-    """)
+    """, unsafe_allow_html=True)
 
-    if 'df_final' in st.session_state:
-        df_final = st.session_state.df_final
-
-        if st.button("📤 Atualizar no Google Sheets"):
-            with st.spinner('🔄 Atualizando...'):
-                try:
-                    # 🔹 Abrir planilha e aba destino
-                    planilha_destino = gc.open("Faturamento Sistema Externo")
-                    aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
-
-                    # 🔹 Ler os dados existentes (ignorando cabeçalho)
-                    dados_existentes_raw = aba_destino.get_all_values()
-                    dados_existentes = dados_existentes_raw[1:]  # Ignora linha 1 (cabeçalho)
-
-                    # 🔹 Gerar chaves dos dados existentes
-                    chaves_existentes = set()
-                    for linha_existente in dados_existentes:
-                        if len(linha_existente) >= 7:  # Garante que tenha Data, Loja e Fat.Total
-                            chave = gerar_chave(linha_existente)
-                            chaves_existentes.add(chave)
-
-                    # 🔹 Preparar os novos dados a partir do df_final
-                    novos_registros = []
-                    for linha_nova in df_final.values.tolist():
-                        chave_nova = gerar_chave(linha_nova)
-                        if chave_nova not in chaves_existentes:
-                            # Formatar linha para envio
-                            nova_linha_formatada = []
-                            for idx, valor in enumerate(linha_nova):
-                                if idx == 0:  # Data
-                                    data_dt = pd.to_datetime(valor, dayfirst=True, errors='coerce')
-                                    valor = data_dt.strftime("%d/%m/%Y") if not pd.isna(data_dt) else ""
-                                elif idx in [6, 7, 8, 9]:  # Valores monetários
-                                    if isinstance(valor, (int, float)) and not pd.isna(valor):
-                                        valor = round(valor, 2)
-                                    else:
-                                        valor = ""
-                                elif idx in [3, 5, 11]:  # Inteiros (Código Everest, Código Grupo Everest, Ano)
-                                    if isinstance(valor, (int, float)) and not pd.isna(valor):
-                                        valor = int(valor)
-                                    else:
-                                        valor = ""
-                                else:
-                                    if pd.isna(valor):
-                                        valor = ""
-                                    else:
-                                        valor = str(valor).strip()
-                                nova_linha_formatada.append(valor)
-
-                            novos_registros.append(nova_linha_formatada)
-                            chaves_existentes.add(chave_nova)
-
-                    total_novos = len(novos_registros)
-
-                    if total_novos == 0:
-                        st.info("✅ Nenhum novo registro para atualizar. Tudo já existe no Google Sheets.")
-                        st.session_state.atualizou_google = True
-                    else:
-                        primeira_linha_vazia = len(dados_existentes_raw) + 1
-
-                        # 🔹 Formatar colunas na aba (garantir padrão)
-                        aba_destino.format("A:A", {"numberFormat": {"type": "DATE", "pattern": "dd/MM/yyyy"}})
-                        aba_destino.format("D:D", {"numberFormat": {"type": "NUMBER", "pattern": "0"}})
-                        aba_destino.format("F:F", {"numberFormat": {"type": "NUMBER", "pattern": "0"}})
-                        for coluna in ["G", "H", "I", "J"]:
-                            aba_destino.format(f"{coluna}:{coluna}", {
-                                "numberFormat": {"type": "CURRENCY", "pattern": "[$R$-416]#,##0.00"}
-                            })
-                        aba_destino.format("K:K", {"numberFormat": {"type": "TEXT"}})
-                        aba_destino.format("L:L", {"numberFormat": {"type": "NUMBER", "pattern": "0000"}})
-
-                        # 🔹 Atualizar os novos registros no Google Sheets
-                        aba_destino.update(f"A{primeira_linha_vazia}", novos_registros)
-
-                        st.success(f"✅ {total_novos} novo(s) registro(s) enviado(s) para o Google Sheets!")
-                        st.session_state.atualizou_google = True
-
-                except Exception as e:
-                    st.error(f"❌ Erro ao atualizar: {e}")
-                    st.session_state.atualizou_google = False
-    else:
-        st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-
+    # 📤 Botão para atualizar
+    if st.button("📤 Atualizar no Google Sheets"):
+        st.info("🚧 Atualização ainda não implementada. Em breve...")
