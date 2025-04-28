@@ -245,53 +245,36 @@ with aba2:
         )
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
-        # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (Sem erro JSON)
-# ================================
+ # =============================
+        # Atualizar Google Sheets (CLEAN)
+        # =============================
+        st.markdown("---")
+        st.subheader("🔄 Atualizar Google Sheets?")
 
-import streamlit as st
-import pandas as pd
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-import json
+        if 'atualizou_google' not in st.session_state:
+            st.session_state.atualizou_google = False
 
-# 🔹 ABA 3
+        if not st.session_state.atualizou_google:
+            if st.button("📤 Atualizar tabela 'Fat Sistema Externo' no Google Sheets"):
+                with st.spinner('🔄 Atualizando a planilha no Google Sheets...'):
+                    try:
+                        planilha_destino = gc.open("Faturamento Sistema Externo")
+                        aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
-with aba3:
-    st.header("📤 Atualizar Banco de Dados (Sem erro JSON e sem aspas na data)")
+                        valores_existentes = aba_destino.get_all_values()
+                        primeira_linha_vazia = len(valores_existentes) + 1
 
-    if 'df_final' in st.session_state:
-        df_final = st.session_state.df_final.copy()
+                        rows = df_final.fillna("").values.tolist()
+                        aba_destino.update(f"A{primeira_linha_vazia}", rows)
 
-        # Garantir que a coluna 'Data' seja datetime (sem formatar para string)
-        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y')
+                        st.success("✅ Dados atualizados com sucesso no Google Sheets!")
+                        st.session_state.atualizou_google = True
 
-        # Convertendo a Data para string antes de enviar para o Google Sheets
-        df_final['Data'] = df_final['Data'].dt.strftime('%d/%m/%Y')
+                    except Exception as e:
+                        st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
+                        st.session_state.atualizou_google = False
+        else:
+            st.info("✅ Dados já foram atualizados no Google Sheets nesta sessão.")
 
-        if st.button("📥 Enviar todos os registros para o Google Sheets"):
-            with st.spinner("🔄 Atualizando o Google Sheets..."):
-                try:
-                    # Conectar ao Google Sheets
-                    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-                    credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-                    credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-                    gc = gspread.authorize(credentials)
-
-                    planilha = gc.open("Faturamento Sistema Externo")
-                    aba = planilha.worksheet("Fat Sistema Externo")
-
-                    # Pega a próxima linha vazia
-                    linha_inicio = len(aba.get_all_values()) + 1
-
-                    # Enviar todos os registros (data já formatada como string)
-                    aba.update(f"A{linha_inicio}", df_final.values.tolist())
-
-                    st.success(f"🚀 {len(df_final)} registro(s) enviado(s) com sucesso para o Google Sheets!")
-
-                except Exception as e:
-                    st.error(f"❌ Erro ao atualizar: {e}")
-
-    else:
-        st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
-
+    except Exception as e:
+        st.error(f"❌ Erro ao processar o arquivo: {e}")
