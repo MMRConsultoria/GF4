@@ -340,12 +340,21 @@ with aba3:
                     if len(dados_raw) <= 1:
                         dados_existentes = []
                     else:
-                        #dados_existentes = [
-                        #    [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
-                        #    for row in dados_raw[1:]
-                        #]
-                        #dados_existentes = dados_raw[1:]  # Apenas lê os dados crus (não mexe!)
-                        dados_existentes = [row for row in dados_raw[1:] if len(row) >= 10]
+                        dados_existentes = []
+                        for row in dados_raw[1:]:  # Pular cabeçalho
+                           if len(row) >= 10:
+                                nova_row = row.copy()
+                                try:
+                                    data_str = nova_row[0]
+                                    data_dt = pd.to_datetime(data_str, dayfirst=True, errors='coerce')
+                                    if not pd.isna(data_dt):
+                                       serial = str((data_dt - pd.Timestamp('1899-12-30')).days)
+                                       nova_row[0] = serial
+                                    else:
+                                       nova_row[0] = str(data_str).strip().lower()
+                                except:
+                                    nova_row[0] = str(data_str).strip().lower()
+                                dados_existentes.append(nova_row)
                             
                     novos_dados_raw = df_final.values.tolist()
                     novos_dados = []
