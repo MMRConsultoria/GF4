@@ -252,7 +252,7 @@ with aba2:
 
 
 with aba3:
-   # st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
+    st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
@@ -264,25 +264,19 @@ with aba3:
         # Não converter para string, apenas utilizar "M" para verificação de duplicação
         df_final['M'] = df_final['M'].apply(str)
 
-        # Formatando os valores monetários (convertendo para valores numéricos)
-        #df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-        #df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-        #df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-        #df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+        # **Alteração: Manter as colunas G, H, I e J como valores numéricos puros (sem formatação monetária)**
+        df_final['Fat.Total'] = pd.to_numeric(df_final['Fat.Total'], errors='coerce')
+        df_final['Serv/Tx'] = pd.to_numeric(df_final['Serv/Tx'], errors='coerce')
+        df_final['Fat.Real'] = pd.to_numeric(df_final['Fat.Real'], errors='coerce')
+        df_final['Ticket'] = pd.to_numeric(df_final['Ticket'], errors='coerce')
 
-        # **Alteração aqui para garantir que "Data" seja formatada corretamente**
-        # Garantir que a coluna "Data" seja formatada corretamente como string para envio ao Google Sheets
-        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
-
-        # **Alteração aqui para garantir que as outras colunas sejam valores numéricos e não string**
-        # Converter as colunas para valores numéricos (exceto "Data", que é mantida como string)
+        # **Remover formatação de string e deixar os valores numéricos como são no Excel**
         for col in ['Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
-            df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
+            df_final[col] = df_final[col].apply(lambda x: float(x) if isinstance(x, str) else x)
 
-        # **Alteração aqui para garantir que todas as colunas sejam strings, exceto a "Data"**
-        # Converter todo o DataFrame para string, exceto para a coluna "Data"
-        df_final['Data'] = df_final['Data'].astype(str)  # Manter a coluna "Data" como string
-        df_final = df_final.applymap(str)  # **Essa parte mantém todas as outras colunas como string**
+        # Converter todo o DataFrame para string, para evitar problemas com o Timestamp, mas sem afetar as colunas G, H, I e J
+        df_final['Data'] = df_final['Data'].astype(str)
+        df_final = df_final.applymap(str)
 
         # Conectar ao Google Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -327,3 +321,4 @@ with aba3:
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
