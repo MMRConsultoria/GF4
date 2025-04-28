@@ -256,7 +256,7 @@ def normalizar_linha(linha):
     linha_normalizada = []
     for idx, cell in enumerate(linha):
         if idx == 0 and isinstance(cell, (int, float)):  # Se for data (serial number)
-            linha_normalizada.append(str(int(cell)))
+            linha_normalizada.append(int(cell))
         else:
             linha_normalizada.append(str(cell).strip().replace(",", "").replace(".", "").lower())
     return linha_normalizada
