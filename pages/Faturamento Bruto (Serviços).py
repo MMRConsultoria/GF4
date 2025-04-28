@@ -287,8 +287,8 @@ with aba3:
                         #    [str(cell).strip().replace(",", "").replace(".", "") for cell in row]
                         #    for row in dados_raw[1:]
                         #]
-                        dados_existentes = dados_raw[1:]  # Apenas lê os dados crus (não mexe!)
-
+                        #dados_existentes = dados_raw[1:]  # Apenas lê os dados crus (não mexe!)
+                        dados_existentes = [row for row in dados_raw[1:] if len(row) >= 10]
                             
                     novos_dados_raw = df_final.values.tolist()
                     novos_dados = []
