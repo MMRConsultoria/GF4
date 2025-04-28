@@ -272,8 +272,8 @@ with aba3:
 
         # **Remover formatação de string e deixar os valores numéricos como são no Excel**
         for col in ['Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
-            df_final[col] = df_final[col].apply(lambda x: float(x) if isinstance(x, str) else x)
-
+            df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
+            
         # Converter todo o DataFrame para string, para evitar problemas com o Timestamp, mas sem afetar as colunas G, H, I e J
         df_final['Data'] = df_final['Data'].astype(str)
         df_final = df_final.applymap(str)
