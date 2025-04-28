@@ -246,51 +246,9 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # ================================
-# 🔄 Função: gerar chave normalizada
+# 🔗 Parte 1 - Link e Botão Atualizar
 # ================================
-from datetime import datetime, timedelta
 
-def gerar_chave_indices(linha):
-    """Gera chave normalizada baseada em Data, Loja e Fat.Total"""
-
-    linha_normalizada = []
-
-    for idx, cell in enumerate(linha):
-        if idx == 0:  # Data
-            try:
-                if isinstance(cell, (int, float)):
-                    data = datetime(1899, 12, 30) + timedelta(days=float(cell))
-                    valor = data.strftime("%d/%m/%Y")
-                else:
-                    data = pd.to_datetime(cell, dayfirst=True, errors='coerce')
-                    valor = data.strftime("%d/%m/%Y") if not pd.isna(data) else ""
-            except:
-                valor = ""
-            linha_normalizada.append(valor)
-
-        elif idx == 2:  # Loja
-            try:
-                valor = str(cell).strip().lower()
-            except:
-                valor = ""
-            linha_normalizada.append(valor)
-
-        elif idx == 6:  # Fat.Total
-            try:
-                valor = str(cell).strip()
-                valor = valor.replace(".", "").replace(",", ".")
-                valor = float(valor)
-                valor = f"{valor:.2f}".replace(".", ",")
-            except:
-                valor = "0,00"
-            linha_normalizada.append(valor)
-
-    chave = "".join(linha_normalizada)
-    return chave
-
-# ================================
-# 🔄 Agora começa a aba3:
-# ================================
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
 
@@ -298,39 +256,4 @@ with aba3:
     🔗 [Clique aqui para abrir o **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
     """, unsafe_allow_html=True)
 
-    if st.button("📤 Atualizar no Google Sheets"):
-        with st.spinner('🔄 Atualizando...'):
-            try:
-                planilha_destino = gc.open("Faturamento Sistema Externo")
-                aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
-
-                dados_existentes = aba_destino.get_all_values()
-                primeira_linha_vazia = len(dados_existentes) + 1
-
-                chaves_existentes = set()
-                for linha in dados_existentes[1:]:
-                    if len(linha) >= 7:
-                        chave = gerar_chave_indices(linha)
-                        chaves_existentes.add(chave)
-
-                if 'df_final' in st.session_state:
-                    df_final = st.session_state.df_final.copy()
-                    df_sem_nan = df_final.iloc[1:].fillna("")
-
-                    dados_para_colar = []
-                    for linha_nova in df_sem_nan.values.tolist():
-                        chave_nova = gerar_chave_indices(linha_nova)
-                        if chave_nova not in chaves_existentes:
-                            dados_para_colar.append(linha_nova)
-                            chaves_existentes.add(chave_nova)
-
-                    if dados_para_colar:
-                        aba_destino.update(f"A{primeira_linha_vazia}", dados_para_colar)
-                        st.success(f"✅ {len(dados_para_colar)} novo(s) registro(s) colado(s) no Google Sheets!")
-                    else:
-                        st.info("⚠️ Nenhum novo registro encontrado para atualizar.")
-                else:
-                    st.warning("⚠️ Nenhum dado encontrado. Faça o upload primeiro.")
-
-            except Exception as e:
-                st.error(f"❌ Erro ao atualizar: {e}")
+    atualizar = st.button("📤 Atualizar no Google Sheets")
