@@ -259,17 +259,29 @@ def gerar_chave_excel(linha):
         return str(linha[0]).strip() + str(linha[2]).strip() + str(linha[6]).strip()
     except:
         return ""
+# ================================
+# 🔄 Aba 3 - Atualizar Google Sheets (Simples - Sem verificação, sem aspas na data)
+# ================================
+
+import streamlit as st
+import pandas as pd
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import json
 
 # 🔹 ABA 3
 
 with aba3:
-    st.header("🔄 Atualizar Banco de Dados (Estilo Excel, direto)")
+    st.header("📤 Atualizar Banco de Dados (Simples - Sem verificação, sem aspas na data)")
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
 
-        if st.button("🔍 Buscar e Verificar novos registros"):
-            with st.spinner("🔄 Buscando dados atuais..."):
+        # Ajuste para garantir que a data não tenha aspas
+        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
+
+        if st.button("📥 Enviar todos os registros para o Google Sheets"):
+            with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
                     # Conectar
                     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -280,60 +292,17 @@ with aba3:
                     planilha = gc.open("Faturamento Sistema Externo")
                     aba = planilha.worksheet("Fat Sistema Externo")
 
-                    dados_sheets = aba.get_all_values()
+                    # Pega a próxima linha vazia
+                    linha_inicio = len(aba.get_all_values()) + 1
 
-                    if not dados_sheets or len(dados_sheets) < 2:
-                        dados_existentes = pd.DataFrame()
-                    else:
-                        dados_existentes = pd.DataFrame(dados_sheets[1:], columns=dados_sheets[0])
+                    # Enviar tudo
+                    aba.update(f"A{linha_inicio}", df_final.values.tolist())
 
-                    if not dados_existentes.empty:
-                        dados_existentes['Chave'] = dados_existentes.apply(gerar_chave_excel, axis=1)
-                        chaves_existentes = set(dados_existentes['Chave'])
-                    else:
-                        chaves_existentes = set()
-
-                    df_final['Chave'] = df_final.apply(gerar_chave_excel, axis=1)
-
-                    novos_registros = df_final[~df_final['Chave'].isin(chaves_existentes)].drop(columns=['Chave'])
-
-                    if novos_registros.empty:
-                        st.success("✅ Nenhum novo registro encontrado.")
-                    else:
-                        st.success(f"✅ {len(novos_registros)} novo(s) registro(s) encontrado(s)!")
-                        st.dataframe(novos_registros)
-
-                        st.session_state['novos_registros'] = novos_registros
+                    st.success(f"🚀 {len(df_final)} registro(s) enviado(s) com sucesso para o Google Sheets!")
 
                 except Exception as e:
-                    st.error(f"❌ Erro ao buscar/verificar: {e}")
-
-        if 'novos_registros' in st.session_state:
-            confirmar = st.checkbox("✅ Confirmo que desejo adicionar novos registros.")
-
-            if confirmar:
-                if st.button("📤 Atualizar Google Sheets agora"):
-                    try:
-                        # Conectar novamente
-                        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-                        credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-                        credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-                        gc = gspread.authorize(credentials)
-
-                        planilha = gc.open("Faturamento Sistema Externo")
-                        aba = planilha.worksheet("Fat Sistema Externo")
-
-                        linha_inicio = len(aba.get_all_values()) + 1
-                        novos_registros = st.session_state['novos_registros']
-
-                        aba.update(f"A{linha_inicio}", novos_registros.values.tolist())
-
-                        st.success(f"🚀 {len(novos_registros)} registro(s) adicionado(s) com sucesso!")
-
-                        del st.session_state['novos_registros']
-
-                    except Exception as e:
-                        st.error(f"❌ Erro ao atualizar: {e}")
+                    st.error(f"❌ Erro ao atualizar: {e}")
 
     else:
-        st.warning("⚠️ Primeiro faça upload na Aba 1.")
+        st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
