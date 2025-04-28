@@ -247,31 +247,34 @@ with aba2:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 
 # ================================
-# 🔄 Aba 3 - Atualizar Google Sheets (VERSÃO FINAL SEM DUPLICAR)
+# 🔄 Aba 3 - Atualizar Google Sheets (Método igual Excel: Chave A+C+G)
 # ================================
 
 import math
 import pandas as pd
 from datetime import datetime
 
-def normalizar_linha(linha):
-    linha_normalizada = []
-    for idx, cell in enumerate(linha):
-        if idx == 0:  # Coluna de Data
+def gerar_chave(linha):
+    """Concatena Data + Loja + Fat.Total"""
+    partes = []
+    for idx in [0, 2, 6]:  # A (Data), C (Loja), G (Fat.Total)
+        cell = linha[idx] if idx < len(linha) else ""
+
+        if idx == 0:  # Data
             try:
                 data_dt = pd.to_datetime(cell, dayfirst=True, errors='coerce')
                 if pd.isna(data_dt):
-                    linha_normalizada.append("")
+                    partes.append("")
                 else:
-                    linha_normalizada.append(data_dt.strftime("%d/%m/%Y"))
+                    partes.append(data_dt.strftime("%d/%m/%Y"))
             except:
-                linha_normalizada.append("")
+                partes.append("")
         else:
             if pd.isna(cell):
-                linha_normalizada.append("")
+                partes.append("")
             else:
-                linha_normalizada.append(str(cell).strip().replace(",", "").replace(".", "").lower())
-    return linha_normalizada
+                partes.append(str(cell).strip().replace(",", "").replace(".", "").lower())
+    return ''.join(partes)  # 🔥 Igual Excel: concatena sem espaço
 
 with aba3:
     st.header("🔄 Atualizar Google Sheets")
@@ -291,19 +294,20 @@ with aba3:
 
                     dados_raw = aba_destino.get_all_values()
 
+                    # 🔥 Gerar chaves já existentes
                     if len(dados_raw) <= 1:
-                        dados_existentes_normalizados = []
+                        chaves_existentes = set()
                     else:
-                        dados_existentes_normalizados = []
+                        chaves_existentes = set()
                         for row in dados_raw[1:]:
-                            if len(row) >= 10:
-                                dados_existentes_normalizados.append(normalizar_linha(row))
+                            if len(row) >= 7:
+                                chave = gerar_chave(row)
+                                chaves_existentes.add(chave)
 
-                    # 🔥 Corrigir NaN logo aqui
+                    # 🔥 Gerar novos dados
                     novos_dados_raw = df_final.fillna("").values.tolist()
 
                     registros_para_enviar = []
-                    registros_para_enviar_normalizados = []
 
                     for linha in novos_dados_raw:
                         nova_linha = []
@@ -320,12 +324,12 @@ with aba3:
                                     valor = data_dt.strftime("%d/%m/%Y")
                                 else:
                                     valor = ""
-                            elif idx in [6, 7, 8, 9]:  # Valores monetários
+                            elif idx in [6, 7, 8, 9]:
                                 if isinstance(valor, (int, float)) and not math.isnan(valor):
                                     valor = round(valor, 2)
                                 else:
                                     valor = ""
-                            elif idx in [3, 5, 11]:  # Valores inteiros
+                            elif idx in [3, 5, 11]:
                                 if isinstance(valor, (int, float)) and not math.isnan(valor):
                                     valor = int(valor)
                                 else:
@@ -337,12 +341,11 @@ with aba3:
                                     valor = str(valor).strip()
                             nova_linha.append(valor)
 
-                        linha_normalizada = normalizar_linha(nova_linha)
+                        chave_linha = gerar_chave(nova_linha)
 
-                        # 🔥 Só adiciona se não existe já normalizado
-                        if linha_normalizada not in dados_existentes_normalizados:
+                        if chave_linha not in chaves_existentes:
                             registros_para_enviar.append(nova_linha)
-                            registros_para_enviar_normalizados.append(linha_normalizada)
+                            chaves_existentes.add(chave_linha)
 
                     total_novos = len(registros_para_enviar)
 
