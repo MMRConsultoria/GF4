@@ -196,6 +196,9 @@ with aba1:
             empresas_nao_localizadas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
 
             if len(empresas_nao_localizadas) > 0:
+                # Listar as empresas não localizadas
+                empresas_nao_localizadas_str = ", ".join(empresas_nao_localizadas)
+                
                 # Construir a mensagem com o link direto
                 mensagem = f"""
                 ⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s): 
