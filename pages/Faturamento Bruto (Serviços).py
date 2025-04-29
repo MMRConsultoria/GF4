@@ -249,6 +249,12 @@ with aba2:
 # =======================================
 
 with aba3:
+
+      # 🔗 Links úteis
+            st.markdown("""
+🔗 [Link **Tabela_Empresa**](https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link)
+
+""")
     #st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
 
     if 'df_final' in st.session_state:
