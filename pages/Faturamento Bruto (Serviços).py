@@ -316,8 +316,8 @@ with aba3:
                         # Exibir as linhas duplicadas para o usuário
                    #     st.write("Registros Duplicados:", duplicados)
 
-                    else:
-                        st.info("✅ Dados atualizados google sheets.")
+                   # else:
+                    #    st.info("✅ Dados atualizados google sheets.")
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
