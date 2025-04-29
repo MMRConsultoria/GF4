@@ -210,10 +210,10 @@ with aba1:
                 st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
 
            # 🔗 Links úteis
-            st.markdown("""
-🔗 [Link **Tabela_Empresa**](https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link)
+           # st.markdown("""
+#🔗 [Link **Tabela_Empresa**](https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link)
 
-""")
+#""")
 
         except Exception as e:
             st.error(f"❌ Erro ao processar o arquivo: {e}")
