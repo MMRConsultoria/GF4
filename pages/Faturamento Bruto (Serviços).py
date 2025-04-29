@@ -255,6 +255,11 @@ with aba3:
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
 
+        # Garantir que a coluna "Data" seja convertida para string antes de enviar
+        # Converte a coluna 'Data' para datetime e depois para o formato desejado para envio
+        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
+
+        
         # Criar a coluna "M" com a concatenação de "Data", "Fat.Total" e "Loja" como string para verificação de duplicação
         df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
                          df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
@@ -273,16 +278,7 @@ with aba3:
         df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
 
        
-        # Garantir que a coluna de Data seja corretamente formatada
-        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d')
-
-        # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
-        df_final = df_final.applymap(str)
-
-        # Converter as colunas de "Data", "Fat.Total", "Serv/Tx", "Fat.Real", etc. para valores numéricos e não string
-        for col in ['Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
-            df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
-        
+             
         
         
         
