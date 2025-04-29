@@ -250,7 +250,7 @@ with aba2:
 # =======================================
 
 with aba3:
-    st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
+    #st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
@@ -324,7 +324,7 @@ with aba3:
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
                     else:
-                        st.info("✅ Não há novos dados para atualizar.")
+                        st.info("✅ Dados estão duplicados.")
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
