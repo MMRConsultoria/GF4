@@ -272,6 +272,20 @@ with aba3:
         df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
         df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
 
+       
+        # Garantir que a coluna de Data seja corretamente formatada
+        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d')
+
+        # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
+        df_final = df_final.applymap(str)
+
+        # Converter as colunas de "Data", "Fat.Total", "Serv/Tx", "Fat.Real", etc. para valores numéricos e não string
+        for col in ['Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
+            df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
+        
+        
+        
+        
         # Converter as colunas de "Data", "Fat.Total", "Serv/Tx", "Fat.Real", etc. para valores numéricos e não string
         for col in ['Data', 'Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
             df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
