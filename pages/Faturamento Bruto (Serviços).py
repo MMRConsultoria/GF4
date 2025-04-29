@@ -160,11 +160,11 @@ with aba1:
 
             # 🔥 Agora exibir:
             # 📄 Nome do Arquivo
-            st.markdown(f"""
-                <div style='font-size:15px; font-weight: bold; margin-bottom:10px;'>
+           # st.markdown(f"""
+              #  <div style='font-size:15px; font-weight: bold; margin-bottom:10px;'>
                    # 📄 Arquivo selecionado: {uploaded_file.name}
-                </div>
-            """, unsafe_allow_html=True)
+              #  </div>
+            #""", unsafe_allow_html=True)
 
             # 📅 e 💰 Período e Valor Total
             datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
