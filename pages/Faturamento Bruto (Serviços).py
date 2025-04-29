@@ -246,20 +246,15 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # =======================================
-# Atualizar Google Sheets 
+# Atualizar Google Sheets (Evitar duplicação)
 # =======================================
 
 with aba3:
-    #st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
+    st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
 
-        # Garantir que a coluna "Data" seja convertida para string antes de enviar
-        # Converte a coluna 'Data' para datetime e depois para o formato desejado para envio
-        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%d/%m/%Y')
-
-        
         # Criar a coluna "M" com a concatenação de "Data", "Fat.Total" e "Loja" como string para verificação de duplicação
         df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
                          df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
@@ -270,23 +265,12 @@ with aba3:
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
         df_final = df_final.applymap(str)
 
-     
         # Formatando os valores monetários (não convertendo para string, mantendo como numérico)
         df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
         df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
         df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
         df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
 
-     
-       
-        
-        
-        
-        # Converter as colunas de "Data", "Fat.Total", "Serv/Tx", "Fat.Real", etc. para valores numéricos e não string
-        #for col in ['Data', 'Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
-        #    df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
-     
-       
         # Conectar ao Google Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
@@ -303,6 +287,7 @@ with aba3:
         dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # Ignorando cabeçalho, coluna M é a 13ª (índice 12)
 
         novos_dados = []
+        duplicados = []  # Armazenar os registros duplicados
         rows = df_final.fillna("").values.tolist()
 
         # Verificar duplicação somente na coluna "M"
@@ -325,15 +310,14 @@ with aba3:
                         # Enviar os novos dados para o Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
-                        
+
                     if duplicados:
                         st.warning(f"⚠️ {len(duplicados)} registro(s) foram duplicados e não foram enviados para o Google Sheets.")
                         # Exibir as linhas duplicadas para o usuário
                         st.write("Registros Duplicados:", duplicados)
 
-                    
                     else:
-                        st.info("✅ Dados estão duplicados.")
+                        st.info("✅ Não há novos dados para atualizar.")
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
