@@ -197,11 +197,13 @@ with aba1:
 
             if len(empresas_nao_localizadas) > 0:
                 # Listar as empresas não localizadas
-                empresas_nao_localizadas_str = ", ".join(empresas_nao_localizadas)
+                empresas_nao_localizadas_str = "<br>".join(empresas_nao_localizadas)
                 
                 # Construir a mensagem com o link direto
                 mensagem = f"""
                 ⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s): 
+                <br>{empresas_nao_localizadas_str}
+                <br>✏️ Atualize a tabela clicando 
                 ✏️ Atualize a tabela clicando 
                 <a href='https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
                 """
