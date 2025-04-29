@@ -311,6 +311,8 @@ with aba3:
             if chave_m not in dados_existentes:
                 novos_dados.append(linha)
                 dados_existentes.add(chave_m)  # Adiciona a chave da linha para não enviar novamente
+            else:
+                duplicados.append(linha)  # Adiciona a linha duplicada à lista
 
         # Adicionar o botão de atualização do Google Sheets
         if st.button("📥 Enviar dados para o Google Sheets"):
@@ -323,6 +325,13 @@ with aba3:
                         # Enviar os novos dados para o Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
+                        
+                    if duplicados:
+                        st.warning(f"⚠️ {len(duplicados)} registro(s) foram duplicados e não foram enviados para o Google Sheets.")
+                        # Exibir as linhas duplicadas para o usuário
+                        st.write("Registros Duplicados:", duplicados)
+
+                    
                     else:
                         st.info("✅ Dados estão duplicados.")
                 except Exception as e:
