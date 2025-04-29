@@ -314,7 +314,7 @@ with aba3:
                     if duplicados:
                         st.warning(f"⚠️ {len(duplicados)} registro(s) foram duplicados e não foram enviados para o Google Sheets.")
                         # Exibir as linhas duplicadas para o usuário
-                        st.write("Registros Duplicados:", duplicados)
+                   #     st.write("Registros Duplicados:", duplicados)
 
                     else:
                         st.info("✅ Não há novos dados para atualizar.")
