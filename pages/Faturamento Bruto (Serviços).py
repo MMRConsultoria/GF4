@@ -162,7 +162,7 @@ with aba1:
             # 📄 Nome do Arquivo
             st.markdown(f"""
                 <div style='font-size:15px; font-weight: bold; margin-bottom:10px;'>
-                    📄 Arquivo selecionado: {uploaded_file.name}
+                   # 📄 Arquivo selecionado: {uploaded_file.name}
                 </div>
             """, unsafe_allow_html=True)
 
