@@ -246,7 +246,7 @@ with aba2:
     else:
         st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # =======================================
-# Atualizar Google Sheets (Evitar duplicação)
+# Atualizar Google Sheets 
 # =======================================
 
 with aba3:
@@ -267,7 +267,8 @@ with aba3:
         # Não converter para string, apenas utilizar "M" para verificação de duplicação
         df_final['M'] = df_final['M'].apply(str)
 
-        
+        # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
+        df_final = df_final.applymap(str)
 
      
         # Formatando os valores monetários (não convertendo para string, mantendo como numérico)
@@ -277,14 +278,13 @@ with aba3:
         df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
 
      
-               # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
-        df_final = df_final.applymap(str)
+       
         
         
         
         # Converter as colunas de "Data", "Fat.Total", "Serv/Tx", "Fat.Real", etc. para valores numéricos e não string
-        for col in ['Data', 'Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
-            df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
+        #for col in ['Data', 'Fat.Total', 'Serv/Tx', 'Fat.Real', 'Ticket']:
+        #    df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
      
        
         # Conectar ao Google Sheets
