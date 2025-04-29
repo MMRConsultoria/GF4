@@ -205,7 +205,7 @@ with aba1:
                 <br>{empresas_nao_localizadas_str}
                 <br>
                 ✏️ Atualize a tabela clicando 
-                <a href='https://docs.google.com/spreadsheets/d/1EzIPdy1waGMMs99dOGYxGNLvYTOwiAht/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
+                <a href='https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
                 """
 
                 st.markdown(mensagem, unsafe_allow_html=True)
