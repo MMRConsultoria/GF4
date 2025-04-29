@@ -317,7 +317,7 @@ with aba3:
                    #     st.write("Registros Duplicados:", duplicados)
 
                     else:
-                        st.info("✅ Não há novos dados para atualizar.")
+                        st.info("✅ Dados atualizados google sheets.")
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
