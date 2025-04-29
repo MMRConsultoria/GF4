@@ -203,7 +203,7 @@ with aba1:
                 mensagem = f"""
                 ⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s): 
                 <br>{empresas_nao_localizadas_str}
-                <br><br>
+                <br>
                 ✏️ Atualize a tabela clicando 
                 <a href='https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
                 """
