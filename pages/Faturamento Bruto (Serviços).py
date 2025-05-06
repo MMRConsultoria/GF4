@@ -287,8 +287,7 @@ with aba3:
 
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
         #df_final = df_final.applymap(str)
-        colunas_texto = df_final.columns.difference(["Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"])
-        df_final[colunas_texto] = df_final[colunas_texto].astype(str)
+        df_final["Data"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors="coerce").dt.strftime("%d/%m/%Y")
 
 
 
