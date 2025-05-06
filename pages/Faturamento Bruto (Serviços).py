@@ -261,19 +261,7 @@ with aba3:
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
         
-        # ✅ Criar coluna N com a data formatada como texto dd/mm/yyyy, já pronta para exportar
-        from datetime import datetime
-
-        datas_formatadas = []
-        for i in range(len(df_final)):
-            data = df_final.iloc[i]['Data']
-            try:
-                dt = pd.to_datetime(data)
-                datas_formatadas.append(dt.strftime('%d/%m/%Y'))
-            except:
-                datas_formatadas.append("")
-
-        df_final['N'] = datas_formatadas   
+         
 
         # 🔗 Links úteis
         st.markdown("""
@@ -337,7 +325,24 @@ with aba3:
                         
                         # Enviar os novos dados para o Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
-                          
+                        
+                        # ✅ Criar coluna N com a data formatada como texto dd/mm/yyyy, já pronta para exportar
+                        from datetime import datetime
+
+                        datas_formatadas = []
+                        for i in range(len(df_final)):
+                            data = df_final.iloc[i]['Data']
+                            try:
+                                dt = pd.to_datetime(data)
+                                datas_formatadas.append(dt.strftime('%d/%m/%Y'))
+                            except:
+                        datas_formatadas.append("")
+
+                        df_final['N'] = datas_formatadas   
+
+
+
+                        
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
 
                     if duplicados:
