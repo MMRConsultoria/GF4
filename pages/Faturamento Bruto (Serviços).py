@@ -267,40 +267,18 @@ with aba3:
         """, unsafe_allow_html=True)
 
         # Criar a coluna "M" com a concatenação de "Data", "Fat.Total" e "Loja" como string para verificação de duplicação
-#alterir aqui        df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
- #                        df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
-
-        # Limpa e formata a coluna 'Data'
-        df_final['Data'] = df_final['Data'].astype(str).str.lstrip("'").str.strip()
-        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y', errors='coerce')
-        df_final['Data'] = df_final['Data'].dt.strftime('%d-%m-%Y')
-
-        # Cria a coluna M
-        df_final['M'] = df_final['Data'] + df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
-
-        # Transforma a M em string (seguro agora porque ela já existe)
-        df_final['M'] = df_final['M'].apply(str)
+        df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
+                        df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
 
 
 
 
-
-
-
-
-
-
-
-        
         # Não converter para string, apenas utilizar "M" para verificação de duplicação
         df_final['M'] = df_final['M'].apply(str)
 
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
-        #df_final = df_final.applymap(str)
-        df_final = df_final.applymap(
-            lambda x: str(x).lstrip("'").strip() if pd.notnull(x) else ""
-        )                
-
+        df_final = df_final.applymap(str)
+      
         
         # Formatando os valores monetários (não convertendo para string, mantendo como numérico)
         df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
