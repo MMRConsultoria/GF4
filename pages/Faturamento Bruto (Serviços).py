@@ -287,30 +287,29 @@ with aba3:
 
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
         #df_final = df_final.applymap(str)
-        
-        
-        
-#alterei        
-        # Garantir que a coluna Data está como datetime
+#alterei aqui
+
+
+
+        # Força conversão de Data com fallback seguro
         df_final["Data"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors="coerce")
 
-        # Criar chave M para evitar duplicação
-        df_final['M'] = df_final["Data"].dt.strftime('%Y-%m-%d') + \
-                       df_final['Fat.Total'].astype(str) + \
-                       df_final['Loja'].astype(str)
+        # Remove linhas com Data inválida (NaT)
+        df_final = df_final[df_final["Data"].notna()].copy()
 
-        # Preparar para envio (sem applymap)
+        # Agora sim: criar chave 'M' e formatar para envio
+        df_final["M"] = df_final["Data"].dt.strftime('%Y-%m-%d') + \
+                        df_final["Fat.Total"].astype(str) + \
+                        df_final["Loja"].astype(str)
+
         df_envio = df_final.copy()
-
-        # Converter coluna Data no formato certo
         df_envio["Data"] = df_envio["Data"].dt.strftime("%d/%m/%Y")
 
-        # Manter apenas colunas de texto como string
         colunas_texto = ["Loja", "Código Everest", "Grupo", "Código Grupo Everest", "Mês", "Dia da Semana", "Ano", "M"]
-        for col in colunas_texto:
-                       df_envio[col] = df_envio[col].astype(str)
+        df_envio[colunas_texto] = df_envio[colunas_texto].astype(str)
 
-        # Valores numéricos mantêm float
+        # Preparar para envio ao Google Sheets
+        rows = df_envio.fillna("").values.tolist()
 
 
 
