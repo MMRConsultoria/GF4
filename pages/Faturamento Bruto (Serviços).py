@@ -271,38 +271,17 @@ with aba3:
 
     if 'df_final' in st.session_state:
         #df_final = st.session_state.df_final.copy()
-        #df_final["Data"] = df_final["Data"].astype(str).str.strip().str.replace("'", "")
+        df_final["Data"] = df_final["Data"].astype(str).str.strip().str.replace("'", "")
         # 🔗 Links úteis
         st.markdown("""
           🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
         """, unsafe_allow_html=True)
 
         # Criar a coluna "M" com a concatenação de "Data", "Fat.Total" e "Loja" como string para verificação de duplicação
-        # se ter tudo errado esse mantém    df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
-        #                 df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+        df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
+                         df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
 
-        🔧 Forçar limpeza da coluna 'Data'
-        df_final["Data"] = df_final["Data"].astype(str).str.replace("'", "").str.strip()
-
-        # 🔧 Corrigir datas para datetime robusto
-        datas_corrigidas = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce')
-
-        # 🔧 Formatar datas no padrão ISO (yyyy-mm-dd) para usar na chave 'M'
-        datas_formatadas = datas_corrigidas.dt.strftime('%Y-%m-%d').fillna("0000-00-00")
-
-        # ✅ Criar chave M com segurança
-        df_final["M"] = datas_formatadas + df_final["Fat.Total"].astype(str) + df_final["Loja"].astype(str)
-
-
-
-
-
-
-
-
-
-
-        
+               
         # Não converter para string, apenas utilizar "M" para verificação de duplicação
         df_final['M'] = df_final['M'].apply(str)
 
