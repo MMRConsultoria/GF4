@@ -261,7 +261,7 @@ with aba3:
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
       
-       st.write("🔍 Valor bruto da primeira Data:", repr(df_final['Data'].iloc[0]))
+  
              
 
         # 🔗 Links úteis
