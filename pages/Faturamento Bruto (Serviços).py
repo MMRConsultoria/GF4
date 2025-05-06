@@ -260,7 +260,7 @@ with aba3:
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
-    import re
+        import re
 
         # Limpa aspas e espaços do início da data e converte para formato ISO (YYYY-MM-DD)
         def limpar_data(valor):
