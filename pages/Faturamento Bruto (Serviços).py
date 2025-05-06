@@ -331,13 +331,6 @@ with aba3:
                             formula = f'=TEXTO(A{linha_destino};"dd/mm/yyyy")'
                             aba_destino.update_acell(f"N{linha_destino}", formula)
 
-                        # Aguardar alguns segundos para o Sheets calcular as fórmulas (evita pegar células vazias)
-                        import time
-                        time.sleep(2)
-
-                        # Copiar valores calculados das fórmulas na coluna N e colar como valores fixos
-                        valores_formatados = aba_destino.get(f"N{primeira_linha_vazia}:N{primeira_linha_vazia + len(novos_dados) - 1}")
-                        aba_destino.update(f"N{primeira_linha_vazia}:N{primeira_linha_vazia + len(novos_dados) - 1}", valores_formatados)
                         
 
 
