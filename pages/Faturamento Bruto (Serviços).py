@@ -276,7 +276,7 @@ with aba3:
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
         #df_final = df_final.applymap(str)
         df_final = df_final.applymap(
-            lambda x: str(x).strip().replace("'", "").replace('"', "") if pd.notnull(x) else ""
+            lambda x: str(x).lstrip("'").strip() if pd.notnull(x) else ""
         )                
 
         
