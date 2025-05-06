@@ -140,7 +140,7 @@ with aba1:
                 "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
             }
             df_final.insert(1, "Dia da Semana", pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.day_name().map(dias_traducao))
- #aleterei aqui      df_final["Data"] = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.strftime("%d/%m/%Y")
+            df_final["Data"] = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.strftime("%d/%m/%Y")
 
             for col_val in ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas"]:
                 df_final[col_val] = pd.to_numeric(df_final[col_val], errors="coerce").round(2)
