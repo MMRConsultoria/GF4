@@ -325,7 +325,19 @@ with aba3:
                         
                         # Enviar os novos dados para o Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
-                        
+                        # Inserir fórmula na coluna N para cada nova linha, formatando como texto dd/mm/yyyy
+                        for i in range(len(novos_dados)):
+                            linha_destino = primeira_linha_vazia + i
+                            formula = f'=TEXTO(A{linha_destino};"dd/mm/yyyy")'
+                            aba_destino.update_acell(f"N{linha_destino}", formula)
+
+                        # Aguardar alguns segundos para o Sheets calcular as fórmulas (evita pegar células vazias)
+                        import time
+                        time.sleep(2)
+
+                        # Copiar valores calculados das fórmulas na coluna N e colar como valores fixos
+                        valores_formatados = aba_destino.get(f"N{primeira_linha_vazia}:N{primeira_linha_vazia + len(novos_dados) - 1}")
+                        aba_destino.update(f"N{primeira_linha_vazia}:N{primeira_linha_vazia + len(novos_dados) - 1}", valores_formatados)
                         
 
 
