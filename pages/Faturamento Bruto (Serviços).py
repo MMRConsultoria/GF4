@@ -271,7 +271,7 @@ with aba3:
 
     if 'df_final' in st.session_state:
         #df_final = st.session_state.df_final.copy()
-        df_final["Data"] = df_final["Data"].astype(str).str.strip().str.replace("'", "")
+        #df_final["Data"] = df_final["Data"].astype(str).str.strip().str.replace("'", "")
         # 🔗 Links úteis
         st.markdown("""
           🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
