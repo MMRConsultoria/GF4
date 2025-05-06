@@ -287,8 +287,17 @@ with aba3:
 
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
         #df_final = df_final.applymap(str)
+        # Garantir que as datas estão formatadas corretamente como string sem aspas simples
         df_final["Data"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors="coerce").dt.strftime("%d/%m/%Y")
 
+        # Concatenação chave M
+        df_final['M'] = df_final["Data"] + df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+
+        # Converter colunas de texto para string (exceto valores numéricos)
+        colunas_str = ["Loja", "Código Everest", "Grupo", "Código Grupo Everest", "Mês", "Dia da Semana", "Ano"]
+        df_final[colunas_str] = df_final[colunas_str].astype(str)
+
+        # Não aplique applymap. Os numéricos ficam como float
 
 
 
