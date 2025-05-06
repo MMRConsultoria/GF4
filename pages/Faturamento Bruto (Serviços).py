@@ -270,17 +270,16 @@ with aba3:
 #alterir aqui        df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
  #                        df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
 
-        # Limpa aspas e espaços na coluna Data
+        # Limpa e formata a coluna 'Data'
         df_final['Data'] = df_final['Data'].astype(str).str.lstrip("'").str.strip()
-
-        # Converte data para o formato correto
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y', errors='coerce')
         df_final['Data'] = df_final['Data'].dt.strftime('%Y-%m-%d')
 
-        # Cria a coluna M para checar duplicação
+        # Cria a coluna M
         df_final['M'] = df_final['Data'] + df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
 
-        df_final = st.session_state.df_final.copy()
+        # Transforma a M em string (seguro agora porque ela já existe)
+        df_final['M'] = df_final['M'].apply(str)
 
 
 
