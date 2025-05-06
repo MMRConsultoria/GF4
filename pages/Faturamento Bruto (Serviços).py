@@ -98,12 +98,8 @@ with aba1:
 
                             if pd.isna(valor_data) or valor_check in ["total", "subtotal"]:
                                 continue
-                            
-                            
-                            
-#  # 🔥 Alterei aqui
+
                             data = valor_data
-      
                             valores = linha[col:col+5].values
 
                             if pd.isna(valores).all():
@@ -116,12 +112,6 @@ with aba1:
                                 data.strftime("%b"),
                                 data.year
                             ])
-
-                          
-
-
-
-
                     col += 5
                 else:
                     col += 1
@@ -144,7 +134,6 @@ with aba1:
                 "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
             }
             df_final.insert(1, "Dia da Semana", pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.day_name().map(dias_traducao))
-    #alterei aqui
             df_final["Data"] = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.strftime("%d/%m/%Y")
 
             for col_val in ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas"]:
@@ -270,8 +259,8 @@ with aba3:
     #st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
 
     if 'df_final' in st.session_state:
-        #df_final = st.session_state.df_final.copy()
-        df_final["Data"] = df_final["Data"].astype(str).str.strip().str.replace("'", "")
+        df_final = st.session_state.df_final.copy()
+
         # 🔗 Links úteis
         st.markdown("""
           🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
@@ -281,7 +270,6 @@ with aba3:
         df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
                          df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
 
-               
         # Não converter para string, apenas utilizar "M" para verificação de duplicação
         df_final['M'] = df_final['M'].apply(str)
 
