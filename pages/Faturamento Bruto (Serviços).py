@@ -278,9 +278,29 @@ with aba3:
         """, unsafe_allow_html=True)
 
         # Criar a coluna "M" com a concatenação de "Data", "Fat.Total" e "Loja" como string para verificação de duplicação
-        df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
-                         df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+        #df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
+        #                 df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
 
+        # 🔧 Remover aspas simples da Data antes de criar a chave M
+        df_final["Data"] = df_final["Data"].astype(str).str.strip().str.replace("'", "")
+
+        # 🔧 Tentar converter Data para datetime (mesmo que tenha vindo como texto)
+        df_final["Data_temp"] = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce')
+
+        # ✅ Criar chave 'M' com data formatada no padrão ISO
+        df_final['M'] = df_final["Data_temp"].dt.strftime('%Y-%m-%d') + \
+            df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+
+
+
+
+
+
+
+
+
+
+        
         # Não converter para string, apenas utilizar "M" para verificação de duplicação
         df_final['M'] = df_final['M'].apply(str)
 
