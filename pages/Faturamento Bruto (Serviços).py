@@ -348,7 +348,16 @@ with aba3:
                         # Atualiza a coluna N com os valores já formatados
                         aba_destino.update(f"N{linha_inicio}:N{linha_fim}", coluna_n_formatada)
 
+                        from gspread_formatting import format_cell_range, CellFormat, NumberFormat
 
+                        # Aplica formato de data dd/mm/yyyy na coluna N
+                        formato_data = CellFormat(
+                            numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy')
+                            )
+
+                        # Aplica o formato na faixa correta
+                        range_n = f"N{linha_inicio}:N{linha_fim}"
+                        format_cell_range(aba_destino, range_n, formato_data)
 
                         
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
