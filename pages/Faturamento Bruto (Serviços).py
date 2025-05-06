@@ -273,7 +273,7 @@ with aba3:
         # Limpa e formata a coluna 'Data'
         df_final['Data'] = df_final['Data'].astype(str).str.lstrip("'").str.strip()
         df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y', errors='coerce')
-        df_final['Data'] = df_final['Data'].dt.strftime('%Y-%m-%d')
+        df_final['Data'] = df_final['Data'].dt.strftime('%d-%m-%a')
 
         # Cria a coluna M
         df_final['M'] = df_final['Data'] + df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
