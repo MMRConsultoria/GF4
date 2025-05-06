@@ -261,6 +261,22 @@ with aba3:
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
 
+        # 🔧 LIMPEZA DA COLUNA 'Data'
+        df_final['Data'] = df_final['Data'].astype(str)
+        df_final['Data'] = df_final['Data'].str.replace("'", "", regex=False)  # Remove aspas simples
+        df_final['Data'] = df_final['Data'].str.strip()
+
+        # 📅 CONVERSÃO PARA FORMATO BRASILEIRO DD/MM/YYYY
+        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y', errors='coerce')
+        df_final['Data'] = df_final['Data'].dt.strftime('%d/%m/%Y')
+
+        # 🧩 CRIAÇÃO DA COLUNA 'M'
+        df_final['M'] = df_final['Data'] + df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+
+
+
+        
+
         # 🔗 Links úteis
         st.markdown("""
           🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
