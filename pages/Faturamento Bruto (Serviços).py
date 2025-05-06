@@ -326,6 +326,21 @@ with aba3:
                         
                         # Enviar os novos dados para o Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
+                        # Pós-processamento: remover aspas da coluna Data dos dados recém-enviados
+                        num_linhas = len(novos_dados)
+                        range_datas = f"A{primeira_linha_vazia}:A{primeira_linha_vazia + num_linhas - 1}"
+                        coluna_data = aba_destino.get(range_datas)
+
+                        # Limpar aspas simples
+                        coluna_data_limpa = [[cel[0].replace("'", "").strip()] if cel else [""] for cel in coluna_data]
+
+                        # Atualiza somente a coluna Data com as datas limpas
+                        aba_destino.update(range_datas, coluna_data_limpa)
+
+
+
+
+                        
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
 
                     if duplicados:
