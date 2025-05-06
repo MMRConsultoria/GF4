@@ -340,7 +340,16 @@ with aba3:
                         
                         # Enviar os novos dados para o Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
+                        from gspread_formatting import CellFormat, format_cell_range, NumberFormat
 
+                        # Formato do tipo DATA (yyyy-mm-dd)
+                        formato_data = CellFormat(
+                        numberFormat=NumberFormat(type='DATE', pattern='yyyy-mm-dd')
+                        )
+
+                        # Aplica na coluna A das novas linhas
+                        range_data = f"A{primeira_linha_vazia}:A{primeira_linha_vazia + len(novos_dados) - 1}"
+                        format_cell_range(aba_destino, range_data, formato_data)
                         
                         
 
