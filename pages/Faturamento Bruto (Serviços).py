@@ -288,32 +288,6 @@ with aba3:
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
         df_final = df_final.applymap(str)
 
-
-
-
-        # Força conversão de Data com fallback seguro
-        df_final["Data"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors="coerce")
-
-        # Remove linhas com Data inválida (NaT)
-        df_final = df_final[df_final["Data"].notna()].copy()
-
-        # Agora sim: criar chave 'M' e formatar para envio
-        df_final["M"] = df_final["Data"].dt.strftime('%Y-%m-%d') + \
-                        df_final["Fat.Total"].astype(str) + \
-                        df_final["Loja"].astype(str)
-
-        df_envio = df_final.copy()
-        df_envio["Data"] = df_envio["Data"].dt.strftime("%d/%m/%Y")
-
-        colunas_texto = ["Loja", "Código Everest", "Grupo", "Código Grupo Everest", "Mês", "Dia da Semana", "Ano", "M"]
-        df_envio[colunas_texto] = df_envio[colunas_texto].astype(str)
-
-        # Preparar para envio ao Google Sheets
-        rows = df_final.fillna("").values.tolist()
-
-
-
-        
         # Formatando os valores monetários (não convertendo para string, mantendo como numérico)
         df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
         df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
@@ -337,10 +311,7 @@ with aba3:
 
         novos_dados = []
         duplicados = []  # Armazenar os registros duplicados
-#alterie aqui        #rows = df_final.fillna("").values.tolist()
-        rows = df_envio.fillna("").values.tolist()
-
-
+        rows = df_final.fillna("").values.tolist()
 
         # Verificar duplicação somente na coluna "M"
         for linha in rows:
