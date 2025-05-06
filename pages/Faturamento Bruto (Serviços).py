@@ -274,8 +274,11 @@ with aba3:
         df_final['M'] = df_final['M'].apply(str)
 
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
-        df_final = df_final.applymap(str)
+        #df_final = df_final.applymap(str)
+        df_final = df_final.applymap(lambda x: str(x).replace("'", "") if pd.notnull(x) else "")
 
+
+        
         # Formatando os valores monetários (não convertendo para string, mantendo como numérico)
         df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
         df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
