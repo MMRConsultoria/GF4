@@ -104,7 +104,7 @@ with aba1:
 #  # 🔥 Alterei aqui
                             #data = valor_data
                             #data = str(valor_data).strip().replace("'", "")
-                            #data = pd.to_datetime(str(valor_data).strip().replace("'", ""), dayfirst=True, errors='coerce')
+                            data = pd.to_datetime(str(valor_data).strip().replace("'", ""), dayfirst=True, errors='coerce')
                           
                             valores = linha[col:col+5].values
 
@@ -141,7 +141,7 @@ with aba1:
             }
             df_final.insert(1, "Dia da Semana", pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.day_name().map(dias_traducao))
     #alterei aqui
-            df_final["Data"] = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.strftime("%d/%m/%Y")
+            #df_final["Data"] = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.strftime("%d/%m/%Y")
 
             for col_val in ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas"]:
                 df_final[col_val] = pd.to_numeric(df_final[col_val], errors="coerce").round(2)
