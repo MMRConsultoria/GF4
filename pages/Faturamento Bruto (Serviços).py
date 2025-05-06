@@ -333,7 +333,7 @@ with aba3:
                         linha_fim = linha_inicio + len(novos_dados) - 1
 
                        # # Ler os valores reais da coluna A diretamente do Google Sheets (já colados)
-                       # coluna_a = aba_destino.get(f"A{linha_inicio}:A{linha_fim}")
+                        coluna_a = aba_destino.get(f"A{linha_inicio}:A{linha_fim}")
 
                         # Formatar para dd/mm/yyyy no Python
                         coluna_n_formatada = []
