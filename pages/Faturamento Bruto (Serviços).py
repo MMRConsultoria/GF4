@@ -343,7 +343,7 @@ with aba3:
                                 dt = pd.to_datetime(valor, dayfirst=True)
                                 coluna_n_formatada.append([dt.strftime('%d/%m/%Y')])
                             except:
-                                coluna_n_formatada.append([""])
+                                coluna_n_formatada.append([dt.to_pydatetime()])
 
                         # Atualiza a coluna N com os valores já formatados
                         aba_destino.update(f"N{linha_inicio}:N{linha_fim}", coluna_n_formatada)
