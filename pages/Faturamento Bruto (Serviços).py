@@ -103,21 +103,40 @@ with aba1:
                             
 #  # 🔥 Alterei aqui
                             #data = valor_data
-                            #data = str(valor_data).strip().replace("'", "")
-                            data = pd.to_datetime(str(valor_data).strip().replace("'", ""), dayfirst=True, errors='coerce')
-                          
+#  # 🔥 inclui
+                        try:
+                            data_bruta = str(valor_data).strip().replace("'", "")
+                            data = pd.to_datetime(data_bruta, dayfirst=True, errors='coerce')
+                            data_str = data.strftime("%d/%m/%Y") if pd.notna(data) else ""
+                        except:
+                            data = ""
+                            data_str = ""
+                            
+#  # 🔥 até aqui                          
                             valores = linha[col:col+5].values
 
                             if pd.isna(valores).all():
                                 continue
 
+                            #registros.append([
+                            #    data,
+                            #    nome_loja,
+                            #    *valores,
+                            #    data.strftime("%b"),
+                            #    data.year
+                            #])
+
                             registros.append([
-                                data,
+                                data_str,     # Data formatada como texto dd/mm/yyyy
                                 nome_loja,
                                 *valores,
-                                data.strftime("%b"),
-                                data.year
+                                data.strftime("%b") if pd.notna(data) else "",  # Mês
+                                data.year if pd.notna(data) else ""             # Ano
                             ])
+
+
+
+
                     col += 5
                 else:
                     col += 1
