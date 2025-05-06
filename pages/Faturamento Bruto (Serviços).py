@@ -278,18 +278,20 @@ with aba3:
         """, unsafe_allow_html=True)
 
         # Criar a coluna "M" com a concatenação de "Data", "Fat.Total" e "Loja" como string para verificação de duplicação
-        #df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
+        # se ter tudo errado esse mantém    df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
         #                 df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
 
-        # 🔧 Remover aspas simples da Data antes de criar a chave M
-        df_final["Data"] = df_final["Data"].astype(str).str.strip().str.replace("'", "")
+        🔧 Forçar limpeza da coluna 'Data'
+        df_final["Data"] = df_final["Data"].astype(str).str.replace("'", "").str.strip()
 
-        # 🔧 Tentar converter Data para datetime (mesmo que tenha vindo como texto)
-        df_final["Data_temp"] = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce')
+        # 🔧 Corrigir datas para datetime robusto
+        datas_corrigidas = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce')
 
-        # ✅ Criar chave 'M' com data formatada no padrão ISO
-        df_final['M'] = df_final["Data_temp"].dt.strftime('%Y-%m-%d') + \
-            df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+        # 🔧 Formatar datas no padrão ISO (yyyy-mm-dd) para usar na chave 'M'
+        datas_formatadas = datas_corrigidas.dt.strftime('%Y-%m-%d').fillna("0000-00-00")
+
+        # ✅ Criar chave M com segurança
+        df_final["M"] = datas_formatadas + df_final["Fat.Total"].astype(str) + df_final["Loja"].astype(str)
 
 
 
