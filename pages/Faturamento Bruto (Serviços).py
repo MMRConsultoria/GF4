@@ -332,8 +332,8 @@ with aba3:
                         linha_inicio = primeira_linha_vazia
                         linha_fim = linha_inicio + len(novos_dados) - 1
 
-                        # Ler os valores reais da coluna A diretamente do Google Sheets (já colados)
-                        coluna_a = aba_destino.get(f"A{linha_inicio}:A{linha_fim}")
+                       # # Ler os valores reais da coluna A diretamente do Google Sheets (já colados)
+                       # coluna_a = aba_destino.get(f"A{linha_inicio}:A{linha_fim}")
 
                         # Formatar para dd/mm/yyyy no Python
                         coluna_n_formatada = []
@@ -341,9 +341,9 @@ with aba3:
                             valor = linha[0]
                             try:
                                 dt = pd.to_datetime(valor, dayfirst=True)
-                                coluna_n_formatada.append([dt.to_pydatetime()])  # ✅ envia como tipo datetime real
+                                coluna_n_formatada.append([dt.strftime('%Y-%m-%d')])  # ✅ formato ISO
                             except:
-                                coluna_n_formatada.append([dt.strftime('%Y-%m-%d')])
+                                coluna_n_formatada.append([""])  # segura caso a conversão falhe
                                 
                         # Atualiza a coluna N com os valores já formatados
                         aba_destino.update(f"N{linha_inicio}:N{linha_fim}", coluna_n_formatada)
