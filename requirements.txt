@@ -6,4 +6,4 @@ oauth2client
 xlsxwriter
 gspread-dataframe
 openpyxl
-
+gspread-formatting
