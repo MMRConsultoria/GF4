@@ -260,9 +260,16 @@ with aba3:
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
-        # Limpar aspas simples iniciais na coluna Data sem afetar a coluna M
-        df_final['Data'] = df_final['Data'].astype(str).str.replace("'", "", regex=False).str.strip()
-        
+      
+        import re
+
+        def limpar_data(valor):
+            if not isinstance(valor, str):
+                valor = str(valor)
+            # Remove qualquer aspas simples, dupla, espaços e aspas unicode invisíveis
+            return re.sub(r"^[\"'\u2018\u2019\u201C\u201D]+", "", valor).strip()
+
+        df_final['Data'] = df_final['Data'].apply(limpar_data)
 
              
 
@@ -329,18 +336,9 @@ with aba3:
                         
                         # Enviar os novos dados para o Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
-                        # Pós-processamento: remover aspas da coluna Data dos dados recém-enviados
-                        num_linhas = len(novos_dados)
-                        range_datas = f"A{primeira_linha_vazia}:A{primeira_linha_vazia + num_linhas - 1}"
-                        coluna_data = aba_destino.get(range_datas)
 
-                        # Limpar aspas simples
-                        coluna_data_limpa = [[cel[0].replace("'", "").strip()] if cel else [""] for cel in coluna_data]
-
-                        # Atualiza somente a coluna Data com as datas limpas
-                        aba_destino.update(range_datas, coluna_data_limpa)
-
-
+                        
+                        
 
 
                         
