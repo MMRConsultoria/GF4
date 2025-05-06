@@ -334,3 +334,4 @@ with aba3:
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
