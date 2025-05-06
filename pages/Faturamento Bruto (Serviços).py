@@ -261,16 +261,7 @@ with aba3:
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
       
-        import re
-
-        def limpar_data(valor):
-            if not isinstance(valor, str):
-                valor = str(valor)
-            # Remove qualquer aspas simples, dupla, espaços e aspas unicode invisíveis
-            return re.sub(r"^[\"'\u2018\u2019\u201C\u201D]+", "", valor).strip()
-
-        df_final['Data'] = df_final['Data'].apply(limpar_data)
-
+       st.write("🔍 Valor bruto da primeira Data:", repr(df_final['Data'].iloc[0]))
              
 
         # 🔗 Links úteis
