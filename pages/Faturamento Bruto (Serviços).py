@@ -98,8 +98,12 @@ with aba1:
 
                             if pd.isna(valor_data) or valor_check in ["total", "subtotal"]:
                                 continue
-
-                            data = valor_data
+                            
+                            
+                            
+                            #Alterei aqui
+                            #data = valor_data
+                            data = str(valor_data).strip().replace("'", "")
                             valores = linha[col:col+5].values
 
                             if pd.isna(valores).all():
