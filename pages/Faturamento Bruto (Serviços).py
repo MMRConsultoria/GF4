@@ -291,26 +291,26 @@ with aba3:
         
         
 #alterei        
-       # Garantir que a coluna Data está como datetime
-       df_final["Data"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors="coerce")
+        # Garantir que a coluna Data está como datetime
+        df_final["Data"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors="coerce")
 
-       # Criar chave M para evitar duplicação
-       df_final['M'] = df_final["Data"].dt.strftime('%Y-%m-%d') + \
+        # Criar chave M para evitar duplicação
+        df_final['M'] = df_final["Data"].dt.strftime('%Y-%m-%d') + \
                        df_final['Fat.Total'].astype(str) + \
                        df_final['Loja'].astype(str)
 
-       # Preparar para envio (sem applymap)
-       df_envio = df_final.copy()
+        # Preparar para envio (sem applymap)
+        df_envio = df_final.copy()
 
-       # Converter coluna Data no formato certo
-       df_envio["Data"] = df_envio["Data"].dt.strftime("%d/%m/%Y")
+        # Converter coluna Data no formato certo
+        df_envio["Data"] = df_envio["Data"].dt.strftime("%d/%m/%Y")
 
-       # Manter apenas colunas de texto como string
-       colunas_texto = ["Loja", "Código Everest", "Grupo", "Código Grupo Everest", "Mês", "Dia da Semana", "Ano", "M"]
-       for col in colunas_texto:
+        # Manter apenas colunas de texto como string
+        colunas_texto = ["Loja", "Código Everest", "Grupo", "Código Grupo Everest", "Mês", "Dia da Semana", "Ano", "M"]
+        for col in colunas_texto:
                        df_envio[col] = df_envio[col].astype(str)
 
-       # Valores numéricos mantêm float
+        # Valores numéricos mantêm float
 
 
 
