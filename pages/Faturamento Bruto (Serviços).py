@@ -286,8 +286,8 @@ with aba3:
         df_final['M'] = df_final['M'].apply(str)
 
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
-        #df_final = df_final.applymap(str)
-#alterei aqui
+        df_final = df_final.applymap(str)
+
 
 
 
@@ -309,7 +309,7 @@ with aba3:
         df_envio[colunas_texto] = df_envio[colunas_texto].astype(str)
 
         # Preparar para envio ao Google Sheets
-        rows = df_envio.fillna("").values.tolist()
+        rows = df_final.fillna("").values.tolist()
 
 
 
