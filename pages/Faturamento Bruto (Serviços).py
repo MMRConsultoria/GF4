@@ -102,7 +102,7 @@ with aba1:
                             
                             
 #  # 🔥 Alterei aqui
-                            data = valor_data
+                            #data = valor_data
                             #data = str(valor_data).strip().replace("'", "")
                             #data = pd.to_datetime(str(valor_data).strip().replace("'", ""), dayfirst=True, errors='coerce')
                           
@@ -140,6 +140,7 @@ with aba1:
                 "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
             }
             df_final.insert(1, "Dia da Semana", pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.day_name().map(dias_traducao))
+    #alterei aqui
             df_final["Data"] = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.strftime("%d/%m/%Y")
 
             for col_val in ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas"]:
