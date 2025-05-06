@@ -326,19 +326,27 @@ with aba3:
                         # Enviar os novos dados para o Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
                         
-                        # ✅ Criar coluna N com a data formatada como texto dd/mm/yyyy, já pronta para exportar
                         from datetime import datetime
 
-                        datas_formatadas = []
-                        for i in range(len(df_final)):
-                            data = df_final.iloc[i]['Data']
-                            try:
-                                dt = pd.to_datetime(data)
-                                datas_formatadas.append(dt.strftime('%d/%m/%Y'))
-                            except:
-                        datas_formatadas.append("")
+                        # Calcular intervalo
+                        linha_inicio = primeira_linha_vazia
+                        linha_fim = linha_inicio + len(novos_dados) - 1
 
-                        df_final['N'] = datas_formatadas   
+                        # Ler os valores reais da coluna A diretamente do Google Sheets (já colados)
+                        coluna_a = aba_destino.get(f"A{linha_inicio}:A{linha_fim}")
+
+                        # Formatar para dd/mm/yyyy no Python
+                        coluna_n_formatada = []
+                        for linha in coluna_a:
+                            valor = linha[0]
+                            try:
+                                dt = pd.to_datetime(valor, dayfirst=True)
+                                coluna_n_formatada.append([dt.strftime('%d/%m/%Y')])
+                            except:
+                                coluna_n_formatada.append([""])
+
+                        # Atualiza a coluna N com os valores já formatados
+                        aba_destino.update(f"N{linha_inicio}:N{linha_fim}", coluna_n_formatada)
 
 
 
