@@ -102,8 +102,8 @@ with aba1:
                             
                             
 #  # 🔥 Alterei aqui
-                            #data = valor_data
-                            data = str(valor_data).strip().replace("'", "")
+                            data = valor_data
+                            #data = str(valor_data).strip().replace("'", "")
                             #data = pd.to_datetime(str(valor_data).strip().replace("'", ""), dayfirst=True, errors='coerce')
                           
                             valores = linha[col:col+5].values
