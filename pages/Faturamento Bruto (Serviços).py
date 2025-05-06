@@ -104,10 +104,11 @@ with aba1:
 #  # 🔥 Alterei aqui
                             #data = valor_data
 #  # 🔥 inclui
-                        try:
+                       
                             data_bruta = str(valor_data).strip().replace("'", "")
-                            data = pd.to_datetime(data_bruta, dayfirst=True, errors='coerce')
-                            data_str = data.strftime("%d/%m/%Y") if pd.notna(data) else ""
+                            try:
+                                 data = pd.to_datetime(data_str, dayfirst=True, errors='raise')
+                           
                         except:
                             data = ""
                             data_str = ""
@@ -127,11 +128,11 @@ with aba1:
                             #])
 
                             registros.append([
-                                data_str,     # Data formatada como texto dd/mm/yyyy
+                                data.strftime("%d/%m/%Y"),  # ← envia como string formatada
                                 nome_loja,
                                 *valores,
-                                data.strftime("%b") if pd.notna(data) else "",  # Mês
-                                data.year if pd.notna(data) else ""             # Ano
+                                data.strftime("%b").lower(),  # Mês (jan, fev...)
+                                data.year
                             ])
 
 
