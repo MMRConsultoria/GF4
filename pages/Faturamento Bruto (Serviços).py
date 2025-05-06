@@ -260,7 +260,17 @@ with aba3:
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
-      
+      import re
+
+        # Limpa aspas e espaços do início da data e converte para formato ISO (YYYY-MM-DD)
+        def limpar_data(valor):
+            if not isinstance(valor, str):
+                valor = str(valor)
+            return re.sub(r"^[\"'\u2018\u2019\u201C\u201D]+", "", valor).strip()
+
+        df_final['Data'] = df_final['Data'].apply(limpar_data)
+        df_final['Data'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y', errors='coerce')
+        df_final['Data'] = df_final['Data'].dt.strftime('%Y-%m-%d')
   
              
 
