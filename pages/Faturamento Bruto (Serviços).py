@@ -344,7 +344,7 @@ with aba3:
 
                         # Formato do tipo DATA (yyyy-mm-dd)
                         formato_data = CellFormat(
-                        numberFormat=NumberFormat(type='DATE', pattern='yyyy-mm-dd')
+                        numberFormat=NumberFormat(type='DATE', pattern='dd-mm-yyyy')
                         )
 
                         # Aplica na coluna A das novas linhas
