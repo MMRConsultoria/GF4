@@ -287,18 +287,30 @@ with aba3:
 
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
         #df_final = df_final.applymap(str)
-        # Garantir que as datas estão formatadas corretamente como string sem aspas simples
-        df_final["Data"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors="coerce").dt.strftime("%d/%m/%Y")
+        
+        
+        
+#alterei        
+       # Garantir que a coluna Data está como datetime
+       df_final["Data"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors="coerce")
 
-        # Concatenação chave M
-        df_final['M'] = df_final["Data"] + df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+       # Criar chave M para evitar duplicação
+       df_final['M'] = df_final["Data"].dt.strftime('%Y-%m-%d') + \
+                       df_final['Fat.Total'].astype(str) + \
+                       df_final['Loja'].astype(str)
 
-        # Converter colunas de texto para string (exceto valores numéricos)
-        colunas_str = ["Loja", "Código Everest", "Grupo", "Código Grupo Everest", "Mês", "Dia da Semana", "Ano"]
-        df_final[colunas_str] = df_final[colunas_str].astype(str)
+       # Preparar para envio (sem applymap)
+       df_envio = df_final.copy()
 
-        # Não aplique applymap. Os numéricos ficam como float
+       # Converter coluna Data no formato certo
+       df_envio["Data"] = df_envio["Data"].dt.strftime("%d/%m/%Y")
 
+       # Manter apenas colunas de texto como string
+       colunas_texto = ["Loja", "Código Everest", "Grupo", "Código Grupo Everest", "Mês", "Dia da Semana", "Ano", "M"]
+       for col in colunas_texto:
+                       df_envio[col] = df_envio[col].astype(str)
+
+       # Valores numéricos mantêm float
 
 
 
@@ -326,7 +338,10 @@ with aba3:
 
         novos_dados = []
         duplicados = []  # Armazenar os registros duplicados
-        rows = df_final.fillna("").values.tolist()
+#alterie aqui        #rows = df_final.fillna("").values.tolist()
+        rows = df_envio.fillna("").values.tolist()
+
+
 
         # Verificar duplicação somente na coluna "M"
         for linha in rows:
