@@ -280,10 +280,10 @@ with aba3:
         """, unsafe_allow_html=True)
 
         # Criar a coluna "M" com a concatenação de "Data", "Fat.Total" e "Loja" como string para verificação de duplicação
-        df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
-                        df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+       # df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
+        #                df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
 
-
+        df_final['M'] = df_final['Data'] + df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
 
 
         # Não converter para string, apenas utilizar "M" para verificação de duplicação
