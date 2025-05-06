@@ -260,6 +260,9 @@ with aba3:
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
+        # Limpar aspas simples iniciais na coluna Data sem afetar a coluna M
+        df_final['Data'] = df_final['Data'].astype(str).str.replace("'", "", regex=False).str.strip()
+        
 
              
 
