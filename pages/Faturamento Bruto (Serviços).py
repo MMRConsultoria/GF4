@@ -325,11 +325,7 @@ with aba3:
                         
                         # Enviar os novos dados para o Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
-                        # Adiciona cabeçalho na coluna Z
-                        aba_destino.update_acell("Z1", "Data Formatada")
-
-                        # Insere fórmula na célula Z2 que converte a coluna A em datas reais
-                        aba_destino.update_acell("Z2", '=ARRAYFORMULA(IFERROR(TO_DATE(A2:A), ""))')
+                        
                         
 
 
