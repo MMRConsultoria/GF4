@@ -498,21 +498,24 @@ with aba4:
 
     # ➕ Adicionar manualmente os anos como annotations (abaixo das barras)
     annotations = []
+    
     y_min = fat_mensal["Fat.Real"].min()
 
     for trace in fig.data:
-	    for xi, yi in zip(trace["x"], trace["y"]):
-		    annotations.append(dict(
-			    x=xi,
-			    y=y_min * -0.05,  # um pouco abaixo do eixo
-			    text=trace.name,  # exibe o ano (2024 ou 2025)
-			    showarrow=False,
-			    xanchor="center",
-			    yanchor="top",
-			    font=dict(size=10),
-			    xref="x",
-			    yref="y"
-		    ))
+    	offset = -0.06 if trace.name == "2024" else 0.06  # desloca para alinhar com a barra
+    	for xi, yi in zip(trace["x"], trace["y"]):
+        	annotations.append(dict(
+           		x=xi,
+            		y=y_min * -0.05,
+            		text=trace.name,
+            		showarrow=False,
+            		xanchor="center",
+            		yanchor="top",
+            		textangle=0,
+            		font=dict(size=10),
+            		xref="x",
+            		yref="y"
+        	))
 
    
    
