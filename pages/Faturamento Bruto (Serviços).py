@@ -523,6 +523,7 @@ with aba4:
     y_min = fat_mensal["Fat.Real"].min()
 
     for trace in fig.data:
+	    offset = -0.06 if trace.name == "2024" else 0.06  # desloca para alinhar com a barra
 	    for xi, yi in zip(trace["x"], trace["y"]):
 		    annotations.append(dict(
 			    x=xi,
