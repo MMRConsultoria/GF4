@@ -520,6 +520,10 @@ fig = px.bar(
 # Posicionar o valor no topo da barra
 fig.update_traces(textposition="outside")
 
+# 📍 Antes do for
+y_min = fat_mensal["Fat.Real"].min()
+
+
 # ➕ Adicionar manualmente os anos como annotations (abaixo das barras)
 annotations = []
 
