@@ -479,7 +479,7 @@ with aba4:
     # 📊 Visualização
     # =========================
 
-    st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado com Ano embaixo e Valor em cima)")
+    st.subheader("📊 Faturamento Real Mensal")
 
     fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
     # Cria coluna auxiliar para usar nas anotações
@@ -493,7 +493,7 @@ with aba4:
 	    barmode="group",
 	    text_auto=".2s",  # valor do faturamento no topo
 	    custom_data=["MesAno"],  # 🔹 leva o mês/ano junto com cada barra
-	    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
+	   # title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
     )
 
     # Posicionar o valor no topo da barra
