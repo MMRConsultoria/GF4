@@ -417,7 +417,7 @@ with aba4:
 
    
 
- # =========================
+  # =========================
     # 🧹 Tratamento dos dados
     # =========================
 
@@ -445,7 +445,7 @@ with aba4:
     meses_portugues = {
         1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
         7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
-    }    
+    }
     df["Nome Mês"] = df["Mês"].map(meses_portugues)
 
     # Filtro de anos
@@ -459,8 +459,8 @@ with aba4:
         "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ]
-    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
-    fat_mensal["Mês/Ano"] = fat_mensal["Nome Mês"] + " - " + fat_mensal["Ano"]
+    fat_mensal["Nome Mês"] = pd.Categorical(fat_mensal["Nome Mês"], categories=ordem_meses, ordered=True)
+    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)  # ✅ Converte ano para string para uso como categoria
     fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
 
     # =========================
@@ -468,33 +468,14 @@ with aba4:
     # =========================
 
     st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado)")
-
-    # Criar eixo com Mês + Ano
-    fat_mensal["Mês/Ano"] = fat_mensal["Nome Mês"] + " - " + fat_mensal["Ano"]
-
     fig = px.bar(
         fat_mensal,
-        x="Mês/Ano",
+        x="Nome Mês",
         y="Fat.Real",
         color="Ano",
+        barmode="group",
         text_auto=".2s",
-        title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
+        title="Comparativo de Faturamento Real Mensal"
     )
-    fig.update_layout(
-        xaxis_title="Mês",
-        yaxis_title="Faturamento (R$)",
-        xaxis_tickangle=-45,
-        showlegend=True
-    )
+    fig.update_layout(xaxis_title="Mês", yaxis_title="Faturamento (R$)", xaxis_tickangle=-45)
     st.plotly_chart(fig, use_container_width=True)
-
-    # =========================
-    # 📋 Tabela de Totais Anuais
-    # =========================
-    totais_ano = df_anos.groupby("Ano")["Fat.Real"].sum().reset_index()
-    totais_ano["Fat.Real"] = totais_ano["Fat.Real"].map("R$ {:,.2f}".format)
-
-    st.subheader("📌 Total Anual de Faturamento")
-    st.dataframe(totais_ano.rename(columns={"Ano": "Ano", "Fat.Real": "Total"}), hide_index=True)
-
-   
