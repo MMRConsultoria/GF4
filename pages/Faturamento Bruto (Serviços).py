@@ -463,20 +463,19 @@ with aba4:
     fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)  # ✅ Converte ano para string para uso como categoria
     fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
 
-    # =========================
+     # =========================
     # 📊 Visualização
     # =========================
 
     st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado)")
     fig = px.bar(
-    fat_mensal,
-    x="Nome Mês",
-    y="Fat.Real",
-    color="Ano",
-    barmode="group",
-    text_auto=".2s",
-    title="Comparativo de Faturamento Real Mensal"
-
-        
+        fat_mensal,
+        x="Nome Mês",
+        y="Fat.Real",
+        color="Ano",
+        barmode="group",
+        text_auto=".2s",
+        title="Comparativo de Faturamento Real Mensal"
+    )
     fig.update_layout(xaxis_title="Mês", yaxis_title="Faturamento (R$)", xaxis_tickangle=-45)
     st.plotly_chart(fig, use_container_width=True)
