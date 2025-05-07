@@ -420,9 +420,16 @@ df = pd.DataFrame(dados)
 
 # Tratamento de dados
 def limpar_valor(x):
-    if isinstance(x, str):
-        return float(x.replace(".", "").replace(",", "."))
-    return x  # já é numérico
+    try:
+        if isinstance(x, str):
+            return float(x.replace(".", "").replace(",", "."))
+        elif isinstance(x, (int, float)):
+            return x
+        else:
+            return None
+    except:
+        return None
+
 
 # Aplicar para as colunas de valor
 for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]:
