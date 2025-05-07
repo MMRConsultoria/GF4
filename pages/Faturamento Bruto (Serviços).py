@@ -509,7 +509,7 @@ with aba4:
 
 
 # Layout final
-ig.update_layout(
+fig.update_layout(
     xaxis_title="Mês",
     yaxis_title="Faturamento (R$)",
     xaxis_tickangle=-45,
