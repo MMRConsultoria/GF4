@@ -499,25 +499,7 @@ with aba4:
     # Posicionar o valor no topo da barra
     fig.update_traces(textposition="outside")
 
-    # ➕ Adicionar manualmente os anos como annotations (abaixo das barras)
-  
-    #y_min = fat_mensal["Fat.Real"].min()
-    #annotations = []
-    #for trace in fig.data:
-    #	ano = trace.name  # "2024" ou "2025"
-    #	for xi, yi in zip(trace.x, trace.y):
-     #   	annotations.append(dict(
-      #     		x=xi,
-       #    		y=y_min * 0.95,  # um pouco abaixo do eixo X
-        #    		text=ano,
-         #   		showarrow=False,
-          #  		xanchor="center",
-           # 		yanchor="top",
-            #		font=dict(size=10),
-            #		textangle=0,
-            #		xref="x",
-            #		yref="y"
-             #    ))
+    
      # ➕ Adicionar manualmente os anos como annotations (abaixo das barras)
     annotations = []
     y_min = fat_mensal["Fat.Real"].min()
@@ -540,16 +522,27 @@ with aba4:
 		    ))
 
 
-   
+fig.update_layout(
+    xaxis_title=None,         # 🔹 Remove o título do eixo X
+    yaxis_title=None,         # 🔹 Remove o título do eixo Y
+    xaxis_tickangle=-45,
+    showlegend=False,         # 🔹 Remove a legenda
+    annotations=annotations,  # 🔹 Mantém os anos abaixo das barras
+    yaxis=dict(
+        showticklabels=False,     # 🔹 Remove números do eixo Y
+        showgrid=False,           # 🔹 Remove linhas de grade
+        zeroline=False            # 🔹 Remove a linha zero
+    )
+)   
 
 
 # Layout final
-fig.update_layout(
-    xaxis_title="Mês",
-    yaxis_title="Faturamento (R$)",
-    xaxis_tickangle=-45,
-    showlegend=True,
-    annotations=annotations		
-)
+#fig.update_layout(
+#    xaxis_title="Mês",
+#    yaxis_title="Faturamento (R$)",
+#    xaxis_tickangle=-45,
+#    showlegend=True,
+#    annotations=annotations		
+#)
 
 st.plotly_chart(fig, use_container_width=True)
