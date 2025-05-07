@@ -368,11 +368,7 @@ with aba3:
                         numero_format = CellFormat(
                         numberFormat=NumberFormat(type='NUMBER', pattern='0')
                         )
-
-                        # Formato numérico simples (sem aspas, sem casas decimais)
-                        numero_format = CellFormat(
-                        numberFormat=NumberFormat(type='NUMBER', pattern='0')
-                        )
+                      
                         
                         # Considerando que a coluna A é onde está a data
                         format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(novos_dados)}", data_format)
