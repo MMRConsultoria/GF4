@@ -398,30 +398,32 @@ with aba3:
 
 
 
-# ================================
-# 📈 Relatórios Gerenciais (Painel Interativo)
-# ================================
-
 with aba4:
+    # ================================
+    # 📈 Relatórios Gerenciais (Painel Interativo)
+    # ================================
+
     # Conectar ao Google Sheets
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
     gc = gspread.authorize(credentials)
 
-    # Carregar dados da aba
+    # Carregar dados
     planilha = gc.open("Faturamento Sistema Externo")
     aba = planilha.worksheet("Fat Sistema Externo")
     dados = aba.get_all_records()
     df = pd.DataFrame(dados)
 
+    # Mostrar amostra da coluna de data
     st.subheader("🕵️‍♀️ Amostra da coluna Data (antes do tratamento)")
     st.write(df["Data"].head(10))
     st.write("Tipo da coluna Data:", df["Data"].dtype)
 
+    # =========================
+    # 🧹 Tratamento dos dados
+    # =========================
 
-    
-  # Conversão correta de valores monetários com vírgula e ponto
     def limpar_valor(x):
         try:
             if isinstance(x, str):
@@ -432,91 +434,44 @@ with aba4:
             return None
         return None
 
-    # Aplicar limpeza nas colunas de valor
     for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real"]:
         if coluna in df.columns:
             df[coluna] = df[coluna].apply(limpar_valor)
-            df[coluna] = pd.to_numeric(df[coluna], errors="coerce")  # reforço
+            df[coluna] = pd.to_numeric(df[coluna], errors="coerce")
 
-    # Agora converte Ano e Mês para número (depois da limpeza)
-    df["Ano"] = pd.to_numeric(df["Ano"], errors="coerce")
-    df["Mês"] = pd.to_numeric(df["Mês"], errors="coerce")
-    
-    # Tratamento de dados
-    def limpar_valor(x):
-        try:
-            if isinstance(x, str):
-                return float(x.replace(".", "").replace(",", "."))
-            elif isinstance(x, (int, float)):
-                return x
-            else:
-                return None
-        except:
-            return None
+    # Conversão da coluna Data
+    df["Data"] = pd.to_datetime(df["Data"], errors="coerce", dayfirst=True)
 
-    # Aplicar para as colunas de valor
-    for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real"]:
-        if coluna in df.columns:
-            df[coluna] = df[coluna].apply(limpar_valor)
+    # Filtro de anos
+    df_anos = df[df["Data"].dt.year.isin([2024, 2025])].dropna(subset=["Data", "Fat.Real"])
 
-    df_filtrado = df.copy()  # usar todo o DataFrame
+    # Criar coluna "Mês-Ano"
+    df_anos["Mês-Ano"] = df_anos["Data"].dt.strftime("%B %Y")  # Ex: Janeiro 2024
 
-    # Gráfico 5: Comparativo de Faturamento Real 2024 vs 2025
-    df["Ano"] = pd.to_numeric(df["Ano"], errors="coerce")
-    df["Mês"] = pd.to_numeric(df["Mês"], errors="coerce")
-
-    # Filtrar 2024 e 2025
-    df_anos = df[df["Ano"].isin([2024, 2025])].dropna(subset=["Mês", "Ano", "Fat.Real"])
-
-    # Criar coluna 'Mês-Ano'
-    meses_nome = {
-        1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
-        7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
-    }
-
-    def mes_ano_formatado(row):
-        try:
-            mes = int(row["Mês"])
-            ano = int(row["Ano"])
-            return f"{meses_nome.get(mes, str(mes))} {ano}"
-        except:
-            return "Desconhecido"
-
-    df_anos["Mês-Ano"] = df_anos.apply(mes_ano_formatado, axis=1)
-
-    # Agrupar por Mês-Ano
+    # Agrupamento mensal
     fat_mensal = df_anos.groupby("Mês-Ano")["Fat.Real"].sum().reset_index()
 
     # Total por ano
-    total_por_ano = df_anos.groupby("Ano")["Fat.Real"].sum().reset_index()
-    total_por_ano["Mês-Ano"] = total_por_ano["Ano"].astype(str) + " (Total)"
+    total_por_ano = df_anos.groupby(df_anos["Data"].dt.year)["Fat.Real"].sum().reset_index()
+    total_por_ano["Mês-Ano"] = total_por_ano["Data"].astype(str) + " (Total)"
     total_por_ano = total_por_ano[["Mês-Ano", "Fat.Real"]]
 
-    # Concatenar final
+    # Unir dados
     df_barras = pd.concat([fat_mensal, total_por_ano], ignore_index=True)
 
-    # Ordenar corretamente
-    ordem_meses = [f"{meses_nome[m]} 2024" for m in range(1, 13)] + \
-                  [f"{meses_nome[m]} 2025" for m in range(1, 13)] + \
-                  ["2024 (Total)", "2025 (Total)"]
-    df_barras["Mês-Ano"] = pd.Categorical(df_barras["Mês-Ano"], categories=ordem_meses, ordered=True)
+    # Ordenação de Mês-Ano
+    meses_ordem = pd.date_range("2024-01-01", "2025-12-01", freq="MS").strftime("%B %Y").tolist()
+    meses_ordem += ["2024 (Total)", "2025 (Total)"]
+    df_barras["Mês-Ano"] = pd.Categorical(df_barras["Mês-Ano"], categories=meses_ordem, ordered=True)
     df_barras = df_barras.sort_values("Mês-Ano")
 
+    # =========================
+    # 📊 Visualização
+    # =========================
 
-
-
-    
-    # Exibir tabelas para validação
-    #st.subheader("📊 Tabela de Faturamento para Verificação")
-    #st.dataframe(df_barras)
-
-    st.write("🔎 Valores únicos em Fat.Real:", df["Fat.Real"].unique())
-    st.write("🔎 Linhas válidas em df_anos:", len(df_anos))
-    #st.write("Tipo da coluna Fat.Real:", df["Fat.Real"].dtype)
-    #st.write("Primeiros valores:", df["Fat.Real"].head(10))
-
-    # Plotar o gráfico final
-    fig5 = px.bar(df_barras, x="Mês-Ano", y="Fat.Real", title="Faturamento Real Mensal - 2024 vs 2025")
+    st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025")
+    fig5 = px.bar(df_barras, x="Mês-Ano", y="Fat.Real", title="Comparativo por Mês", text_auto=".2s")
     fig5.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig5, use_container_width=True)
 
+    st.info(f"🔎 Linhas válidas no gráfico: {len(df_barras)}")
