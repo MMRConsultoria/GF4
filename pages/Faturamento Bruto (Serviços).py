@@ -464,7 +464,7 @@ with aba4:
     fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
   
 
- # =========================
+    # =========================
     # 📊 Visualização
     # =========================
 
@@ -478,13 +478,13 @@ with aba4:
 	    y="Fat.Real",
 	    color="Ano",
 	    barmode="group",
-	    text_auto=".2s",  # valor do faturamento no topo
+	    text=fat_mensal["Ano"],   # valor do faturamento no topo
 	    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
     )
 
     # Posicionar o valor no topo da barra
-    fig.update_traces(textposition="outside")
-
+    fig.update_traces(textposition="inside", textfont_color="white") 
+	
    # Adiciona o ano dentro de cada barra
     for trace in fig.data:
     	trace.text = [trace.name] * len(trace.x)  # Ano dentro da barra
