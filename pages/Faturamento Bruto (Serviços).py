@@ -462,7 +462,7 @@ with aba4:
     fat_mensal["Nome Mês"] = pd.Categorical(fat_mensal["Nome Mês"], categories=ordem_meses, ordered=True)
     fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)  # ✅ Converte ano para string para uso como categoria
     fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
-
+    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
 
    # =========================
 # 📊 Visualização
