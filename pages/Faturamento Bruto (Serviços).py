@@ -492,9 +492,9 @@ with aba4:
 
    # Garante que o eixo X siga exatamente essa ordem
    fat_mensal["MesAno"] = pd.Categorical(
-     fat_mensal["MesAno"],
-     categories=fat_mensal["MesAno"].tolist(),
-     ordered=True
+       fat_mensal["MesAno"],
+       categories=fat_mensal["MesAno"].tolist(),
+       ordered=True
     )
 
     # Garante que a ordem apareça corretamente no eixo X
