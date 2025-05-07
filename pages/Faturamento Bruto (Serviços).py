@@ -416,7 +416,7 @@ df = pd.DataFrame(dados)
 
 
 # Converter 'Fat.Real' de string com vírgula para float
-df["Fat.Real"] = pd.to_numeric(df["Fat.Real"].astype(str).str.replace(",", "."), errors="coerce")
+#df["Fat.Real"] = pd.to_numeric(df["Fat.Real"].astype(str).str.replace(",", "."), errors="coerce")
 
 # Tratamento de dados
 def limpar_valor(x):
@@ -424,8 +424,10 @@ def limpar_valor(x):
         return float(x.replace(".", "").replace(",", "."))
     return x  # já é numérico
 
-df["Fat.Real"] = df["Fat.Real"].apply(limpar_valor)
-   
+# Aplicar para as colunas de valor
+for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]:
+    if coluna in df.columns:
+        df[coluna] = df[coluna].apply(limpar_valor)
 
 # Filtros laterais
     with st.sidebar:
