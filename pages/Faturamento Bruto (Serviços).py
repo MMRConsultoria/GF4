@@ -557,7 +557,7 @@ fig.update_layout(
 # ==============================
 # 📉 Gráfico horizontal: Total Anual 2024 vs 2025
 # ==============================
-# 📉 Gráfico horizontal minimalista com total anual (usando as cores do gráfico mensal)
+# 📉 Gráfico horizontal minimalista com total anual (valores visíveis e cores mantidas)
 df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
 
 fig_total = px.bar(
@@ -565,25 +565,33 @@ fig_total = px.bar(
     x="Fat.Real",
     y="Ano",
     orientation="h",
-    text=df_total["Fat.Real"].apply(lambda x: f"R$ {x:,.0f}".replace(",", ".")),  # valor fora da barra
-    color="Ano",  # usa as mesmas cores do gráfico mensal automaticamente
+    color="Ano",  # Mantém as cores iguais ao gráfico mensal
+    text=df_total["Fat.Real"].apply(lambda x: f"R$ {x/1_000_000:,.1f} Mi".replace(",", "."))  # Valor total fora da barra
 )
 
-# Estilo das barras
+# Estilo da barra
 fig_total.update_traces(
-    textposition="outside",  # valor aparece fora da barra
+    textposition="outside",  # Valor do lado de fora
     insidetextanchor="middle",
     textfont=dict(size=12),
 )
 
-# Texto do ano dentro da barra com destaque
-fig_total.update_traces(
-    texttemplate="<b>%{y}</b>",  # ano dentro da barra
-    textposition="inside",
-    textfont=dict(color="white", size=13)
-)
+# Inserir o ano DENTRO da barra com destaque em branco
+for trace in fig_total.data:
+    ano = trace.name
+    fig_total.add_annotation(
+        x=0.5,  # Pequeno deslocamento dentro da barra
+        y=ano,
+        text=f"<b>{ano}</b>",
+        showarrow=False,
+        xanchor="left",
+        yanchor="middle",
+        font=dict(color="white", size=13),
+        xref="x",
+        yref="y"
+    )
 
-# Layout minimalista
+# Layout limpo e discreto
 fig_total.update_layout(
     height=120,
     margin=dict(t=0, b=0, l=0, r=0),
