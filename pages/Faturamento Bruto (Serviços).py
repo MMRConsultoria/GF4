@@ -468,14 +468,23 @@ with aba4:
     # =========================
 
     st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado)")
+   # Criar nova coluna 'Mês/Ano' com quebra de linha
+    fat_mensal["Mês/Ano"] = fat_mensal["Nome Mês"] + "\n" + fat_mensal["Ano"]
+
     fig = px.bar(
         fat_mensal,
-        x="Nome Mês",
+        x="Mês/Ano",
         y="Fat.Real",
         color="Ano",
-        barmode="group",
         text_auto=".2s",
-        title="Comparativo de Faturamento Real Mensal"
+        title="Comparativo de Faturamento Real Mensal - 2024 vs 2025",
+    )
+
+    fig.update_layout(
+        xaxis_title="Mês",
+        yaxis_title="Faturamento (R$)",
+        xaxis_tickangle=0,
+        showlegend=True
     )
     fig.update_layout(xaxis_title="Mês", yaxis_title="Faturamento (R$)", xaxis_tickangle=-45)
     st.plotly_chart(fig, use_container_width=True)
