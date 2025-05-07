@@ -503,16 +503,7 @@ with aba4:
 			    yref="y"
 		    ))
 
-    fig.update_layout(
-	    annotations=annotations,
-	    xaxis_title="Mês",
-	    yaxis_title="Faturamento (R$)",
-	    xaxis_tickangle=0,
-	    showlegend=True
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
+   
    
 
 
