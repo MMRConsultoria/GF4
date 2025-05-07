@@ -521,7 +521,7 @@ fig = px.bar(
 fig.update_traces(textposition="outside")
 
 # ➕ Anotações com os anos centralizados abaixo de cada barra
-y_min = fat_mensal_ext["Fat.Real"].min()
+y_min = fat_mensal["Fat.Real"].min()
 annotations = []
 
 for trace in fig.data:
