@@ -481,9 +481,8 @@ with aba4:
     #st.subheader("📊 Tabela de Faturamento para Verificação")
     #st.dataframe(df_barras)
 
-    #st.subheader("🔍 Dados brutos de 2024 e 2025")
-    #st.dataframe(df_anos[["Ano", "Mês", "Fat.Real"]].head(20))
-
+    st.write("🔎 Valores únicos em Fat.Real:", df["Fat.Real"].unique())
+    st.write("🔎 Linhas válidas em df_anos:", len(df_anos))
     #st.write("Tipo da coluna Fat.Real:", df["Fat.Real"].dtype)
     #st.write("Primeiros valores:", df["Fat.Real"].head(10))
 
