@@ -455,13 +455,31 @@ with aba4:
     fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
 
     # Ordenação dos meses
-    #ordem_meses = [
-     #   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-      #  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    #]
-    #fat_mensal["Nome Mês"] = pd.Categorical(fat_mensal["Nome Mês"], categories=ordem_meses, ordered=True)
-    #fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)  # ✅ Converte ano para string para uso como categoria
-    #fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
+    # Converte Ano para string (antes de formatar)
+    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
+
+    # Criar coluna MesAno para exibir no eixo X: ex. Jan/24
+    fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal["Ano"].str[-2:]
+
+    # Converter mês para número para ordenar
+    meses = {
+    	"jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
+        "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12
+    }
+    fat_mensal["MesNum"] = fat_mensal["Nome Mês"].str[:3].str.lower().map(meses)
+
+    # Criar chave de ordenação: mês*10 + ano
+    fat_mensal["ordem"] = fat_mensal["MesNum"] * 10 + fat_mensal["Ano"].astype(int)
+
+    # Ordenar DataFrame
+    fat_mensal = fat_mensal.sort_values("ordem")
+
+    # Garante que a ordem no eixo X seja respeitada
+    fat_mensal["MesAno"] = pd.Categorical(
+    	fat_mensal["MesAno"],
+    	categories=fat_mensal["MesAno"].tolist(),
+    	ordered=True
+    )
         
     # Converter mês para número
     meses = {
@@ -485,7 +503,7 @@ with aba4:
 
     fig = px.bar(
 	    fat_mensal,
-	    x="Nome Mês",
+	    x="MesAno",
 	    y="Fat.Real",
 	    color="Ano",
 	    barmode="group",
