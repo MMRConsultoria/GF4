@@ -470,37 +470,37 @@ with aba4:
 
     st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado com Ano embaixo e Valor em cima)")
 
-    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
+    # Garantir que o ano é string
+fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
 
-    fig = px.bar(
-	    fat_mensal,
-	    x="Nome Mês",
-	    y="Fat.Real",
-	    color="Ano",
-	    barmode="group",
-	    text="Fat.Real",  # mostra o valor fora
-   	    custom_data=["Ano"],  # passa o ano para uso dentro do hovertemplate
-	    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
-    )
+# Criar gráfico de barras
+fig = px.bar(
+    fat_mensal,
+    x="Nome Mês",
+    y="Fat.Real",
+    color="Ano",
+    barmode="group",
+    text="Fat.Real",  # mostra o valor fora (em cima)
+    custom_data=["Ano"],  # ano será usado dentro da barra
+    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
+)
 
-    # Posicionar o valor no topo da barra
-    fig.update_traces(textposition="outside")
-	
-    # Mostrar ano dentro da barra com hovertemplate e customdata
-    fig.update_traces(
-            insidetextanchor="start",  # ancora texto dentro
-	    texttemplate="%{customdata[0]}",  # ano dentro da barra
-	    textposition="auto"
-     )
+# Valor no topo da barra
+fig.update_traces(textposition="outside")
 
-     fig.update_layout(
-	    xaxis_title="Mês",
-	    yaxis_title="Faturamento (R$)",
-	    xaxis_tickangle=0,
-	    showlegend=True
-     )
+# Ano dentro da barra
+fig.update_traces(
+    insidetextanchor="middle",
+    texttemplate="%{text}<br>%{customdata[0]}",  # valor em cima + ano dentro
+    textfont=dict(size=12)
+)
 
-     st.plotly_chart(fig, use_container_width=True)
+# Layout
+fig.update_layout(
+    xaxis_title="Mês",
+    yaxis_title="Faturamento (R$)",
+    xaxis_tickangle=0,
+    showlegend=True
+)
 
-   
-
+st.plotly_chart(fig, use_container_width=True)
