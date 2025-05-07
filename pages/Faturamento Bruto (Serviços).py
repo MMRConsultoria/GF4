@@ -432,7 +432,7 @@ def limpar_valor(x):
 
 
 # Aplicar para as colunas de valor
-for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]:
+for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real",]:
     if coluna in df.columns:
         df[coluna] = df[coluna].apply(limpar_valor)
 
@@ -468,11 +468,7 @@ for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]:
     fig3 = px.pie(fat_grupo, names="Grupo", values="Fat.Total", title="Distribuição por Grupo")
     st.plotly_chart(fig3, use_container_width=True)
 
-    # Gráfico 4: Ticket médio por Loja
-    ticket_loja = df_filtrado.groupby("Loja")["Ticket"].mean().reset_index()
-    fig4 = px.bar(ticket_loja, x="Loja", y="Ticket", title="Ticket Médio por Loja")
-    st.plotly_chart(fig4, use_container_width=True)
-
+  
 
     # Gráfico 5: Comparativo de Faturamento Real 2024 vs 2025
     df["Fat.Real"] = pd.to_numeric(df["Fat.Real"], errors="coerce")
