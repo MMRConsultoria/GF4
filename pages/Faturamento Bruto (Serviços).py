@@ -491,7 +491,6 @@ with aba4:
     	trace.textposition = "inside"
 
     fig.update_layout(
-	    annotations=annotations,
 	    xaxis_title="Mês",
 	    yaxis_title="Faturamento (R$)",
 	    xaxis_tickangle=0,
