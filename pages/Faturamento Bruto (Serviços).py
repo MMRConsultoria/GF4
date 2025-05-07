@@ -316,6 +316,19 @@ with aba3:
         duplicados = []  # Armazenar os registros duplicados
         rows = df_final.fillna("").values.tolist()
 
+        from gspread_formatting import CellFormat, NumberFormat, format_cell_range
+
+        # Definir o formato de data dd/mm/yyyy
+        data_format = CellFormat(
+        numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy')
+        )
+
+        # Aplicar na coluna onde estão as datas (ex: coluna A)
+        format_cell_range(aba, 'A2:A', data_format)
+
+
+
+        
         # Verificar duplicação somente na coluna "M"
         for linha in rows:
             chave_m = linha[-1]  # A chave da coluna M (última coluna)
