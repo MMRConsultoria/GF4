@@ -486,7 +486,7 @@ with aba4:
         title="Comparativo de Faturamento Real Mensal - 2024 vs 2025",
     )
 
-        fig.update_layout(
+    fig.update_layout(
         xaxis_title="Mês",
         yaxis_title="Faturamento (R$)",
         xaxis_tickangle=0,
