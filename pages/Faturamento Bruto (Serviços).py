@@ -402,6 +402,7 @@ with aba3:
 # 📈 Relatórios Gerenciais (Painel Interativo)
 # ================================
 
+with aba4:
 # Conectar ao Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
