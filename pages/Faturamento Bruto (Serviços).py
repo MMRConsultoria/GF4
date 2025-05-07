@@ -261,7 +261,10 @@ with aba3:
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
         
-         
+        # 🛠️ Tratamento da coluna Data para remover aspas e garantir datetime correto
+        df_final['Data'] = df_final['Data'].apply(
+        lambda x: pd.to_datetime(x.strip().replace("'", ""), dayfirst=True) if isinstance(x, str) else x
+        ) 
 
         # 🔗 Links úteis
         st.markdown("""
