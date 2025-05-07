@@ -462,35 +462,36 @@ with aba4:
     fat_mensal["Nome Mês"] = pd.Categorical(fat_mensal["Nome Mês"], categories=ordem_meses, ordered=True)
     fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)  # ✅ Converte ano para string para uso como categoria
     fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
-
     # =========================
-# 📊 Visualização
-# =========================
+    # 📊 Visualização
+    # =========================
 
-st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado)")
+    st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado)")
 
-# Garantir que as colunas estejam em formato string para concatenação
-fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
-fat_mensal["Nome Mês"] = fat_mensal["Nome Mês"].astype(str)
+    # Garantir que as colunas estejam em string e sem NaN
+    fat_mensal["Ano"] = fat_mensal["Ano"].fillna("").astype(str)
+    fat_mensal["Nome Mês"] = fat_mensal["Nome Mês"].fillna("").astype(str)
 
-# Criar coluna para exibir mês e ano com quebra de linha
-fat_mensal["Mês/Ano"] = fat_mensal["Nome Mês"] + "\n" + fat_mensal["Ano"]
+    # Criar coluna combinada para eixo X
+    fat_mensal["Mês/Ano"] = fat_mensal["Nome Mês"] + "\n" + fat_mensal["Ano"]
 
-# Gráfico de barras com mês e ano no eixo X
-fig = px.bar(
-    fat_mensal,
-    x="Mês/Ano",
-    y="Fat.Real",
-    color="Ano",
-    text_auto=".2s",
-    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025",
-)
+    # Gráfico de barras com mês/ano empilhado no eixo X
+    fig = px.bar(
+        fat_mensal,
+        x="Mês/Ano",
+        y="Fat.Real",
+        color="Ano",
+        text_auto=".2s",
+        title="Comparativo de Faturamento Real Mensal - 2024 vs 2025",
+    )
 
-fig.update_layout(
-    xaxis_title="Mês",
-    yaxis_title="Faturamento (R$)",
-    xaxis_tickangle=0,
-    showlegend=True
-)
+        fig.update_layout(
+        xaxis_title="Mês",
+        yaxis_title="Faturamento (R$)",
+        xaxis_tickangle=0,
+        showlegend=True
+    )
 
-st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True)
+
+   
