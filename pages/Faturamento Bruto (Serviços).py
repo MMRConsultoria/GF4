@@ -471,16 +471,16 @@ with aba4:
     st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado com Ano embaixo e Valor em cima)")
 
     #fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
-    fat_mensal["AnoMes"] = fat_mensal["Ano"] + " / " + fat_mensal["Nome Mês"].astype(str)
+   # Ex: jan/24, fev/25...
+    fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.lower() + "/" + fat_mensal["Ano"].str[-2:]
+    
     fig = px.bar(
-	    fat_mensal,
-	    x="Nome Mês",
-	    y="Fat.Real",
-	    color="Ano",
-	    barmode="group",
-	    text="Fat.Real",  # valor do faturamento no topo
-   	    custom_data=["AnoMes"],  # ← adicionado
-    	    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
+    	fat_mensal,
+    	x="MesAno",  # cada barra com seu próprio rótulo no eixo X
+    	y="Fat.Real",
+    	color="Ano",
+    	text_auto=".2s",  # mostra valor no topo
+    	title="Faturamento Real Mensal - jan/24 a jan/25"
     )
 
     # Posicionar o valor no topo da barra
@@ -510,12 +510,10 @@ with aba4:
 
 # Layout final
 fig.update_layout(
-    xaxis_title="Mês",
+    xaxis_title="Mês/Ano",
     yaxis_title="Faturamento (R$)",
     xaxis_tickangle=-45,
-    showlegend=True,
-    annotations=annotations  # ← aqui você passa as anotações pro layout
+    showlegend=True
 )
-
 # Mostrar o gráfico no Streamlit
 st.plotly_chart(fig, use_container_width=True)
