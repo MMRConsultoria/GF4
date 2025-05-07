@@ -470,36 +470,27 @@ with aba4:
 
     st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado com Ano embaixo e Valor em cima)")
 
-    # Garantir que o ano é string
-fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
+    # Criar coluna combinando mês e ano
+fat_mensal["Mês_Ano"] = fat_mensal["Nome Mês"] + " " + fat_mensal["Ano"]
 
-# Criar gráfico de barras
+# Gráfico com Mês + Ano no eixo X
 fig = px.bar(
     fat_mensal,
-    x="Nome Mês",
+    x="Mês_Ano",
     y="Fat.Real",
     color="Ano",
-    barmode="group",
-    text="Fat.Real",  # mostra o valor fora (em cima)
-    custom_data=["Ano"],  # ano será usado dentro da barra
+    text="Fat.Real",  # valor no topo da barra
     title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
 )
 
 # Valor no topo da barra
 fig.update_traces(textposition="outside")
 
-# Ano dentro da barra
-fig.update_traces(
-    insidetextanchor="middle",
-    texttemplate="%{text}<br>%{customdata[0]}",  # valor em cima + ano dentro
-    textfont=dict(size=12)
-)
-
-# Layout
+# Layout final
 fig.update_layout(
-    xaxis_title="Mês",
+    xaxis_title="Mês/Ano",
     yaxis_title="Faturamento (R$)",
-    xaxis_tickangle=0,
+    xaxis_tickangle=-45,
     showlegend=True
 )
 
