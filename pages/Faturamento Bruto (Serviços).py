@@ -473,9 +473,17 @@ if not df.empty:
         1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
         7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
     }
-    df_anos["Mês-Ano"] = df_anos.apply(
-        lambda row: f"{meses_nome.get(int(row['Mês']), str(int(row['Mês'])))} {int(row['Ano'])}", axis=1
-    )
+    df_anos = df_anos.dropna(subset=["Mês", "Ano"])  # garantir que não há nulos
+
+    def mes_ano_formatado(row):
+        try:
+            mes = int(row["Mês"])
+            ano = int(row["Ano"])
+            return f"{meses_nome.get(mes, str(mes))} {ano}"
+    except:
+            return "Desconhecido"
+
+    df_anos["Mês-Ano"] = df_anos.apply(mes_ano_formatado, axis=1)
 
     # Agrupar por Mês-Ano
     fat_mensal = df_anos.groupby("Mês-Ano")["Fat.Real"].sum().reset_index()
