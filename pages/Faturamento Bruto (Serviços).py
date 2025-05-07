@@ -455,102 +455,75 @@ with aba4:
     fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
 
     # Ordenação dos meses
-    # Converte Ano para string (antes de formatar)
-    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
-
-    # Criar coluna MesAno para exibir no eixo X: ex. Jan/24
-    fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal["Ano"].str[-2:]
-
-    # Converter mês para número para ordenar
+    #ordem_meses = [
+     #   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      #  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    #]
+    #fat_mensal["Nome Mês"] = pd.Categorical(fat_mensal["Nome Mês"], categories=ordem_meses, ordered=True)
+    #fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)  # ✅ Converte ano para string para uso como categoria
+    #fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
+        
+    # Converter mês para número
     meses = {
-    	"jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
-        "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12
-    }
-    fat_mensal["MesNum"] = fat_mensal["Nome Mês"].str[:3].str.lower().map(meses)
-
-    # Criar chave de ordenação: mês*10 + ano
-    fat_mensal["ordem"] = fat_mensal["MesNum"] * 10 + fat_mensal["Ano"].astype(int)
-
-    # =========================
-# 💡 Preparação dos dados
-# =========================
-
-# Converte ano para string
-fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
-
-# Cria coluna MesAno com rótulo do eixo X
-fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal["Ano"].str[-2:]
-
-# Converter mês para número
-meses = {
     "jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
     "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12
-}
-fat_mensal["MesNum"] = fat_mensal["Nome Mês"].str[:3].str.lower().map(meses)
+    }	
 
-# Cria chave de ordenação intercalada
-fat_mensal["ordem"] = fat_mensal["MesNum"] * 10 + fat_mensal["Ano"].astype(int)
+    fat_mensal["MesNum"] = fat_mensal["Nome Mês"].str[:3].str.lower().map(meses)
 
-# Ordena pela ordem correta de exibição (jan/24, jan/25, fev/24, fev/25, ...)
-fat_mensal = fat_mensal.sort_values(by=["MesNum", "Ano"])
+    # Ordem correta: intercalada por mês/ano
+    fat_mensal["ordem"] = fat_mensal["MesNum"] * 10 + fat_mensal["Ano"].astype(int)  # ex: jan/24 = 1*10+24 = 34 	
 
-# Garante que o eixo X siga exatamente essa ordem
-fat_mensal["MesAno"] = pd.Categorical(
-    fat_mensal["MesAno"],
-    categories=fat_mensal["MesAno"].tolist(),
-    ordered=True
-)
+    fat_mensal = fat_mensal.sort_values("ordem")
+    # =========================
+    # 📊 Visualização
+    # =========================
 
-# =========================
-# 📊 Visualização
-# =========================
+    st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado com Ano embaixo e Valor em cima)")
 
-st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado com Ano embaixo e Valor em cima)")
+    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
 
-fig = px.bar(
-    fat_mensal,
-    x="MesAno",
-    y="Fat.Real",
-    color="Ano",
-    barmode="group",
-    text_auto=".2s",
-    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
-)
+    fig = px.bar(
+	    fat_mensal,
+	    x="Nome Mês",
+	    y="Fat.Real",
+	    color="Ano",
+	    barmode="group",
+	    text_auto=".2s",  # valor do faturamento no topo
+	    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
+    )
 
-# Posicionar o valor no topo da barra
-fig.update_traces(textposition="outside")
+    # Posicionar o valor no topo da barra
+    fig.update_traces(textposition="outside")
 
-# 📍 Antes do for
-y_min = fat_mensal["Fat.Real"].min()
+    # ➕ Adicionar manualmente os anos como annotations (abaixo das barras)
+    annotations = []
+    y_min = fat_mensal["Fat.Real"].min()
+
+    for trace in fig.data:
+	    for xi, yi in zip(trace["x"], trace["y"]):
+		    annotations.append(dict(
+			    x=xi,
+			    y=y_min * -0.05,  # um pouco abaixo do eixo
+			    text=trace.name,  # exibe o ano (2024 ou 2025)
+			    showarrow=False,
+			    xanchor="center",
+			    yanchor="top",
+			    font=dict(size=10),
+			    xref="x",
+			    yref="y"
+		    ))
+
+   
+   
 
 
-# ➕ Adicionar manualmente os anos como annotations (abaixo das barras)
-annotations = []
-
-# Mapeia a posição relativa das barras no grupo
-offset_map = {"2024": -20, "2025": 20}  # deslocamento para a esquerda ou direita
-
-for trace in fig.data:
-    for xi, yi in zip(trace["x"], trace["y"]):
-        annotations.append(dict(
-            x=xi,
-            y=y_min * -0.05,
-            text=trace.name,
-            showarrow=False,
-            xanchor="center",
-            yanchor="top",
-            textangle=0,
-            font=dict(size=10),
-            xref="x",
-            yref="y",
-            xshift=offset_map.get(trace.name, 0)  # aplica deslocamento horizontal leve
-        ))
+# Layout final
 fig.update_layout(
     xaxis_title="Mês/Ano",
     yaxis_title="Faturamento (R$)",
     xaxis_tickangle=-45,
-    showlegend=True,
-    annotations=annotations
+    showlegend=True
 )
 
 st.plotly_chart(fig, use_container_width=True)
