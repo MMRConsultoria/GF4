@@ -415,22 +415,22 @@ with aba4:
     dados = aba.get_all_records()
     df = pd.DataFrame(dados)
     
+  # Conversão correta de valores monetários com vírgula e ponto
     def limpar_valor(x):
         try:
             if isinstance(x, str):
-                return float(x.replace(".", "").replace(",", "."))
+                return float(x.replace("R$", "").replace(".", "").replace(",", ".").strip())
             elif isinstance(x, (int, float)):
                 return x
-            else:
-                return None
         except:
             return None
+        return None
 
+    # Aplicar limpeza nas colunas de valor
     for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real"]:
         if coluna in df.columns:
             df[coluna] = df[coluna].apply(limpar_valor)
             df[coluna] = pd.to_numeric(df[coluna], errors="coerce")  # reforço
-
 
     # Tratamento de dados
     def limpar_valor(x):
