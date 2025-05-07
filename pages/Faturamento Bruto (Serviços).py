@@ -429,30 +429,30 @@ def limpar_valor(x):
             return None
     except:
         return None
-
+df_filtrado = df.copy()  # usar todo o DataFrame
 
 # Aplicar para as colunas de valor
-for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real",]:
-    if coluna in df.columns:
-        df[coluna] = df[coluna].apply(limpar_valor)
+#for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real",]:
+#    if coluna in df.columns:
+#        df[coluna] = df[coluna].apply(limpar_valor)
 
 # Filtros laterais
-    with st.sidebar:
-        st.subheader("🎛 Filtros Relatório Gerencial")
-        lojas = sorted(df["Loja"].dropna().unique())
-        anos = sorted(df["Ano"].dropna().unique())
-        grupos = sorted(df["Grupo"].dropna().unique())
+#    with st.sidebar:
+#        st.subheader("🎛 Filtros Relatório Gerencial")
+#        lojas = sorted(df["Loja"].dropna().unique())
+#        anos = sorted(df["Ano"].dropna().unique())
+#        grupos = sorted(df["Grupo"].dropna().unique())
 
-        loja_selecionada = st.multiselect("Loja", options=lojas, default=lojas)
-        ano_selecionado = st.multiselect("Ano", options=anos, default=anos)
-        grupo_selecionado = st.multiselect("Grupo", options=grupos, default=grupos)
+ #       loja_selecionada = st.multiselect("Loja", options=lojas, default=lojas)
+ #       ano_selecionado = st.multiselect("Ano", options=anos, default=anos)
+ #       grupo_selecionado = st.multiselect("Grupo", options=grupos, default=grupos)
 
     # Aplicar filtros
-    df_filtrado = df[
-        (df["Loja"].isin(loja_selecionada)) &
-        (df["Ano"].isin(ano_selecionado)) &
-        (df["Grupo"].isin(grupo_selecionado))
-    ]
+  #  df_filtrado = df[
+   #     (df["Loja"].isin(loja_selecionada)) &
+   #     (df["Ano"].isin(ano_selecionado)) &
+   #     (df["Grupo"].isin(grupo_selecionado))
+   # ]
 
     # Gráfico 1: Faturamento ao longo do tempo
     fig1 = px.line(df_filtrado, x="Data", y="Fat.Total", color="Loja", title="Evolução do Faturamento")
