@@ -485,7 +485,7 @@ with aba4:
 
     fig = px.bar(
 	    fat_mensal,
-	    x="Nome Mês",
+	    x="Mês/Ano",
 	    y="Fat.Real",
 	    color="Ano",
 	    barmode="group",
