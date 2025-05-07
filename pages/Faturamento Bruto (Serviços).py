@@ -458,30 +458,30 @@ with aba4:
    # ➕ Adicionar barra de Total 2024 e 2025
    # ==============================
 
-   # 👉 1. Calcular totais
-   total_2024 = fat_mensal[fat_mensal["Ano"] == "2024"]["Fat.Real"].sum()
-   total_2025 = fat_mensal[fat_mensal["Ano"] == "2025"]["Fat.Real"].sum()
+    # 👉 1. Calcular totais
+    total_2024 = fat_mensal[fat_mensal["Ano"] == "2024"]["Fat.Real"].sum()
+    total_2025 = fat_mensal[fat_mensal["Ano"] == "2025"]["Fat.Real"].sum()
 
-   # 👉 2. Criar dataframe com as barras de total
-   df_total = pd.DataFrame({
+    # 👉 2. Criar dataframe com as barras de total
+    df_total = pd.DataFrame({
     	"Nome Mês": ["Total", "Total"],
     	"Ano": ["2024", "2025"],
     	"Fat.Real": [total_2024, total_2025]
-   })
+    })
 
-   # 👉 3. Concatenar com o fat_mensal original
-   fat_mensal_ext = pd.concat([fat_mensal, df_total], ignore_index=True)
+    # 👉 3. Concatenar com o fat_mensal original
+    fat_mensal_ext = pd.concat([fat_mensal, df_total], ignore_index=True)
 
-   # 👉 4. Garantir que "Total" apareça por último no eixo X
-   ordem_meses = fat_mensal["Nome Mês"].unique().tolist()
-   if "Total" not in ordem_meses:
+    # 👉 4. Garantir que "Total" apareça por último no eixo X
+    ordem_meses = fat_mensal["Nome Mês"].unique().tolist()
+    if "Total" not in ordem_meses:
     	ordem_meses.append("Total")
 
-   fat_mensal_ext["Nome Mês"] = pd.Categorical(
+    fat_mensal_ext["Nome Mês"] = pd.Categorical(
     	fat_mensal_ext["Nome Mês"],
     	categories=ordem_meses,
     	ordered=True
-   )
+    )
 
 
     # ==============================
