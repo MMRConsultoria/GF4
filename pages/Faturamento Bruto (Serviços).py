@@ -459,6 +459,47 @@ if not df.empty:
     fig4 = px.bar(ticket_loja, x="Loja", y="Ticket", title="Ticket Médio por Loja")
     st.plotly_chart(fig4, use_container_width=True)
 
+
+    # Gráfico 5: Comparativo de Faturamento Real 2024 vs 2025
+    df["Fat.Real"] = pd.to_numeric(df["Fat.Real"], errors="coerce")
+    df["Ano"] = pd.to_numeric(df["Ano"], errors="coerce")
+    df["Mês"] = pd.to_numeric(df["Mês"], errors="coerce")
+
+    # Filtrar 2024 e 2025
+    df_anos = df[df["Ano"].isin([2024, 2025])].dropna(subset=["Mês", "Ano", "Fat.Real"])
+
+    # Criar coluna 'Mês-Ano'
+    meses_nome = {
+        1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
+        7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
+    }
+    df_anos["Mês-Ano"] = df_anos.apply(
+        lambda row: f"{meses_nome.get(int(row['Mês']), str(int(row['Mês'])))} {int(row['Ano'])}", axis=1
+    )
+
+    # Agrupar por Mês-Ano
+    fat_mensal = df_anos.groupby("Mês-Ano")["Fat.Real"].sum().reset_index()
+
+    # Total por ano
+    total_por_ano = df_anos.groupby("Ano")["Fat.Real"].sum().reset_index()
+    total_por_ano["Mês-Ano"] = total_por_ano["Ano"].astype(str) + " (Total)"
+    total_por_ano = total_por_ano[["Mês-Ano", "Fat.Real"]]
+
+    # Concatenar final
+    df_barras = pd.concat([fat_mensal, total_por_ano], ignore_index=True)
+
+    # Ordenar corretamente
+    ordem_meses = [f"{meses_nome[m]} 2024" for m in range(1, 13)] + \
+                  [f"{meses_nome[m]} 2025" for m in range(1, 13)] + \
+                  ["2024 (Total)", "2025 (Total)"]
+    df_barras["Mês-Ano"] = pd.Categorical(df_barras["Mês-Ano"], categories=ordem_meses, ordered=True)
+    df_barras = df_barras.sort_values("Mês-Ano")
+
+    # Plotar
+    fig5 = px.bar(df_barras, x="Mês-Ano", y="Fat.Real", title="Faturamento Real Mensal - 2024 vs 2025")
+    fig5.update_layout(xaxis_tickangle=-45)
+    st.plotly_chart(fig5, use_container_width=True)
+
 else:
     st.warning("Nenhum dado encontrado na aba 'Fat Sistema Externo'. Verifique se a planilha está atualizada.")
 
