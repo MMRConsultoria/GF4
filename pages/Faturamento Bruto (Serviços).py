@@ -501,6 +501,12 @@ if not df.empty:
     df_barras["Mês-Ano"] = pd.Categorical(df_barras["Mês-Ano"], categories=ordem_meses, ordered=True)
     df_barras = df_barras.sort_values("Mês-Ano")
 
+    st.subheader("📊 Tabela de Faturamento para Verificação")
+    st.dataframe(df_barras)
+    st.subheader("🔍 Dados brutos de 2024 e 2025")
+    st.dataframe(df_anos[["Ano", "Mês", "Fat.Real"]].head(20))
+
+    
     # Plotar
     fig5 = px.bar(df_barras, x="Mês-Ano", y="Fat.Real", title="Faturamento Real Mensal - 2024 vs 2025")
     fig5.update_layout(xaxis_tickangle=-45)
