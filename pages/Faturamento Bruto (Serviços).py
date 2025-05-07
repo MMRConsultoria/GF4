@@ -524,7 +524,7 @@ with aba4:
 
 # Layout final
 fig.update_layout(
-    xaxis_title="Mês/Ano",
+    xaxis_title="Mês",
     yaxis_title="Faturamento (R$)",
     xaxis_tickangle=-45,
     showlegend=True
