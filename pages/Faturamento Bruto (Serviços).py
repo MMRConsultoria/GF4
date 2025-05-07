@@ -414,6 +414,12 @@ with aba4:
     aba = planilha.worksheet("Fat Sistema Externo")
     dados = aba.get_all_records()
     df = pd.DataFrame(dados)
+
+    st.subheader("🕵️‍♀️ Amostra da coluna Data (antes do tratamento)")
+    st.write(df["Data"].head(10))
+    st.write("Tipo da coluna Data:", df["Data"].dtype)
+
+
     
   # Conversão correta de valores monetários com vírgula e ponto
     def limpar_valor(x):
