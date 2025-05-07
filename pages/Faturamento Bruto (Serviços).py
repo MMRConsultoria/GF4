@@ -261,11 +261,6 @@ with aba3:
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
         
-        # 🛠️ Tratamento da coluna Data para remover aspas e garantir datetime correto
-        df_final['Data'] = df_final['Data'].apply(
-        lambda x: pd.to_datetime(x.strip().replace("'", ""), dayfirst=True) if isinstance(x, str) else x
-        ) 
-
         # 🔗 Links úteis
         st.markdown("""
           🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
@@ -297,6 +292,13 @@ with aba3:
         df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
         df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
 
+        # Formatando a coluna Data (removendo aspas e espaços, e convertendo corretamente)
+        df_final['Data'] = df_final['Data'].apply(
+        lambda x: pd.to_datetime(x.replace("'", "").strip(), dayfirst=True) if isinstance(x, str) else x
+        )
+        df_final['Data'] = df_final['Data'].dt.strftime('%d/%m/%Y')
+
+        
         # Conectar ao Google Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
