@@ -474,7 +474,7 @@ fat_mensal["Mês_Ano"] = fat_mensal["Nome Mês"] + " " + fat_mensal["Ano"]
 
 fig = px.bar(
     fat_mensal,
-    x="Nome Mês",
+    x="Mês_Ano",
     y="Fat.Real",
     color="Ano",
     barmode="group",
