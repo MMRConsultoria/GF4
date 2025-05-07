@@ -521,7 +521,7 @@ with aba4:
     fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal["Ano"].str[-2:]	
 
     fig = px.bar(
-	    fat_mensal_ext,,
+	    fat_mensal_ext,
 	    x="Nome Mês",
 	    y="Fat.Real",
 	    color="Ano",
