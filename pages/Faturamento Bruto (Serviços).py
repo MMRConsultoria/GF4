@@ -528,12 +528,13 @@ for trace in fig.data:
     for xi, yi in zip(trace["x"], trace["y"]):
         annotations.append(dict(
             x=xi,
-            y=yi / 2,  # meio da altura da barra
+            y=y_min * -0.05,
             text=trace.name,
             showarrow=False,
             xanchor="center",
-            yanchor="middle",
+            yanchor="top",
             font=dict(size=10),
+            textangle=0  # ← texto na horizontal
             xref="x",
             yref="y"
         ))
