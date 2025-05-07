@@ -414,7 +414,22 @@ with aba4:
     aba = planilha.worksheet("Fat Sistema Externo")
     dados = aba.get_all_records()
     df = pd.DataFrame(dados)
+    
+    def limpar_valor(x):
+        try:
+            if isinstance(x, str):
+                return float(x.replace(".", "").replace(",", "."))
+            elif isinstance(x, (int, float)):
+                return x
+            else:
+                return None
+        except:
+            return None
 
+    for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real"]:
+        if coluna in df.columns:
+            df[coluna] = df[coluna].apply(limpar_valor)
+            df[coluna] = pd.to_numeric(df[coluna], errors="coerce")  # reforço
 
 
     # Tratamento de dados
@@ -477,6 +492,10 @@ with aba4:
     df_barras["Mês-Ano"] = pd.Categorical(df_barras["Mês-Ano"], categories=ordem_meses, ordered=True)
     df_barras = df_barras.sort_values("Mês-Ano")
 
+
+
+
+    
     # Exibir tabelas para validação
     #st.subheader("📊 Tabela de Faturamento para Verificação")
     #st.dataframe(df_barras)
