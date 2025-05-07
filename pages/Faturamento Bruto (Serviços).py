@@ -296,8 +296,7 @@ with aba3:
         df_final['Data'] = df_final['Data'].apply(
         lambda x: pd.to_datetime(x.replace("'", "").strip(), dayfirst=True) if isinstance(x, str) else x
         )
-        #df_final['Data'] = df_final['Data'].dt.strftime('%d/%m/%Y')
-
+        df_final['Data'] = pd.to_datetime(df_final['Data'], dayfirst=True).dt.date  # ✅ envia como data real
         
         # Conectar ao Google Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
