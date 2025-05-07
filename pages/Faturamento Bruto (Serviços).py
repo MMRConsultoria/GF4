@@ -606,9 +606,9 @@ fig_total.update_layout(
 
 # Exibir no Streamlit
 
-st.subheader("📊 Faturamento Anual")
+st.subheader("Faturamento Anual")
 st.plotly_chart(fig_total, use_container_width=True)
 
 st.markdown("---")
-st.subheader("📆 Faturamento Mensal por Mês")
+st.subheader("Faturamento Mensal por Mês")
 st.plotly_chart(fig, use_container_width=True)
