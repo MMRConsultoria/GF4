@@ -505,7 +505,7 @@ fat_mensal = fat_mensal.sort_values(["MesNum", "Ano"])
 # 📊 Visualização
 # =========================
 
-st.subheader("📊 Faturamento Anual")
+#st.subheader("📊 Faturamento Anual")
 
 fig = px.bar(
     fat_mensal,
@@ -560,7 +560,7 @@ fig.update_layout(
 # 📉 Gráfico horizontal minimalista com total anual (valores visíveis e cores mantidas)
 df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
 
-st.subheader("📊 Faturamento Mensal")
+#st.subheader("📊 Faturamento Mensal")
 
 fig_total = px.bar(
     df_total,
@@ -605,6 +605,10 @@ fig_total.update_layout(
 )
 
 # Exibir no Streamlit
-st.plotly_chart(fig_total, use_container_width=True)
-
+st.subheader("📆 Faturamento Mensal por Mês")
 st.plotly_chart(fig, use_container_width=True)
+
+st.markdown("---")
+
+st.subheader("📊 Faturamento Anual")
+st.plotly_chart(fig_total, use_container_width=True)
