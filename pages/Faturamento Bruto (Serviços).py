@@ -272,16 +272,33 @@ with aba3:
         df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
                         df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
 
-        df_final['M'] = df_final['Data'] + df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+       # df_final['M'] = df_final['Data'] + df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
 
 
         # Não converter para string, apenas utilizar "M" para verificação de duplicação
-        df_final['M'] = df_final['M'].apply(str)
+       # df_final['M'] = df_final['M'].apply(str)
 
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
-        df_final = df_final.applymap(str)
+       # df_final = df_final.applymap(str)
         
 
+        # Criar a coluna M como antes (sem alterações)
+        df_final['M'] = df_final['Data'] + df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+        df_final['M'] = df_final['M'].apply(str)
+
+        # Criar a nova coluna DataFormatada como datetime (evita as aspas no Google Sheets)
+        df_final['DataFormatada'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y')
+
+        # Converter todas as colunas para string, exceto 'M' e 'DataFormatada'
+        colunas_para_converter = [col for col in df_final.columns if col not in ['M', 'DataFormatada']]
+        df_final[colunas_para_converter] = df_final[colunas_para_converter].applymap(str)
+
+
+        
+
+
+
+        
         
         # Formatando os valores monetários (não convertendo para string, mantendo como numérico)
         df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
