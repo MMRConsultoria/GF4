@@ -463,17 +463,17 @@ with aba4:
     fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)  # ✅ Converte ano para string para uso como categoria
     fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
   
-        # =========================
+    # =========================
     # 📊 Visualização
     # =========================
 
     st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado com Ano embaixo e Valor em cima)")
 
-    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
-
+    #fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
+    fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal["Ano"].str[-2:]
     fig = px.bar(
 	    fat_mensal,
-	    x="Nome Mês",
+	    x="MesAno",
 	    y="Fat.Real",
 	    color="Ano",
 	    barmode="group",
