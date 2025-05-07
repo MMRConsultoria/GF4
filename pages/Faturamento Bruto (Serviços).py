@@ -471,38 +471,38 @@ with aba4:
     # Criar chave de ordenação: mês*10 + ano
     fat_mensal["ordem"] = fat_mensal["MesNum"] * 10 + fat_mensal["Ano"].astype(int)
 
-   # Converte ano para string
-   fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
+    # Converte ano para string
+    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
 
-   # Cria coluna MesAno com rótulo do eixo X
-   fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal["Ano"].str[-2:]
+    # Cria coluna MesAno com rótulo do eixo X
+    fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal["Ano"].str[-2:]
 
-   # Converte mês para número
-   meses = {
+    # Converte mês para número
+    meses = {
     	"jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
     	"jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12
-   }
-   fat_mensal["MesNum"] = fat_mensal["Nome Mês"].str[:3].str.lower().map(meses)
+    }
+    fat_mensal["MesNum"] = fat_mensal["Nome Mês"].str[:3].str.lower().map(meses)
 
-   # Cria chave de ordenação intercalada
-   fat_mensal["ordem"] = fat_mensal["MesNum"] * 10 + fat_mensal["Ano"].astype(int)
+    # Cria chave de ordenação intercalada
+    fat_mensal["ordem"] = fat_mensal["MesNum"] * 10 + fat_mensal["Ano"].astype(int)
 
-   # Ordena pela ordem correta de exibição (jan/24, jan/25, fev/24, fev/25, ...)
-   fat_mensal = fat_mensal.sort_values(by=["MesNum", "Ano"])
+    # Ordena pela ordem correta de exibição (jan/24, jan/25, fev/24, fev/25, ...)
+    fat_mensal = fat_mensal.sort_values(by=["MesNum", "Ano"])
 
-   # Garante que o eixo X siga exatamente essa ordem
-   fat_mensal["MesAno"] = pd.Categorical(
+    # Garante que o eixo X siga exatamente essa ordem
+    fat_mensal["MesAno"] = pd.Categorical(
        fat_mensal["MesAno"],
        categories=fat_mensal["MesAno"].tolist(),
        ordered=True
-    )
+     )
 
-    # Garante que a ordem apareça corretamente no eixo X
-    fat_mensal["MesAno"] = pd.Categorical(
+     # Garante que a ordem apareça corretamente no eixo X
+     fat_mensal["MesAno"] = pd.Categorical(
     	fat_mensal["MesAno"],
     	categories=fat_mensal["MesAno"].tolist(),
     	ordered=True
-    )
+     )
 	
     # =========================
     # 📊 Visualização
