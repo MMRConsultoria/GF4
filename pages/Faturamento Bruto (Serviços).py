@@ -419,13 +419,12 @@ df = pd.DataFrame(dados)
 df["Fat.Real"] = pd.to_numeric(df["Fat.Real"].astype(str).str.replace(",", "."), errors="coerce")
 
 # Tratamento de dados
-if not df.empty:
-    df["Data"] = pd.to_datetime(df["Data"], errors="coerce")
-    df["Fat.Total"] = pd.to_numeric(df["Fat.Total"], errors="coerce")
-    df["Ticket"] = pd.to_numeric(df["Ticket"], errors="coerce")
-    df["Ano"] = pd.to_numeric(df["Ano"], errors="coerce")
-    df["Mês"] = pd.to_numeric(df["Mês"], errors="coerce")
+def limpar_valor(x):
+    if isinstance(x, str):
+        return float(x.replace(".", "").replace(",", "."))
+    return x  # já é numérico
 
+df["Fat.Real"] = df["Fat.Real"].apply(limpar_valor)
     # Filtros laterais
     with st.sidebar:
         st.subheader("🎛 Filtros Relatório Gerencial")
