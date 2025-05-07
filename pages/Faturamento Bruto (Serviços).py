@@ -509,7 +509,8 @@ if not df.empty:
     st.dataframe(df_barras)
     st.subheader("🔍 Dados brutos de 2024 e 2025")
     st.dataframe(df_anos[["Ano", "Mês", "Fat.Real"]].head(20))
-
+    st.write("Tipo da coluna Fat.Real:", df["Fat.Real"].dtype)
+    st.write("Primeiros valores:", df["Fat.Real"].head(10))
     
     # Plotar
     fig5 = px.bar(df_barras, x="Mês-Ano", y="Fat.Real", title="Faturamento Real Mensal - 2024 vs 2025")
