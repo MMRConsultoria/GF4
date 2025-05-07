@@ -442,7 +442,11 @@ with aba4:
     # Criar colunas auxiliares
     df["Ano"] = df["Data"].dt.year
     df["Mês"] = df["Data"].dt.month
-    df["Nome Mês"] = df["Data"].dt.strftime("%B")
+    meses_portugues = {
+        1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
+        7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
+    }    
+    df["Nome Mês"] = df["Mês"].map(meses_portugues)
 
     # Filtro de anos
     df_anos = df[df["Ano"].isin([2024, 2025])].dropna(subset=["Data", "Fat.Real"])
