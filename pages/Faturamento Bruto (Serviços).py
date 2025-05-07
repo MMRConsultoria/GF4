@@ -488,9 +488,9 @@ with aba4:
 	
     # Mostrar ano dentro da barra com hovertemplate e customdata
     fig.update_traces(
-	insidetextanchor="start",  # ancora texto dentro
-	texttemplate="%{customdata[0]}",  # ano dentro da barra
-	textposition="auto"
+            insidetextanchor="start",  # ancora texto dentro
+	    texttemplate="%{customdata[0]}",  # ano dentro da barra
+	    textposition="auto"
      )
 
      fig.update_layout(
