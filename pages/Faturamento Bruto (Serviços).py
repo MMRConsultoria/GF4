@@ -292,11 +292,13 @@ with aba3:
         df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
         df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
 
-        # Formatando a coluna Data (removendo aspas e espaços, e convertendo corretamente)
+        # Passo 1: Corrigir a data (tirar aspas, espaços, e garantir formato correto)
         df_final['Data'] = df_final['Data'].apply(
         lambda x: pd.to_datetime(x.replace("'", "").strip(), dayfirst=True) if isinstance(x, str) else x
         )
-        df_final['Data'] = pd.to_datetime(df_final['Data'], dayfirst=True).dt.date  # ✅ envia como data real
+
+        # Passo 2: Converter para string no formato ISO que o Google Sheets entende como data (sem aspas visuais)
+        df_final['Data'] = df_final['Data'].dt.strftime('%Y-%m-%d')
         
         # Conectar ao Google Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
