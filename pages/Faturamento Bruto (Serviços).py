@@ -554,5 +554,33 @@ fig.update_layout(
         zeroline=False
     )
 )
+# ==============================
+# 📉 Gráfico horizontal: Total Anual 2024 vs 2025
+# ==============================
 
+# 1. Calcular total por ano com base em fat_mensal
+df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
+
+# 2. Criar gráfico de barras horizontais
+fig_total = px.bar(
+    df_total,
+    x="Fat.Real",     # eixo X = valor
+    y="Ano",          # eixo Y = ano (barra horizontal)
+    orientation="h",
+    text_auto=".2s",
+    color="Ano",
+    title="📊 Total de Faturamento por Ano"
+)
+
+# 3. Estilizar layout
+fig_total.update_layout(
+    xaxis_title="Faturamento (R$)",
+    yaxis_title=None,
+    showlegend=False,
+    xaxis=dict(showgrid=False, zeroline=False)
+)
+
+# 4. Exibir no Streamlit (abaixo do gráfico principal)
+st.markdown("---")  # separador visual
+st.plotly_chart(fig_total, use_container_width=True)
 st.plotly_chart(fig, use_container_width=True)
