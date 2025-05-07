@@ -478,7 +478,7 @@ with aba4:
 	    y="Fat.Real",
 	    color="Ano",
 	    barmode="group",
-	    text_auto=".2s",  # valor do faturamento no topo
+	    #text_auto=".2s",  # valor do faturamento no topo
 	    text=fat_mensal["Ano"],  # mostra o ano como texto
 	    textposition="inside",   # texto dentro da barra
 	    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
