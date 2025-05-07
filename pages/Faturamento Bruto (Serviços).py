@@ -478,31 +478,31 @@ with aba4:
         title="Comparativo de Faturamento Real Mensal"
     )
     # Gráfico com Mês + Ano no eixo X
-fat_mensal["Mês/Ano"] = fat_mensal["Nome Mês"] + " - " + fat_mensal["Ano"]
+    fat_mensal["Mês/Ano"] = fat_mensal["Nome Mês"] + " - " + fat_mensal["Ano"]
 
-fig = px.bar(
-    fat_mensal,
-    x="Mês/Ano",
-    y="Fat.Real",
-    color="Ano",
-    text_auto=".2s",
-    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025",
+    fig = px.bar(
+        fat_mensal,
+        x="Mês/Ano",
+        y="Fat.Real",
+        color="Ano",
+        text_auto=".2s",
+        title="Comparativo de Faturamento Real Mensal - 2024 vs 2025",
+    )
+    fig.update_layout(
+        xaxis_title="Mês",
+        yaxis_title="Faturamento (R$)",
+        xaxis_tickangle=-45,
+        showlegend=False,
 )
-fig.update_layout(
-    xaxis_title="Mês",
-    yaxis_title="Faturamento (R$)",
-    xaxis_tickangle=-45,
-    showlegend=False,
-)
-st.plotly_chart(fig, use_container_width=True)
-
-# =========================
-# 📋 Tabela de Totais Anuais
-# =========================
-totais_ano = df_anos.groupby("Ano")["Fat.Real"].sum().reset_index()
-totais_ano["Fat.Real"] = totais_ano["Fat.Real"].map("R$ {:,.2f}".format)
-
-st.subheader("📌 Total Anual de Faturamento")
-st.dataframe(totais_ano.rename(columns={"Ano": "Ano", "Fat.Real": "Total"}), hide_index=True)
-    fig.update_layout(xaxis_title="Mês", yaxis_title="Faturamento (R$)", xaxis_tickangle=-45)
     st.plotly_chart(fig, use_container_width=True)
+
+    # =========================
+    # 📋 Tabela de Totais Anuais
+    # =========================
+    totais_ano = df_anos.groupby("Ano")["Fat.Real"].sum().reset_index()
+    totais_ano["Fat.Real"] = totais_ano["Fat.Real"].map("R$ {:,.2f}".format)
+
+    st.subheader("📌 Total Anual de Faturamento")
+    st.dataframe(totais_ano.rename(columns={"Ano": "Ano", "Fat.Real": "Total"}), hide_index=True)
+        fig.update_layout(xaxis_title="Mês", yaxis_title="Faturamento (R$)", xaxis_tickangle=-45)
+        st.plotly_chart(fig, use_container_width=True)
