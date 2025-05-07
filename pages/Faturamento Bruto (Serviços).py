@@ -557,7 +557,7 @@ fig.update_layout(
 # ==============================
 # 📉 Gráfico horizontal: Total Anual 2024 vs 2025
 # ==============================
-# 📉 Gráfico horizontal discreto com total anual
+# 📉 Gráfico horizontal minimalista com total anual
 df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
 
 fig_total = px.bar(
@@ -565,21 +565,29 @@ fig_total = px.bar(
     x="Fat.Real",
     y="Ano",
     orientation="h",
-    text_auto=".2s",
-    color="Ano"
+    text=df_total["Fat.Real"].apply(lambda x: f"R$ {x:,.0f}".replace(",", ".")),
+    color_discrete_sequence=["#2b8cbe", "#a6bddb"]  # cores suaves (pode ajustar)
 )
 
+# Estilo: mostrar somente valores fora e ano dentro da barra
+fig_total.update_traces(
+    texttemplate="<b>%{y}</b>",  # ano dentro da barra
+    textposition="inside",
+    insidetextanchor="middle",
+    textfont=dict(size=13, color="white"),
+)
+
+# Layout minimalista e limpo
 fig_total.update_layout(
-    height=200,  # 👈 reduz a altura para ficar mais discreto
-    margin=dict(t=10, b=10, l=40, r=10),  # margens mínimas
-    xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-    yaxis=dict(showticklabels=True),  # mantém apenas o nome dos anos
+    height=100,
+    margin=dict(t=0, b=0, l=0, r=0),
     showlegend=False,
-    title=None,  # 👈 sem título
-    plot_bgcolor="rgba(0,0,0,0)"  # fundo transparente
+    title=None,
+    xaxis=dict(visible=False),
+    yaxis=dict(visible=False),
+    plot_bgcolor="rgba(0,0,0,0)"
 )
 
-# 👇 Exibir abaixo do gráfico principal
-st.markdown("#### ")  # espaço visual leve
+# Exibir no Streamlit
 st.plotly_chart(fig_total, use_container_width=True)
 st.plotly_chart(fig, use_container_width=True)
