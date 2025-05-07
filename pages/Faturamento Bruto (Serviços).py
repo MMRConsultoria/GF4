@@ -471,10 +471,10 @@ with aba4:
     st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado com Ano embaixo e Valor em cima)")
 
     fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
-
+    fat_mensal["Mês_Ano"] = fat_mensal["Nome Mês"] + " " + fat_mensal["Ano"]
     fig = px.bar(
 	    fat_mensal,
-	    x="Nome Mês",
+	    x="Mês_Ano",
 	    y="Fat.Real",
 	    color="Ano",
 	    barmode="group",
