@@ -431,44 +431,6 @@ def limpar_valor(x):
         return None
 df_filtrado = df.copy()  # usar todo o DataFrame
 
-# Aplicar para as colunas de valor
-#for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real",]:
-#    if coluna in df.columns:
-#        df[coluna] = df[coluna].apply(limpar_valor)
-
-# Filtros laterais
-#    with st.sidebar:
-#        st.subheader("🎛 Filtros Relatório Gerencial")
-#        lojas = sorted(df["Loja"].dropna().unique())
-#        anos = sorted(df["Ano"].dropna().unique())
-#        grupos = sorted(df["Grupo"].dropna().unique())
-
- #       loja_selecionada = st.multiselect("Loja", options=lojas, default=lojas)
- #       ano_selecionado = st.multiselect("Ano", options=anos, default=anos)
- #       grupo_selecionado = st.multiselect("Grupo", options=grupos, default=grupos)
-
-    # Aplicar filtros
-  #  df_filtrado = df[
-   #     (df["Loja"].isin(loja_selecionada)) &
-   #     (df["Ano"].isin(ano_selecionado)) &
-   #     (df["Grupo"].isin(grupo_selecionado))
-   # ]
-
-    # Gráfico 1: Faturamento ao longo do tempo
-    fig1 = px.line(df_filtrado, x="Data", y="Fat.Total", color="Loja", title="Evolução do Faturamento")
-    st.plotly_chart(fig1, use_container_width=True)
-
-    # Gráfico 2: Faturamento por Loja
-    fat_loja = df_filtrado.groupby("Loja")["Fat.Total"].sum().reset_index()
-    fig2 = px.bar(fat_loja, x="Fat.Total", y="Loja", orientation="h", title="Faturamento Total por Loja")
-    st.plotly_chart(fig2, use_container_width=True)
-
-    # Gráfico 3: Distribuição por Grupo (Pizza)
-    fat_grupo = df_filtrado.groupby("Grupo")["Fat.Total"].sum().reset_index()
-    fig3 = px.pie(fat_grupo, names="Grupo", values="Fat.Total", title="Distribuição por Grupo")
-    st.plotly_chart(fig3, use_container_width=True)
-
-  
 
     # Gráfico 5: Comparativo de Faturamento Real 2024 vs 2025
     df["Fat.Real"] = pd.to_numeric(df["Fat.Real"], errors="coerce")
