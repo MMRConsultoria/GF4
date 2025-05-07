@@ -528,17 +528,16 @@ for trace in fig.data:
     for xi, yi in zip(trace["x"], trace["y"]):
         annotations.append(dict(
             x=xi,
-            y=y_min * -0.05,
-            text=trace.name,
+            y=y_min * -0.05,  # posiciona abaixo do eixo
+            text=trace.name,  # o ano
             showarrow=False,
-            xanchor="center",
+            xanchor="center",  # centraliza horizontalmente com a barra
             yanchor="top",
             font=dict(size=10),
-            textangle=0  # ← texto na horizontal
+            textangle=0,  # mantém o texto na horizontal
             xref="x",
             yref="y"
         ))
-
 fig.update_layout(
     xaxis_title="Mês/Ano",
     yaxis_title="Faturamento (R$)",
