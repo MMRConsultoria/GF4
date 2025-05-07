@@ -454,130 +454,105 @@ with aba4:
    # Agrupamento por mês e ano
     fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
 
-   # ==============================
-   # ➕ Adicionar barra de Total 2024 e 2025
-   # ==============================
+ # ==============================
+# ➕ Adicionar barra de Total 2024 e 2025
+# ==============================
 
-    # 👉 1. Calcular totais
-    total_2024 = fat_mensal[fat_mensal["Ano"] == "2024"]["Fat.Real"].sum()
-    total_2025 = fat_mensal[fat_mensal["Ano"] == "2025"]["Fat.Real"].sum()
+# 1. Calcular totais
+total_2024 = fat_mensal[fat_mensal["Ano"] == "2024"]["Fat.Real"].sum()
+total_2025 = fat_mensal[fat_mensal["Ano"] == "2025"]["Fat.Real"].sum()
 
-    # 👉 2. Criar dataframe com as barras de total
-    df_total = pd.DataFrame({
-    	"Nome Mês": ["Total", "Total"],
-    	"Ano": ["2024", "2025"],
-    	"Fat.Real": [total_2024, total_2025]
-    })
+# 2. Criar dataframe com as barras de total
+df_total = pd.DataFrame({
+    "Nome Mês": ["Total", "Total"],
+    "Ano": ["2024", "2025"],
+    "Fat.Real": [total_2024, total_2025]
+})
 
-    # 👉 3. Concatenar com o fat_mensal original
-    fat_mensal_ext = pd.concat([fat_mensal, df_total], ignore_index=True)
+# 3. Concatenar com o fat_mensal original
+fat_mensal_ext = pd.concat([fat_mensal, df_total], ignore_index=True)
 
-    # 👉 4. Garantir que "Total" apareça por último no eixo X
-    ordem_meses = fat_mensal["Nome Mês"].unique().tolist()
-    if "Total" not in ordem_meses:
-    	ordem_meses.append("Total")
+# 4. Garantir que "Total" apareça por último no eixo X
+ordem_meses = fat_mensal["Nome Mês"].unique().tolist()
+if "Total" not in ordem_meses:
+    ordem_meses.append("Total")
 
-    fat_mensal_ext["Nome Mês"] = pd.Categorical(
-    	fat_mensal_ext["Nome Mês"],
-    	categories=ordem_meses,
-    	ordered=True
-    )
+fat_mensal_ext["Nome Mês"] = pd.Categorical(
+    fat_mensal_ext["Nome Mês"],
+    categories=ordem_meses,
+    ordered=True
+)
 
+# ==============================
+# ➕ Barras Mensais (ajuste para o DataFrame com Totais)
+# ==============================
 
-    # ==============================
-    # ➕ Barras Mensais
-    # ==============================
-
-	
-    # Ordenação dos meses
-    #ordem_meses = [
-     #   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-      #  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    #]
-    #fat_mensal["Nome Mês"] = pd.Categorical(fat_mensal["Nome Mês"], categories=ordem_meses, ordered=True)
-    #fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)  # ✅ Converte ano para string para uso como categoria
-    #fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
-        
-    # Converter mês para número
-    meses = {
+# Converter mês para número (sem erro no "Total")
+meses = {
     "jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
     "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12
-    }	
+}
+fat_mensal_ext["MesNum"] = fat_mensal_ext["Nome Mês"].str[:3].str.lower().map(meses)
 
-    fat_mensal["MesNum"] = fat_mensal["Nome Mês"].str[:3].str.lower().map(meses)
+# Cria coluna MesAno
+fat_mensal_ext["Ano"] = fat_mensal_ext["Ano"].astype(str)
+fat_mensal_ext["MesAno"] = fat_mensal_ext["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal_ext["Ano"].str[-2:]
 
-    # Ordem correta: intercalada por mês/ano
-    fat_mensal["ordem"] = fat_mensal["MesNum"] * 10 + fat_mensal["Ano"].astype(int)  # ex: jan/24 = 1*10+24 = 34 	
+# Ordenar corretamente por mês e ano
+fat_mensal_ext = fat_mensal_ext.sort_values(["MesNum", "Ano"])
 
-    fat_mensal = fat_mensal.sort_values("ordem")
-    # =========================
-    # 📊 Visualização
-    # =========================
+# =========================
+# 📊 Visualização
+# =========================
 
-    st.subheader("📊 Faturamento Real Mensal")
+st.subheader("📊 Faturamento Real Mensal")
 
-    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
-    # Cria coluna auxiliar para usar nas anotações
-    fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal["Ano"].str[-2:]	
+fig = px.bar(
+    fat_mensal_ext,
+    x="Nome Mês",
+    y="Fat.Real",
+    color="Ano",
+    barmode="group",
+    text_auto=".2s",
+    custom_data=["MesAno"]
+)
 
-    fig = px.bar(
-	    fat_mensal_ext,
-	    x="Nome Mês",
-	    y="Fat.Real",
-	    color="Ano",
-	    barmode="group",
-	    text_auto=".2s",  # valor do faturamento no topo
-	    custom_data=["MesAno"],  # 🔹 leva o mês/ano junto com cada barra
-	   # title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
-    )
+# Posicionar o valor no topo da barra
+fig.update_traces(textposition="outside")
 
-    # Posicionar o valor no topo da barra
-    fig.update_traces(textposition="outside")
+# ➕ Anotações com os anos centralizados abaixo de cada barra
+y_min = fat_mensal_ext["Fat.Real"].min()
+annotations = []
 
-    
-     # ➕ Adicionar manualmente os anos como annotations (abaixo das barras)
-    annotations = []
-    y_min = fat_mensal["Fat.Real"].min()
+for trace in fig.data:
+    x_shift = -15 if trace.name == "2024" else 15
+    for xi, yi in zip(trace["x"], trace["y"]):
+        annotations.append(dict(
+            x=xi,
+            y=y_min * -0.05,
+            text=trace.name,
+            showarrow=False,
+            xanchor="center",
+            yanchor="top",
+            textangle=0,
+            font=dict(size=10),
+            xref="x",
+            yref="y",
+            xshift=x_shift
+        ))
 
-    for trace in fig.data:
-	    x_shift = -15 if trace.name == "2024" else 15
-	    for xi, yi in zip(trace["x"], trace["y"]):
-		    annotations.append(dict(
-			    x=xi,
-			    y=y_min * -0.05,  # um pouco abaixo do eixo
-			    text=trace.name,  # exibe o ano (2024 ou 2025)
-			    showarrow=False,
-			    xanchor="center",
-			    yanchor="top",
-			    textangle=0,
-			    font=dict(size=10),
-			    xref="x",
-			    yref="y",
-			    xshift=x_shift
-		    ))
-
-
+# Layout limpo e estilizado
 fig.update_layout(
-    xaxis_title=None,         # 🔹 Remove o título do eixo X
-    yaxis_title=None,         # 🔹 Remove o título do eixo Y
+    xaxis_title=None,
+    yaxis_title=None,
     xaxis_tickangle=-45,
-    showlegend=False,         # 🔹 Remove a legenda
-    annotations=annotations,  # 🔹 Mantém os anos abaixo das barras
+    showlegend=False,
+    annotations=annotations,
     yaxis=dict(
-        showticklabels=False,     # 🔹 Remove números do eixo Y
-        showgrid=False,           # 🔹 Remove linhas de grade
-        zeroline=False            # 🔹 Remove a linha zero
+        showticklabels=False,
+        showgrid=False,
+        zeroline=False
     )
-)   
-
-
-# Layout final
-#fig.update_layout(
-#    xaxis_title="Mês",
-#    yaxis_title="Faturamento (R$)",
-#    xaxis_tickangle=-45,
-#    showlegend=True,
-#    annotations=annotations		
-#)
+)
 
 st.plotly_chart(fig, use_container_width=True)
