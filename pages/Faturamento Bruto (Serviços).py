@@ -297,6 +297,15 @@ with aba3:
 
         # Converter para número serial (dias desde 1899-12-30, padrão do Excel/Sheets)
         df_final['Data'] = (df_final['Data'] - pd.Timestamp("1899-12-30")).dt.days
+       
+        # Corrigir coluna Ano: remover aspas, espaços e garantir que seja inteiro
+        df_final['Ano'] = df_final['Ano'].apply(
+        lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
+        )
+
+        
+        
+        
         # Conectar ao Google Sheets
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
