@@ -439,12 +439,25 @@ with aba4:
     # Conversão da coluna Data
     df["Data"] = pd.to_datetime(df["Data"], errors="coerce", dayfirst=True)
 
-    # Filtro de anos
-    df_anos = df[df["Data"].dt.year.isin([2024, 2025])].dropna(subset=["Data", "Fat.Real"])
+   # Criar colunas auxiliares de mês e ano
+    df["Data"] = pd.to_datetime(df["Data"], errors="coerce", dayfirst=True)
+    df["Ano"] = df["Data"].dt.year
+    df["Mês"] = df["Data"].dt.month
+    df["Nome Mês"] = df["Data"].dt.strftime("%B")  # Ex: Janeiro, Fevereiro
 
-    # Criar coluna "Mês-Ano"
-    df_anos["Mês-Ano"] = df_anos["Data"].dt.strftime("%B %Y")  # Ex: Janeiro 2024
+    # Filtrar apenas 2024 e 2025
+    df_anos = df[df["Ano"].isin([2024, 2025])].dropna(subset=["Fat.Real", "Mês", "Ano"])
 
+    # Agrupar por Mês e Ano
+    fat_mensal = df_anos.groupby(["Mês", "Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
+
+    # Ordenar os meses corretamente
+    mes_ordem = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ]
+    fat_mensal["Nome Mês"] = pd.Categorical(fat_mensal["Nome Mês"], categories=mes_ordem, ordered=True)
+    fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
     # Agrupamento mensal
     fat_mensal = df_anos.groupby("Mês-Ano")["Fat.Real"].sum().reset_index()
 
@@ -470,5 +483,16 @@ with aba4:
     fig5 = px.bar(df_barras, x="Mês-Ano", y="Fat.Real", title="Comparativo por Mês", text_auto=".2s")
     fig5.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig5, use_container_width=True)
+    fig = px.bar(
+        fat_mensal,
+        x="Nome Mês",
+        y="Fat.Real",
+        color="Ano",
+        barmode="group",
+        text_auto=".2s",
+        title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
+    )
 
+    fig.update_layout(xaxis_title="Mês", yaxis_title="Faturamento (R$)", xaxis_tickangle=-45)
+    st.plotly_chart(fig, use_container_width=True)
    
