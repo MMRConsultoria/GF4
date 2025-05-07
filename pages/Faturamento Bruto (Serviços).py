@@ -525,7 +525,7 @@ annotations = []
 y_min = fat_mensal["Fat.Real"].min()
 
 for trace in fig.data:
-    for xi, yi in zip(trace["x"], trace["y"]):
+    for i, (xi, yi) in enumerate(zip(trace["x"], trace["y"])):
         annotations.append(dict(
             x=xi,
             y=y_min * -0.05,  # posiciona abaixo do eixo
