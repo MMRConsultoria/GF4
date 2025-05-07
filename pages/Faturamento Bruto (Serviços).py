@@ -492,14 +492,14 @@ meses = {
     "jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
     "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12
 }
-fat_mensal_ext["MesNum"] = fat_mensal_ext["Nome Mês"].str[:3].str.lower().map(meses)
+fat_mensal["MesNum"] = fat_mensal["Nome Mês"].str[:3].str.lower().map(meses)
 
 # Cria coluna MesAno
-fat_mensal_ext["Ano"] = fat_mensal_ext["Ano"].astype(str)
-fat_mensal_ext["MesAno"] = fat_mensal_ext["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal_ext["Ano"].str[-2:]
+fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
+fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal["Ano"].str[-2:]
 
 # Ordenar corretamente por mês e ano
-fat_mensal_ext = fat_mensal_ext.sort_values(["MesNum", "Ano"])
+fat_mensal = fat_mensal.sort_values(["MesNum", "Ano"])
 
 # =========================
 # 📊 Visualização
