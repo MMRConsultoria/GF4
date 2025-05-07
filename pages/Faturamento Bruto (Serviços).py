@@ -471,88 +471,79 @@ with aba4:
     # Criar chave de ordenação: mês*10 + ano
     fat_mensal["ordem"] = fat_mensal["MesNum"] * 10 + fat_mensal["Ano"].astype(int)
 
-    # Converte ano para string
-    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
-
-    # Cria coluna MesAno com rótulo do eixo X
-    fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal["Ano"].str[-2:]
-
-    # Converte mês para número
-    meses = {
-    	"jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
-    	"jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12
-    }
-    fat_mensal["MesNum"] = fat_mensal["Nome Mês"].str[:3].str.lower().map(meses)
-
-    # Cria chave de ordenação intercalada
-    fat_mensal["ordem"] = fat_mensal["MesNum"] * 10 + fat_mensal["Ano"].astype(int)
-
-    # Ordena pela ordem correta de exibição (jan/24, jan/25, fev/24, fev/25, ...)
-    fat_mensal = fat_mensal.sort_values(by=["MesNum", "Ano"])
-
-    # Garante que o eixo X siga exatamente essa ordem
-    fat_mensal["MesAno"] = pd.Categorical(
-       fat_mensal["MesAno"],
-       categories=fat_mensal["MesAno"].tolist(),
-       ordered=True
-     )
-
-     # Garante que a ordem apareça corretamente no eixo X
-     fat_mensal["MesAno"] = pd.Categorical(
-    	fat_mensal["MesAno"],
-    	categories=fat_mensal["MesAno"].tolist(),
-    	ordered=True
-     )
-	
     # =========================
-    # 📊 Visualização
-    # =========================
+# 💡 Preparação dos dados
+# =========================
 
-    st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado com Ano embaixo e Valor em cima)")
+# Converte ano para string
+fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
 
-    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
+# Cria coluna MesAno com rótulo do eixo X
+fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal["Ano"].str[-2:]
 
-    fig = px.bar(
-	    fat_mensal,
-	    x="MesAno",
-	    y="Fat.Real",
-	    color="Ano",
-	    barmode="group",
-	    text_auto=".2s",  # valor do faturamento no topo
-	    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
-    )
+# Converter mês para número
+meses = {
+    "jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
+    "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12
+}
+fat_mensal["MesNum"] = fat_mensal["Nome Mês"].str[:3].str.lower().map(meses)
 
-    # Posicionar o valor no topo da barra
-    fig.update_traces(textposition="outside")
+# Cria chave de ordenação intercalada
+fat_mensal["ordem"] = fat_mensal["MesNum"] * 10 + fat_mensal["Ano"].astype(int)
 
-    # ➕ Adicionar manualmente os anos como annotations (abaixo das barras)
-    annotations = []
-    y_min = fat_mensal["Fat.Real"].min()
+# Ordena pela ordem correta de exibição (jan/24, jan/25, fev/24, fev/25, ...)
+fat_mensal = fat_mensal.sort_values(by=["MesNum", "Ano"])
 
-    for trace in fig.data:
-	    for xi, yi in zip(trace["x"], trace["y"]):
-		    annotations.append(dict(
-			    x=xi,
-			    y=y_min * -0.05,  # um pouco abaixo do eixo
-			    text=trace.name,  # exibe o ano (2024 ou 2025)
-			    showarrow=False,
-			    xanchor="center",
-			    yanchor="top",
-			    font=dict(size=10),
-			    xref="x",
-			    yref="y"
-		    ))
+# Garante que o eixo X siga exatamente essa ordem
+fat_mensal["MesAno"] = pd.Categorical(
+    fat_mensal["MesAno"],
+    categories=fat_mensal["MesAno"].tolist(),
+    ordered=True
+)
 
-   
-   
+# =========================
+# 📊 Visualização
+# =========================
 
+st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado com Ano embaixo e Valor em cima)")
 
-# Layout final
+fig = px.bar(
+    fat_mensal,
+    x="MesAno",
+    y="Fat.Real",
+    color="Ano",
+    barmode="group",
+    text_auto=".2s",
+    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
+)
+
+# Posicionar o valor no topo da barra
+fig.update_traces(textposition="outside")
+
+# ➕ Adicionar manualmente os anos como annotations (abaixo das barras)
+annotations = []
+y_min = fat_mensal["Fat.Real"].min()
+
+for trace in fig.data:
+    for xi, yi in zip(trace["x"], trace["y"]):
+        annotations.append(dict(
+            x=xi,
+            y=y_min * -0.05,
+            text=trace.name,
+            showarrow=False,
+            xanchor="center",
+            yanchor="top",
+            font=dict(size=10),
+            xref="x",
+            yref="y"
+        ))
+
 fig.update_layout(
     xaxis_title="Mês/Ano",
     yaxis_title="Faturamento (R$)",
     xaxis_tickangle=-45,
-    showlegend=True
+    showlegend=True,
+    annotations=annotations
 )
 
 st.plotly_chart(fig, use_container_width=True)
