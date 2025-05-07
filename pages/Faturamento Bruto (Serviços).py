@@ -459,8 +459,8 @@ with aba4:
 # ==============================
 
 # 1. Calcular totais
-total_2024 = fat_mensal[fat_mensal["Ano"] == "2024"]["Fat.Real"].sum()
-total_2025 = fat_mensal[fat_mensal["Ano"] == "2025"]["Fat.Real"].sum()
+total_2024 = fat_mensal[fat_mensal["Ano"] == 2024]["Fat.Real"].sum()
+total_2025 = fat_mensal[fat_mensal["Ano"] == 2025]["Fat.Real"].sum()
 
 # 2. Criar dataframe com as barras de total
 df_total = pd.DataFrame({
