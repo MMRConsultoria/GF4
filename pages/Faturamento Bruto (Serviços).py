@@ -505,7 +505,7 @@ fat_mensal = fat_mensal.sort_values(["MesNum", "Ano"])
 # 📊 Visualização
 # =========================
 
-st.subheader("📊 Faturamento Real Mensal")
+st.subheader("📊 Faturamento Anual")
 
 fig = px.bar(
     fat_mensal,
@@ -559,6 +559,8 @@ fig.update_layout(
 # ==============================
 # 📉 Gráfico horizontal minimalista com total anual (valores visíveis e cores mantidas)
 df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
+
+st.subheader("📊 Faturamento Mensal")
 
 fig_total = px.bar(
     df_total,
