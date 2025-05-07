@@ -419,12 +419,12 @@ df = pd.DataFrame(dados)
 df["Fat.Real"] = pd.to_numeric(df["Fat.Real"].astype(str).str.replace(",", "."), errors="coerce")
 
 # Tratamento de dados
-    def limpar_valor(x):
-        if isinstance(x, str):
-            return float(x.replace(".", "").replace(",", "."))
-        return x  # já é numérico
+def limpar_valor(x):
+    if isinstance(x, str):
+        return float(x.replace(".", "").replace(",", "."))
+    return x  # já é numérico
 
-    df["Fat.Real"] = df["Fat.Real"].apply(limpar_valor)
+df["Fat.Real"] = df["Fat.Real"].apply(limpar_valor)
    
 
 # Filtros laterais
