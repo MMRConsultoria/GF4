@@ -527,7 +527,7 @@ fig.update_layout(
     xaxis_title="Mês",
     yaxis_title="Faturamento (R$)",
     xaxis_tickangle=-45,
-    showlegend=True
+    showlegend=True,
     annotations=annotations		
 )
 
