@@ -395,3 +395,71 @@ with aba3:
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
 
+
+
+# ================================
+# 📈 Relatórios Gerenciais (Painel Interativo)
+# ================================
+
+# Conectar ao Google Sheets
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+with open("credenciais.json") as source:
+    info = json.load(source)
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
+gc = gspread.authorize(credentials)
+
+# Carregar dados da aba
+planilha = gc.open("Faturamento Sistema Externo")
+aba = planilha.worksheet("Fat Sistema Externo")
+dados = aba.get_all_records()
+df = pd.DataFrame(dados)
+
+# Tratamento de dados
+if not df.empty:
+    df["Data"] = pd.to_datetime(df["Data"], errors="coerce")
+    df["Fat.Total"] = pd.to_numeric(df["Fat.Total"], errors="coerce")
+    df["Ticket"] = pd.to_numeric(df["Ticket"], errors="coerce")
+    df["Ano"] = pd.to_numeric(df["Ano"], errors="coerce")
+    df["Mês"] = pd.to_numeric(df["Mês"], errors="coerce")
+
+    # Filtros laterais
+    with st.sidebar:
+        st.subheader("🎛 Filtros Relatório Gerencial")
+        lojas = sorted(df["Loja"].dropna().unique())
+        anos = sorted(df["Ano"].dropna().unique())
+        grupos = sorted(df["Grupo"].dropna().unique())
+
+        loja_selecionada = st.multiselect("Loja", options=lojas, default=lojas)
+        ano_selecionado = st.multiselect("Ano", options=anos, default=anos)
+        grupo_selecionado = st.multiselect("Grupo", options=grupos, default=grupos)
+
+    # Aplicar filtros
+    df_filtrado = df[
+        (df["Loja"].isin(loja_selecionada)) &
+        (df["Ano"].isin(ano_selecionado)) &
+        (df["Grupo"].isin(grupo_selecionado))
+    ]
+
+    # Gráfico 1: Faturamento ao longo do tempo
+    fig1 = px.line(df_filtrado, x="Data", y="Fat.Total", color="Loja", title="Evolução do Faturamento")
+    st.plotly_chart(fig1, use_container_width=True)
+
+    # Gráfico 2: Faturamento por Loja
+    fat_loja = df_filtrado.groupby("Loja")["Fat.Total"].sum().reset_index()
+    fig2 = px.bar(fat_loja, x="Fat.Total", y="Loja", orientation="h", title="Faturamento Total por Loja")
+    st.plotly_chart(fig2, use_container_width=True)
+
+    # Gráfico 3: Distribuição por Grupo (Pizza)
+    fat_grupo = df_filtrado.groupby("Grupo")["Fat.Total"].sum().reset_index()
+    fig3 = px.pie(fat_grupo, names="Grupo", values="Fat.Total", title="Distribuição por Grupo")
+    st.plotly_chart(fig3, use_container_width=True)
+
+    # Gráfico 4: Ticket médio por Loja
+    ticket_loja = df_filtrado.groupby("Loja")["Ticket"].mean().reset_index()
+    fig4 = px.bar(ticket_loja, x="Loja", y="Ticket", title="Ticket Médio por Loja")
+    st.plotly_chart(fig4, use_container_width=True)
+
+else:
+    st.warning("Nenhum dado encontrado na aba 'Fat Sistema Externo'. Verifique se a planilha está atualizada.")
+
+
