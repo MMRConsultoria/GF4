@@ -485,23 +485,10 @@ with aba4:
     # Posicionar o valor no topo da barra
     fig.update_traces(textposition="outside")
 
-    # ➕ Adicionar manualmente os anos como annotations (abaixo das barras)
-    annotations = []
-    y_min = fat_mensal["Fat.Real"].min()
-
+   # Adiciona o ano dentro de cada barra
     for trace in fig.data:
-	    for xi, yi in zip(trace["x"], trace["y"]):
-		    annotations.append(dict(
-			    x=xi,
-			    y=y_min * -0.05,  # um pouco abaixo do eixo
-			    text=trace.name,  # exibe o ano (2024 ou 2025)
-			    showarrow=False,
-			    xanchor="center",
-			    yanchor="top",
-			    font=dict(size=10),
-			    xref="x",
-			    yref="y"
-		    ))
+    	trace.text = [trace.name] * len(trace.x)  # Ano dentro da barra
+    	trace.textposition = "inside"
 
     fig.update_layout(
 	    annotations=annotations,
