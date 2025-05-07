@@ -467,32 +467,44 @@ with aba4:
     # 📊 Visualização
     # =========================
 
-    st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado)")
+   st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado com Ano embaixo e Valor em cima)")
 
-    # Garantir que o ano está como string (para o eixo de cores)
     fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
 
-    # Gráfico com agrupamento por mês e ano destacado nas barras
     fig = px.bar(
         fat_mensal,
         x="Nome Mês",
         y="Fat.Real",
         color="Ano",
         barmode="group",
-        text="Ano",  # Mostrar o ano como texto sobre a barra
-        title="Comparativo de Faturamento Real Mensal - 2024 vs 2025",
+        text_auto=".2s",  # valor do faturamento no topo
+        title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
     )
 
-    # Posicionar o texto na base das barras
-    fig.update_traces(textposition="outside", insidetextanchor="start")
+    # Posicionar o valor no topo da barra
+    fig.update_traces(textposition="outside")
 
-    # Ajustes finais do layout
+    # ➕ Adicionar manualmente os anos como annotations (abaixo das barras)
+    annotations = []
+    for d in fig.data:
+        for x, y in zip(d.x, d.y):
+            annotations.append(dict(
+                x=x,
+                y=-0.05 * max(fat_mensal["Fat.Real"]),  # posição abaixo do eixo X
+                text=d.name,  # o nome do trace (2024 ou 2025)
+                showarrow=False,
+                xanchor="center",
+                yanchor="top",
+                font=dict(size=10),
+                xref="x",
+                yref="y"
+            ))
+
     fig.update_layout(
+        annotations=annotations,
         xaxis_title="Mês",
         yaxis_title="Faturamento (R$)",
         xaxis_tickangle=0,
-        uniformtext_minsize=8,
-        uniformtext_mode='hide',
         showlegend=True
     )
 
