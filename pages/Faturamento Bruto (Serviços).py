@@ -296,7 +296,7 @@ with aba3:
         df_final['Data'] = df_final['Data'].apply(
         lambda x: pd.to_datetime(x.replace("'", "").strip(), dayfirst=True) if isinstance(x, str) else x
         )
-        df_final['Data'] = df_final['Data'].dt.strftime('%d/%m/%Y')
+        #df_final['Data'] = df_final['Data'].dt.strftime('%d/%m/%Y')
 
         
         # Conectar ao Google Sheets
