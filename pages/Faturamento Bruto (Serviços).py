@@ -432,6 +432,10 @@ with aba4:
             df[coluna] = df[coluna].apply(limpar_valor)
             df[coluna] = pd.to_numeric(df[coluna], errors="coerce")  # reforço
 
+    # Agora converte Ano e Mês para número (depois da limpeza)
+    df["Ano"] = pd.to_numeric(df["Ano"], errors="coerce")
+    df["Mês"] = pd.to_numeric(df["Mês"], errors="coerce")
+    
     # Tratamento de dados
     def limpar_valor(x):
         try:
