@@ -522,21 +522,24 @@ fig.update_traces(textposition="outside")
 
 # ➕ Adicionar manualmente os anos como annotations (abaixo das barras)
 annotations = []
-y_min = fat_mensal["Fat.Real"].min()
+
+# Mapeia a posição relativa das barras no grupo
+offset_map = {"2024": -20, "2025": 20}  # deslocamento para a esquerda ou direita
 
 for trace in fig.data:
-    for i, (xi, yi) in enumerate(zip(trace["x"], trace["y"])):
+    for xi, yi in zip(trace["x"], trace["y"]):
         annotations.append(dict(
             x=xi,
-            y=y_min * -0.05,  # posiciona abaixo do eixo
-            text=trace.name,  # o ano
+            y=y_min * -0.05,
+            text=trace.name,
             showarrow=False,
-            xanchor="center",  # centraliza horizontalmente com a barra
+            xanchor="center",
             yanchor="top",
+            textangle=0,
             font=dict(size=10),
-            textangle=0,  # mantém o texto na horizontal
             xref="x",
-            yref="y"
+            yref="y",
+            xshift=offset_map.get(trace.name, 0)  # aplica deslocamento horizontal leve
         ))
 fig.update_layout(
     xaxis_title="Mês/Ano",
