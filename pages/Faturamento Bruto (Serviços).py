@@ -469,25 +469,30 @@ with aba4:
 
     st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado)")
 
-    # Converter colunas para string (importante para o eixo de cores)
+    # Garantir que o ano está como string (para o eixo de cores)
     fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
 
-    # Gráfico de barras agrupadas
+    # Gráfico com agrupamento por mês e ano destacado nas barras
     fig = px.bar(
         fat_mensal,
         x="Nome Mês",
         y="Fat.Real",
         color="Ano",
-        barmode="group",  # 👈 agrupamento lado a lado
-        text_auto=".2s",
+        barmode="group",
+        text="Ano",  # Mostrar o ano como texto sobre a barra
         title="Comparativo de Faturamento Real Mensal - 2024 vs 2025",
     )
 
-    # Ajustes visuais
+    # Posicionar o texto na base das barras
+    fig.update_traces(textposition="outside", insidetextanchor="start")
+
+    # Ajustes finais do layout
     fig.update_layout(
         xaxis_title="Mês",
         yaxis_title="Faturamento (R$)",
         xaxis_tickangle=0,
+        uniformtext_minsize=8,
+        uniformtext_mode='hide',
         showlegend=True
     )
 
