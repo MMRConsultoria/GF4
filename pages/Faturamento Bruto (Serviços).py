@@ -282,7 +282,7 @@ with aba3:
 
       
 
-
+        #TIRAR ASPAS DOS VALORES, DATA E NUMEROS
 
         
         
@@ -303,7 +303,14 @@ with aba3:
         lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
         )
 
-        
+        # Corrigir colunas D e F (Código Everest e Código Grupo Everest): remover aspas e converter para número inteiro
+        df_final['Código Everest'] = df_final['Código Everest'].apply(
+        lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
+        )
+
+        df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(
+        lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
+        )
         
         
         # Conectar ao Google Sheets
@@ -348,7 +355,7 @@ with aba3:
                         # Enviar os novos dados para o Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
 
-
+# ASPAS RESOLVIDO
                         
                         # 🔧 Aplicar formatação de data na coluna A (Data) - prbblema de aspas resolvido
                         from gspread_formatting import CellFormat, NumberFormat, format_cell_range
@@ -362,10 +369,16 @@ with aba3:
                         numberFormat=NumberFormat(type='NUMBER', pattern='0')
                         )
 
+                        # Formato numérico simples (sem aspas, sem casas decimais)
+                        numero_format = CellFormat(
+                        numberFormat=NumberFormat(type='NUMBER', pattern='0')
+                        )
+                        
                         # Considerando que a coluna A é onde está a data
                         format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(novos_dados)}", data_format)
                         format_cell_range(aba_destino, f"L2:L{primeira_linha_vazia + len(novos_dados)}", numero_format)  
-
+                        format_cell_range(aba_destino, f"D2:D{primeira_linha_vazia + len(novos_dados)}", numero_format)
+                        format_cell_range(aba_destino, f"F2:F{primeira_linha_vazia + len(novos_dados)}", numero_format)
 
 
 
