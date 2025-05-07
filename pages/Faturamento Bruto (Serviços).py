@@ -509,11 +509,13 @@ with aba4:
 
 
 # Layout final
-fig.update_traces(
-    texttemplate="%{customdata[0]}\n%{text}",  # mostra "Ano / Mês" e valor
-    textposition="inside",  # texto dentro da barra
-    insidetextanchor="start"  # ancora no topo da barra
+ig.update_layout(
+    xaxis_title="Mês",
+    yaxis_title="Faturamento (R$)",
+    xaxis_tickangle=-45,
+    showlegend=True,
+    annotations=annotations  # ← aqui você passa as anotações pro layout
 )
 
-
+# Mostrar o gráfico no Streamlit
 st.plotly_chart(fig, use_container_width=True)
