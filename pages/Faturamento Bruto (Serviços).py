@@ -279,8 +279,8 @@ with aba3:
         df_final['M'] = df_final['M'].apply(str)
 
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
-        #df_final = df_final.applymap(str)
-        df_final["Data"] = pd.to_datetime(df_final["Data"], errors="coerce", dayfirst=True)
+        df_final = df_final.applymap(str)
+        
 
         
         # Formatando os valores monetários (não convertendo para string, mantendo como numérico)
@@ -327,41 +327,7 @@ with aba3:
                         
                         # Enviar os novos dados para o Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
-                        
-                        from datetime import datetime
 
-                        # Calcular intervalo
-                        linha_inicio = primeira_linha_vazia
-                        linha_fim = linha_inicio + len(novos_dados) - 1
-
-                       # # Ler os valores reais da coluna A diretamente do Google Sheets (já colados)
-                        coluna_a = aba_destino.get(f"A{linha_inicio}:A{linha_fim}")
-
-                        # Formatar para dd/mm/yyyy no Python
-                        coluna_n_formatada = []
-                        for linha in coluna_a:
-                            valor = linha[0]
-                            try:
-                                dt = pd.to_datetime(valor, dayfirst=True)
-                                coluna_n_formatada.append([dt.strftime('%Y-%m-%d')])  # ✅ formato ISO
-                            except:
-                                coluna_n_formatada.append([""])  # segura caso a conversão falhe
-                                
-                        # Atualiza a coluna N com os valores já formatados
-                        aba_destino.update(f"N{linha_inicio}:N{linha_fim}", coluna_n_formatada)
-
-                        from gspread_formatting import format_cell_range, CellFormat, NumberFormat
-
-                        # Aplica formato de data dd/mm/yyyy na coluna N
-                        formato_data = CellFormat(
-                            numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy')
-                            )
-
-                        # Aplica o formato na faixa correta
-                        range_n = f"N{linha_inicio}:N{linha_fim}"
-                        format_cell_range(aba_destino, range_n, formato_data)
-
-                        
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
 
                     if duplicados:
