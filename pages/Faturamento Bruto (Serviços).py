@@ -492,7 +492,14 @@ with aba4:
     # Ordem correta: intercalada por mês/ano
     fat_mensal["ordem"] = fat_mensal["MesNum"] * 10 + fat_mensal["Ano"].astype(int)  # ex: jan/24 = 1*10+24 = 34 	
 
-    fat_mensal = fat_mensal.sort_values("ordem")
+    fat_mensal = fat_mensal.sort_values(by=["MesNum", "Ano"])
+    # Garante que a ordem apareça corretamente no eixo X
+    fat_mensal["MesAno"] = pd.Categorical(
+    	fat_mensal["MesAno"],
+    	categories=fat_mensal["MesAno"].tolist(),
+    	ordered=True
+    )
+	
     # =========================
     # 📊 Visualização
     # =========================
