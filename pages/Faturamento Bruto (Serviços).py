@@ -557,7 +557,7 @@ fig.update_layout(
 # ==============================
 # 📉 Gráfico horizontal: Total Anual 2024 vs 2025
 # ==============================
-# 📉 Gráfico horizontal minimalista com total anual
+# 📉 Gráfico horizontal minimalista com total anual (usando as cores do gráfico mensal)
 df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
 
 fig_total = px.bar(
@@ -565,21 +565,27 @@ fig_total = px.bar(
     x="Fat.Real",
     y="Ano",
     orientation="h",
-    text=df_total["Fat.Real"].apply(lambda x: f"R$ {x:,.0f}".replace(",", ".")),
-    color_discrete_sequence=["#2b8cbe", "#a6bddb"]  # cores suaves (pode ajustar)
+    text=df_total["Fat.Real"].apply(lambda x: f"R$ {x:,.0f}".replace(",", ".")),  # valor fora da barra
+    color="Ano",  # usa as mesmas cores do gráfico mensal automaticamente
 )
 
-# Estilo: mostrar somente valores fora e ano dentro da barra
+# Estilo das barras
+fig_total.update_traces(
+    textposition="outside",  # valor aparece fora da barra
+    insidetextanchor="middle",
+    textfont=dict(size=12),
+)
+
+# Texto do ano dentro da barra com destaque
 fig_total.update_traces(
     texttemplate="<b>%{y}</b>",  # ano dentro da barra
     textposition="inside",
-    insidetextanchor="middle",
-    textfont=dict(size=13, color="white"),
+    textfont=dict(color="white", size=13)
 )
 
-# Layout minimalista e limpo
+# Layout minimalista
 fig_total.update_layout(
-    height=100,
+    height=120,
     margin=dict(t=0, b=0, l=0, r=0),
     showlegend=False,
     title=None,
@@ -590,4 +596,5 @@ fig_total.update_layout(
 
 # Exibir no Streamlit
 st.plotly_chart(fig_total, use_container_width=True)
+
 st.plotly_chart(fig, use_container_width=True)
