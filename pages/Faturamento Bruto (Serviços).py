@@ -415,6 +415,8 @@ with aba4:
     dados = aba.get_all_records()
     df = pd.DataFrame(dados)
 
+   
+
     # =========================
     # 🧹 Tratamento dos dados
     # =========================
@@ -437,38 +439,34 @@ with aba4:
     # Conversão da coluna Data
     df["Data"] = pd.to_datetime(df["Data"], errors="coerce", dayfirst=True)
 
-    # Criar colunas auxiliares
-    df["Ano"] = df["Data"].dt.year
-    df["Mês"] = df["Data"].dt.month
-    df["Nome Mês"] = df["Data"].dt.strftime("%B")
+    # Filtro de anos
+    df_anos = df[df["Data"].dt.year.isin([2024, 2025])].dropna(subset=["Data", "Fat.Real"])
 
-    # Filtrar apenas 2024 e 2025
-    df_anos = df[df["Ano"].isin([2024, 2025])].dropna(subset=["Fat.Real"])
+    # Criar coluna "Mês-Ano"
+    df_anos["Mês-Ano"] = df_anos["Data"].dt.strftime("%B %Y")  # Ex: Janeiro 2024
 
-    # Agrupar por Nome do Mês e Ano
-    fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
+    # Agrupamento mensal
+    fat_mensal = df_anos.groupby("Mês-Ano")["Fat.Real"].sum().reset_index()
 
-    # Ordenar meses corretamente
-    ordem_meses = [
-        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    ]
-    fat_mensal["Nome Mês"] = pd.Categorical(fat_mensal["Nome Mês"], categories=ordem_meses, ordered=True)
-    fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
+    # Total por ano
+    total_por_ano = df_anos.groupby(df_anos["Data"].dt.year)["Fat.Real"].sum().reset_index()
+    total_por_ano["Mês-Ano"] = total_por_ano["Data"].astype(str) + " (Total)"
+    total_por_ano = total_por_ano[["Mês-Ano", "Fat.Real"]]
+
+    # Unir dados
+    df_barras = pd.concat([fat_mensal, total_por_ano], ignore_index=True)
+
+    # Ordenação de Mês-Ano
+    meses_ordem = pd.date_range("2024-01-01", "2025-12-01", freq="MS").strftime("%B %Y").tolist()
+    meses_ordem += ["2024 (Total)", "2025 (Total)"]
+    df_barras["Mês-Ano"] = pd.Categorical(df_barras["Mês-Ano"], categories=meses_ordem, ordered=True)
+    df_barras = df_barras.sort_values("Mês-Ano")
 
     # =========================
     # 📊 Visualização
     # =========================
 
-    st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (lado a lado)")
-    fig = px.bar(
-        fat_mensal,
-        x="Nome Mês",
-        y="Fat.Real",
-        color="Ano",
-        barmode="group",
-        text_auto=".2s",
-        title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
-    )
-    fig.update_layout(xaxis_title="Mês", yaxis_title="Faturamento (R$)", xaxis_tickangle=-45)
-    st.plotly_chart(fig, use_container_width=True)
+    st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025")
+    fig5 = px.bar(df_barras, x="Mês-Ano", y="Fat.Real", title="Comparativo por Mês", text_auto=".2s")
+    fig5.update_layout(xaxis_tickangle=-45)
+    st.plotly_chart(fig5, use_container_width=True)
