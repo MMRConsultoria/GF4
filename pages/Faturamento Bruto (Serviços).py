@@ -414,6 +414,10 @@ aba = planilha.worksheet("Fat Sistema Externo")
 dados = aba.get_all_records()
 df = pd.DataFrame(dados)
 
+
+# Converter 'Fat.Real' de string com vírgula para float
+df["Fat.Real"] = df["Fat.Real"].astype(str).str.replace(",", ".").astype(float)
+
 # Tratamento de dados
 if not df.empty:
     df["Data"] = pd.to_datetime(df["Data"], errors="coerce")
