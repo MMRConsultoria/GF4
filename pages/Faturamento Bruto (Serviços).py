@@ -470,16 +470,17 @@ with aba4:
 
     st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado com Ano embaixo e Valor em cima)")
 
-    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
-
+    #fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
+    fat_mensal["AnoMes"] = fat_mensal["Ano"] + " / " + fat_mensal["Nome Mês"]
     fig = px.bar(
 	    fat_mensal,
 	    x="Nome Mês",
 	    y="Fat.Real",
 	    color="Ano",
 	    barmode="group",
-	    text_auto=".2s",  # valor do faturamento no topo
-	    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
+	    text="Fat.Real",  # valor do faturamento no topo
+   	    custom_data=["AnoMes"],  # ← adicionado
+    	    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
     )
 
     # Posicionar o valor no topo da barra
@@ -508,11 +509,11 @@ with aba4:
 
 
 # Layout final
-fig.update_layout(
-    xaxis_title="Mês/Ano",
-    yaxis_title="Faturamento (R$)",
-    xaxis_tickangle=-45,
-    showlegend=True
+fig.update_traces(
+    texttemplate="%{customdata[0]}\n%{text}",  # mostra "Ano / Mês" e valor
+    textposition="inside",  # texto dentro da barra
+    insidetextanchor="start"  # ancora no topo da barra
 )
+
 
 st.plotly_chart(fig, use_container_width=True)
