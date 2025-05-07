@@ -316,17 +316,7 @@ with aba3:
         duplicados = []  # Armazenar os registros duplicados
         rows = df_final.fillna("").values.tolist()
 
-        from gspread_formatting import CellFormat, NumberFormat, format_cell_range
-
-        # Definir o formato de data dd/mm/yyyy
-        data_format = CellFormat(
-        numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy')
-        )
-
-        # Aplicar na coluna onde estão as datas (ex: coluna A)
-        format_cell_range(aba, 'A2:A', data_format)
-
-
+       
 
         
         # Verificar duplicação somente na coluna "M"
@@ -349,6 +339,22 @@ with aba3:
                         # Enviar os novos dados para o Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
 
+                        # 🔧 Aplicar formatação de data na coluna A (Data)
+                        from gspread_formatting import CellFormat, NumberFormat, format_cell_range
+
+                        data_format = CellFormat(
+                            numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy')
+                        )
+
+                        # Considerando que a coluna A é onde está a data
+                        format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(novos_dados)}", data_format)
+
+
+
+
+
+
+                        
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
 
                     if duplicados:
