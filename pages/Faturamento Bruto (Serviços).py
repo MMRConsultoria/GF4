@@ -484,23 +484,23 @@ with aba4:
     )
 
     # Posicionar o valor no topo da barra
-   fig.update_traces(textposition="outside")
+    fig.update_traces(textposition="outside")
 	
-   # Mostrar ano dentro da barra com hovertemplate e customdata
-   fig.update_traces(
+    # Mostrar ano dentro da barra com hovertemplate e customdata
+    fig.update_traces(
 	insidetextanchor="start",  # ancora texto dentro
 	texttemplate="%{customdata[0]}",  # ano dentro da barra
 	textposition="auto"
-    )
+     )
 
-    fig.update_layout(
+     fig.update_layout(
 	    xaxis_title="Mês",
 	    yaxis_title="Faturamento (R$)",
 	    xaxis_tickangle=0,
 	    showlegend=True
-    )
+     )
 
-    st.plotly_chart(fig, use_container_width=True)
+     st.plotly_chart(fig, use_container_width=True)
 
    
 
