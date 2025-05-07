@@ -339,16 +339,23 @@ with aba3:
                         # Enviar os novos dados para o Google Sheets
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
 
-                        # 🔧 Aplicar formatação de data na coluna A (Data)
+
+                        
+                        # 🔧 Aplicar formatação de data na coluna A (Data) - prbblema de aspas resolvido
                         from gspread_formatting import CellFormat, NumberFormat, format_cell_range
 
                         data_format = CellFormat(
                             numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy')
                         )
 
+                        # 🔢 Formato para coluna Ano como número sem aspas
+                        numero_format = CellFormat(
+                        numberFormat=NumberFormat(type='NUMBER', pattern='0')
+                        )
+
                         # Considerando que a coluna A é onde está a data
                         format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(novos_dados)}", data_format)
-
+                        format_cell_range(aba_destino, f"L2:L{primeira_linha_vazia + len(novos_dados)}", numero_format)  
 
 
 
