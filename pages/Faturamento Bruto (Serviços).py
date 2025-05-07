@@ -478,14 +478,14 @@ with aba4:
     df_barras = df_barras.sort_values("Mês-Ano")
 
     # Exibir tabelas para validação
-    st.subheader("📊 Tabela de Faturamento para Verificação")
-    st.dataframe(df_barras)
+    #st.subheader("📊 Tabela de Faturamento para Verificação")
+    #st.dataframe(df_barras)
 
-    st.subheader("🔍 Dados brutos de 2024 e 2025")
-    st.dataframe(df_anos[["Ano", "Mês", "Fat.Real"]].head(20))
+    #st.subheader("🔍 Dados brutos de 2024 e 2025")
+    #st.dataframe(df_anos[["Ano", "Mês", "Fat.Real"]].head(20))
 
-    st.write("Tipo da coluna Fat.Real:", df["Fat.Real"].dtype)
-    st.write("Primeiros valores:", df["Fat.Real"].head(10))
+    #st.write("Tipo da coluna Fat.Real:", df["Fat.Real"].dtype)
+    #st.write("Primeiros valores:", df["Fat.Real"].head(10))
 
     # Plotar o gráfico final
     fig5 = px.bar(df_barras, x="Mês-Ano", y="Fat.Real", title="Faturamento Real Mensal - 2024 vs 2025")
