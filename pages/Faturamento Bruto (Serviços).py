@@ -511,13 +511,13 @@ with aba4:
            		y=y_min * 0.95,  # um pouco abaixo do eixo X
             		text=ano,
             		showarrow=False,
-            	xanchor="center",
-            	yanchor="top",
-            	font=dict(size=10),
-            	textangle=0,
-            	xref="x",
-            	yref="y"
-        ))
+            		xanchor="center",
+            		yanchor="top",
+            		font=dict(size=10),
+            		textangle=0,
+            		xref="x",
+            		yref="y"
+                 ))
 
    
 
