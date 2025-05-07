@@ -458,22 +458,7 @@ with aba4:
     ]
     fat_mensal["Nome Mês"] = pd.Categorical(fat_mensal["Nome Mês"], categories=mes_ordem, ordered=True)
     fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
-    # Agrupamento mensal
-    fat_mensal = df_anos.groupby("Mês-Ano")["Fat.Real"].sum().reset_index()
-
-    # Total por ano
-    total_por_ano = df_anos.groupby(df_anos["Data"].dt.year)["Fat.Real"].sum().reset_index()
-    total_por_ano["Mês-Ano"] = total_por_ano["Data"].astype(str) + " (Total)"
-    total_por_ano = total_por_ano[["Mês-Ano", "Fat.Real"]]
-
-    # Unir dados
-    df_barras = pd.concat([fat_mensal, total_por_ano], ignore_index=True)
-
-    # Ordenação de Mês-Ano
-    meses_ordem = pd.date_range("2024-01-01", "2025-12-01", freq="MS").strftime("%B %Y").tolist()
-    meses_ordem += ["2024 (Total)", "2025 (Total)"]
-    df_barras["Mês-Ano"] = pd.Categorical(df_barras["Mês-Ano"], categories=meses_ordem, ordered=True)
-    df_barras = df_barras.sort_values("Mês-Ano")
+   
 
     # =========================
     # 📊 Visualização
