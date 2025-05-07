@@ -282,12 +282,15 @@ with aba3:
        # df_final = df_final.applymap(str)
         
 
+        # Criar a nova coluna DataFormatada como datetime (evita as aspas no Google Sheets)
+        df_final['DataFormatada'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y')
+        df_final['DataFormatada'] = df_final['DataFormatada'].dt.strftime('%Y-%m-%d')  # <-- ESSA LINHA É ESSENCIAL
+        
         # Criar a coluna M como antes (sem alterações)
         df_final['M'] = df_final['Data'] + df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
         df_final['M'] = df_final['M'].apply(str)
 
-        # Criar a nova coluna DataFormatada como datetime (evita as aspas no Google Sheets)
-        df_final['DataFormatada'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y')
+       
 
         # Converter todas as colunas para string, exceto 'M' e 'DataFormatada'
         colunas_para_converter = [col for col in df_final.columns if col not in ['M', 'DataFormatada']]
