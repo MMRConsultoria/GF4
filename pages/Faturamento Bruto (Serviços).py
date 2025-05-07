@@ -447,7 +447,7 @@ with aba4:
     # Filtro de anos
     df_anos = df[df["Ano"].isin([2024, 2025])].dropna(subset=["Data", "Fat.Real"])
 
-    # Agrupamento por mês e ano
+   # Agrupamento por mês e ano
     fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
 
     # Ordenação dos meses
@@ -456,6 +456,7 @@ with aba4:
         "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
     ]
     fat_mensal["Nome Mês"] = pd.Categorical(fat_mensal["Nome Mês"], categories=ordem_meses, ordered=True)
+    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)  # ✅ Converte ano para string para uso como categoria
     fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
 
     # =========================
