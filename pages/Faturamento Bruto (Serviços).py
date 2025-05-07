@@ -468,16 +468,8 @@ with aba4:
     # =========================
 
     st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado)")
-    fig = px.bar(
-        fat_mensal,
-        x="Nome Mês",
-        y="Fat.Real",
-        color="Ano",
-        barmode="group",
-        text_auto=".2s",
-        title="Comparativo de Faturamento Real Mensal"
-    )
-    # Gráfico com Mês + Ano no eixo X
+
+    # Criar eixo com Mês + Ano
     fat_mensal["Mês/Ano"] = fat_mensal["Nome Mês"] + " - " + fat_mensal["Ano"]
 
     fig = px.bar(
@@ -486,14 +478,14 @@ with aba4:
         y="Fat.Real",
         color="Ano",
         text_auto=".2s",
-        title="Comparativo de Faturamento Real Mensal - 2024 vs 2025",
+        title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
     )
     fig.update_layout(
         xaxis_title="Mês",
         yaxis_title="Faturamento (R$)",
         xaxis_tickangle=-45,
-        showlegend=False,
-)
+        showlegend=True
+    )
     st.plotly_chart(fig, use_container_width=True)
 
     # =========================
@@ -504,5 +496,5 @@ with aba4:
 
     st.subheader("📌 Total Anual de Faturamento")
     st.dataframe(totais_ano.rename(columns={"Ano": "Ano", "Fat.Real": "Total"}), hide_index=True)
-        fig.update_layout(xaxis_title="Mês", yaxis_title="Faturamento (R$)", xaxis_tickangle=-45)
-        st.plotly_chart(fig, use_container_width=True)
+
+   
