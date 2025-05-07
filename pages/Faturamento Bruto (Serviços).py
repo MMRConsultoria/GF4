@@ -455,13 +455,25 @@ with aba4:
     fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
 
     # Ordenação dos meses
-    ordem_meses = [
-        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    ]
-    fat_mensal["Nome Mês"] = pd.Categorical(fat_mensal["Nome Mês"], categories=ordem_meses, ordered=True)
-    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)  # ✅ Converte ano para string para uso como categoria
+    #ordem_meses = [
+     #   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      #  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    #]
+    #fat_mensal["Nome Mês"] = pd.Categorical(fat_mensal["Nome Mês"], categories=ordem_meses, ordered=True)
+    #fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)  # ✅ Converte ano para string para uso como categoria
     #fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
+        
+    # Converter mês para número
+    meses = {
+    "jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
+    "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12
+    }	
+
+    fat_mensal["MesNum"] = fat_mensal["Nome Mês"].str[:3].str.lower().map(meses)
+
+    # Ordem correta: intercalada por mês/ano
+    fat_mensal["ordem"] = fat_mensal["MesNum"] * 10 + fat_mensal["Ano"].astype(int)  # ex: jan/24 = 1*10+24 = 34 	
+
     fat_mensal = fat_mensal.sort_values("ordem")
     # =========================
     # 📊 Visualização
