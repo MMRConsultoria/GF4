@@ -478,17 +478,20 @@ with aba4:
 	    y="Fat.Real",
 	    color="Ano",
 	    barmode="group",
-	    text=fat_mensal["Ano"],   # valor do faturamento no topo
+	    text="Fat.Real",  # mostra o valor fora
+   	    custom_data=["Ano"],  # passa o ano para uso dentro do hovertemplate
 	    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
     )
 
     # Posicionar o valor no topo da barra
-    fig.update_traces(textposition="inside", textfont_color="white") 
+   fig.update_traces(textposition="outside")
 	
-   # Adiciona o ano dentro de cada barra
-    for trace in fig.data:
-    	trace.text = [trace.name] * len(trace.x)  # Ano dentro da barra
-    	trace.textposition = "inside"
+   # Mostrar ano dentro da barra com hovertemplate e customdata
+   fig.update_traces(
+	insidetextanchor="start",  # ancora texto dentro
+	texttemplate="%{customdata[0]}",  # ano dentro da barra
+	textposition="auto"
+    )
 
     fig.update_layout(
 	    xaxis_title="Mês",
