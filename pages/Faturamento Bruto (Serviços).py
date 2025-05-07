@@ -416,7 +416,7 @@ df = pd.DataFrame(dados)
 
 
 # Converter 'Fat.Real' de string com vírgula para float
-df["Fat.Real"] = df["Fat.Real"].astype(str).str.replace(",", ".").astype(float)
+df["Fat.Real"] = pd.to_numeric(df["Fat.Real"].astype(str).str.replace(",", "."), errors="coerce")
 
 # Tratamento de dados
 if not df.empty:
