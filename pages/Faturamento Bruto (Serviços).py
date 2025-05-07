@@ -464,10 +464,7 @@ with aba4:
     # 📊 Visualização
     # =========================
 
-    st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025")
-    fig5 = px.bar(df_barras, x="Mês-Ano", y="Fat.Real", title="Comparativo por Mês", text_auto=".2s")
-    fig5.update_layout(xaxis_tickangle=-45)
-    st.plotly_chart(fig5, use_container_width=True)
+    st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Comparativo lado a lado)")
     fig = px.bar(
         fat_mensal,
         x="Nome Mês",
@@ -477,7 +474,5 @@ with aba4:
         text_auto=".2s",
         title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
     )
-
     fig.update_layout(xaxis_title="Mês", yaxis_title="Faturamento (R$)", xaxis_tickangle=-45)
     st.plotly_chart(fig, use_container_width=True)
-   
