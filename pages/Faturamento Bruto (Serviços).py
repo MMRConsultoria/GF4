@@ -478,13 +478,16 @@ with aba4:
 	    y="Fat.Real",
 	    color="Ano",
 	    barmode="group",
-	    #text_auto=".2s",  # valor do faturamento no topo
-	    text=fat_mensal["Ano"],  # mostra o ano como texto
-	    textposition="inside",   # texto dentro da barra
+	    text_auto=".2s",  # valor do faturamento no topo
 	    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
     )
 
-    # Posicionar o valor no topo da barra
+	# Adiciona o ano dentro de cada barra
+	for trace in fig.data:
+    		trace.text = [trace.name] * len(trace.x)  # Ano dentro da barra
+    		trace.textposition = "inside"
+    
+	# Posicionar o valor no topo da barra
     fig.update_traces(textposition="outside")
 
     # ➕ Adicionar manualmente os anos como annotations (abaixo das barras)
