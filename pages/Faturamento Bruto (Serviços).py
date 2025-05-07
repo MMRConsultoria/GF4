@@ -415,10 +415,7 @@ with aba4:
     dados = aba.get_all_records()
     df = pd.DataFrame(dados)
 
-    # Mostrar amostra da coluna de data
-    st.subheader("🕵️‍♀️ Amostra da coluna Data (antes do tratamento)")
-    st.write(df["Data"].head(10))
-    st.write("Tipo da coluna Data:", df["Data"].dtype)
+   
 
     # =========================
     # 🧹 Tratamento dos dados
@@ -474,4 +471,4 @@ with aba4:
     fig5.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig5, use_container_width=True)
 
-    st.info(f"🔎 Linhas válidas no gráfico: {len(df_barras)}")
+   
