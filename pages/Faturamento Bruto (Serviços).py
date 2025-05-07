@@ -464,27 +464,57 @@ with aba4:
     fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
   
 
-    # =========================
+  # =========================
     # 📊 Visualização
     # =========================
 
     st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado com Ano embaixo e Valor em cima)")
 
-    # Criar coluna combinando mês e ano
-fat_mensal["Mês_Ano"] = fat_mensal["Nome Mês"] + " " + fat_mensal["Ano"]
+    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
 
-# Gráfico com Mês + Ano no eixo X
-fig = px.bar(
-    fat_mensal,
-    x="Mês_Ano",
-    y="Fat.Real",
-    color="Ano",
-    text="Fat.Real",  # valor no topo da barra
-    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
-)
+    fig = px.bar(
+	    fat_mensal,
+	    x="Nome Mês",
+	    y="Fat.Real",
+	    color="Ano",
+	    barmode="group",
+	    text_auto=".2s",  # valor do faturamento no topo
+	    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
+    )
 
-# Valor no topo da barra
-fig.update_traces(textposition="outside")
+    # Posicionar o valor no topo da barra
+    fig.update_traces(textposition="outside")
+
+    # ➕ Adicionar manualmente os anos como annotations (abaixo das barras)
+    annotations = []
+    y_min = fat_mensal["Fat.Real"].min()
+
+    for trace in fig.data:
+	    for xi, yi in zip(trace["x"], trace["y"]):
+		    annotations.append(dict(
+			    x=xi,
+			    y=y_min * -0.05,  # um pouco abaixo do eixo
+			    text=trace.name,  # exibe o ano (2024 ou 2025)
+			    showarrow=False,
+			    xanchor="center",
+			    yanchor="top",
+			    font=dict(size=10),
+			    xref="x",
+			    yref="y"
+		    ))
+
+    fig.update_layout(
+	    annotations=annotations,
+	    xaxis_title="Mês",
+	    yaxis_title="Faturamento (R$)",
+	    xaxis_tickangle=0,
+	    showlegend=True
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+   
+
 
 # Layout final
 fig.update_layout(
