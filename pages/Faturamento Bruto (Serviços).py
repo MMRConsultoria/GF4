@@ -482,12 +482,7 @@ with aba4:
 	    title="Comparativo de Faturamento Real Mensal - 2024 vs 2025"
     )
 
-	# Adiciona o ano dentro de cada barra
-	for trace in fig.data:
-    		trace.text = [trace.name] * len(trace.x)  # Ano dentro da barra
-    		trace.textposition = "inside"
-    
-	# Posicionar o valor no topo da barra
+    # Posicionar o valor no topo da barra
     fig.update_traces(textposition="outside")
 
     # ➕ Adicionar manualmente os anos como annotations (abaixo das barras)
@@ -517,3 +512,6 @@ with aba4:
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
+   
+
