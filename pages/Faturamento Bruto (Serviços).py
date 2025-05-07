@@ -468,8 +468,11 @@ with aba4:
     # =========================
 
     st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado)")
-   # Criar nova coluna 'Mês/Ano' com quebra de linha
-    fat_mensal["Mês/Ano"] = fat_mensal["Nome Mês"] + "\n" + fat_mensal["Ano"].astype(str)
+    # Converter 'Ano' para string ANTES da concatenação
+    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
+
+    # Criar coluna para exibir mês e ano no eixo X com quebra de linha
+    fat_mensal["Mês/Ano"] = fat_mensal["Nome Mês"] + "\n" + fat_mensal["Ano"]
     fig = px.bar(
         fat_mensal,
         x="Mês/Ano",
