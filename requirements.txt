@@ -7,3 +7,4 @@ xlsxwriter
 gspread-dataframe
 openpyxl
 gspread-formatting
+plotly
