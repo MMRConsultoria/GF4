@@ -462,18 +462,19 @@ with aba4:
     fat_mensal["Nome Mês"] = pd.Categorical(fat_mensal["Nome Mês"], categories=ordem_meses, ordered=True)
     fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)  # ✅ Converte ano para string para uso como categoria
     fat_mensal = fat_mensal.sort_values(["Nome Mês", "Ano"])
+    
     # =========================
     # 📊 Visualização
     # =========================
 
     st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado)")
 
-    # Garantir que as colunas estejam em string e sem NaN
-    fat_mensal["Ano"] = fat_mensal["Ano"].fillna("").astype(str)
-    fat_mensal["Nome Mês"] = fat_mensal["Nome Mês"].fillna("").astype(str)
+    # Converter colunas para string comum (mesmo se forem categóricas)
+    fat_mensal["Nome Mês"] = fat_mensal["Nome Mês"].astype(str)
+    fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
 
-    # Criar coluna combinada para eixo X
-    fat_mensal["Mês/Ano"] = fat_mensal["Nome Mês"] + "\n" + fat_mensal["Ano"]
+    # Criar rótulo para eixo X com quebra de linha
+    fat_mensal["Mês/Ano"] = fat_mensal["Nome Mês"] + "<br>" + fat_mensal["Ano"]  # usar <br> ao invés de \n para plotly
 
     # Gráfico de barras com mês/ano empilhado no eixo X
     fig = px.bar(
