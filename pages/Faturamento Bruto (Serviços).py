@@ -469,23 +469,21 @@ with aba4:
 
     st.subheader("📊 Faturamento Real Mensal - 2024 vs 2025 (Lado a Lado)")
 
-    # Converter colunas para string comum (mesmo se forem categóricas)
-    fat_mensal["Nome Mês"] = fat_mensal["Nome Mês"].astype(str)
+    # Converter colunas para string (importante para o eixo de cores)
     fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
 
-    # Criar rótulo para eixo X com quebra de linha
-    fat_mensal["Mês/Ano"] = fat_mensal["Nome Mês"] + "<br>" + fat_mensal["Ano"]  # usar <br> ao invés de \n para plotly
-
-    # Gráfico de barras com mês/ano empilhado no eixo X
+    # Gráfico de barras agrupadas
     fig = px.bar(
         fat_mensal,
-        x="Mês/Ano",
+        x="Nome Mês",
         y="Fat.Real",
         color="Ano",
+        barmode="group",  # 👈 agrupamento lado a lado
         text_auto=".2s",
         title="Comparativo de Faturamento Real Mensal - 2024 vs 2025",
     )
 
+    # Ajustes visuais
     fig.update_layout(
         xaxis_title="Mês",
         yaxis_title="Faturamento (R$)",
@@ -494,5 +492,3 @@ with aba4:
     )
 
     st.plotly_chart(fig, use_container_width=True)
-
-   
