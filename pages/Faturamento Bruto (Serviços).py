@@ -546,7 +546,7 @@ df_lojas["Ano"] = df_lojas["Ano"].astype(int)
 df_total = df_total.merge(df_lojas, on="Ano", how="left")
 
 
-
+df_total["Ano"] = df_total["Ano"].astype(str)
 fig_total = px.bar(
     df_total,
     x="Fat.Real",
