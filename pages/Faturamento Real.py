@@ -603,10 +603,7 @@ fig_total = px.bar(
     color="Ano",  # Mantém as cores iguais ao gráfico mensal
     text="AnoTexto",  # 👈 usa a nova coluna,
     color_discrete_map=color_map
-	#color_discrete_map={
-    #    "2024": "#1f77b4",  # cor usada no mensal para 2024 (exemplo: azul padrão plotly)
-    #    "2025": "#ff7f0e",  # cor usada no mensal para 2025 (exemplo: laranja padrão plotly)
-    #}
+	
 )
 # 🔥 Remove título de eixos e legenda
 fig_total.update_traces(
@@ -619,7 +616,7 @@ fig_total.update_traces(
 # Estilo da barra
 fig_total.update_traces(
     textposition="outside",  # Valor do lado de fora
-    insidetextanchor="middle",
+    insidetextanchor="start",
     textfont=dict(size=12),
     showlegend=False      # reforço	
 )
