@@ -516,7 +516,6 @@ fig.update_layout(
     yaxis_title=None,
     xaxis_tickangle=-45,
     showlegend=False,
-    annotations=annotations,
     yaxis=dict(
         showticklabels=False,
         showgrid=False,
