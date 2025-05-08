@@ -346,42 +346,52 @@ with aba3:
                 duplicados.append(linha)  # Adiciona a linha duplicada à lista
 
         # Adicionar o botão de atualização do Google Sheets
-       # Adicionar o botão de atualização do Google Sheets
-if st.button("📥 Enviar dados para o Google Sheets"):
-    with st.spinner("🔄 Atualizando o Google Sheets..."):
-        try:
-            if novos_dados:
-                primeira_linha_vazia = len(valores_existentes) + 1
-
-                # Dados limpos como string
-                dados_limpos = [[str(c) if pd.notna(c) else "" for c in row] for row in novos_dados]
-
-                # Atualizar Google Sheets
-                aba_destino.update(f"A{primeira_linha_vazia}", dados_limpos)
-
-                # Aplicar formatação com segurança
-                from gspread_formatting import CellFormat, NumberFormat, format_cell_range
-
-                data_format = CellFormat(numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy'))
-                numero_format = CellFormat(numberFormat=NumberFormat(type='NUMBER', pattern='0'))
-
-                linha_fim = primeira_linha_vazia + len(novos_dados) - 1
-                linha_fim_limitada = min(linha_fim, primeira_linha_vazia + 1000)
-
+        if st.button("📥 Enviar dados para o Google Sheets"):
+            with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
-                    format_cell_range(aba_destino, f"A{primeira_linha_vazia}:A{linha_fim_limitada}", data_format)
-                    format_cell_range(aba_destino, f"L{primeira_linha_vazia}:L{linha_fim_limitada}", numero_format)
-                    format_cell_range(aba_destino, f"D{primeira_linha_vazia}:D{linha_fim_limitada}", numero_format)
-                    format_cell_range(aba_destino, f"F{primeira_linha_vazia}:F{linha_fim_limitada}", numero_format)
-                except Exception as e_format:
-                    st.warning(f"⚠️ Dados enviados, mas a formatação falhou: {e_format}")
+                    if novos_dados:
+                        # Manter a primeira linha vazia para começar a inserção
+                        primeira_linha_vazia = len(valores_existentes) + 1
+                        
+                        # Enviar os novos dados para o Google Sheets
+                        aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
 
-                st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso!")
+# ASPAS RESOLVIDO
+                        
+                        # 🔧 Aplicar formatação de data na coluna A (Data) - prbblema de aspas resolvido
+                        from gspread_formatting import CellFormat, NumberFormat, format_cell_range
 
-            if duplicados:
-                st.warning(f"⚠️ {len(duplicados)} registro(s) duplicado(s) foram ignorados.")
-        except Exception as e:
-            st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
+                        data_format = CellFormat(
+                            numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy')
+                        )
+
+                        # 🔢 Formato para coluna Ano como número sem aspas
+                        numero_format = CellFormat(
+                        numberFormat=NumberFormat(type='NUMBER', pattern='0')
+                        )
+                      
+                        
+                        # Considerando que a coluna A é onde está a data
+                        format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(novos_dados)}", data_format)
+                        format_cell_range(aba_destino, f"L2:L{primeira_linha_vazia + len(novos_dados)}", numero_format)  
+                        format_cell_range(aba_destino, f"D2:D{primeira_linha_vazia + len(novos_dados)}", numero_format)
+                        format_cell_range(aba_destino, f"F2:F{primeira_linha_vazia + len(novos_dados)}", numero_format)
+
+
+
+
+                        
+                        st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
+
+                    if duplicados:
+                        st.warning(f"⚠️ {len(duplicados)} registro(s) foram duplicados e não foram enviados para o Google Sheets.")
+                        # Exibir as linhas duplicadas para o usuário
+                   #     st.write("Registros Duplicados:", duplicados)
+
+                   # else:
+                    #    st.info("✅ Dados atualizados google sheets.")
+                except Exception as e:
+                    st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
