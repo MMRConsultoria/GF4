@@ -442,7 +442,7 @@ with aba4:
 
 	
     # Filtrar os dados com base na seleção
-    df_anos_filtrado = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"])
+    #df_anos_filtrado = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"])
     def limpar_valor(x):
         try:
             if isinstance(x, str):
@@ -470,6 +470,10 @@ with aba4:
     }
     df["Nome Mês"] = df["Mês"].map(meses_portugues)
 
+    # Só depois faz o filtro
+    df_anos_filtrado = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"])
+     
+	
    # Filtro de anos
     #df_anos = df[df["Ano"].isin([2024, 2025])].dropna(subset=["Data", "Fat.Real"])
     # Filtro de anos com base no multiselect
