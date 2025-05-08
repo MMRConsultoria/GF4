@@ -550,7 +550,8 @@ df_lojas["Ano"] = df_lojas["Ano"].astype(int)
 
 # Junta com quantidade de lojas
 df_total = df_total.merge(df_lojas, on="Ano", how="left")
-df_total["AnoTexto"] = df_total["Ano"] + "        " + df_total["Fat.Real"].apply(lambda x: f"R$ {x/1_000_000:,.1f} Mi".replace(",", "."))
+df_total["AnoTexto"] = df_total["Ano"].astype(str) + "        " + df_total["Fat.Real"].apply(lambda x: f"R$ {x/1_000_000:,.1f} Mi".replace(",", "."))
+
 
 df_total["Ano"] = df_total["Ano"].astype(str)
 fig_total = px.bar(
