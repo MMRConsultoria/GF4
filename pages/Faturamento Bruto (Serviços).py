@@ -423,21 +423,21 @@ with aba4:
     # 🧹 Tratamento dos dados
     # =========================
     # 🔽 Interface para selecionar anos no comparativo (após tratamento dos dados)
-    anos_disponiveis = sorted(df["Ano"].dropna().unique())
+     anos_disponiveis = sorted(df["Ano"].dropna().unique())
 
-   # Para os gráficos
-    anos_comparacao = st.multiselect(
+    # Para os gráficos
+     anos_comparacao = st.multiselect(
     	"📊 Anos para gráficos de comparação",
     	options=anos_disponiveis,
     	default=anos_disponiveis
-   )
+    )
 
-   # Para a tabela
-   anos_selecionados = st.multiselect(
+    # Para a tabela
+    anos_selecionados = st.multiselect(
     	"🗓️ Anos para tabela com totais",
     	options=anos_disponiveis,
     	default=anos_disponiveis
-   )
+    )
 
 
 	
