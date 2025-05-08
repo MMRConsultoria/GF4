@@ -508,26 +508,7 @@ fig = px.bar(
 # Posicionar o valor no topo da barra
 fig.update_traces(textposition="outside")
 
-# ➕ Anotações com os anos centralizados abaixo de cada barra
-y_min = fat_mensal["Fat.Real"].min()
-annotations = []
 
-for trace in fig.data:
-    x_shift = -15 if trace.name == "2024" else 15
-    for xi, yi in zip(trace["x"], trace["y"]):
-        annotations.append(dict(
-            x=xi,
-            y=y_min * -0.05,
-            text=trace.name,
-            showarrow=False,
-            xanchor="center",
-            yanchor="top",
-            textangle=0,
-            font=dict(size=10),
-            xref="x",
-            yref="y",
-            xshift=x_shift
-        ))
 
 # Layout limpo e estilizado
 fig.update_layout(
