@@ -1,13 +1,23 @@
-# logo_sidebar.py
 import streamlit as st
-from PIL import Image
-import os
 
 def mostrar_logo_cliente():
-    caminho_logo = os.path.join(os.path.dirname(__file__), "logo_cliente.png")
-    try:
-        imagem = Image.open(caminho_logo)
-        st.sidebar.image(imagem, width=120)  # Logo no topo
-        st.sidebar.markdown("---")  # Separador visual abaixo
-    except Exception as e:
-        st.sidebar.warning(f"⚠️ Erro ao carregar logo: {e}")
+    st.markdown(
+        """
+        <style>
+            [data-testid="stSidebar"] > div:first-child {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .logo-container img {
+                max-width: 100px;
+                margin-bottom: 10px;
+                margin-top: 5px;
+            }
+        </style>
+        <div class="logo-container">
+            <img src="https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo_cliente.png" alt="Logo Cliente">
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
