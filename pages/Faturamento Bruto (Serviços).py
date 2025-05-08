@@ -640,19 +640,18 @@ st.plotly_chart(fig, use_container_width=True)
 # 📋 Tabela: Faturamento Real por Loja e Mês
 # =========================
 
-# ✅ Reutiliza exatamente o df_anos do gráfico (já filtrado e limpo)
 df_fat = df_anos.copy()
 
-# ✅ Normaliza loja
+# Normaliza nomes das lojas
 df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
 
-# ✅ Garante que Fat.Real está numérico
+# Garante que Fat.Real é numérico
 df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
 
-# ✅ Gera coluna do mês
+# Cria coluna do mês
 df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
 
-# ✅ Cria a tabela pivot
+# Gera a tabela dinâmica
 tabela_fat_real = df_fat.pivot_table(
     index="Loja",
     columns="Mês",
@@ -661,6 +660,15 @@ tabela_fat_real = df_fat.pivot_table(
     fill_value=0
 )
 
-# ✅ Ordena meses
+# Ordena os meses
 ordem_meses = [
-    "01 - Janeiro", "02 - Fevereiro", "
+    "01 - Janeiro", "02 - Fevereiro", "03 - Março", "04 - Abril", "05 - Maio",
+    "06 - Junho", "07 - Julho", "08 - Agosto", "09 - Setembro", "10 - Outubro",
+    "11 - Novembro", "12 - Dezembro"
+]
+tabela_fat_real = tabela_fat_real.reindex(columns=ordem_meses, fill_value=0)
+
+# Exibe a tabela no app
+st.markdown("---")
+st.subheader("📋 Faturamento Real por Loja e Mês")
+st.dataframe(tabela_fat_real.style.format("R$ {:,.2f}"))
