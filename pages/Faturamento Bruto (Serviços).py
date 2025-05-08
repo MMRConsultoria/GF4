@@ -661,22 +661,28 @@ st.write("💰 Soma total de Fat.Real:", soma_total)
 st.write("📋 Dados para pivot:")
 st.write(df_fat[["Loja", "Mês", "Fat.Real"]].head(10))
 # =========================
-# 📋 Tabela: Faturamento Real por Loja e Mês (100% baseada em df_anos)
+# 📋 Faturamento Real por Loja e Mês (com meses em português)
 # =========================
 
-# 🔹 Copia os dados reais do gráfico (df_anos já está filtrado e validado)
+# 🔹 Usa o mesmo df_anos dos gráficos
 df_fat = df_anos.copy()
 
 # 🔹 Normaliza nomes das lojas
 df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
 
-# 🔹 Garante que Fat.Real seja numérico
+# 🔹 Garante que Fat.Real é numérico
 df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
 
-# 🔹 Cria coluna do mês no formato "03 - Março"
+# 🔹 Traduz mês para português
+meses_pt = {
+    "January": "Janeiro", "February": "Fevereiro", "March": "Março", "April": "Abril",
+    "May": "Maio", "June": "Junho", "July": "Julho", "August": "Agosto",
+    "September": "Setembro", "October": "Outubro", "November": "Novembro", "December": "Dezembro"
+}
 df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
+df_fat["Mês"] = df_fat["Mês"].apply(lambda x: f"{x[:6]}{meses_pt.get(x[6:], x[6:])}")
 
-# 🔹 Cria a tabela dinâmica (pivot table)
+# 🔹 Gera tabela dinâmica
 tabela_fat_real = df_fat.pivot_table(
     index="Loja",
     columns="Mês",
@@ -685,7 +691,7 @@ tabela_fat_real = df_fat.pivot_table(
     fill_value=0
 )
 
-# 🔹 Ordena os meses na sequência correta
+# 🔹 Ordena colunas dos meses corretamente
 ordem_meses = [
     "01 - Janeiro", "02 - Fevereiro", "03 - Março", "04 - Abril", "05 - Maio",
     "06 - Junho", "07 - Julho", "08 - Agosto", "09 - Setembro", "10 - Outubro",
@@ -693,9 +699,7 @@ ordem_meses = [
 ]
 tabela_fat_real = tabela_fat_real.reindex(columns=ordem_meses, fill_value=0)
 
-# 🔹 Exibe no Streamlit com formatação de moeda
+# 🔹 Exibe no Streamlit
 st.markdown("---")
 st.subheader("📋 Faturamento Real por Loja e Mês")
 st.dataframe(tabela_fat_real.style.format("R$ {:,.2f}"))
-
-
