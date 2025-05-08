@@ -637,35 +637,23 @@ st.subheader("Faturamento Mensal")
 st.plotly_chart(fig, use_container_width=True)
 
 # =========================
-# 📋 Tabela: Faturamento Real por Loja e Mês (100% funcional)
+# 📋 Tabela: Faturamento Real por Loja e Mês
 # =========================
 
-# 🔧 Função mais robusta para limpar valores
-def limpar_valor(x):
-    try:
-        if pd.isnull(x):
-            return None
-        x = str(x).replace("R$", "").replace("\xa0", "").replace("\u200b", "").strip()
-        x = x.replace(".", "").replace(",", ".")
-        return float(x)
-    except:
-        return None
+# ✅ Reutiliza exatamente o df_anos do gráfico (já filtrado e limpo)
+df_fat = df_anos.copy()
 
-# ✅ Trabalhar com df (dados lidos da aba "Fat Sistema Externo")
-df["Fat.Real"] = df["Fat.Real"].apply(limpar_valor)
-df["Data"] = pd.to_datetime(df["Data"], errors="coerce", dayfirst=True)
+# ✅ Normaliza loja
+df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
 
-# ✅ Filtrar apenas dados válidos de 2024 e 2025
-df_anos = df[df["Data"].dt.year.isin([2024, 2025])].dropna(subset=["Fat.Real", "Data", "Loja"])
+# ✅ Garante que Fat.Real está numérico
+df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
 
-# ✅ Normalizar lojas
-df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
+# ✅ Gera coluna do mês
+df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
 
-# ✅ Criar coluna do mês
-df_anos["Mês"] = df_anos["Data"].dt.strftime("%m - %B")
-
-# ✅ Gerar tabela dinâmica
-tabela_fat_real = df_anos.pivot_table(
+# ✅ Cria a tabela pivot
+tabela_fat_real = df_fat.pivot_table(
     index="Loja",
     columns="Mês",
     values="Fat.Real",
@@ -673,15 +661,6 @@ tabela_fat_real = df_anos.pivot_table(
     fill_value=0
 )
 
-# ✅ Ordem correta dos meses
+# ✅ Ordena meses
 ordem_meses = [
-    "01 - Janeiro", "02 - Fevereiro", "03 - Março", "04 - Abril", "05 - Maio",
-    "06 - Junho", "07 - Julho", "08 - Agosto", "09 - Setembro", "10 - Outubro",
-    "11 - Novembro", "12 - Dezembro"
-]
-tabela_fat_real = tabela_fat_real.reindex(columns=ordem_meses, fill_value=0)
-
-# ✅ Exibir no Streamlit
-st.markdown("---")
-st.subheader("📋 Faturamento Real por Loja e Mês")
-st.dataframe(tabela_fat_real.style.format("R$ {:,.2f}"))
+    "01 - Janeiro", "02 - Fevereiro", "
