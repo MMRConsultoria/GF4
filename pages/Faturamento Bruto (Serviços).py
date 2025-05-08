@@ -661,14 +661,14 @@ st.write("💰 Soma total de Fat.Real:", soma_total)
 st.write("📋 Dados para pivot:")
 st.write(df_fat[["Loja", "Mês", "Fat.Real"]].head(10))
 # =========================
-# 📋 Faturamento Real por Loja e Mês (formato BR: vírgula e ponto)
+# 📋 Faturamento Real por Loja e Mês — com vírgula e ponto no padrão BR
 # =========================
 
 df_fat = df_anos.copy()
 df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
 df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
 
-# Traduzir meses para português
+# Traduzir mês
 meses_pt = {
     "January": "Janeiro", "February": "Fevereiro", "March": "Março", "April": "Abril",
     "May": "Maio", "June": "Junho", "July": "Julho", "August": "Agosto",
@@ -677,7 +677,7 @@ meses_pt = {
 df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
 df_fat["Mês"] = df_fat["Mês"].apply(lambda x: f"{x[:6]}{meses_pt.get(x[6:], x[6:])}")
 
-# Criar a tabela dinâmica
+# Tabela dinâmica
 tabela_fat_real = df_fat.pivot_table(
     index="Loja",
     columns="Mês",
@@ -686,15 +686,12 @@ tabela_fat_real = df_fat.pivot_table(
     fill_value=0
 )
 
-# Exibir com formato BR (ponto milhar, vírgula decimal)
-st.markdown("---")
-st.subheader("📋 Faturamento Real por Loja e Mês")
-
-st.dataframe(
-    tabela_fat_real
-    .style
-    .format("R$ {:,.2f}")
-    .format_index(str)
-    .applymap(lambda x: str(x).replace(",", "X").replace(".", ",").replace("X", "."))  # ponto ↔ vírgula
+# Formatar os valores manualmente com ponto ↔ vírgula
+tabela_formatada = tabela_fat_real.applymap(
+    lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 )
 
+# Exibir no Streamlit sem usar .style
+st.markdown("---")
+st.subheader("📋 Faturamento Real por Loja e Mês")
+st.dataframe(tabela_formatada)
