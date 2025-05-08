@@ -457,7 +457,10 @@ with aba4:
 
    # Filtro de anos
     #df_anos = df[df["Ano"].isin([2024, 2025])].dropna(subset=["Data", "Fat.Real"])
-    df_anos = df.dropna(subset=["Data", "Fat.Real"]).copy()
+    # Filtro de anos com base no multiselect
+    anos_disponiveis = sorted(df["Ano"].dropna().unique())
+    anos_comparacao = st.multiselect("📊 Escolha os anos para comparação nos gráficos", options=anos_disponiveis, default=anos_disponiveis)
+    df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"]).copy()
 #NOVO
     # Calcular a quantidade de lojas únicas por ano
     df_lojas = df_anos.groupby("Ano")["Loja"].nunique().reset_index()
@@ -475,7 +478,7 @@ with aba4:
 	
    # Agrupamento por mês e ano
     #fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
-   fat_mensal = df_anos_filtrado.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
+    fat_mensal = df_anos_filtrado.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
 
 
 # ==============================
@@ -502,7 +505,7 @@ fat_mensal = fat_mensal.sort_values(["MesNum", "Ano"])
 
 
 # Filtrar os dados com base na seleção
-df_anos_filtrado = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"])
+#df_anos_filtrado = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"])
 
 
 
