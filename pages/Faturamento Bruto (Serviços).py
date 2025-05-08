@@ -605,9 +605,7 @@ fig_total.update_layout(
     yaxis=dict(
         showticklabels=False,
         showgrid=False,
-        ticks="",
-        zeroline=False,
-        visible=False
+        zeroline=False
     ),
     plot_bgcolor="rgba(0,0,0,0)"
 )
