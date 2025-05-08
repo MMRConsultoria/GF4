@@ -1,10 +1,7 @@
 # logo_sidebar.py
-from PIL import Image
 import streamlit as st
+from PIL import Image
 
-def exibir_logo(path="logo_cliente.png"):
-    try:
-        logo = Image.open(path)
-        st.sidebar.image(logo, use_column_width=True)
-    except FileNotFoundError:
-        st.sidebar.warning("⚠️ Logo não encontrado.")
+def mostrar_logo_cliente():
+    imagem = Image.open("logo_cliente.png")
+    st.sidebar.image(imagem, use_column_width=True)
