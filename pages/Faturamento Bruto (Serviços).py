@@ -560,12 +560,19 @@ fig_total = px.bar(
         "2025": "#ff7f0e",  # cor usada no mensal para 2025 (exemplo: laranja padrão plotly)
     }
 )
+# 🔥 Remove título de eixos e legenda
+fig_total.update_layout(
+    showlegend=False,      # ✅ remove legenda colorida
+    yaxis_title=None,      # ✅ remove o "Ano" da lateral
+    xaxis_title=None,      # (só por garantia)
+)
 
 # Estilo da barra
 fig_total.update_traces(
     textposition="outside",  # Valor do lado de fora
     insidetextanchor="middle",
     textfont=dict(size=12),
+    showlegend=False      # reforço	
 )
 # Ano dentro da barra (ex: 2025)
 for i, row in df_total.iterrows():
