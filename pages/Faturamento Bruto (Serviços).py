@@ -635,37 +635,13 @@ st.plotly_chart(fig_total, use_container_width=True)
 st.markdown("---")
 st.subheader("Faturamento Mensal")
 st.plotly_chart(fig, use_container_width=True)
-# =========================
-# 📋 Diagnóstico de df_anos
-# =========================
 
-st.markdown("---")
-st.subheader("🛠️ Diagnóstico dos dados brutos")
 
-# Verificar tipos e primeiros dados
-st.write("🔎 Primeiros dados de df_anos:")
-st.write(df_anos[["Loja", "Data", "Fat.Real"]].head(10))
-st.write("📊 Tipos de dados:", df_anos.dtypes)
-
-# Forçar limpeza e teste
-df_fat = df_anos.copy()
-df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
-df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
-df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
-
-# Soma total para saber se os dados existem
-soma_total = df_fat["Fat.Real"].sum()
-st.write("💰 Soma total de Fat.Real:", soma_total)
-
-# Mostrar dados antes do pivot
-st.write("📋 Dados para pivot:")
-st.write(df_fat[["Loja", "Mês", "Fat.Real"]].head(10))
-import io
 
 # =========================
 # 📋 Faturamento Real por Loja e Mês (com totais e exportação)
 # =========================
-
+import io
 # 1. Prepara os dados
 df_fat = df_anos.copy()
 df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
