@@ -617,7 +617,6 @@ for i, row in df_total.iterrows():
 fig_total.update_layout(
     height=130,
     margin=dict(t=0, b=0, l=0, r=0),
-    showlegend=False,
     title=None,
     xaxis=dict(
         visible=False
