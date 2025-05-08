@@ -474,7 +474,7 @@ with aba4:
     #df_anos = df[df["Ano"].isin([2024, 2025])].dropna(subset=["Data", "Fat.Real"])
     # Filtro de anos com base no multiselect
     anos_disponiveis = sorted(df["Ano"].dropna().unique())
-    anos_comparacao = st.multiselect("📊 Escolha os anos para comparação nos gráficos", options=anos_disponiveis, default=anos_disponiveis)
+    #anos_comparacao = st.multiselect("📊 Escolha os anos para comparação nos gráficos", options=anos_disponiveis, default=anos_disponiveis)
     df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"]).copy()
 #NOVO
     # Calcular a quantidade de lojas únicas por ano
