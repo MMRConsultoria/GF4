@@ -660,15 +660,18 @@ st.write("💰 Soma total de Fat.Real:", soma_total)
 # Mostrar dados antes do pivot
 st.write("📋 Dados para pivot:")
 st.write(df_fat[["Loja", "Mês", "Fat.Real"]].head(10))
+import io
+
 # =========================
-# 📋 Faturamento Real por Loja e Mês — com vírgula e ponto no padrão BR
+# 📋 Faturamento Real por Loja e Mês (com totais e exportação)
 # =========================
 
+# 1. Prepara os dados
 df_fat = df_anos.copy()
 df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
 df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
 
-# Traduzir mês
+# 2. Traduz os meses para português
 meses_pt = {
     "January": "Janeiro", "February": "Fevereiro", "March": "Março", "April": "Abril",
     "May": "Maio", "June": "Junho", "July": "Julho", "August": "Agosto",
@@ -677,7 +680,7 @@ meses_pt = {
 df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
 df_fat["Mês"] = df_fat["Mês"].apply(lambda x: f"{x[:6]}{meses_pt.get(x[6:], x[6:])}")
 
-# Tabela dinâmica
+# 3. Cria a tabela dinâmica
 tabela_fat_real = df_fat.pivot_table(
     index="Loja",
     columns="Mês",
@@ -686,12 +689,33 @@ tabela_fat_real = df_fat.pivot_table(
     fill_value=0
 )
 
-# Formatar os valores manualmente com ponto ↔ vírgula
-tabela_formatada = tabela_fat_real.applymap(
+# 4. Adiciona total por loja e total por mês
+linha_total = tabela_fat_real.sum().to_frame().T
+linha_total.index = ["Total Geral"]
+coluna_total = tabela_fat_real.sum(axis=1)
+tabela_fat_real.insert(0, "Total Geral", coluna_total)
+linha_total.insert(0, "Total Geral", coluna_total.sum())
+tabela_com_total = pd.concat([linha_total, tabela_fat_real])
+
+# 5. Formata os valores no padrão brasileiro
+tabela_formatada = tabela_com_total.applymap(
     lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 )
 
-# Exibir no Streamlit sem usar .style
+# 6. Exibe a tabela no app
 st.markdown("---")
-st.subheader("📋 Faturamento Real por Loja e Mês")
+st.subheader("📋 Faturamento Real por Loja e Mês (com Totais)")
 st.dataframe(tabela_formatada)
+
+# 7. Gera botão de download Excel com os dados reais
+buffer = io.BytesIO()
+with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+    tabela_com_total.to_excel(writer, index=True, sheet_name="Faturamento")
+    writer.save()
+
+st.download_button(
+    label="📥 Baixar Excel com Totais",
+    data=buffer.getvalue(),
+    file_name="faturamento_real_com_totais.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
