@@ -633,7 +633,7 @@ for i, row in df_total.iterrows():
 	showarrow=False,
         xanchor="left",
         yanchor="middle",
-        font=dict(color="white", size=13),
+        font=dict(color="white", size=16),
         xref="x",
         yref="y"
     )
@@ -646,8 +646,8 @@ for i, row in df_total.iterrows():
         text=f"{int(row['Qtd_Lojas'])} lojas",  # remove o .0
         xanchor="left",
         yanchor="bottom",
-	yshift=12,     
-        font=dict(color="red", size=12),
+	yshift=8,     
+        font=dict(color="red", size=16),
         xref="x",
         yref="y"
     )
