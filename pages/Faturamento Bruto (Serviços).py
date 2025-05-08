@@ -640,26 +640,25 @@ st.plotly_chart(fig, use_container_width=True)
 # 📋 Tabela: Faturamento Real por Loja e Mês
 # =========================
 
-# 🔹 Começa com base em df_anos, já filtrado por anos válidos
+# 🔹 Trabalha diretamente com df_anos (que já veio da planilha do Sheets)
 df_fat = df_anos.copy()
 
-# 🔹 Normaliza a loja (sem espaços e lowercase)
-df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower()
-df_fat["Loja"] = df_fat["Loja"].str.title()  # opcional: deixa com iniciais maiúsculas
-
-# 🔹 Corrige possíveis valores mal formatados em Fat.Real
+# 🔹 Corrige Fat.Real caso ainda tenha vindo como texto
 df_fat["Fat.Real"] = df_fat["Fat.Real"].apply(
     lambda x: float(str(x).replace("R$", "").replace(".", "").replace(",", ".").strip()) if pd.notnull(x) else 0
 )
 
-# 🔹 Remove linhas com problemas
-df_fat = df_fat.dropna(subset=["Data", "Loja"])
-df_fat = df_fat[df_fat["Fat.Real"] > 0]  # só mantém dados reais
+# 🔹 Normaliza nomes de lojas
+df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
 
-# 🔹 Cria coluna de mês (ex: "03 - Março")
+# 🔹 Remove linhas sem valor ou data
+df_fat = df_fat.dropna(subset=["Fat.Real", "Data", "Loja"])
+df_fat = df_fat[df_fat["Fat.Real"] > 0]
+
+# 🔹 Cria coluna do mês
 df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
 
-# 🔹 Gera a tabela dinâmica
+# 🔹 Cria tabela dinâmica
 tabela_fat_real = df_fat.pivot_table(
     index="Loja",
     columns="Mês",
@@ -668,7 +667,7 @@ tabela_fat_real = df_fat.pivot_table(
     fill_value=0
 )
 
-# 🔹 Ordena colunas pela ordem dos meses
+# 🔹 Ordena os meses
 ordem_meses = [
     "01 - Janeiro", "02 - Fevereiro", "03 - Março", "04 - Abril", "05 - Maio",
     "06 - Junho", "07 - Julho", "08 - Agosto", "09 - Setembro", "10 - Outubro",
@@ -676,7 +675,7 @@ ordem_meses = [
 ]
 tabela_fat_real = tabela_fat_real.reindex(columns=ordem_meses, fill_value=0)
 
-# 🔹 Exibe no app com formatação de moeda
+# 🔹 Exibe no app
 st.markdown("---")
 st.subheader("📋 Faturamento Real por Loja e Mês")
 st.dataframe(tabela_fat_real.style.format("R$ {:,.2f}"))
