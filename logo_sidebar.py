@@ -9,7 +9,7 @@ def mostrar_logo_cliente():
                 content: "";
                 display: block;
                 height: 80px;
-                background-image: url("https://raw.githubusercontent.com/MMRConsultoria/MMRConsultoria/principal/logo_cliente.png");
+                background-image: url("https://raw.githubusercontent.com/MMRConsultoria/MMRConsultoria/principal/logo_cliente1.png");
                 background-repeat: no-repeat;
                 background-position: center top;
                 background-size: 60px;
