@@ -588,10 +588,13 @@ df_lojas["Ano"] = df_lojas["Ano"].astype(int)
 
 # Junta com quantidade de lojas
 df_total = df_total.merge(df_lojas, on="Ano", how="left")
-df_total["AnoTexto"] = df_total.apply(
-    lambda row: f"{row['Ano']}  R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
-)
+#df_total["AnoTexto"] = df_total.apply(
+ #   lambda row: f"{row['Ano']}  R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
+#)
 
+df_total["AnoTexto"] = df_total.apply(
+    lambda row: f"{int(row['Ano'])}      R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
+)
 
 df_total["Ano"] = df_total["Ano"].astype(str)
 fig_total = px.bar(
