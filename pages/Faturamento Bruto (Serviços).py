@@ -424,7 +424,6 @@ with aba4:
     # =========================
     # 🔽 Interface para selecionar anos no comparativo (após tratamento dos dados)
     anos_disponiveis = sorted(df["Ano"].dropna().unique())
-    anos_comparacao = st.multiselect("📊 Escolha os anos para comparação nos gráficos", options=anos_disponiveis, default=anos_disponiveis)
     
     # Filtrar os dados com base na seleção
     df_anos_filtrado = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"])
