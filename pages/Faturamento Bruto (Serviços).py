@@ -636,60 +636,63 @@ st.markdown("---")
 st.subheader("Faturamento Mensal")
 st.plotly_chart(fig, use_container_width=True)
 
-# =========================
-# 📋 Faturamento Real por Loja e Mês (com totais e exportação)
-# =========================
 import io
+
 # 1. Prepara os dados
-df_fat = df_anos.copy()
-df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
-df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
+df_anos["Ano"] = df_anos["Data"].dt.year
+anos_disponiveis = sorted(df_anos["Ano"].dropna().unique())
 
-# 2. Traduz os meses para português
-meses_pt = {
-    "January": "Janeiro", "February": "Fevereiro", "March": "Março", "April": "Abril",
-    "May": "Maio", "June": "Junho", "July": "Julho", "August": "Agosto",
-    "September": "Setembro", "October": "Outubro", "November": "Novembro", "December": "Dezembro"
-}
-df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
-df_fat["Mês"] = df_fat["Mês"].apply(lambda x: f"{x[:6]}{meses_pt.get(x[6:], x[6:])}")
-
-# 3. Cria a tabela dinâmica
-tabela_fat_real = df_fat.pivot_table(
-    index="Loja",
-    columns="Mês",
-    values="Fat.Real",
-    aggfunc="sum",
-    fill_value=0
-)
-
-# 4. Adiciona total por loja e total por mês
-linha_total = tabela_fat_real.sum().to_frame().T
-linha_total.index = ["Total Geral"]
-coluna_total = tabela_fat_real.sum(axis=1)
-tabela_fat_real.insert(0, "Total Geral", coluna_total)
-linha_total.insert(0, "Total Geral", coluna_total.sum())
-tabela_com_total = pd.concat([linha_total, tabela_fat_real])
-
-# 5. Formata os valores no padrão brasileiro
-tabela_formatada = tabela_com_total.applymap(
-    lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-)
-
-# 6. Exibe a tabela no app
-st.markdown("---")
-st.subheader("📋 Faturamento Real por Loja e Mês (com Totais)")
-st.dataframe(tabela_formatada)
-
-# 7. Gera botão de download Excel com os dados reais
 buffer = io.BytesIO()
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-    tabela_com_total.to_excel(writer, index=True, sheet_name="Faturamento")
-  
+    for ano in anos_disponiveis:
+        df_fat = df_anos[df_anos["Ano"] == ano].copy()
+        df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
+        df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
 
+        # 2. Traduz os meses para português
+        meses_pt = {
+            "January": "Janeiro", "February": "Fevereiro", "March": "Março", "April": "Abril",
+            "May": "Maio", "June": "Junho", "July": "Julho", "August": "Agosto",
+            "September": "Setembro", "October": "Outubro", "November": "Novembro", "December": "Dezembro"
+        }
+        df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
+        df_fat["Mês"] = df_fat["Mês"].apply(lambda x: f"{x[:6]}{meses_pt.get(x[6:], x[6:])}")
+
+        # 3. Cria a tabela dinâmica
+        tabela_fat_real = df_fat.pivot_table(
+            index="Loja",
+            columns="Mês",
+            values="Fat.Real",
+            aggfunc="sum",
+            fill_value=0
+        )
+
+        # 4. Totais
+        linha_total = tabela_fat_real.sum().to_frame().T
+        linha_total.index = ["Total Geral"]
+        coluna_total = tabela_fat_real.sum(axis=1)
+        tabela_fat_real.insert(0, "Total Geral", coluna_total)
+        linha_total.insert(0, "Total Geral", coluna_total.sum())
+        tabela_com_total = pd.concat([linha_total, tabela_fat_real])
+
+        # 5. Formatar os valores
+        tabela_formatada = tabela_com_total.applymap(
+            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        )
+
+        # 6. Exibir no app
+        st.markdown("---")
+        st.subheader(f"📋 Faturamento Real por Loja e Mês - {ano}")
+        st.dataframe(tabela_formatada)
+
+        # 7. Salvar no Excel
+        tabela_com_total.to_excel(writer, sheet_name=f"Faturamento_{ano}")
+
+# 8. Botão de download do Excel final
+st.markdown("---")
 st.download_button(
-    label="📥 Baixar Excel com Totais",
+    label="📥 Baixar Excel com Totais por Ano",
     data=buffer.getvalue(),
-    file_name="faturamento_real_com_totais.xlsx",
+    file_name="faturamento_real_totais_por_ano.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
