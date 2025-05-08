@@ -3,9 +3,10 @@ import streamlit as st
 
 st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
 
-# Exibe o logo da empresa
-logo = Image.open("logo_cliente.png")
-st.image(logo, use_column_width=False)
+# Mostrar logo no menu lateral
+logo = Image.open("logo_cliente.png")  # ou "assets/logo_cliente.png" se estiver em subpasta
+st.sidebar.image(logo, use_container_width=True)
+
 
 # Garante que a chave exista antes de usar
 if "acesso_liberado" not in st.session_state:
