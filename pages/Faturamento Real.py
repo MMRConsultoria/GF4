@@ -611,7 +611,7 @@ fig_total = px.bar(
 # 🔥 Remove título de eixos e legenda
 fig_total.update_traces(
     textposition="inside",
-    textfont=dict(size=12, color="white"),
+    textfont=dict(size=16, color="white"),
     insidetextanchor="start",
     showlegend=False
 )
@@ -620,7 +620,7 @@ fig_total.update_traces(
 fig_total.update_traces(
     textposition="outside",  # Valor do lado de fora
     insidetextanchor="start",
-    textfont=dict(size=12),
+    textfont=dict(size=16),
     showlegend=False      # reforço	
 )
 # Ano dentro da barra (ex: 2025)
