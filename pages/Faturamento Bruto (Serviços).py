@@ -602,6 +602,7 @@ fig_total.update_layout(
     xaxis=dict(
         visible=False
     ),
+    showlegend=False,	
     yaxis=dict(
         showticklabels=False,
         showgrid=False,
