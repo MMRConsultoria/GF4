@@ -613,15 +613,14 @@ for i, row in df_total.iterrows():
         yref="y"
     )
 
-# Layout final
 fig_total.update_layout(
     height=130,
     margin=dict(t=0, b=0, l=0, r=0),
-    showlegend=False,
-    title=None,
-    xaxis=dict(visible=False),
-    yaxis=dict(visible=False),
-    plot_bgcolor="rgba(0,0,0,0)"
+    showlegend=False,           # remove legenda
+    title=None,                 # remove título
+    xaxis=dict(visible=False),  # remove eixo X (ticks, valores)
+    yaxis=dict(visible=False),  # remove eixo Y (anos)
+    plot_bgcolor="rgba(0,0,0,0)",  # fundo transparente
 )
 
 # Exibir no Streamlit
