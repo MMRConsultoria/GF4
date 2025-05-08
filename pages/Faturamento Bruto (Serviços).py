@@ -351,14 +351,14 @@ with aba3:
                 try:
                     if novos_dados:
                         # Manter a primeira linha vazia para começar a inserção
-                        primeira_linha_vazia = len(valores_existentes) + 1
+			primeira_linha_vazia = len(valores_existentes) + 1
 
 			# 🔐 Dados tratados como string segura
                         dados_limpos = [[str(c) if pd.notna(c) else "" for c in row] for row in novos_dados]
     
                         # Enviar os novos dados para o Google Sheets
                         #aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
-			aba_destino.update(f"A{linha_inicio}", dados_limpos)    
+			aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
 
 # ASPAS RESOLVIDO
                         
@@ -377,7 +377,7 @@ with aba3:
                     linha_fim = linha_inicio + len(novos_dados) - 1
     	            linha_fim_limitada = min(linha_fim, linha_inicio + 1000)  # evita travar com range muito grande   
 			
-		    try
+		    try:
                         # Considerando que a coluna A é onde está a data
                         format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(novos_dados)}", data_format)
                         format_cell_range(aba_destino, f"L2:L{primeira_linha_vazia + len(novos_dados)}", numero_format)  
