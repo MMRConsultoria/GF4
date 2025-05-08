@@ -550,17 +550,17 @@ df_lojas["Ano"] = df_lojas["Ano"].astype(int)
 
 # Junta com quantidade de lojas
 df_total = df_total.merge(df_lojas, on="Ano", how="left")
-
+df_total["AnoTexto"] = df_total["Ano"] + "        " + df_total["Fat.Real"].apply(lambda x: f"R$ {x/1_000_000:,.1f} Mi".replace(",", "."))
 
 df_total["Ano"] = df_total["Ano"].astype(str)
 fig_total = px.bar(
     df_total,
     x="Fat.Real",
     y="Ano",
-    title=None,	
+    #title=None,	
     orientation="h",
     color="Ano",  # Mantém as cores iguais ao gráfico mensal
-    text=df_total["Fat.Real"].apply(lambda x: f"R$ {x/1_000_000:,.1f} Mi".replace(",", ".")),
+    text="AnoTexto",  # 👈 usa a nova coluna,
     color_discrete_map=color_map
 	#color_discrete_map={
     #    "2024": "#1f77b4",  # cor usada no mensal para 2024 (exemplo: azul padrão plotly)
@@ -568,10 +568,11 @@ fig_total = px.bar(
     #}
 )
 # 🔥 Remove título de eixos e legenda
-fig_total.update_layout(
-    showlegend=False,      # ✅ remove legenda colorida
-    yaxis_title=None,      # ✅ remove o "Ano" da lateral
-    xaxis_title=None,      # (só por garantia)
+fig_total.update_traces(
+    textposition="inside",
+    textfont=dict(size=12, color="white"),
+    insidetextanchor="middle",
+    showlegend=False
 )
 
 # Estilo da barra
