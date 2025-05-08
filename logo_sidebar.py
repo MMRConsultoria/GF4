@@ -4,12 +4,16 @@ def mostrar_logo_cliente():
     st.markdown(
         """
         <style>
-            [data-testid="stSidebar"] > div:first-child {
-                padding-top: 100px;
+            /* Aplica o logo no TOPO da sidebar, fixo e visível */
+            [data-testid="stSidebar"]::before {
+                content: "";
+                display: block;
+                height: 80px;
                 background-image: url("https://raw.githubusercontent.com/MMRConsultoria/MMRConsultoria/principal/logo_cliente.png");
                 background-repeat: no-repeat;
-                background-position: top center;
-                background-size: 80px;
+                background-position: center top;
+                background-size: 60px;
+                margin: 20px 0;
             }
         </style>
         """,
