@@ -636,7 +636,6 @@ st.markdown("---")
 st.subheader("Faturamento Mensal")
 st.plotly_chart(fig, use_container_width=True)
 
-
 # =========================
 # 📋 Tabela: Faturamento Real por Loja e Mês
 # =========================
@@ -648,8 +647,10 @@ df_fat = df_fat.dropna(subset=["Fat.Real", "Data", "Loja"])
 df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower()
 df_fat["Loja"] = df_fat["Loja"].str.title()
 
-# ✅ Garantir que Fat.Real está numérico
-df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
+# ✅ Corrigir valores que ainda estejam como string
+df_fat["Fat.Real"] = df_fat["Fat.Real"].apply(
+    lambda x: float(str(x).replace("R$", "").replace(".", "").replace(",", ".").strip()) if pd.notnull(x) else 0
+)
 
 # ✅ Criar coluna "Mês" no formato "03 - Março"
 df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
@@ -676,8 +677,3 @@ st.markdown("---")
 st.subheader("📋 Faturamento Real por Loja e Mês")
 st.dataframe(tabela_fat_real.style.format("R$ {:,.2f}"))
 
-
-# 🔹 Exibir no Streamlit
-st.markdown("---")
-st.subheader("📋 Faturamento Real por Loja e Mês")
-st.dataframe(tabela_fat_real.style.format("R$ {:,.2f}"))
