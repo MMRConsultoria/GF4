@@ -566,7 +566,6 @@ df_lojas["Ano"] = df_lojas["Ano"].astype(int)
 df_total = df_total.merge(df_lojas, on="Ano", how="left")
 
 
-#st.subheader("📊 Faturamento Mensal")
 
 fig_total = px.bar(
     df_total,
@@ -584,13 +583,12 @@ fig_total.update_traces(
     textfont=dict(size=12),
 )
 
-# Inserir o ano DENTRO da barra com destaque em branco
-for trace in fig_total.data:
-    ano = trace.name
+# Adiciona o ANO dentro da barra (lado esquerdo)
+for i, row in df_total.iterrows():
     fig_total.add_annotation(
-        x=0.5,  # Pequeno deslocamento dentro da barra
-        y=ano,
-        text=f"<b>{ano}</b>",
+        x=0.1,
+        y=row["Ano"],
+        text=f"<b>{row['Ano']}</b>",
         showarrow=False,
         xanchor="left",
         yanchor="middle",
@@ -598,30 +596,24 @@ for trace in fig_total.data:
         xref="x",
         yref="y"
     )
-#NOVO
 
-# Inserir a quantidade de lojas no início da barra (lado oposto ao valor)
+# Adiciona a QTD DE LOJAS do lado direito da barra
 for i, row in df_total.iterrows():
     fig_total.add_annotation(
-        x=0.1,
+        x=row["Fat.Real"],
         y=row["Ano"],
         text=f"{row['Qtd_Lojas']} loja(s)",
         showarrow=False,
-        xanchor="left",
+        xanchor="right",
         yanchor="middle",
-        font=dict(color="white", size=11),
+        font=dict(color="black", size=12),
         xref="x",
         yref="y"
     )
 
-
-
-
-
-
-# Layout limpo e discreto
+# Layout final
 fig_total.update_layout(
-    height=120,
+    height=130,
     margin=dict(t=0, b=0, l=0, r=0),
     showlegend=False,
     title=None,
