@@ -450,6 +450,21 @@ with aba4:
 
    # Filtro de anos
     df_anos = df[df["Ano"].isin([2024, 2025])].dropna(subset=["Data", "Fat.Real"])
+
+#NOVO
+    # Calcular a quantidade de lojas únicas por ano
+    df_lojas = df_anos.groupby("Ano")["Loja"].nunique().reset_index()
+    df_lojas.columns = ["Ano", "Qtd_Lojas"]	
+
+
+
+
+    # Calcular a quantidade de lojas únicas por ano
+    df_lojas = df_anos.groupby("Ano")["Loja"].nunique().reset_index()
+    df_lojas.columns = ["Ano", "Qtd_Lojas"]
+
+
+
 	
    # Agrupamento por mês e ano
     fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
@@ -531,7 +546,16 @@ fig.update_layout(
 # 📉 Gráfico horizontal: Total Anual 2024 vs 2025
 # ==============================
 # 📉 Gráfico horizontal minimalista com total anual (valores visíveis e cores mantidas)
+#df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
+
+#NOVO
+
+# Total de faturamento por ano
 df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
+
+# Junta com quantidade de lojas
+df_total = df_total.merge(df_lojas, on="Ano", how="left")
+
 
 #st.subheader("📊 Faturamento Mensal")
 
@@ -565,6 +589,26 @@ for trace in fig_total.data:
         xref="x",
         yref="y"
     )
+#NOVO
+
+# Inserir a quantidade de lojas no início da barra (lado oposto ao valor)
+for i, row in df_total.iterrows():
+    fig_total.add_annotation(
+        x=0.1,
+        y=row["Ano"],
+        text=f"{row['Qtd_Lojas']} loja(s)",
+        showarrow=False,
+        xanchor="left",
+        yanchor="middle",
+        font=dict(color="white", size=11),
+        xref="x",
+        yref="y"
+    )
+
+
+
+
+
 
 # Layout limpo e discreto
 fig_total.update_layout(
