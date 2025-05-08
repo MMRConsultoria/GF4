@@ -553,6 +553,15 @@ fig.update_layout(
 # Total de faturamento por ano
 df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
 
+# Calcular quantidade de lojas
+df_lojas = df_anos.groupby("Ano")["Loja"].nunique().reset_index()
+df_lojas.columns = ["Ano", "Qtd_Lojas"]
+
+# Garantir que ambas as colunas 'Ano' são do mesmo tipo
+df_total["Ano"] = df_total["Ano"].astype(int)
+df_lojas["Ano"] = df_lojas["Ano"].astype(int)
+
+
 # Junta com quantidade de lojas
 df_total = df_total.merge(df_lojas, on="Ano", how="left")
 
