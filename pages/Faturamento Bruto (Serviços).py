@@ -571,7 +571,6 @@ fig_total = px.bar(
     df_total,
     x="Fat.Real",
     y="Ano",
-    showlegend=False,
     title=None,	
     orientation="h",
     color="Ano",  # Mantém as cores iguais ao gráfico mensal
