@@ -550,7 +550,9 @@ df_lojas["Ano"] = df_lojas["Ano"].astype(int)
 
 # Junta com quantidade de lojas
 df_total = df_total.merge(df_lojas, on="Ano", how="left")
-df_total["AnoTexto"] = df_total["Ano"].astype(str) + " - " + df_total["Fat.Real"].apply(lambda x: f"R$ {x/1_000_000:.1f} Mi")
+df_total["AnoTexto"] = df_total.apply(
+    lambda row: f"{row['Ano']}  R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
+)
 
 
 df_total["Ano"] = df_total["Ano"].astype(str)
@@ -633,3 +635,31 @@ st.plotly_chart(fig_total, use_container_width=True)
 st.markdown("---")
 st.subheader("Faturamento Mensal")
 st.plotly_chart(fig, use_container_width=True)
+# =========================
+# 📋 Tabela: Faturamento Real por Loja e Mês
+# =========================
+
+# Criar coluna de mês com nome e número (ex: 03 - Março)
+df_anos["Mês"] = df_anos["Data"].dt.strftime("%m - %B")
+
+# Criar tabela dinâmica (Loja x Mês)
+tabela_fat_real = df_anos.pivot_table(
+    index="Loja",
+    columns="Mês",
+    values="Fat.Real",
+    aggfunc="sum",
+    fill_value=0
+)
+
+# Ordenar colunas pela ordem dos meses
+ordem_meses = [
+    "01 - Janeiro", "02 - Fevereiro", "03 - Março", "04 - Abril", "05 - Maio",
+    "06 - Junho", "07 - Julho", "08 - Agosto", "09 - Setembro", "10 - Outubro",
+    "11 - Novembro", "12 - Dezembro"
+]
+tabela_fat_real = tabela_fat_real.reindex(columns=ordem_meses)
+
+# Exibir no Streamlit
+st.markdown("---")
+st.subheader("📋 Faturamento Real por Loja e Mês")
+st.dataframe(tabela_fat_real.style.format("R$ {:,.2f}"))
