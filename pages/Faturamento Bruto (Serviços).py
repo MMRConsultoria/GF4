@@ -403,6 +403,8 @@ with aba4:
     # 📈 Relatórios Gerenciais (Painel Interativo)
     # ================================
 
+
+	
     # Conectar ao Google Sheets
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
@@ -420,7 +422,12 @@ with aba4:
   # =========================
     # 🧹 Tratamento dos dados
     # =========================
-
+    # 🔽 Interface para selecionar anos no comparativo (após tratamento dos dados)
+    anos_disponiveis = sorted(df["Ano"].dropna().unique())
+    anos_comparacao = st.multiselect("📊 Escolha os anos para comparação nos gráficos", options=anos_disponiveis, default=anos_disponiveis)
+    
+    # Filtrar os dados com base na seleção
+    df_anos_filtrado = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"])
     def limpar_valor(x):
         try:
             if isinstance(x, str):
@@ -467,8 +474,8 @@ with aba4:
 
 	
    # Agrupamento por mês e ano
-    fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
-
+    #fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
+   fat_mensal = df_anos_filtrado.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
 
 
 # ==============================
@@ -492,6 +499,12 @@ fat_mensal = fat_mensal.sort_values(["MesNum", "Ano"])
 # =========================
 # 📊 Visualização
 # =========================
+
+
+# Filtrar os dados com base na seleção
+df_anos_filtrado = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"])
+
+
 
 #st.subheader("📊 Faturamento Anual")
 
@@ -537,6 +550,7 @@ fig.update_layout(
 #NOVO
 
 # Total de faturamento por ano
+#df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
 df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
 
 # Calcular quantidade de lojas
