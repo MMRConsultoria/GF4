@@ -641,16 +641,20 @@ st.plotly_chart(fig, use_container_width=True)
 # 📋 Tabela: Faturamento Real por Loja e Mês
 # =========================
 
-# 🔹 Garantir que estamos usando dados já tratados
 df_fat = df_anos.copy()
-
-# 🔹 Remover entradas inválidas
 df_fat = df_fat.dropna(subset=["Fat.Real", "Data", "Loja"])
 
-# 🔹 Criar coluna do mês no formato "03 - Março"
+# ✅ Normalizar nome das lojas
+df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower()
+df_fat["Loja"] = df_fat["Loja"].str.title()
+
+# ✅ Garantir que Fat.Real está numérico
+df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
+
+# ✅ Criar coluna "Mês" no formato "03 - Março"
 df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
 
-# 🔹 Criar tabela dinâmica (pivot table)
+# ✅ Criar a tabela
 tabela_fat_real = df_fat.pivot_table(
     index="Loja",
     columns="Mês",
@@ -659,13 +663,19 @@ tabela_fat_real = df_fat.pivot_table(
     fill_value=0
 )
 
-# 🔹 Definir ordem correta dos meses
+# ✅ Ordenar colunas por mês
 ordem_meses = [
     "01 - Janeiro", "02 - Fevereiro", "03 - Março", "04 - Abril", "05 - Maio",
     "06 - Junho", "07 - Julho", "08 - Agosto", "09 - Setembro", "10 - Outubro",
     "11 - Novembro", "12 - Dezembro"
 ]
 tabela_fat_real = tabela_fat_real.reindex(columns=ordem_meses, fill_value=0)
+
+# ✅ Exibir tabela no app
+st.markdown("---")
+st.subheader("📋 Faturamento Real por Loja e Mês")
+st.dataframe(tabela_fat_real.style.format("R$ {:,.2f}"))
+
 
 # 🔹 Exibir no Streamlit
 st.markdown("---")
