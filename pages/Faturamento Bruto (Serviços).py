@@ -711,7 +711,7 @@ st.dataframe(tabela_formatada)
 buffer = io.BytesIO()
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_com_total.to_excel(writer, index=True, sheet_name="Faturamento")
-    writer.save()
+  
 
 st.download_button(
     label="📥 Baixar Excel com Totais",
