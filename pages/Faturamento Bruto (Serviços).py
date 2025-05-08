@@ -502,7 +502,7 @@ fig = px.bar(
     color="Ano",
     barmode="group",
     text_auto=".2s",
-    custom_data=["MesAno"]
+    custom_data=["MesAno"],
     color_discrete_map=color_map	
 )
 
