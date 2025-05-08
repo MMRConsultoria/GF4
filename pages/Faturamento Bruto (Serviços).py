@@ -495,6 +495,11 @@ fat_mensal = fat_mensal.sort_values(["MesNum", "Ano"])
 
 #st.subheader("📊 Faturamento Anual")
 
+color_map = {
+    "2024": "#1f77b4",  # Azul (igual ao gráfico mensal)
+    "2025": "#ff7f0e",  # Laranja (igual ao gráfico mensal)
+}
+
 fig = px.bar(
     fat_mensal,
     x="Nome Mês",
