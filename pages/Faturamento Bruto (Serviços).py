@@ -659,23 +659,15 @@ tabela_fat_real = df_fat.pivot_table(
     fill_value=0
 )
 
-# 🔹 Ordenar colunas dos meses corretamente
+# 🔹 Definir ordem correta dos meses
 ordem_meses = [
     "01 - Janeiro", "02 - Fevereiro", "03 - Março", "04 - Abril", "05 - Maio",
     "06 - Junho", "07 - Julho", "08 - Agosto", "09 - Setembro", "10 - Outubro",
     "11 - Novembro", "12 - Dezembro"
 ]
-# Apenas manter os meses que existem no DataFrame
-meses_existentes = [m for m in ordem_meses if m in tabela_fat_real.columns]
-tabela_fat_real = tabela_fat_real[meses_existentes]
+tabela_fat_real = tabela_fat_real.reindex(columns=ordem_meses, fill_value=0)
 
 # 🔹 Exibir no Streamlit
-st.markdown("---")
-st.subheader("📋 Faturamento Real por Loja e Mês")
-st.dataframe(tabela_fat_real.style.format("R$ {:,.2f}"))
-
-
-# Exibir no Streamlit
 st.markdown("---")
 st.subheader("📋 Faturamento Real por Loja e Mês")
 st.dataframe(tabela_fat_real.style.format("R$ {:,.2f}"))
