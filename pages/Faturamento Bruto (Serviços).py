@@ -560,7 +560,7 @@ fig_total = px.bar(
 	#color_discrete_map={
     #    "2024": "#1f77b4",  # cor usada no mensal para 2024 (exemplo: azul padrão plotly)
     #    "2025": "#ff7f0e",  # cor usada no mensal para 2025 (exemplo: laranja padrão plotly)
-    }
+    #}
 )
 # 🔥 Remove título de eixos e legenda
 fig_total.update_layout(
