@@ -585,7 +585,7 @@ for i, row in df_total.iterrows():
     fig_total.add_annotation(
         x=row["Fat.Real"],
         y=row["Ano"],
-	title=None,    
+	  
         text=f"{int(row['Qtd_Lojas'])} lojas",  # remove o .0
         xanchor="right",
         yanchor="middle",
