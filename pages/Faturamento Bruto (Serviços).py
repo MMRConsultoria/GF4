@@ -582,13 +582,12 @@ fig_total.update_traces(
     insidetextanchor="middle",
     textfont=dict(size=12),
 )
-
-# Adiciona o ANO dentro da barra (lado esquerdo)
+# Ano dentro da barra (ex: 2025)
 for i, row in df_total.iterrows():
     fig_total.add_annotation(
         x=0.1,
         y=row["Ano"],
-        text=f"<b>{row['Ano']}</b>",
+        text=f"<b>{int(row['Ano'])}</b>",  # remove o .0
         showarrow=False,
         xanchor="left",
         yanchor="middle",
@@ -596,13 +595,12 @@ for i, row in df_total.iterrows():
         xref="x",
         yref="y"
     )
-
-# Adiciona a QTD DE LOJAS do lado direito da barra
+# Qtd de lojas ao final da barra (ex: 10 lojas)
 for i, row in df_total.iterrows():
     fig_total.add_annotation(
         x=row["Fat.Real"],
         y=row["Ano"],
-        text=f"{row['Qtd_Lojas']} loja(s)",
+        text=f"{int(row['Qtd_Lojas'])} lojas",  # remove o .0
         showarrow=False,
         xanchor="right",
         yanchor="middle",
