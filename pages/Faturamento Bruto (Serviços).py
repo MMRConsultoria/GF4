@@ -599,15 +599,14 @@ fig_total.update_layout(
     height=130,
     margin=dict(t=0, b=0, l=0, r=0),
     title=None,
-    xaxis=dict(
-        visible=False
-    ),
-    showlegend=False,	
+    xaxis=dict(visible=False),
     yaxis=dict(
         showticklabels=False,
         showgrid=False,
         zeroline=False
     ),
+    yaxis_title=None,     # ✅ remove "Ano" da lateral
+    showlegend=False,     # ✅ remove a legenda de cores
     plot_bgcolor="rgba(0,0,0,0)"
 )
 # Exibir no Streamlit
