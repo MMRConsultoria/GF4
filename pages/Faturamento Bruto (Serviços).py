@@ -640,22 +640,26 @@ st.plotly_chart(fig, use_container_width=True)
 # 📋 Tabela: Faturamento Real por Loja e Mês
 # =========================
 
+# 🔹 Começa com base em df_anos, já filtrado por anos válidos
 df_fat = df_anos.copy()
-df_fat = df_fat.dropna(subset=["Fat.Real", "Data", "Loja"])
 
-# ✅ Normalizar nome das lojas
+# 🔹 Normaliza a loja (sem espaços e lowercase)
 df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower()
-df_fat["Loja"] = df_fat["Loja"].str.title()
+df_fat["Loja"] = df_fat["Loja"].str.title()  # opcional: deixa com iniciais maiúsculas
 
-# ✅ Corrigir valores que ainda estejam como string
+# 🔹 Corrige possíveis valores mal formatados em Fat.Real
 df_fat["Fat.Real"] = df_fat["Fat.Real"].apply(
     lambda x: float(str(x).replace("R$", "").replace(".", "").replace(",", ".").strip()) if pd.notnull(x) else 0
 )
 
-# ✅ Criar coluna "Mês" no formato "03 - Março"
+# 🔹 Remove linhas com problemas
+df_fat = df_fat.dropna(subset=["Data", "Loja"])
+df_fat = df_fat[df_fat["Fat.Real"] > 0]  # só mantém dados reais
+
+# 🔹 Cria coluna de mês (ex: "03 - Março")
 df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
 
-# ✅ Criar a tabela
+# 🔹 Gera a tabela dinâmica
 tabela_fat_real = df_fat.pivot_table(
     index="Loja",
     columns="Mês",
@@ -664,7 +668,7 @@ tabela_fat_real = df_fat.pivot_table(
     fill_value=0
 )
 
-# ✅ Ordenar colunas por mês
+# 🔹 Ordena colunas pela ordem dos meses
 ordem_meses = [
     "01 - Janeiro", "02 - Fevereiro", "03 - Março", "04 - Abril", "05 - Maio",
     "06 - Junho", "07 - Julho", "08 - Agosto", "09 - Setembro", "10 - Outubro",
@@ -672,8 +676,7 @@ ordem_meses = [
 ]
 tabela_fat_real = tabela_fat_real.reindex(columns=ordem_meses, fill_value=0)
 
-# ✅ Exibir tabela no app
+# 🔹 Exibe no app com formatação de moeda
 st.markdown("---")
 st.subheader("📋 Faturamento Real por Loja e Mês")
 st.dataframe(tabela_fat_real.style.format("R$ {:,.2f}"))
-
