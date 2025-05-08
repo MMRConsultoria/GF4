@@ -644,7 +644,7 @@ for i, row in df_total.iterrows():
         y=row["Ano"],
 	showarrow=False,  
         text=f"{int(row['Qtd_Lojas'])} lojas",  # remove o .0
-        xanchor="left",
+        xanchor="center",
         yanchor="bottom",
 	yshift=8,     
         font=dict(color="red", size=16),
