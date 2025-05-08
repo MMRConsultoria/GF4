@@ -3,7 +3,7 @@ import streamlit as st
 from logo_sidebar import mostrar_logo_cliente
 
 st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
-
+mostrar_logo_cliente()
 
 st.sidebar.markdown(
     """
