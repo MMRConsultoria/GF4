@@ -1,6 +1,11 @@
+from PIL import Image
 import streamlit as st
 
 st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
+
+# Exibe o logo da empresa
+logo = Image.open("logo_cliente.png")
+st.image(logo, use_column_width=False)
 
 # Garante que a chave exista antes de usar
 if "acesso_liberado" not in st.session_state:
