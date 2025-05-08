@@ -12,7 +12,7 @@ st.sidebar.markdown(
     </div>
     """,
     unsafe_allow_html=True
-
+)
 # Garante que a chave exista antes de usar
 if "acesso_liberado" not in st.session_state:
     st.session_state["acesso_liberado"] = False
