@@ -1,11 +1,8 @@
-from PIL import Image
+
 import streamlit as st
 
 st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
 
-# Mostrar logo no menu lateral
-logo = Image.open("logo_cliente.png")  # ou "assets/logo_cliente.png" se estiver em subpasta
-st.sidebar.image(logo, use_container_width=True)
 
 
 # Garante que a chave exista antes de usar
