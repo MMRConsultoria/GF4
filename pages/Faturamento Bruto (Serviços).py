@@ -638,54 +638,70 @@ st.plotly_chart(fig, use_container_width=True)
 
 
 
-# =========================
-# 📋 Faturamento Real por Loja e Mês (com totais e exportação)
-# =========================
 import io
 
-# 🔹 Prepara os dados
+# 🔹 Prepara os dados base
 df_fat = df_anos.copy()
 df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
 df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
+
+# 🔹 Traduz os meses para português
+meses_pt = {
+    "January": "Janeiro", "February": "Fevereiro", "March": "Março", "April": "Abril",
+    "May": "Maio", "June": "Junho", "July": "Julho", "August": "Agosto",
+    "September": "Setembro", "October": "Outubro", "November": "Novembro", "December": "Dezembro"
+}
 df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
+df_fat["Mês"] = df_fat["Mês"].apply(lambda x: f"{x[:6]}{meses_pt.get(x[6:], x[6:])}")
 
-# 🔹 Dicionário para nomes traduzidos (opcional)
-meses_ordem = [
-    "01 - Janeiro", "02 - Fevereiro", "03 - Março", "04 - Abril", "05 - Maio",
-    "06 - Junho", "07 - Julho", "08 - Agosto", "09 - Setembro", "10 - Outubro",
-    "11 - Novembro", "12 - Dezembro"
-]
+# 🔹 Lista dos anos encontrados
+anos_disponiveis = sorted(df_fat["Data"].dt.year.dropna().unique())
 
-# 🔹 Gerar buffer Excel
+# 🔹 Iniciar buffer para exportação
 buffer = io.BytesIO()
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-    for ano in sorted(df_fat["Data"].dt.year.unique()):
-        df_ano = df_fat[df_fat["Data"].dt.year == ano].copy()
-        tabela = df_ano.pivot_table(index="Loja", columns="Mês", values="Fat.Real", aggfunc="sum", fill_value=0)
+    for ano in anos_disponiveis:
+        df_ano = df_fat[df_fat["Data"].dt.year == ano]
 
-        # Ordenar colunas por mês
-        colunas_presentes = [m for m in meses_ordem if m in tabela.columns]
+        tabela = df_ano.pivot_table(
+            index="Loja",
+            columns="Mês",
+            values="Fat.Real",
+            aggfunc="sum",
+            fill_value=0
+        )
+
+        # Ordenar colunas
+        ordem_meses = [
+            "01 - Janeiro", "02 - Fevereiro", "03 - Março", "04 - Abril", "05 - Maio",
+            "06 - Junho", "07 - Julho", "08 - Agosto", "09 - Setembro", "10 - Outubro",
+            "11 - Novembro", "12 - Dezembro"
+        ]
+        colunas_presentes = [m for m in ordem_meses if m in tabela.columns]
         tabela = tabela[colunas_presentes]
 
-        # Adicionar total por loja e total por mês
+        # Totais
         linha_total = tabela.sum().to_frame().T
         linha_total.index = ["Total Geral"]
         coluna_total = tabela.sum(axis=1)
         tabela.insert(0, "Total Geral", coluna_total)
         linha_total.insert(0, "Total Geral", coluna_total.sum())
-        tabela_final = pd.concat([linha_total, tabela])
+        tabela_com_total = pd.concat([linha_total, tabela])
 
         # Exibir no Streamlit
-        st.markdown(f"### 📋 Faturamento por Loja - {ano}")
-        st.dataframe(tabela_final.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")))
+        tabela_formatada = tabela_com_total.applymap(
+            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        )
+        st.markdown(f"### 📋 Faturamento Real por Loja e Mês - {ano}")
+        st.dataframe(tabela_formatada)
 
-        # Salvar no Excel
-        tabela_final.to_excel(writer, sheet_name=f"Faturamento {ano}")
+        # Gravar no Excel
+        tabela_com_total.to_excel(writer, index=True, sheet_name=f"Faturamento {ano}")
 
 # 🔽 Botão de download
 st.download_button(
-    label="📥 Baixar Excel por Ano",
+    label="📥 Baixar Excel com Totais por Ano",
     data=buffer.getvalue(),
-    file_name="faturamento_real_por_ano.xlsx",
+    file_name="faturamento_por_loja_por_ano.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
