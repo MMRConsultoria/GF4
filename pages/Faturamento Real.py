@@ -643,11 +643,11 @@ for i, row in df_total.iterrows():
         x=row["Fat.Real"],
         y=row["Ano"],
 	showarrow=False,  
-        text=f"{int(row['Qtd_Lojas'])} lojas",  # remove o .0
+        text=f"{int(row['Qtd_Lojas'])} Lojas",  # remove o .0
         xanchor="left",
         yanchor="bottom",
 	yshift=-8,     
-        font=dict(color="red", size=16),
+        font=dict(color="red", size=16,weight="bold"),
         xref="x",
         yref="y"
     )
