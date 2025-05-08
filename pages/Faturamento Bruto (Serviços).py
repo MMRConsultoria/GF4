@@ -619,7 +619,12 @@ fig_total.update_layout(
     showlegend=False,           # remove legenda
     title=None,                 # remove título
     xaxis=dict(visible=False),  # remove eixo X (ticks, valores)
-    yaxis=dict(visible=False),  # remove eixo Y (anos)
+    yaxis=dict(
+    showticklabels=False,  # ❌ esconde os rótulos dos anos
+    showgrid=False,        # ❌ esconde linhas de grade
+    ticks="",              # ❌ remove os ticks
+    zeroline=False,        # ❌ remove a linha zero
+    visible=False          # ❌ força invisibilidade do eixo
     plot_bgcolor="rgba(0,0,0,0)",  # fundo transparente
 )
 
