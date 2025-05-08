@@ -616,18 +616,20 @@ for i, row in df_total.iterrows():
 fig_total.update_layout(
     height=130,
     margin=dict(t=0, b=0, l=0, r=0),
-    showlegend=False,           # remove legenda
-    title=None,                 # remove título
-    xaxis=dict(visible=False),  # remove eixo X (ticks, valores)
+    showlegend=False,
+    title=None,
+    xaxis=dict(
+        visible=False
+    ),
     yaxis=dict(
-    showticklabels=False,  # ❌ esconde os rótulos dos anos
-    showgrid=False,        # ❌ esconde linhas de grade
-    ticks="",              # ❌ remove os ticks
-    zeroline=False,        # ❌ remove a linha zero
-    visible=False          # ❌ força invisibilidade do eixo
-    plot_bgcolor="rgba(0,0,0,0)",  # fundo transparente
+        showticklabels=False,
+        showgrid=False,
+        ticks="",
+        zeroline=False,
+        visible=False
+    ),
+    plot_bgcolor="rgba(0,0,0,0)"
 )
-
 # Exibir no Streamlit
 
 st.subheader("Faturamento Anual")
