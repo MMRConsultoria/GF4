@@ -353,13 +353,13 @@ if st.button("📥 Enviar dados para o Google Sheets"):
             if novos_dados:
                 primeira_linha_vazia = len(valores_existentes) + 1
 
-                # 🔐 Dados tratados como string segura
+                # Dados limpos como string
                 dados_limpos = [[str(c) if pd.notna(c) else "" for c in row] for row in novos_dados]
 
-                # Enviar os novos dados para o Google Sheets
+                # Atualizar Google Sheets
                 aba_destino.update(f"A{primeira_linha_vazia}", dados_limpos)
 
-                # 🔧 Aplicar formatação com segurança
+                # Aplicar formatação com segurança
                 from gspread_formatting import CellFormat, NumberFormat, format_cell_range
 
                 data_format = CellFormat(numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy'))
@@ -376,22 +376,12 @@ if st.button("📥 Enviar dados para o Google Sheets"):
                 except Exception as e_format:
                     st.warning(f"⚠️ Dados enviados, mas a formatação falhou: {e_format}")
 
-                st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
+                st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso!")
 
             if duplicados:
-                st.warning(f"⚠️ {len(duplicados)} registro(s) foram duplicados e não foram enviados.")
+                st.warning(f"⚠️ {len(duplicados)} registro(s) duplicado(s) foram ignorados.")
         except Exception as e:
             st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
-
-                    if duplicados:
-                        st.warning(f"⚠️ {len(duplicados)} registro(s) foram duplicados e não foram enviados para o Google Sheets.")
-                        # Exibir as linhas duplicadas para o usuário
-                   #     st.write("Registros Duplicados:", duplicados)
-
-                   # else:
-                    #    st.info("✅ Dados atualizados google sheets.")
-                except Exception as e:
-                    st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
