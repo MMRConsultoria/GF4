@@ -609,7 +609,7 @@ fig_total = px.bar(
 fig_total.update_traces(
     textposition="inside",
     textfont=dict(size=12, color="white"),
-    insidetextanchor="middle",
+    insidetextanchor="start",
     showlegend=False
 )
 
@@ -625,8 +625,9 @@ for i, row in df_total.iterrows():
     fig_total.add_annotation(
         x=0.1,
         y=row["Ano"],
-        text=f"<b>{int(row['Ano'])}</b>",  # remove o .0
-        showarrow=False,
+       # text=f"<b>{int(row['Ano'])}</b>",  # remove o .0
+        text=row["AnoTexto"],  # texto com valor formatado
+	showarrow=False,
         xanchor="left",
         yanchor="middle",
         font=dict(color="white", size=13),
