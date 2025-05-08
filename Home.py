@@ -3,6 +3,9 @@ import streamlit as st
 
 st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
 
+from logo_sidebar import mostrar_logo_cliente
+
+mostrar_logo_cliente()
 
 # Garante que a chave exista antes de usar
 if "acesso_liberado" not in st.session_state:
