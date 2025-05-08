@@ -571,6 +571,8 @@ fig_total = px.bar(
     df_total,
     x="Fat.Real",
     y="Ano",
+    showlegend=False,
+    title=None,	
     orientation="h",
     color="Ano",  # Mantém as cores iguais ao gráfico mensal
     text=df_total["Fat.Real"].apply(lambda x: f"R$ {x/1_000_000:,.1f} Mi".replace(",", ".")),
@@ -604,6 +606,8 @@ for i, row in df_total.iterrows():
     fig_total.add_annotation(
         x=row["Fat.Real"],
         y=row["Ano"],
+	showlegend=False,
+        title=None,    
         text=f"{int(row['Qtd_Lojas'])} lojas",  # remove o .0
         showarrow=False,
         xanchor="right",
