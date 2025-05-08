@@ -433,11 +433,11 @@ with aba4:
     )
 
     # Para a tabela
-    anos_selecionados = st.multiselect(
-    	"🗓️ Anos para tabela com totais",
-    	options=anos_disponiveis,
-    	default=anos_disponiveis
-    )
+   # anos_selecionados = st.multiselect(
+    #	"🗓️ Anos para tabela com totais",
+   # 	options=anos_disponiveis,
+    #	default=anos_disponiveis
+    #)
 
 
 	
