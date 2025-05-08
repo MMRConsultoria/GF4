@@ -573,7 +573,11 @@ fig_total = px.bar(
     y="Ano",
     orientation="h",
     color="Ano",  # Mantém as cores iguais ao gráfico mensal
-    text=df_total["Fat.Real"].apply(lambda x: f"R$ {x/1_000_000:,.1f} Mi".replace(",", "."))  # Valor total fora da barra
+    text=df_total["Fat.Real"].apply(lambda x: f"R$ {x/1_000_000:,.1f} Mi".replace(",", ".")),
+    color_discrete_map={
+        "2024": "#1f77b4",  # cor usada no mensal para 2024 (exemplo: azul padrão plotly)
+        "2025": "#ff7f0e",  # cor usada no mensal para 2025 (exemplo: laranja padrão plotly)
+    }
 )
 
 # Estilo da barra
