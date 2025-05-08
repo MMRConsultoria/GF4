@@ -503,6 +503,7 @@ fig = px.bar(
     barmode="group",
     text_auto=".2s",
     custom_data=["MesAno"]
+    color_discrete_map=color_map	
 )
 
 # Posicionar o valor no topo da barra
@@ -555,9 +556,10 @@ fig_total = px.bar(
     orientation="h",
     color="Ano",  # Mantém as cores iguais ao gráfico mensal
     text=df_total["Fat.Real"].apply(lambda x: f"R$ {x/1_000_000:,.1f} Mi".replace(",", ".")),
-    color_discrete_map={
-        "2024": "#1f77b4",  # cor usada no mensal para 2024 (exemplo: azul padrão plotly)
-        "2025": "#ff7f0e",  # cor usada no mensal para 2025 (exemplo: laranja padrão plotly)
+    color_discrete_map=color_map
+	#color_discrete_map={
+    #    "2024": "#1f77b4",  # cor usada no mensal para 2024 (exemplo: azul padrão plotly)
+    #    "2025": "#ff7f0e",  # cor usada no mensal para 2025 (exemplo: laranja padrão plotly)
     }
 )
 # 🔥 Remove título de eixos e legenda
