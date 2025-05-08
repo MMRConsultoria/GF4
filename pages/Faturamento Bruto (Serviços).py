@@ -449,8 +449,8 @@ with aba4:
     df["Nome Mês"] = df["Mês"].map(meses_portugues)
 
    # Filtro de anos
-    df_anos = df[df["Ano"].isin([2024, 2025])].dropna(subset=["Data", "Fat.Real"])
-
+    #df_anos = df[df["Ano"].isin([2024, 2025])].dropna(subset=["Data", "Fat.Real"])
+    df_anos = df.dropna(subset=["Data", "Fat.Real"]).copy()
 #NOVO
     # Calcular a quantidade de lojas únicas por ano
     df_lojas = df_anos.groupby("Ano")["Loja"].nunique().reset_index()
