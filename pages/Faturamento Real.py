@@ -1,4 +1,9 @@
 # pages/FaturamentoServico.py
+from logo_sidebar import exibir_logo
+
+# Mostra o logo no menu lateral
+exibir_logo("logo_cliente.png")  # ou "assets/logo_cliente.png" se estiver em uma pasta
+
 
 import streamlit as st
 import pandas as pd
