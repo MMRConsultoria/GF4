@@ -312,7 +312,7 @@ with aba2:
             df_fat = df_anos[df_anos["Ano"] == ano].copy()
             df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
             df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
-# =========================
+ # =========================
         # 3. Traduzir meses para português
         # =========================
         meses_pt = {
@@ -361,7 +361,6 @@ with aba2:
         file_name="faturamento_real_totais_por_ano.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
 # ================================
 # 6. Abas futuras (placeholders)
 # ================================
