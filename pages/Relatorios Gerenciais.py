@@ -119,11 +119,8 @@ with aba1:
     )
     st.plotly_chart(fig, use_container_width=True)
 
-# ================================
-# 📊 Aba 2 - Gráfico Trimestral
-# ================================
 # ==========================================================
-# 📊 Aba 2 - Gráfico Trimestral (corrigido e funcionando)
+# 📊 Aba 2 - Gráfico Trimestral Comparativo
 # ==========================================================
 with aba2:
     st.subheader("Faturamento Trimestral Comparativo")
@@ -134,7 +131,7 @@ with aba2:
     dados = aba.get_all_records()
     df_trimestre = pd.DataFrame(dados)
 
-    # ✅ Limpeza
+    # ✅ Limpeza dos dados
     df_trimestre["Data"] = pd.to_datetime(df_trimestre["Data"], errors="coerce", dayfirst=True)
     df_trimestre["Fat.Real"] = pd.to_numeric(df_trimestre["Fat.Real"], errors="coerce")
     df_trimestre = df_trimestre[df_trimestre["Data"].notna() & df_trimestre["Fat.Real"].notna()].copy()
@@ -153,13 +150,13 @@ with aba2:
     # ✅ Gráfico
     color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
 
-  fig_trimestre = px.bar(
+    fig_trimestre = px.bar(
         fat_trimestral,
         x="Nome Trimestre",
         y="Fat.Real",
         color="Ano",
         barmode="group",
-        text="Fat.Real",
+        text="Fat.Real",  # substitui text_auto que estava quebrando
         custom_data=["Ano"],
         color_discrete_map=color_map
     )
@@ -175,6 +172,7 @@ with aba2:
 
     # ✅ Mostrar gráfico na aba
     st.plotly_chart(fig_trimestre, use_container_width=True)
+
 
 
 # ================================
