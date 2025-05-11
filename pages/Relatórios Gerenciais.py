@@ -27,7 +27,7 @@ df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela_Empresa").get_all_r
 # 2. Configuração inicial do app
 # ================================
 st.set_page_config(page_title="Faturamento por Serviço", layout="wide")
-#st.title("📋 Relatório de Faturamento por Serviço")
+#st.title("📋 Relatórios Gerenciais")
 
 # 🎨 Estilizar abas
 st.markdown("""
@@ -59,7 +59,7 @@ st.markdown("""
 
 
 
-st.title("📊 Relatórios Gerenciais")
+#st.title("📊 Relatórios Gerenciais")
 
 with aba4:
     # ================================
