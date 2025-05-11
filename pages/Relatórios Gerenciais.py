@@ -58,10 +58,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# Configuração da página
-st.set_page_config(page_title="Relatórios Gerenciais", layout="wide")
 
-# Título da página
 st.title("📊 Relatórios Gerenciais")
 
 with aba4:
