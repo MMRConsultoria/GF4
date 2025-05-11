@@ -295,21 +295,21 @@ with aba2:
     st.markdown("---")
     st.subheader("Faturamento Mensal")
     st.plotly_chart(fig, use_container_width=True)
-        # =========================
-        #📋 Faturamento Real por Loja e Mês (com totais e exportação)
-        # =========================
+# =========================
+#📋 Faturamento Real por Loja e Mês (com totais e exportação)
+# =========================
     
 
-        # 1. Prepara os dados com todos os anos disponíveis
-    df_anos["Ano"] = df_anos["Data"].dt.year
-    anos_disponiveis = sorted(df_anos["Ano"].dropna().unique())
+# 1. Prepara os dados com todos os anos disponíveis
+df_anos["Ano"] = df_anos["Data"].dt.year
+anos_disponiveis = sorted(df_anos["Ano"].dropna().unique())
 
-        # 2. Permitir seleção dos anos
-    anos_selecionados = st.multiselect("🗓️ Selecione os anos que deseja exibir", options=anos_disponiveis, default=anos_disponiveis)
+# 2. Permitir seleção dos anos
+anos_selecionados = st.multiselect("🗓️ Selecione os anos que deseja exibir", options=anos_disponiveis, default=anos_disponiveis)
 
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        for ano in anos_selecionados:
+buffer = io.BytesIO()
+     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+	for ano in anos_selecionados:
             df_fat = df_anos[df_anos["Ano"] == ano].copy()
             df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
             df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
