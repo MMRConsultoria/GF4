@@ -225,6 +225,7 @@ with aba1:
 # 📊 Aba 2 - Gráfico Trimestral (em breve)
 # ==========================================================
 with aba2:
+    st.empty()  # para não ficar vazio
     
 
 
@@ -298,4 +299,5 @@ with aba3:
 # 📊 Aba 4 - Gráficos por Loja (em breve)
 # ==========================================================
 with aba4:
+    st.empty()  # mesma coisa
       
