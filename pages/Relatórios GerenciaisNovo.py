@@ -233,7 +233,7 @@ with aba2:
 # 📥 Aba 3 - Relatório Analítico
 # ==========================================================
 with aba3:
-    import io
+
     st.header("📥 Relatório Analítico")
 
     # 1. Prepara os dados com todos os anos disponíveis
@@ -242,8 +242,7 @@ with aba3:
 
     # 2. Permitir seleção dos anos
     anos_selecionados = st.multiselect("🗓️ Selecione os anos que deseja exibir", options=anos_disponiveis, default=anos_disponiveis)
-
-    buffer = io.BytesIO()
+    buffer = BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         for ano in anos_selecionados:
             df_fat = df_anos[df_anos["Ano"] == ano].copy()
