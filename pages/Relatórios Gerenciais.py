@@ -286,3 +286,9 @@ with aba3:
         file_name="faturamento_real_totais_por_ano.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
+with aba2:
+    st.info("📌 Em breve: Gráficos Trimestrais por Grupo.")
+
+with aba4:
+    st.info("📌 Em breve: Gráficos detalhados por Loja.")
