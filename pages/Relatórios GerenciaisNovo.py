@@ -233,6 +233,7 @@ with aba2:
 # 📥 Aba 3 - Relatório Analítico
 # ==========================================================
 with aba3:
+    import io
     st.header("📥 Relatório Analítico")
 
     # 1. Prepara os dados com todos os anos disponíveis
