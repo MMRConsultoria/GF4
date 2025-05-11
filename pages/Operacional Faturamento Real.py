@@ -23,7 +23,12 @@ gc = gspread.authorize(credentials)
 planilha_empresa = gc.open("Tabela")
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela_Empresa").get_all_records())
 
-
+=========================================================
+# 🔄 Carregar dados do Google Sheets para os relatórios
+planilha_dados = gc.open("Faturamento Sistema Externo")
+aba_dados = planilha_dados.worksheet("Fat Sistema Externo")
+df = pd.DataFrame(aba_dados.get_all_records())
+==========================================================
 # Configuração da página
 st.set_page_config(page_title="Relatórios Gerenciais", layout="wide")
 
