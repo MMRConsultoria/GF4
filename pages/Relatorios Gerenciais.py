@@ -122,35 +122,60 @@ with aba1:
 # ================================
 # 📊 Aba 2 - Gráfico Trimestral
 # ================================
+# ==========================================================
+# 📊 Aba 2 - Gráfico Trimestral (corrigido e funcionando)
+# ==========================================================
 with aba2:
     st.subheader("Faturamento Trimestral Comparativo")
 
-    df_anos["Trimestre"] = df_anos["Data"].dt.quarter
-    df_anos["Nome Trimestre"] = "T" + df_anos["Trimestre"].astype(str)
-    fat_trimestral = df_anos.groupby(["Nome Trimestre", "Ano"])["Fat.Real"].sum().reset_index()
+    # 🔁 Recarregar os dados da planilha
+    planilha = gc.open("Faturamento Sistema Externo")
+    aba = planilha.worksheet("Fat Sistema Externo")
+    dados = aba.get_all_records()
+    df_trimestre = pd.DataFrame(dados)
+
+    # ✅ Limpeza
+    df_trimestre["Data"] = pd.to_datetime(df_trimestre["Data"], errors="coerce", dayfirst=True)
+    df_trimestre["Fat.Real"] = pd.to_numeric(df_trimestre["Fat.Real"], errors="coerce")
+    df_trimestre = df_trimestre[df_trimestre["Data"].notna() & df_trimestre["Fat.Real"].notna()].copy()
+
+    # ✅ Criar colunas de ano e trimestre
+    df_trimestre["Ano"] = df_trimestre["Data"].dt.year
+    df_trimestre["Trimestre"] = df_trimestre["Data"].dt.quarter
+    df_trimestre["Nome Trimestre"] = "T" + df_trimestre["Trimestre"].astype(str)
+
+    # ✅ Agrupar por trimestre e ano
+    fat_trimestral = df_trimestre.groupby(["Nome Trimestre", "Ano"])["Fat.Real"].sum().reset_index()
     fat_trimestral["TrimestreNum"] = fat_trimestral["Nome Trimestre"].str.extract(r'(\d)').astype(int)
     fat_trimestral["Ano"] = fat_trimestral["Ano"].astype(str)
     fat_trimestral = fat_trimestral.sort_values(["TrimestreNum", "Ano"])
 
-    fig_tri = px.bar(
+    # ✅ Gráfico
+    color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
+
+    fig_trimestre = px.bar(
         fat_trimestral,
         x="Nome Trimestre",
         y="Fat.Real",
         color="Ano",
         barmode="group",
-        text="Fat.Real",
+        text_auto=".2s",
         custom_data=["Ano"],
         color_discrete_map=color_map
     )
-    fig_tri.update_traces(textposition="outside")
-    fig_tri.update_layout(
+
+    fig_trimestre.update_traces(textposition="outside")
+    fig_trimestre.update_layout(
         xaxis_title=None,
         yaxis_title=None,
         xaxis_tickangle=-45,
         showlegend=False,
         yaxis=dict(showticklabels=False, showgrid=False, zeroline=False)
     )
-    st.plotly_chart(fig_tri, use_container_width=True)
+
+    # ✅ Mostrar gráfico na aba
+    st.plotly_chart(fig_trimestre, use_container_width=True)
+
 
 # ================================
 # 📥 Aba 3 - Relatório Analítico
