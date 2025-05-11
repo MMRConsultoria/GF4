@@ -227,6 +227,34 @@ with aba1:
 with aba2:
     st.subheader("Faturamento Trimestral Comparativo")
 
+    # Garantir que df_anos exista — caso ainda não esteja criado no app
+    if "df_anos" not in locals():
+        planilha = gc.open("Faturamento Sistema Externo")
+        aba = planilha.worksheet("Fat Sistema Externo")
+        dados = aba.get_all_records()
+        df = pd.DataFrame(dados)
+
+        def limpar_valor(x):
+            try:
+                if isinstance(x, str):
+                    return float(x.replace("R$", "").replace(".", "").replace(",", ".").strip())
+                elif isinstance(x, (int, float)):
+                    return x
+            except:
+                return None
+            return None
+
+        for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real"]:
+            if coluna in df.columns:
+                df[coluna] = df[coluna].apply(limpar_valor)
+                df[coluna] = pd.to_numeric(df[coluna], errors="coerce")
+
+        df["Data"] = pd.to_datetime(df["Data"], errors="coerce", dayfirst=True)
+        df["Ano"] = df["Data"].dt.year
+        df["Mês"] = df["Data"].dt.month
+        df_anos = df[df["Data"].notna() & df["Fat.Real"].notna()].copy()
+
+    # Agrupamento por trimestre
     df_anos["Trimestre"] = df_anos["Data"].dt.quarter
     df_anos["Nome Trimestre"] = "T" + df_anos["Trimestre"].astype(str)
     df_anos["TrimestreAno"] = df_anos["Nome Trimestre"] + "/" + df_anos["Ano"].astype(str)
@@ -260,6 +288,7 @@ with aba2:
     )
 
     st.plotly_chart(fig_trimestre, use_container_width=True)
+
 
 
 
