@@ -418,3 +418,25 @@ st.download_button(
     file_name="faturamento_real_totais_por_ano.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
+# ================================
+    # 6. Abas futuras (placeholders)
+    # ================================
+with aba3:
+        st.subheader("📌 Análise Extra 1")
+        st.info("Aba reservada para conteúdo futuro.")
+
+with aba4:
+        st.subheader("📌 Análise Extra 2")
+        st.info("Aba reservada para conteúdo futuro.")
+
+with aba5:
+        st.subheader("📌 Análise Extra 3")
+        st.info("Aba reservada para conteúdo futuro.")
+
+with aba6:
+        st.subheader("📌 Análise Extra 4")
+        st.info("Aba reservada para conteúdo futuro.")
+
+with aba7:
+        st.subheader("📌 Análise Extra 5")
+        st.info("Aba reservada para conteúdo futuro.")
