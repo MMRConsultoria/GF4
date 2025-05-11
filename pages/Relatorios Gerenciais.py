@@ -12,7 +12,7 @@ import json
 import plotly.express as px
 
 # ✅ Deve ser a PRIMEIRA chamada do Streamlit
-st.set_page_config(page_title="Relatórios Gerenciais", layout="wide")
+st.set_page_config(page_title="Relatorios", layout="wide")
 
 # ================================
 # 1. Conexão com Google Sheets
@@ -64,7 +64,7 @@ aba1, aba2, aba3, aba4 = st.tabs([
 # 📊 Aba 1 - Gráficos Anuais
 # ==========================================================
 with aba1:
-    st.header("📥Graficos anuais")  # <-- facilita saber se está na aba certa
+    #st.header("📥Graficos anuais")  # <-- facilita saber se está na aba certa
     # ================================
     # 📈 Graficos Anuais (Painel Interativo)
     # ================================
@@ -225,7 +225,7 @@ with aba1:
 # 📊 Aba 2 - Gráfico Trimestral (em breve)
 # ==========================================================
 with aba2:
-    st.info("📌 Em breve: Gráficos Trimestrais por Grupo.")
+    #st.info("📌 Em breve: Gráficos Trimestrais por Grupo.")
 
 
 
@@ -234,7 +234,7 @@ with aba2:
 # ==========================================================
 with aba3:
 
-    st.header("📥 Relatório Analítico")
+    #st.header("📥 Relatório Analítico")
 
     # 1. Prepara os dados com todos os anos disponíveis
     df_anos["Ano"] = df_anos["Data"].dt.year
@@ -299,4 +299,4 @@ with aba3:
 # 📊 Aba 4 - Gráficos por Loja (em breve)
 # ==========================================================
 with aba4:
-    st.info("📌 Em breve: Gráficos detalhados por Loja.")
+    #st.info("📌 Em breve: Gráficos detalhados por Loja.")
