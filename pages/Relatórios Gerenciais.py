@@ -78,7 +78,7 @@ aba1, aba2, aba3, aba4, aba5, aba6, aba7 = st.tabs([
 ])
 
 
-with aba1:
+with aba4:
     # ================================
     # 📈 Relatórios Gerenciais (Painel Interativo)
     # ================================
