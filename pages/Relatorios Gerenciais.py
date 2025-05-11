@@ -225,8 +225,7 @@ with aba1:
 # 📊 Aba 2 - Gráfico Trimestral (em breve)
 # ==========================================================
 with aba2:
-    #st.info("📌 Em breve: Gráficos Trimestrais por Grupo.")
-
+    
 
 
 # ==========================================================
