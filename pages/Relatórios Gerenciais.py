@@ -61,6 +61,24 @@ aba1, aba2, aba3, aba4 = st.tabs([
     
 ])
 
+# 📊 Aba 1 - Já implementada
+with aba1:
+    # ... seu código de gráficos anuais ...
+
+# 📊 Aba 2 - Gráfico Trimestral (placeholder por enquanto)
+with aba2:
+    st.info("📌 Em breve: Gráficos Trimestrais por Grupo.")
+
+# 📥 Aba 3 - Já implementada
+with aba3:
+    # ... seu código do relatório analítico ...
+
+# 🔄 Aba 4 - Gráfico por Loja (placeholder por enquanto)
+with aba4:
+    st.info("📌 Em breve: Gráficos detalhados por Loja.")
+
+
+
 with aba1:
     # ================================
     # 📈 Relatórios Gerenciais (Painel Interativo)
