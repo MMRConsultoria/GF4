@@ -54,7 +54,7 @@ st.markdown("""
 
 # ✅ Criar as abas (use essas se quiser dividir os relatórios por tipo depois)
 aba1, aba2, aba3, aba4 = st.tabs([
-    "📊 Graficos Anuais - Grupo"
+    "📊 Graficos Anuais - Grupo",
     "📥 Relatório Analitico", 
     "🔄 Graficos Loja",
     "📊 Relatórios Gerenciais"
