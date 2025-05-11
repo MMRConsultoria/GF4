@@ -334,69 +334,72 @@ st.plotly_chart(fig_total, use_container_width=True)
 st.markdown("---")
 st.subheader("Faturamento Mensal")
 st.plotly_chart(fig, use_container_width=True)
-# =========================
-# 📋 Faturamento Real por Loja e Mês (com totais e exportação)
-# =========================
-import io
 
-# 1. Prepara os dados com todos os anos disponíveis
-df_anos["Ano"] = df_anos["Data"].dt.year
-anos_disponiveis = sorted(df_anos["Ano"].dropna().unique())
 
-# 2. Permitir seleção dos anos
-anos_selecionados = st.multiselect("🗓️ Selecione os anos que deseja exibir", options=anos_disponiveis, default=anos_disponiveis)
+with aba2:
+    # =========================
+    # 📋 Faturamento Real por Loja e Mês (com totais e exportação)
+    # =========================
+    import io
 
-buffer = io.BytesIO()
-with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-    for ano in anos_selecionados:
-        df_fat = df_anos[df_anos["Ano"] == ano].copy()
-        df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
-        df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
+    # 1. Prepara os dados com todos os anos disponíveis
+    df_anos["Ano"] = df_anos["Data"].dt.year
+    anos_disponiveis = sorted(df_anos["Ano"].dropna().unique())
 
-        # 3. Traduzir meses para português
-        meses_pt = {
-            "January": "Janeiro", "February": "Fevereiro", "March": "Março", "April": "Abril",
-            "May": "Maio", "June": "Junho", "July": "Julho", "August": "Agosto",
-            "September": "Setembro", "October": "Outubro", "November": "Novembro", "December": "Dezembro"
-        }
-        df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
-        df_fat["Mês"] = df_fat["Mês"].apply(lambda x: f"{x[:6]}{meses_pt.get(x[6:], x[6:])}")
+    # 2. Permitir seleção dos anos
+    anos_selecionados = st.multiselect("🗓️ Selecione os anos que deseja exibir", options=anos_disponiveis, default=anos_disponiveis)
 
-        # 4. Tabela dinâmica
-        tabela_fat_real = df_fat.pivot_table(
-            index="Loja",
-            columns="Mês",
-            values="Fat.Real",
-            aggfunc="sum",
-            fill_value=0
-        )
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+        for ano in anos_selecionados:
+            df_fat = df_anos[df_anos["Ano"] == ano].copy()
+            df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
+            df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
 
-        # 5. Totais
-        linha_total = tabela_fat_real.sum().to_frame().T
-        linha_total.index = ["Total Geral"]
-        coluna_total = tabela_fat_real.sum(axis=1)
-        tabela_fat_real.insert(0, "Total Geral", coluna_total)
-        linha_total.insert(0, "Total Geral", coluna_total.sum())
-        tabela_com_total = pd.concat([linha_total, tabela_fat_real])
+            # 3. Traduzir meses para português
+            meses_pt = {
+                "January": "Janeiro", "February": "Fevereiro", "March": "Março", "April": "Abril",
+                "May": "Maio", "June": "Junho", "July": "Julho", "August": "Agosto",
+                "September": "Setembro", "October": "Outubro", "November": "Novembro", "December": "Dezembro"
+            }
+            df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
+            df_fat["Mês"] = df_fat["Mês"].apply(lambda x: f"{x[:6]}{meses_pt.get(x[6:], x[6:])}")
 
-        # 6. Formatação brasileira
-        tabela_formatada = tabela_com_total.applymap(
-            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        )
+            # 4. Tabela dinâmica
+            tabela_fat_real = df_fat.pivot_table(
+                index="Loja",
+                columns="Mês",
+                values="Fat.Real",
+                aggfunc="sum",
+                fill_value=0
+            )
 
-        # 7. Mostrar no app
-        st.markdown("---")
-        st.subheader(f"📋 Faturamento Real por Loja e Mês - {ano}")
-        st.dataframe(tabela_formatada)
+            # 5. Totais
+            linha_total = tabela_fat_real.sum().to_frame().T
+            linha_total.index = ["Total Geral"]
+            coluna_total = tabela_fat_real.sum(axis=1)
+            tabela_fat_real.insert(0, "Total Geral", coluna_total)
+            linha_total.insert(0, "Total Geral", coluna_total.sum())
+            tabela_com_total = pd.concat([linha_total, tabela_fat_real])
 
-        # 8. Gravar no Excel
-        tabela_com_total.to_excel(writer, sheet_name=f"Faturamento_{ano}")
+            # 6. Formatação brasileira
+            tabela_formatada = tabela_com_total.applymap(
+                lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            )
 
-# 9. Botão de download final
-st.markdown("---")
-st.download_button(
-    label="📥 Baixar Excel com Totais por Ano",
-    data=buffer.getvalue(),
-    file_name="faturamento_real_totais_por_ano.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
+            # 7. Mostrar no app
+            st.markdown("---")
+            st.subheader(f"📋 Faturamento Real por Loja e Mês - {ano}")
+            st.dataframe(tabela_formatada)
+
+            # 8. Gravar no Excel
+            tabela_com_total.to_excel(writer, sheet_name=f"Faturamento_{ano}")
+
+    # 9. Botão de download final
+    st.markdown("---")
+    st.download_button(
+        label="📥 Baixar Excel com Totais por Ano",
+        data=buffer.getvalue(),
+        file_name="faturamento_real_totais_por_ano.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
