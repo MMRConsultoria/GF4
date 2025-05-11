@@ -66,7 +66,7 @@ aba1, aba2, aba3, aba4 = st.tabs([
 with aba1:
     st.header("📥Graficos anuais")  # <-- facilita saber se está na aba certa
     # ================================
-    # 📈 Relatórios Gerenciais (Painel Interativo)
+    # 📈 Graficos Anuais (Painel Interativo)
     # ================================
 
     # Conectar ao Google Sheets
