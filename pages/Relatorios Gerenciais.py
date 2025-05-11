@@ -299,4 +299,4 @@ with aba3:
 # 📊 Aba 4 - Gráficos por Loja (em breve)
 # ==========================================================
 with aba4:
-    #st.info("📌 Em breve: Gráficos detalhados por Loja.")
+        #st.info("📌 Em breve: Gráficos detalhados por Loja.")
