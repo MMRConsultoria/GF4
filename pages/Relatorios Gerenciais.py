@@ -60,6 +60,32 @@ aba1, aba2, aba3, aba4 = st.tabs([
     "🔄 Graficos Loja",
     
 ])
+
+#===========================================================
+# Limpeza dos valores
+#===========================================================
+
+def limpar_valor(x):
+    try:
+        if isinstance(x, str):
+            return float(x.replace("R$", "").replace(".", "").replace(",", ".").strip())
+        elif isinstance(x, (int, float)):
+            return x
+    except:
+        return None
+    return None
+
+for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real"]:
+    if coluna in df.columns:
+        df[coluna] = df[coluna].apply(limpar_valor)
+        df[coluna] = pd.to_numeric(df[coluna], errors="coerce")
+
+df["Data"] = pd.to_datetime(df["Data"], errors="coerce", dayfirst=True)
+df["Ano"] = df["Data"].dt.year
+df["Mês"] = df["Data"].dt.month
+
+df_anos = df[df["Data"].notna() & df["Fat.Real"].notna()].copy()
+
 # ==========================================================
 # 📊 Aba 1 - Gráficos Anuais
 # ==========================================================
