@@ -64,20 +64,6 @@ st.set_page_config(page_title="Relatórios Gerenciais", layout="wide")
 # Título da página
 st.title("📊 Relatórios Gerenciais")
 
-# ================================
-# 3. Abas internas
-# ================================
-aba1, aba2, aba3, aba4, aba5, aba6, aba7 = st.tabs([
-    "📊 Gráfico Anual Comparativo",
-    "🗓️ Relatório Mensal Detalhado",
-    "📌 Análise Extra 1",
-    "📌 Análise Extra 2",
-    "📌 Análise Extra 3",
-    "📌 Análise Extra 4",
-    "📌 Análise Extra 5"
-])
-
-
 with aba4:
     # ================================
     # 📈 Relatórios Gerenciais (Painel Interativo)
@@ -418,25 +404,3 @@ st.download_button(
     file_name="faturamento_real_totais_por_ano.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
-# ================================
-    # 6. Abas futuras (placeholders)
-    # ================================
-with aba3:
-        st.subheader("📌 Análise Extra 1")
-        st.info("Aba reservada para conteúdo futuro.")
-
-with aba4:
-        st.subheader("📌 Análise Extra 2")
-        st.info("Aba reservada para conteúdo futuro.")
-
-with aba5:
-        st.subheader("📌 Análise Extra 3")
-        st.info("Aba reservada para conteúdo futuro.")
-
-with aba6:
-        st.subheader("📌 Análise Extra 4")
-        st.info("Aba reservada para conteúdo futuro.")
-
-with aba7:
-        st.subheader("📌 Análise Extra 5")
-        st.info("Aba reservada para conteúdo futuro.")
