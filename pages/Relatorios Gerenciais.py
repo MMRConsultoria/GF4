@@ -153,13 +153,13 @@ with aba2:
     # ✅ Gráfico
     color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
 
-    fig_trimestre = px.bar(
+  fig_trimestre = px.bar(
         fat_trimestral,
         x="Nome Trimestre",
         y="Fat.Real",
         color="Ano",
         barmode="group",
-        text_auto=".2s",
+        text="Fat.Real",
         custom_data=["Ano"],
         color_discrete_map=color_map
     )
