@@ -217,7 +217,7 @@ with aba1:
     st.subheader("Faturamento Mensal")
     st.plotly_chart(fig, use_container_width=True)
 
-with aba2:
+with aba3:
 
     
     # =========================
