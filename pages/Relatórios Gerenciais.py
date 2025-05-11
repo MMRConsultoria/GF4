@@ -1,7 +1,5 @@
 # pages/RelatorioGerenciais.py
 
-
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -12,6 +10,9 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 import plotly.express as px
+
+# ✅ Deve ser a PRIMEIRA chamada do Streamlit
+st.set_page_config(page_title="Relatórios Gerenciais", layout="wide")
 
 # ================================
 # 1. Conexão com Google Sheets
@@ -24,12 +25,8 @@ planilha_empresa = gc.open("Tabela")
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela_Empresa").get_all_records())
 
 # ================================
-# 2. Configuração inicial do app
+# 2. Estilo e título da página
 # ================================
-st.set_page_config(page_title="Relatórios Gerenciais", layout="wide")
-#st.title("📊 Relatórios Gerenciais")
-
-# 🎨 Estilizar abas
 st.markdown("""
     <style>
     .stApp { background-color: #f9f9f9; }
@@ -48,8 +45,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-
-# Cabeçalho bonito (depois do estilo)
 st.markdown("""
     <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
         <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
@@ -57,9 +52,13 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-
-
-#st.title("📊 Relatórios Gerenciais")
+# ✅ Criar as abas (use essas se quiser dividir os relatórios por tipo depois)
+aba1, aba2, aba3, aba4 = st.tabs([
+    "📄 Upload e Processamento", 
+    "📥 Download Excel", 
+    "🔄 Atualizar Google Sheets",
+    "📊 Relatórios Gerenciais"
+])
 
 with aba4:
     # ================================
