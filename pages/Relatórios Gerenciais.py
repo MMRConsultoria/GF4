@@ -58,7 +58,7 @@ aba1, aba2, aba3, aba4 = st.tabs([
     "📊 Graficos Trimestral - Grupo",
     "📥 Relatório Analitico", 
     "🔄 Graficos Loja",
-    "📊 Relatórios Gerenciais"
+    
 ])
 
 with aba1:
