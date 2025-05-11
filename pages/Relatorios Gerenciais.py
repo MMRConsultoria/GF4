@@ -150,6 +150,9 @@ with aba2:
     # ✅ Gráfico
     color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
 
+    st.write("🔍 Dados carregados:")
+    st.dataframe(df_trimestre.head()) 
+    
     fig_trimestre = px.bar(
         fat_trimestral,
         x="Nome Trimestre",
