@@ -216,9 +216,7 @@ with aba1:
 
 with aba2:
 
-    st.markdown("---")
-    st.subheader("Faturamento Mensal")
-    st.plotly_chart(fig, use_container_width=True)
+    
     # =========================
     # 📋 Faturamento Real por Loja e Mês (com totais e exportação)
     # =========================
