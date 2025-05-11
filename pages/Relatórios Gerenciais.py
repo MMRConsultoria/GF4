@@ -182,41 +182,7 @@ with aba1:
         showlegend=False
     )
 
-    # Estilo da barra
-    fig_total.update_traces(
-        textposition="outside",  # Valor do lado de fora
-        insidetextanchor="start",
-        textfont=dict(size=16),
-        showlegend=False      # reforço	
-    
-    # Ano dentro da barra (ex: 2025)
-    for i, row in df_total.iterrows():
-        fig_total.add_annotation(
-            x=0.1,
-            y=row["Ano"],
-        # text=f"<b>{int(row['Ano'])}</b>",  # remove o .0
-            text=row["AnoTexto"],  # texto com valor formatado
-        showarrow=False,
-            xanchor="left",
-            yanchor="middle",
-            font=dict(color="white", size=16),
-            xref="x",
-            yref="y"
-        )
-    # Qtd de lojas ao final da barra (ex: 10 lojas)
-    for i, row in df_total.iterrows():
-        fig_total.add_annotation(
-            x=row["Fat.Real"],
-            y=row["Ano"],
-        showarrow=False,  
-            text=f"{int(row['Qtd_Lojas'])} Lojas",  # remove o .0
-            xanchor="left",
-            yanchor="bottom",
-        yshift=-8,     
-            font=dict(color="red", size=16,weight="bold"),
-            xref="x",
-            yref="y"
-        )
+   
 
 
     fig_total.update_layout(
