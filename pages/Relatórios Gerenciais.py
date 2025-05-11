@@ -60,7 +60,9 @@ aba1, aba2, aba3, aba4 = st.tabs([
     "🔄 Graficos Loja",
     
 ])
-
+# ==========================================================
+# 📊 Aba 1 - Gráficos Anuais
+# ==========================================================
 with aba1:
     st.header("📥Graficos anuais")  # <-- facilita saber se está na aba certa
     # ================================
@@ -219,19 +221,19 @@ with aba1:
     st.subheader("Faturamento Mensal")
     st.plotly_chart(fig, use_container_width=True)
     
-#==========================================================
-# 📊 Aba 2 - Gráfico Trimestral (placeholder por enquanto)
-#==========================================================
+# ==========================================================
+# 📊 Aba 2 - Gráfico Trimestral (em breve)
+# ==========================================================
 with aba2:
     st.info("📌 Em breve: Gráficos Trimestrais por Grupo.")
 
 
 
-#==========================================================
-# 📋 Faturamento Real por Loja e Mês (com totais e exportação)
-#==========================================================
+# ==========================================================
+# 📥 Aba 3 - Relatório Analítico
+# ==========================================================
 with aba3:
-    import io
+    st.header("📥 Relatório Analítico")
 
     # 1. Prepara os dados com todos os anos disponíveis
     df_anos["Ano"] = df_anos["Data"].dt.year
@@ -293,9 +295,8 @@ with aba3:
         file_name="faturamento_real_totais_por_ano.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-#==========================================================
-# 📊 Aba 4 - Gráfico Trimestral (placeholder por enquanto)
-#==========================================================
-
+# ==========================================================
+# 📊 Aba 4 - Gráficos por Loja (em breve)
+# ==========================================================
 with aba4:
     st.info("📌 Em breve: Gráficos detalhados por Loja.")
