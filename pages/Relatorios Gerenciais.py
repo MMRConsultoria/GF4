@@ -226,7 +226,42 @@ with aba1:
 # ==========================================================
 with aba2:
     st.empty()  # para não ficar vazio
-    
+    st.subheader("Faturamento Trimestral Comparativo")
+
+    df_anos["Trimestre"] = df_anos["Data"].dt.quarter
+    df_anos["Nome Trimestre"] = "T" + df_anos["Trimestre"].astype(str)
+    df_anos["TrimestreAno"] = df_anos["Nome Trimestre"] + "/" + df_anos["Ano"].astype(str)
+
+    df_trimestral = df_anos.groupby(["Nome Trimestre", "Ano"])["Fat.Real"].sum().reset_index()
+    df_trimestral["Ano"] = df_trimestral["Ano"].astype(str)
+    df_trimestral["TrimestreNum"] = df_trimestral["Nome Trimestre"].str.extract(r'(\d)').astype(int)
+    df_trimestral = df_trimestral.sort_values(["TrimestreNum", "Ano"])
+
+    fig_trimestre = px.bar(
+        df_trimestral,
+        x="Nome Trimestre",
+        y="Fat.Real",
+        color="Ano",
+        barmode="group",
+        text="Fat.Real",
+        custom_data=["Ano"],
+        color_discrete_map={
+            "2024": "#1f77b4",
+            "2025": "#ff7f0e"
+        }
+    )
+
+    fig_trimestre.update_traces(textposition="outside")
+    fig_trimestre.update_layout(
+        xaxis_title=None,
+        yaxis_title=None,
+        xaxis_tickangle=-45,
+        showlegend=False,
+        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False)
+    )
+
+    st.plotly_chart(fig_trimestre, use_container_width=True)
+
 
 
 # ==========================================================
