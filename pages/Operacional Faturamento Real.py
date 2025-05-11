@@ -21,22 +21,13 @@ gc = gspread.authorize(credentials)
 planilha_empresa = gc.open("Tabela")
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela_Empresa").get_all_records())
 
-# ================================
-# 🔄 Carregar dados do Google Sheets para os relatórios
-# ================================
 planilha_dados = gc.open("Faturamento Sistema Externo")
 aba_dados = planilha_dados.worksheet("Fat Sistema Externo")
 df = pd.DataFrame(aba_dados.get_all_records())
 
-# Configuração da página
 st.set_page_config(page_title="Relatórios Gerenciais", layout="wide")
-
-# Título da página
 st.title("📊 Relatórios Gerenciais")
 
-# ================================
-# 3. Abas internas
-# ================================
 aba1, aba2, aba3, aba4, aba5, aba6, aba7 = st.tabs([
     "📊 Gráfico Anual Comparativo",
     "🗓️ Relatório Mensal Detalhado",
@@ -47,15 +38,16 @@ aba1, aba2, aba3, aba4, aba5, aba6, aba7 = st.tabs([
     "📌 Análise Extra 5"
 ])
 
-# ================================
-# 4. Aba 1 - Gráfico Anual Comparativo
-# ================================
 with aba1:
     st.subheader("📊 Gráfico Anual Comparativo")
+    anos_disponiveis = sorted(df["Ano"].dropna().unique())
 
-    # =========================
-    # 🧹 Tratamento dos dados
-    # =========================
+    anos_comparacao = st.multiselect(
+        "📊 Anos para gráficos de comparação",
+        options=anos_disponiveis,
+        default=anos_disponiveis
+    )
+
     def limpar_valor(x):
         try:
             if isinstance(x, str):
@@ -64,7 +56,6 @@ with aba1:
                 return x
         except:
             return None
-        return None
 
     for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real"]:
         if coluna in df.columns:
@@ -74,35 +65,28 @@ with aba1:
     df["Data"] = pd.to_datetime(df["Data"], errors="coerce", dayfirst=True)
     df["Ano"] = df["Data"].dt.year
     df["Mês"] = df["Data"].dt.month
+
     meses_portugues = {
         1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
         7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
     }
+
     df["Nome Mês"] = df["Mês"].map(meses_portugues)
-
-    anos_disponiveis = sorted(df["Ano"].dropna().unique())
-    anos_comparacao = st.multiselect("📊 Anos para gráficos de comparação", options=anos_disponiveis, default=anos_disponiveis)
-
     df_anos_filtrado = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"])
     df_anos = df_anos_filtrado.copy()
-
-    df_lojas = df_anos.groupby("Ano")["Loja"].nunique().reset_index()
-    df_lojas.columns = ["Ano", "Qtd_Lojas"]
 
     fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
     meses = {
         "jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
         "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12
     }
+
     fat_mensal["MesNum"] = fat_mensal["Nome Mês"].str[:3].str.lower().map(meses)
     fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
     fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal["Ano"].str[-2:]
     fat_mensal = fat_mensal.sort_values(["MesNum", "Ano"])
 
-    color_map = {
-        "2024": "#1f77b4",
-        "2025": "#ff7f0e"
-    }
+    color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
 
     fig = px.bar(
         fat_mensal,
@@ -114,6 +98,7 @@ with aba1:
         custom_data=["MesAno"],
         color_discrete_map=color_map
     )
+
     fig.update_traces(textposition="outside")
     fig.update_layout(
         xaxis_title=None,
@@ -122,65 +107,4 @@ with aba1:
         showlegend=False,
         yaxis=dict(showticklabels=False, showgrid=False, zeroline=False)
     )
-
-    df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
-    df_lojas["Ano"] = df_lojas["Ano"].astype(int)
-    df_total["Ano"] = df_total["Ano"].astype(int)
-    df_total = df_total.merge(df_lojas, on="Ano", how="left")
-    df_total["AnoTexto"] = df_total.apply(
-        lambda row: f"{int(row['Ano'])}       R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
-    )
-    df_total["Ano"] = df_total["Ano"].astype(str)
-
-    fig_total = px.bar(
-        df_total,
-        x="Fat.Real",
-        y="Ano",
-        orientation="h",
-        color="Ano",
-        text="AnoTexto",
-        color_discrete_map=color_map
-    )
-    fig_total.update_traces(textposition="inside", textfont=dict(size=16, color="white"), insidetextanchor="start", showlegend=False)
-    fig_total.update_traces(textposition="outside", insidetextanchor="start", textfont=dict(size=16), showlegend=False)
-
-    for i, row in df_total.iterrows():
-        fig_total.add_annotation(
-            x=0.1,
-            y=row["Ano"],
-            text=row["AnoTexto"],
-            showarrow=False,
-            xanchor="left",
-            yanchor="middle",
-            font=dict(color="white", size=16),
-            xref="x",
-            yref="y"
-        )
-        fig_total.add_annotation(
-            x=row["Fat.Real"],
-            y=row["Ano"],
-            showarrow=False,
-            text=f"{int(row['Qtd_Lojas'])} Lojas",
-            xanchor="left",
-            yanchor="bottom",
-            yshift=-8,
-            font=dict(color="red", size=16, weight="bold"),
-            xref="x",
-            yref="y"
-        )
-
-    fig_total.update_layout(
-        height=130,
-        margin=dict(t=0, b=0, l=0, r=0),
-        title=None,
-        xaxis=dict(visible=False),
-        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
-        yaxis_title=None,
-        showlegend=False,
-        plot_bgcolor="rgba(0,0,0,0)"
-    )
-
-    st.plotly_chart(fig_total, use_container_width=True)
-    st.markdown("---")
-    st.subheader("Faturamento Mensal")
     st.plotly_chart(fig, use_container_width=True)
