@@ -227,7 +227,7 @@ with aba2:
 
     # 1. Prepara os dados com todos os anos disponíveis
     df_anos["Ano"] = df_anos["Data"].dt.year
-    anos_disponiveis = sorted(df_anos["Ano"].dropna().unique())
+    anos_disponiveis = sorted(df_anos["Ano"].dropna().unique(), reverse=True)
 
     # 2. Permitir seleção dos anos
     anos_selecionados = st.multiselect("🗓️ Selecione os anos que deseja exibir", options=anos_disponiveis, default=anos_disponiveis)
