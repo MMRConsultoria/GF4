@@ -64,7 +64,7 @@ aba1, aba2, aba3, aba4 = st.tabs([
 # 📊 Aba 1 - Gráficos Anuais
 # ==========================================================
 with aba1:
-    st.header("📥Graficos anuais")  # <-- facilita saber se está na aba certa
+    st.header("📥Graficos anuais1")  # <-- facilita saber se está na aba certa
     # ================================
     # 📈 Graficos Anuais (Painel Interativo)
     # ================================
