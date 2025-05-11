@@ -239,14 +239,13 @@ with aba2:
             df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
             df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
 
-            # 3. Traduzir meses para português
+            # 3. Traduzir meses para português diretamente
             meses_pt = {
-                "January": "Janeiro", "February": "Fevereiro", "March": "Março", "April": "Abril",
-                "May": "Maio", "June": "Junho", "July": "Julho", "August": "Agosto",
-                "September": "Setembro", "October": "Outubro", "November": "Novembro", "December": "Dezembro"
+               1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
+               7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
             }
-            df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
-            df_fat["Mês"] = df_fat["Mês"].apply(lambda x: f"{x[:6]}{meses_pt.get(x[6:], x[6:])}")
+            df_fat["Mês"] = df_fat["Data"].dt.month.map(meses_pt)
+            df_fat["Mês"] = df_fat["Data"].dt.strftime("%m") + " - " + df_fat["Mês"]
 
             # 4. Tabela dinâmica
             tabela_fat_real = df_fat.pivot_table(
