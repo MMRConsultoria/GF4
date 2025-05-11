@@ -1,4 +1,4 @@
-# pages/Relatorio Gerencial.py
+# pages/RelatorioGerenciais.py
 
 
 
@@ -12,7 +12,6 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 import plotly.express as px
-import io
 
 # ================================
 # 1. Conexão com Google Sheets
@@ -24,34 +23,68 @@ gc = gspread.authorize(credentials)
 planilha_empresa = gc.open("Tabela")
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela_Empresa").get_all_records())
 
+# ================================
+# 2. Configuração inicial do app
+# ================================
+st.set_page_config(page_title="Faturamento por Serviço", layout="wide")
+#st.title("📋 Relatório de Faturamento por Serviço")
 
-# Configuração da página
-st.set_page_config(page_title="Relatórios Gerenciais", layout="wide")
+# 🎨 Estilizar abas
+st.markdown("""
+    <style>
+    .stApp { background-color: #f9f9f9; }
+    div[data-baseweb="tab-list"] { margin-top: 20px; }
+    button[data-baseweb="tab"] {
+        background-color: #f0f2f6;
+        border-radius: 10px;
+        padding: 10px 20px;
+        margin-right: 10px;
+        transition: all 0.3s ease;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    button[data-baseweb="tab"]:hover { background-color: #dce0ea; color: black; }
+    button[data-baseweb="tab"][aria-selected="true"] { background-color: #0366d6; color: white; }
+    </style>
+""", unsafe_allow_html=True)
 
-# Título da página
-st.title("📊 Relatórios Gerenciais")
+
+# Cabeçalho bonito (depois do estilo)
+st.markdown("""
+    <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
+        <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
+        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório de Faturamento por Serviço</h1>
+    </div>
+""", unsafe_allow_html=True)
+
 
 # ================================
-# 3. Abas internas
+# 3. Separação em ABAS
 # ================================
-aba1, aba2, aba3, aba4, aba5, aba6, aba7 = st.tabs([
-    "📊 Gráfico Anual Comparativo",
-    "🗓️ Relatório Mensal Detalhado",
-    "📌 Análise Extra 1",
-    "📌 Análise Extra 2",
-    "📌 Análise Extra 3",
-    "📌 Análise Extra 4",
-    "📌 Análise Extra 5"
-])
+aba1, aba2, aba3, aba4 = st.tabs(["📄 Upload e Processamento", "📥 Download Excel", "🔄 Atualizar Google Sheets","📊 Relatórios Gerenciais"])
 
 
-# ================================
-# 4. Aba 1 - Gráfico Anual Comparativo
-# ================================
-with aba1:
-    st.subheader("📊 Gráfico Anual Comparativo")
+with aba4:
+    # ================================
+    # 📈 Relatórios Gerenciais (Painel Interativo)
+    # ================================
 
- 
+
+	
+    # Conectar ao Google Sheets
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+    gc = gspread.authorize(credentials)
+
+    # Carregar dados
+    planilha = gc.open("Faturamento Sistema Externo")
+    aba = planilha.worksheet("Fat Sistema Externo")
+    dados = aba.get_all_records()
+    df = pd.DataFrame(dados)
+
+   
+
   # =========================
     # 🧹 Tratamento dos dados
     # =========================
@@ -60,12 +93,20 @@ with aba1:
 
     # Para os gráficos
     anos_comparacao = st.multiselect(
-        "📊 Anos para gráficos de comparação",
-        options=anos_disponiveis,
-        default=anos_disponiveis
+    	"📊 Anos para gráficos de comparação",
+    	options=anos_disponiveis,
+    	default=anos_disponiveis
     )
 
-       
+    # Para a tabela
+   # anos_selecionados = st.multiselect(
+    #	"🗓️ Anos para tabela com totais",
+   # 	options=anos_disponiveis,
+    #	default=anos_disponiveis
+    #)
+
+
+	
     # Filtrar os dados com base na seleção
     #df_anos_filtrado = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"])
     def limpar_valor(x):
@@ -98,21 +139,30 @@ with aba1:
     # Só depois faz o filtro
     df_anos_filtrado = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"])
      
-    
+	
    # Filtro de anos
-    
+    #df_anos = df[df["Ano"].isin([2024, 2025])].dropna(subset=["Data", "Fat.Real"])
+    # Filtro de anos com base no multiselect
     anos_disponiveis = sorted(df["Ano"].dropna().unique())
+    #anos_comparacao = st.multiselect("📊 Escolha os anos para comparação nos gráficos", options=anos_disponiveis, default=anos_disponiveis)
     df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"]).copy()
 #NOVO
     # Calcular a quantidade de lojas únicas por ano
     df_lojas = df_anos.groupby("Ano")["Loja"].nunique().reset_index()
     df_lojas.columns = ["Ano", "Qtd_Lojas"]	
 
+
+
+
     # Calcular a quantidade de lojas únicas por ano
     df_lojas = df_anos.groupby("Ano")["Loja"].nunique().reset_index()
     df_lojas.columns = ["Ano", "Qtd_Lojas"]
 
+
+
+	
    # Agrupamento por mês e ano
+    #fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
     fat_mensal = df_anos_filtrado.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
 
 
@@ -179,112 +229,178 @@ fig.update_layout(
         zeroline=False
     )
 )
-    # ==============================
-    # 📉 Gráfico horizontal: Total Anual 2024 vs 2025
-    # ==============================
-    # 📉 Gráfico horizontal minimalista com total anual (valores visíveis e cores mantidas)
-    #df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
+# ==============================
+# 📉 Gráfico horizontal: Total Anual 2024 vs 2025
+# ==============================
+# 📉 Gráfico horizontal minimalista com total anual (valores visíveis e cores mantidas)
+#df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
 
-    #NOVO
+#NOVO
 
-    # Total de faturamento por ano
-    #df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
-    df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
+# Total de faturamento por ano
+#df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
+df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
 
-    # Calcular quantidade de lojas
-    df_lojas = df_anos.groupby("Ano")["Loja"].nunique().reset_index()
-    df_lojas.columns = ["Ano", "Qtd_Lojas"]
+# Calcular quantidade de lojas
+df_lojas = df_anos.groupby("Ano")["Loja"].nunique().reset_index()
+df_lojas.columns = ["Ano", "Qtd_Lojas"]
 
-    # Garantir que ambas as colunas 'Ano' são do mesmo tipo
-    df_total["Ano"] = df_total["Ano"].astype(int)
-    df_lojas["Ano"] = df_lojas["Ano"].astype(int)
+# Garantir que ambas as colunas 'Ano' são do mesmo tipo
+df_total["Ano"] = df_total["Ano"].astype(int)
+df_lojas["Ano"] = df_lojas["Ano"].astype(int)
 
 
-    # Junta com quantidade de lojas
-    df_total = df_total.merge(df_lojas, on="Ano", how="left")
-    #df_total["AnoTexto"] = df_total.apply(
-    #   lambda row: f"{row['Ano']}  R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
-    #)
+# Junta com quantidade de lojas
+df_total = df_total.merge(df_lojas, on="Ano", how="left")
+#df_total["AnoTexto"] = df_total.apply(
+ #   lambda row: f"{row['Ano']}  R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
+#)
 
-    df_total["AnoTexto"] = df_total.apply(
-        lambda row: f"{int(row['Ano'])}                                                      R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
-    )
+df_total["AnoTexto"] = df_total.apply(
+    lambda row: f"{int(row['Ano'])}                                                      R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
+)
 
-    df_total["Ano"] = df_total["Ano"].astype(str)
-    fig_total = px.bar(
+df_total["Ano"] = df_total["Ano"].astype(str)
+fig_total = px.bar(
     df_total,
     x="Fat.Real",
     y="Ano",
-            #title=None,	
-            orientation="h",
-            color="Ano",  # Mantém as cores iguais ao gráfico mensal
-            text="AnoTexto",  # 👈 usa a nova coluna,
-            color_discrete_map=color_map
-        
+    #title=None,	
+    orientation="h",
+    color="Ano",  # Mantém as cores iguais ao gráfico mensal
+    text="AnoTexto",  # 👈 usa a nova coluna,
+    color_discrete_map=color_map
+	
+)
+# 🔥 Remove título de eixos e legenda
+fig_total.update_traces(
+    textposition="inside",
+    textfont=dict(size=16, color="white"),
+    insidetextanchor="start",
+    showlegend=False
+)
+
+# Estilo da barra
+fig_total.update_traces(
+    textposition="outside",  # Valor do lado de fora
+    insidetextanchor="start",
+    textfont=dict(size=16),
+    showlegend=False      # reforço	
+)
+# Ano dentro da barra (ex: 2025)
+for i, row in df_total.iterrows():
+    fig_total.add_annotation(
+        x=0.1,
+        y=row["Ano"],
+       # text=f"<b>{int(row['Ano'])}</b>",  # remove o .0
+        text=row["AnoTexto"],  # texto com valor formatado
+	showarrow=False,
+        xanchor="left",
+        yanchor="middle",
+        font=dict(color="white", size=16),
+        xref="x",
+        yref="y"
     )
-    # 🔥 Remove título de eixos e legenda
-    fig_total.update_traces(
-        textposition="inside",
-        textfont=dict(size=16, color="white"),
-        insidetextanchor="start",
-        showlegend=False
+# Qtd de lojas ao final da barra (ex: 10 lojas)
+for i, row in df_total.iterrows():
+    fig_total.add_annotation(
+        x=row["Fat.Real"],
+        y=row["Ano"],
+	showarrow=False,  
+        text=f"{int(row['Qtd_Lojas'])} Lojas",  # remove o .0
+        xanchor="left",
+        yanchor="bottom",
+	yshift=-8,     
+        font=dict(color="red", size=16,weight="bold"),
+        xref="x",
+        yref="y"
     )
 
-    # Estilo da barra
-    fig_total.update_traces(
-        textposition="outside",  # Valor do lado de fora
-        insidetextanchor="start",
-        textfont=dict(size=16),
-        showlegend=False      # reforço	
-    )
-    # Ano dentro da barra (ex: 2025)
-    for i, row in df_total.iterrows():
-        fig_total.add_annotation(
-            x=0.1,
-            y=row["Ano"],
-        # text=f"<b>{int(row['Ano'])}</b>",  # remove o .0
-            text=row["AnoTexto"],  # texto com valor formatado
-        showarrow=False,
-            xanchor="left",
-            yanchor="middle",
-            font=dict(color="white", size=16),
-            xref="x",
-            yref="y"
+fig_total.update_layout(
+    height=130,
+    margin=dict(t=0, b=0, l=0, r=0),
+    title=None,
+    xaxis=dict(visible=False),
+    yaxis=dict(
+        showticklabels=False,
+        showgrid=False,
+        zeroline=False
+    ),
+    yaxis_title=None,     # ✅ remove "Ano" da lateral
+    showlegend=False,     # ✅ remove a legenda de cores
+    plot_bgcolor="rgba(0,0,0,0)"
+)
+# Exibir no Streamlit
+
+st.subheader("Faturamento Anual")
+st.plotly_chart(fig_total, use_container_width=True)
+
+st.markdown("---")
+st.subheader("Faturamento Mensal")
+st.plotly_chart(fig, use_container_width=True)
+# =========================
+# 📋 Faturamento Real por Loja e Mês (com totais e exportação)
+# =========================
+import io
+
+# 1. Prepara os dados com todos os anos disponíveis
+df_anos["Ano"] = df_anos["Data"].dt.year
+anos_disponiveis = sorted(df_anos["Ano"].dropna().unique())
+
+# 2. Permitir seleção dos anos
+anos_selecionados = st.multiselect("🗓️ Selecione os anos que deseja exibir", options=anos_disponiveis, default=anos_disponiveis)
+
+buffer = io.BytesIO()
+with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+    for ano in anos_selecionados:
+        df_fat = df_anos[df_anos["Ano"] == ano].copy()
+        df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
+        df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
+
+        # 3. Traduzir meses para português
+        meses_pt = {
+            "January": "Janeiro", "February": "Fevereiro", "March": "Março", "April": "Abril",
+            "May": "Maio", "June": "Junho", "July": "Julho", "August": "Agosto",
+            "September": "Setembro", "October": "Outubro", "November": "Novembro", "December": "Dezembro"
+        }
+        df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
+        df_fat["Mês"] = df_fat["Mês"].apply(lambda x: f"{x[:6]}{meses_pt.get(x[6:], x[6:])}")
+
+        # 4. Tabela dinâmica
+        tabela_fat_real = df_fat.pivot_table(
+            index="Loja",
+            columns="Mês",
+            values="Fat.Real",
+            aggfunc="sum",
+            fill_value=0
         )
-    # Qtd de lojas ao final da barra (ex: 10 lojas)
-    for i, row in df_total.iterrows():
-        fig_total.add_annotation(
-            x=row["Fat.Real"],
-            y=row["Ano"],
-        showarrow=False,  
-            text=f"{int(row['Qtd_Lojas'])} Lojas",  # remove o .0
-            xanchor="left",
-            yanchor="bottom",
-        yshift=-8,     
-            font=dict(color="red", size=16,weight="bold"),
-            xref="x",
-            yref="y"
+
+        # 5. Totais
+        linha_total = tabela_fat_real.sum().to_frame().T
+        linha_total.index = ["Total Geral"]
+        coluna_total = tabela_fat_real.sum(axis=1)
+        tabela_fat_real.insert(0, "Total Geral", coluna_total)
+        linha_total.insert(0, "Total Geral", coluna_total.sum())
+        tabela_com_total = pd.concat([linha_total, tabela_fat_real])
+
+        # 6. Formatação brasileira
+        tabela_formatada = tabela_com_total.applymap(
+            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         )
 
-    fig_total.update_layout(
-        height=130,
-        margin=dict(t=0, b=0, l=0, r=0),
-        title=None,
-        xaxis=dict(visible=False),
-        yaxis=dict(
-            showticklabels=False,
-            showgrid=False,
-            zeroline=False
-        ),
-        yaxis_title=None,     # ✅ remove "Ano" da lateral
-        showlegend=False,     # ✅ remove a legenda de cores
-        plot_bgcolor="rgba(0,0,0,0)"
-    )
-    # Exibir no Streamlit
+        # 7. Mostrar no app
+        st.markdown("---")
+        st.subheader(f"📋 Faturamento Real por Loja e Mês - {ano}")
+        st.dataframe(tabela_formatada)
 
-#    st.plotly_chart(fig, use_container_width=True)
+        # 8. Gravar no Excel
+        tabela_com_total.to_excel(writer, sheet_name=f"Faturamento_{ano}")
 
-# ✅ Encerramento da aba1 (sem mais indentação)
-# ================================
-# 5. Aba 2 - Relatório Mensal Detalhado
-# ================================
+# 9. Botão de download final
+st.markdown("---")
+st.download_button(
+    label="📥 Baixar Excel com Totais por Ano",
+    data=buffer.getvalue(),
+    file_name="faturamento_real_totais_por_ano.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
