@@ -225,7 +225,6 @@ with aba1:
 # 📊 Aba 2 - Gráfico Trimestral (em breve)
 # ==========================================================
 with aba2:
-    st.empty()  # para não ficar vazio
     st.subheader("Faturamento Trimestral Comparativo")
 
     df_anos["Trimestre"] = df_anos["Data"].dt.quarter
