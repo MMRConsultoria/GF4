@@ -58,13 +58,27 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+# Configuração da página
+st.set_page_config(page_title="Relatórios Gerenciais", layout="wide")
+
+# Título da página
+st.title("📊 Relatórios Gerenciais")
+
 # ================================
-# 3. Separação em ABAS
+# 3. Abas internas
 # ================================
-aba1, aba2, aba3, aba4 = st.tabs(["📄 Upload e Processamento", "📥 Download Excel", "🔄 Atualizar Google Sheets","📊 Relatórios Gerenciais"])
+aba1, aba2, aba3, aba4, aba5, aba6, aba7 = st.tabs([
+    "📊 Gráfico Anual Comparativo",
+    "🗓️ Relatório Mensal Detalhado",
+    "📌 Análise Extra 1",
+    "📌 Análise Extra 2",
+    "📌 Análise Extra 3",
+    "📌 Análise Extra 4",
+    "📌 Análise Extra 5"
+])
 
 
-with aba4:
+with aba1:
     # ================================
     # 📈 Relatórios Gerenciais (Painel Interativo)
     # ================================
