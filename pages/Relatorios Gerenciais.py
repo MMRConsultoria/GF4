@@ -227,55 +227,34 @@ with aba1:
 with aba2:
     st.subheader("Faturamento Trimestral Comparativo")
 
-    # Garantir que df_anos exista — caso ainda não esteja criado no app
-    if "df_anos" not in locals():
-        planilha = gc.open("Faturamento Sistema Externo")
-        aba = planilha.worksheet("Fat Sistema Externo")
-        dados = aba.get_all_records()
-        df = pd.DataFrame(dados)
-
-        def limpar_valor(x):
-            try:
-                if isinstance(x, str):
-                    return float(x.replace("R$", "").replace(".", "").replace(",", ".").strip())
-                elif isinstance(x, (int, float)):
-                    return x
-            except:
-                return None
-            return None
-
-        for coluna in ["Fat.Total", "Serv/Tx", "Fat.Real"]:
-            if coluna in df.columns:
-                df[coluna] = df[coluna].apply(limpar_valor)
-                df[coluna] = pd.to_numeric(df[coluna], errors="coerce")
-
-        df["Data"] = pd.to_datetime(df["Data"], errors="coerce", dayfirst=True)
-        df["Ano"] = df["Data"].dt.year
-        df["Mês"] = df["Data"].dt.month
-        df_anos = df[df["Data"].notna() & df["Fat.Real"].notna()].copy()
-
-    # Agrupamento por trimestre
+    # Criar coluna de trimestre
     df_anos["Trimestre"] = df_anos["Data"].dt.quarter
     df_anos["Nome Trimestre"] = "T" + df_anos["Trimestre"].astype(str)
-    df_anos["TrimestreAno"] = df_anos["Nome Trimestre"] + "/" + df_anos["Ano"].astype(str)
 
-    df_trimestral = df_anos.groupby(["Nome Trimestre", "Ano"])["Fat.Real"].sum().reset_index()
-    df_trimestral["Ano"] = df_trimestral["Ano"].astype(str)
-    df_trimestral["TrimestreNum"] = df_trimestral["Nome Trimestre"].str.extract(r'(\d)').astype(int)
-    df_trimestral = df_trimestral.sort_values(["TrimestreNum", "Ano"])
+    # Agrupar por trimestre e ano
+    fat_trimestral = df_anos.groupby(["Nome Trimestre", "Ano"])["Fat.Real"].sum().reset_index()
 
+    # Garantir ordenação correta
+    fat_trimestral["TrimestreNum"] = fat_trimestral["Nome Trimestre"].str.extract(r'(\d)').astype(int)
+    fat_trimestral["Ano"] = fat_trimestral["Ano"].astype(str)
+    fat_trimestral = fat_trimestral.sort_values(["TrimestreNum", "Ano"])
+
+    # Cores
+    color_map = {
+        "2024": "#1f77b4",
+        "2025": "#ff7f0e",
+    }
+
+    # Criar gráfico de barras agrupadas por trimestre
     fig_trimestre = px.bar(
-        df_trimestral,
+        fat_trimestral,
         x="Nome Trimestre",
         y="Fat.Real",
         color="Ano",
         barmode="group",
         text="Fat.Real",
         custom_data=["Ano"],
-        color_discrete_map={
-            "2024": "#1f77b4",
-            "2025": "#ff7f0e"
-        }
+        color_discrete_map=color_map
     )
 
     fig_trimestre.update_traces(textposition="outside")
@@ -288,6 +267,7 @@ with aba2:
     )
 
     st.plotly_chart(fig_trimestre, use_container_width=True)
+
 
 
 
