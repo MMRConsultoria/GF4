@@ -162,7 +162,8 @@ df_trimestre["Fat.Real"] = df_trimestre["Fat.Real"].apply(limpar_valor)
     st.write("📅 Intervalo de datas:", df_trimestre["Data"].min(), "→", df_trimestre["Data"].max())
     st.write("🔍 Dados carregados:")
     st.dataframe(df_trimestre.head()) 
-    
+    st.write(fat_trimestral)
+
     fig_trimestre = px.bar(
         fat_trimestral,
         x="Nome Trimestre",
