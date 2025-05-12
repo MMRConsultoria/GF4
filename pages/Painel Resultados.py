@@ -51,5 +51,5 @@ with aba3:
 
 # Aba 4: Relatório Detalhado
 with aba4:
-    st.subheader("📋 Relatório Detalhado")
+   
     st.info("Você pode colocar tabelas detalhadas e botões de download aqui.")
