@@ -133,13 +133,13 @@ with aba2:
 
     # ✅ Limpeza dos dados
     df_trimestre["Data"] = pd.to_datetime(df_trimestre["Data"], errors="coerce", dayfirst=True)
-    def limpar_valor(x):
-        try:
-            if isinstance(x, str):
-                return float(x.replace("R$", "").replace(".", "").replace(",", ".").strip())
-            return float(x)
-        except:
-            return None
+def limpar_valor(x):
+    try:
+        if isinstance(x, str):
+            return float(x.replace("R$", "").replace(".", "").replace(",", ".").strip())
+        return float(x)
+    except:
+        return None
 
 df_trimestre["Fat.Real"] = df_trimestre["Fat.Real"].apply(limpar_valor)
     df_trimestre = df_trimestre[df_trimestre["Data"].notna() & df_trimestre["Fat.Real"].notna()].copy()
