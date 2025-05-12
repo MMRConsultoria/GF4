@@ -75,8 +75,9 @@ st.markdown("""
 # ================================
 # 4. Abas
 # ================================
-aba1, aba2  = st.tabs([
+aba1, aba2,aba3  = st.tabs([
     "📊 Graficos Anuais - Grupo",
+    "📥 Graficos Trimestrais - Grupo"
     "📥 Relatoio Analitico"
   
 ])
@@ -121,9 +122,9 @@ with aba1:
 
 
 # ================================
-# 📥 Aba 2 - Relatorio Analitico
+# 📥 Aba 3 - Relatorio Analitico
 # ================================
-with aba2:
+with aba3:
     st.subheader("📥 Relatório Analítico")
     anos = sorted(df_anos["Ano"].dropna().unique(), reverse=True)
     anos_selecionados = st.multiselect("🗓️ Selecione os anos", anos, default=anos)
