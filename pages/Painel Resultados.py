@@ -415,14 +415,14 @@ with aba3:
         		# 8. Gravar no Excel
         		tabela_com_total.to_excel(writer, sheet_name=f"Faturamento_{ano}")
 
-# 9. Botão de download final
-st.markdown("---")
-st.download_button(
-	label="📥 Baixar Excel com Totais por Ano",
-	data=buffer.getvalue(),
-	file_name="faturamento_real_totais_por_ano.xlsx",
-	mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-	)
+	# 9. Botão de download final
+	st.markdown("---")
+	st.download_button(
+		label="📥 Baixar Excel com Totais por Ano",
+		data=buffer.getvalue(),
+		file_name="faturamento_real_totais_por_ano.xlsx",
+		mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+		)
 # ================================
 # Aba 4: Analise Lojas
 # ================================
