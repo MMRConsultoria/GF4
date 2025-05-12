@@ -125,16 +125,14 @@ with aba1:
 with aba2:
     st.subheader("Faturamento Trimestral Comparativo")
 
-    # Carregar dados
+    # Carregar dados do Google Sheets
     dados = aba.get_all_records()
     df_trimestre = pd.DataFrame(dados)
 
-    # Limpeza
     df_trimestre["Data"] = pd.to_datetime(df_trimestre["Data"], errors="coerce", dayfirst=True)
     df_trimestre["Fat.Real"] = df_trimestre["Fat.Real"].apply(limpar_valor)
     df_trimestre = df_trimestre[df_trimestre["Data"].notna() & df_trimestre["Fat.Real"].notna()]
 
-    # Trimestre
     df_trimestre["Ano"] = df_trimestre["Data"].dt.year
     df_trimestre["Trimestre"] = df_trimestre["Data"].dt.quarter
     df_trimestre["Nome Trimestre"] = "T" + df_trimestre["Trimestre"].astype(str)
@@ -144,12 +142,7 @@ with aba2:
     fat_trimestral["Ano"] = fat_trimestral["Ano"].astype(str)
     fat_trimestral = fat_trimestral.sort_values(["TrimestreNum", "Ano"])
 
-    # Debug
-    st.write("✅ Trimestres:", fat_trimestral)
-
-    # Teste mínimo
-    st.write("🎯 Teste básico")
-    st.plotly_chart(px.bar(x=["T1", "T2"], y=[100, 200]), use_container_width=True)
+    st.dataframe(fat_trimestral)
 
     if not fat_trimestral.empty:
         fig = px.bar(
@@ -162,10 +155,16 @@ with aba2:
             color_discrete_map={"2024": "#1f77b4", "2025": "#ff7f0e"}
         )
         fig.update_traces(textposition="outside")
+        fig.update_layout(
+            xaxis_title=None,
+            yaxis_title=None,
+            xaxis_tickangle=-45,
+            showlegend=False,
+            yaxis=dict(showticklabels=False, showgrid=False, zeroline=False)
+        )
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.warning("⚠️ Nenhum dado trimestral encontrado.")
-
 
 
 # ================================
