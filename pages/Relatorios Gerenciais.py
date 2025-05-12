@@ -125,64 +125,57 @@ with aba1:
 with aba2:
     st.subheader("Faturamento Trimestral Comparativo")
 
-    # 🔁 Recarregar os dados da planilha
     planilha = gc.open("Faturamento Sistema Externo")
     aba = planilha.worksheet("Fat Sistema Externo")
     dados = aba.get_all_records()
     df_trimestre = pd.DataFrame(dados)
 
-    # ✅ Limpeza dos dados
     df_trimestre["Data"] = pd.to_datetime(df_trimestre["Data"], errors="coerce", dayfirst=True)
     df_trimestre["Fat.Real"] = df_trimestre["Fat.Real"].apply(limpar_valor)
     df_trimestre = df_trimestre[df_trimestre["Data"].notna() & df_trimestre["Fat.Real"].notna()].copy()
 
-    # ✅ Criar colunas de ano e trimestre
     df_trimestre["Ano"] = df_trimestre["Data"].dt.year
     df_trimestre["Trimestre"] = df_trimestre["Data"].dt.quarter
     df_trimestre["Nome Trimestre"] = "T" + df_trimestre["Trimestre"].astype(str)
 
-    # ✅ Agrupar por trimestre e ano
     fat_trimestral = df_trimestre.groupby(["Nome Trimestre", "Ano"])["Fat.Real"].sum().reset_index()
     fat_trimestral["TrimestreNum"] = fat_trimestral["Nome Trimestre"].str.extract(r'(\d)').astype(int)
     fat_trimestral["Ano"] = fat_trimestral["Ano"].astype(str)
     fat_trimestral = fat_trimestral.sort_values(["TrimestreNum", "Ano"])
 
-    # ✅ Mostrar preview
+    # 👀 Debug
     st.write("🔍 Linhas válidas:", len(df_trimestre))
     st.write("📅 Intervalo de datas:", df_trimestre["Data"].min(), "→", df_trimestre["Data"].max())
     st.dataframe(fat_trimestral)
-    st.write("✅ Fat trimestral vazio?", fat_trimestral.empty)
 
+    # 🧪 Gráfico de teste
     st.write("🎯 Teste de gráfico simples")
     fig_debug = px.bar(x=["T1", "T2", "T3", "T4"], y=[100, 200, 300, 400])
     st.plotly_chart(fig_debug)
 
-   if not fat_trimestral.empty:
-    fig_trimestre = px.bar(
-        fat_trimestral,
-        x="Nome Trimestre",
-        y="Fat.Real",
-        color="Ano",
-        barmode="group",
-        text="Fat.Real",
-        custom_data=["Ano"],
-        color_discrete_map=color_map
-    )
-    fig_trimestre.update_traces(textposition="outside")
-    fig_trimestre.update_layout(
-        xaxis_title=None,
-        yaxis_title=None,
-        xaxis_tickangle=-45,
-        showlegend=False,
-        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False)
-    )
-    st.plotly_chart(fig_trimestre, use_container_width=True)
-else:
-    st.warning("⚠️ Nenhum dado trimestral encontrado para exibir o gráfico.")
-
-
-    st.plotly_chart(fig_trimestre, use_container_width=True)
-
+    # ✅ Gráfico real
+    if not fat_trimestral.empty:
+        fig_trimestre = px.bar(
+            fat_trimestral,
+            x="Nome Trimestre",
+            y="Fat.Real",
+            color="Ano",
+            barmode="group",
+            text="Fat.Real",
+            custom_data=["Ano"],
+            color_discrete_map={"2024": "#1f77b4", "2025": "#ff7f0e"}
+        )
+        fig_trimestre.update_traces(textposition="outside")
+        fig_trimestre.update_layout(
+            xaxis_title=None,
+            yaxis_title=None,
+            xaxis_tickangle=-45,
+            showlegend=False,
+            yaxis=dict(showticklabels=False, showgrid=False, zeroline=False)
+        )
+        st.plotly_chart(fig_trimestre, use_container_width=True)
+    else:
+        st.warning("⚠️ Nenhum dado trimestral encontrado para exibir o gráfico.")
 
 
 
