@@ -117,7 +117,7 @@ with aba1:
         showlegend=False,
         yaxis=dict(showticklabels=False, showgrid=False, zeroline=False)
     )
-    #st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True)
 
 # ==========================================================
 # 📊 Aba 2 - Gráfico Trimestral Comparativo
