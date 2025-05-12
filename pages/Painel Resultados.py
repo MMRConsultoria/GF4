@@ -60,28 +60,28 @@ st.markdown("""
 # ================================
 
 aba1, aba2, aba3, aba4 = st.tabs([
-    "📈 Visão Geral",
-    "📆 Análise Mensal",
-    "📉 Comparativo Anual",
-    "📋 Relatório Detalhado"
+    "📈 Graficos Anual",
+    "📈 Graficos Trimestral",
+    "📆 Analise Mensal",
+    "📋 Analise Lojas"
 ])
 
-# Aba 1: Visão Geral
+# Aba 1: Graficos Anual
 with aba1:
    
     st.info("Aqui você pode adicionar um gráfico resumo, KPIs principais ou destaques estratégicos.")
 
-# Aba 2: Análise Mensal
+# Aba 2: Graficos Trimestral
 with aba2:
    
     st.info("Coloque aqui um gráfico de barras ou linhas mês a mês.")
 
-# Aba 3: Comparativo Anual
+# Aba 3: Analise Mensal
 with aba3:
    
     st.info("Ideal para mostrar evolução por ano ou por trimestre.")
 
-# Aba 4: Relatório Detalhado
+# Aba 4: Analise Lojas
 with aba4:
    
     st.info("Você pode colocar tabelas detalhadas e botões de download aqui.")
