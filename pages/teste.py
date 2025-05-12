@@ -26,7 +26,7 @@ df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela_Empresa").get_all_r
 # ================================
 # 2. Configuração inicial do app
 # ================================
-st.set_page_config(page_title="Faturamento por Serviço", layout="wide")
+st.set_page_config(page_title="Relatorios", layout="wide")
 #st.title("📋 Relatório de Faturamento por Serviço")
 
 # 🎨 Estilizar abas
@@ -61,11 +61,16 @@ st.markdown("""
 # ================================
 # 3. Separação em ABAS
 # ================================
-aba1 = st.tabs(["📊 Graficos"])
+aba1, aba2, aba3, aba4  = st.tabs([
+	"📊 1 Graficos",
+	"📊 2 Graficos",
+	"📊 3 Graficos",
+	"📊 4 Graficos"
+])
 
 with aba1:
 # ================================
-# 📈 Relatórios Gerenciais (Painel Interativo)
+# 📈 Relatorios (Painel Interativo)
 # ================================
 
 
@@ -388,3 +393,10 @@ st.download_button(
     file_name="faturamento_real_totais_por_ano.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
+with aba2:
+    st.info("📌 Em breve: 📊 2 Graficos")
+with aba3:
+    st.info("📌 Em breve: 📊 3 Graficos")
+with aba4:
+    st.info("📌 Em breve: 📊 4 Graficos")
+	
