@@ -155,9 +155,10 @@ with aba2:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     st.plotly_chart(fig, use_container_width=True)
+    del fig  # garante que não vai vazar para a aba 3
 
 # ================================
-# 📊 Aba 3 - Gráfico Anual
+# 📊 Aba 3 - Relatório Trimestral
 # ================================
 with aba3:
     st.subheader("Faturamento Anual")
