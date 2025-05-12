@@ -4,10 +4,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-st.set_page_config(
-    page_title="📈 Análises de Resultados",  # 🟢 Nome bonito que aparecerá no navegador e no menu lateral
-    layout="wide"
-)
 
 st.markdown("""
     <style>
