@@ -133,7 +133,7 @@ with aba2:
 
     # ✅ Limpeza dos dados
     df_trimestre["Data"] = pd.to_datetime(df_trimestre["Data"], errors="coerce", dayfirst=True)
-    df_trimestre["Fat.Real"] = pd.to_numeric(df_trimestre["Fat.Real"], errors="coerce")
+    #df_trimestre["Fat.Real"] = pd.to_numeric(df_trimestre["Fat.Real"], errors="coerce")
     df_trimestre = df_trimestre[df_trimestre["Data"].notna() & df_trimestre["Fat.Real"].notna()].copy()
 
     # ✅ Criar colunas de ano e trimestre
@@ -150,6 +150,8 @@ with aba2:
     # ✅ Gráfico
     color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
 
+    st.write("🔍 Linhas válidas:", len(df_trimestre))
+    st.write("📅 Intervalo de datas:", df_trimestre["Data"].min(), "→", df_trimestre["Data"].max())
     st.write("🔍 Dados carregados:")
     st.dataframe(df_trimestre.head()) 
     
