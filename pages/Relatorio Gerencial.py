@@ -19,14 +19,14 @@ st.set_page_config(page_title="Relatorios", layout="wide")
 aba1, aba2, aba3, aba4 = st.tabs([
     "📊 Graficos Anuais - Grupo",
     "📥 Graficos Trimestrais - Grupo",
-    "📥 Relatório Analítico",
-    "📊 Relatórios Gerenciais"
+    "📥 Relatorio Analitico",
+    "📊 Relatorios Gerenciais"
 ])
 
 with aba4:
 
     # ================================
-    # 📈 Relatórios Gerenciais (Painel Interativo)
+    # 📈 Relatorios Gerenciais (Painel Interativo)
     # ================================
 
 
@@ -51,7 +51,7 @@ with aba4:
     # 🔽 Interface para selecionar anos no comparativo (após tratamento dos dados)
     anos_disponiveis = sorted(df["Ano"].dropna().unique())
 
-    # Para os gráficos
+    # Para os graficos
     anos_comparacao = st.multiselect(
     	"📊 Anos para gráficos de comparação",
     	options=anos_disponiveis,
@@ -190,9 +190,9 @@ fig.update_layout(
     )
 )
 # ==============================
-# 📉 Gráfico horizontal: Total Anual 2024 vs 2025
+# 📉 Grafico horizontal: Total Anual 2024 vs 2025
 # ==============================
-# 📉 Gráfico horizontal minimalista com total anual (valores visíveis e cores mantidas)
+# 📉 Grafico horizontal minimalista com total anual (valores visíveis e cores mantidas)
 #df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
 
 #NOVO
