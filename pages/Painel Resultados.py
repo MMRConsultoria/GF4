@@ -22,7 +22,7 @@ st.markdown("""
 st.markdown("""
     <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
         <img src='https://img.icons8.com/color/48/combo-chart--v1.png' width='40'/>
-        <h1 style='display: inline; margin: 0; font-size: 2.2rem;'>📊 Painel de Indicadores</h1>
+        <h1 style='display: inline; margin: 0; font-size: 2.2rem;'> Painel de Indicadores</h1>
     </div>
 """, unsafe_allow_html=True)
 
