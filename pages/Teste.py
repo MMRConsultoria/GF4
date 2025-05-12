@@ -155,7 +155,7 @@ with aba2:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 # ================================
-# 📥 Aba 3 - Graficos Tirmestral - Grupo
+# 📥 Aba 3 - Graficos Trimestral - Grupo
 # ================================
 with aba3:
     st.subheader("Faturamento Anual")
