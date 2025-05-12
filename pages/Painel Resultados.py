@@ -340,18 +340,7 @@ st.markdown("---")
 st.subheader("Faturamento Mensal")
 st.plotly_chart(fig, use_container_width=True)
 
-# ================================
-# Aba 2: Graficos Trimestrais
-# ================================
 
-with aba2:
-	st.info("Ideal para mostrar evolução por ano ou por trimestre.")
-	
-# ================================
-# Aba 3: Analise Mensal
-# ================================
-
-with aba3:
 
 
 # =========================
@@ -420,7 +409,19 @@ st.download_button(
     file_name="faturamento_real_totais_por_ano.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
+# ================================
+# Aba 2: Graficos Trimestrais
+# ================================
 
+with aba2:
+	st.info("Ideal para mostrar evolução por ano ou por trimestre.")
+	
+# ================================
+# Aba 3: Analise Mensal
+# ================================
+
+with aba3:
+	st.info("Ideal para mostrar evolução por ano ou por trimestre.")
 # ================================
 # Aba 4: Analise Lojas
 # ================================
