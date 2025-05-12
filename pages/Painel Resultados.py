@@ -345,6 +345,15 @@ st.plotly_chart(fig, use_container_width=True)
 # ================================
 
 with aba2:
+	st.info("Ideal para mostrar evolução por ano ou por trimestre.")
+	
+# ================================
+# Aba 3: Analise Mensal
+# ================================
+
+with aba3:
+
+
 # =========================
 # 📋 Faturamento Real por Loja e Mês (com totais e exportação)
 # =========================
@@ -411,15 +420,6 @@ st.download_button(
     file_name="faturamento_real_totais_por_ano.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
-
-    
-# ================================
-# Aba 3: Analise Mensal
-# ================================
-
-with aba3:
-   
-    st.info("Ideal para mostrar evolução por ano ou por trimestre.")
 
 # ================================
 # Aba 4: Analise Lojas
