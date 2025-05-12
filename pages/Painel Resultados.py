@@ -422,7 +422,7 @@ with aba3:
 		data=buffer.getvalue(),
 		file_name="faturamento_real_totais_por_ano.xlsx",
 		mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-		)
+	)
 # ================================
 # Aba 4: Analise Lojas
 # ================================
