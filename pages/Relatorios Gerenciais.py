@@ -157,8 +157,7 @@ with aba2:
     fig_debug = px.bar(x=["T1", "T2", "T3", "T4"], y=[100, 200, 300, 400])
     st.plotly_chart(fig_debug)
 
-    # ✅ Gráfico
-    color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
+   if not fat_trimestral.empty:
     fig_trimestre = px.bar(
         fat_trimestral,
         x="Nome Trimestre",
@@ -169,7 +168,6 @@ with aba2:
         custom_data=["Ano"],
         color_discrete_map=color_map
     )
-
     fig_trimestre.update_traces(textposition="outside")
     fig_trimestre.update_layout(
         xaxis_title=None,
@@ -178,6 +176,10 @@ with aba2:
         showlegend=False,
         yaxis=dict(showticklabels=False, showgrid=False, zeroline=False)
     )
+    st.plotly_chart(fig_trimestre, use_container_width=True)
+else:
+    st.warning("⚠️ Nenhum dado trimestral encontrado para exibir o gráfico.")
+
 
     st.plotly_chart(fig_trimestre, use_container_width=True)
 
