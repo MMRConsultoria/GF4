@@ -9,7 +9,8 @@ from oauth2client.service_account import ServiceAccountCredentials
 import json
 import plotly.express as px
 
-st.set_page_config(page_title="Relatorios", layout="wide")
+st.set_page_config(page_title="Relatórios Gerenciais", layout="wide")
+st.title("📊 Relatórios Gerenciais")
 
 # ================================
 # 1. Conexão com Google Sheets
