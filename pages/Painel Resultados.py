@@ -339,6 +339,12 @@ st.plotly_chart(fig_total, use_container_width=True)
 st.markdown("---")
 st.subheader("Faturamento Mensal")
 st.plotly_chart(fig, use_container_width=True)
+
+# ================================
+# Aba 2: Graficos Trimestrais
+# ================================
+
+with aba2:
 # =========================
 # 📋 Faturamento Real por Loja e Mês (com totais e exportação)
 # =========================
@@ -406,14 +412,6 @@ st.download_button(
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 
-
-# ================================
-# Aba 2: Graficos Trimestrais
-# ================================
-
-with aba2:
-   
-    st.info("Coloque aqui um gráfico de barras ou linhas mês a mês.")
     
 # ================================
 # Aba 3: Analise Mensal
