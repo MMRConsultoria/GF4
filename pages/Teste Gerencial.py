@@ -1,4 +1,4 @@
-# pages/RelatorioGerenciais.py
+# pages/testeGerencial.py
 
 import streamlit as st
 import pandas as pd
@@ -76,8 +76,8 @@ st.markdown("""
 # ================================
 aba1, aba2,aba3  = st.tabs([
     "📊 Graficos Anuais - Grupo",
-    "📥 Relatório Analitico".
-    "📥 Relatório Trimestral"
+    "📥 Relatorio Analitico".
+    "📥 Relatorio Trimestral"
   
 ])
 
@@ -154,7 +154,7 @@ with aba2:
         file_name="faturamento_real_totais.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
+    st.plotly_chart(fig, use_container_width=True)
 # ================================
 # 📥 Aba 3 - Relatório Analítico
 # ================================
