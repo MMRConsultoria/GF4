@@ -77,7 +77,7 @@ st.markdown("""
 # ================================
 aba1, aba2,aba3  = st.tabs([
     "📊 Graficos Anuais - Grupo",
-    "📥 Graficos Trimestrais - Grupo"
+    "📥 Graficos Trimestrais - Grupo",
     "📥 Relatoio Analitico"
   
 ])
