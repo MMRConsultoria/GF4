@@ -1,5 +1,5 @@
 
-# pages/RelatoriosGerenciais.py
+# pages/Relatorios_Gerenciais.py
 
 import streamlit as st
 import pandas as pd
