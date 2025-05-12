@@ -1,4 +1,4 @@
-# pages/RelatorioGerencil.py
+# pages/RelatorioGerencial.py
 
 import streamlit as st
 import pandas as pd
