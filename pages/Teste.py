@@ -1,4 +1,4 @@
-# pages/Teste.py
+# pages/teste.py
 
 
 
