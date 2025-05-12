@@ -69,13 +69,6 @@ with aba1:
 # ================================
 
 
-	
-    # Conectar ao Google Sheets
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-    credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-    gc = gspread.authorize(credentials)
-
     # Carregar dados
     planilha = gc.open("Faturamento Sistema Externo")
     aba = planilha.worksheet("Fat Sistema Externo")
