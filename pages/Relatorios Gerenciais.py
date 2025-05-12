@@ -153,6 +153,10 @@ with aba2:
     st.dataframe(fat_trimestral)
     st.write("✅ Fat trimestral vazio?", fat_trimestral.empty)
 
+    st.write("🎯 Teste de gráfico simples")
+    fig_debug = px.bar(x=["T1", "T2", "T3", "T4"], y=[100, 200, 300, 400])
+    st.plotly_chart(fig_debug)
+
     # ✅ Gráfico
     color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
     fig_trimestre = px.bar(
