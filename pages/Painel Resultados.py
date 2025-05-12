@@ -40,17 +40,17 @@ aba1, aba2, aba3, aba4 = st.tabs([
 
 # Aba 1: Visão Geral
 with aba1:
-    st.subheader("📈 Visão Geral")
+   
     st.info("Aqui você pode adicionar um gráfico resumo, KPIs principais ou destaques estratégicos.")
 
 # Aba 2: Análise Mensal
 with aba2:
-    st.subheader("📆 Análise Mensal")
+   
     st.info("Coloque aqui um gráfico de barras ou linhas mês a mês.")
 
 # Aba 3: Comparativo Anual
 with aba3:
-    st.subheader("📉 Comparativo Anual")
+
     st.info("Ideal para mostrar evolução por ano ou por trimestre.")
 
 # Aba 4: Relatório Detalhado
