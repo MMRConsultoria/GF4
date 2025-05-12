@@ -120,7 +120,7 @@ with aba1:
     st.plotly_chart(fig, use_container_width=True)
 
 # ================================
-# 📊 Aba 2 - Graficos Trimestrais
+# 📊 Aba 2 - Gráficos Trimestrais
 # ================================
 with aba2:
     st.subheader("📊 Gráficos Trimestrais (em construção)")
