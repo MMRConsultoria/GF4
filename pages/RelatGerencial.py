@@ -82,7 +82,7 @@ aba1, aba2, aba3, aba4 = st.tabs([
 ])
 
 # ================================
-# 📊 Aba 1 - Gráfico Anual
+# 📊 Aba 1 - Graficos Anuais
 # ================================
 with aba1:
   
@@ -94,7 +94,7 @@ with aba1:
 
     # Para os gráficos
     anos_comparacao = st.multiselect(
-    	"📊 Anos para gráficos de comparação",
+    	"📊 Anos para graficos de comparação",
     	options=anos_disponiveis,
     	default=anos_disponiveis
     )
@@ -231,9 +231,9 @@ fig.update_layout(
     )
 )
 # ==============================
-# 📉 Gráfico horizontal: Total Anual 2024 vs 2025
+# 📉 Grafico horizontal: Total Anual 2024 vs 2025
 # ==============================
-# 📉 Gráfico horizontal minimalista com total anual (valores visíveis e cores mantidas)
+# 📉 Grafico horizontal minimalista com total anual (valores visíveis e cores mantidas)
 #df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
 
 #NOVO
@@ -318,7 +318,7 @@ for i, row in df_total.iterrows():
     )
 
 fig_total.update_layout(
-    height=130,
+    height=300,
     margin=dict(t=0, b=0, l=0, r=0),
     title=None,
     xaxis=dict(visible=False),
@@ -333,7 +333,7 @@ fig_total.update_layout(
 )
 # Exibir no Streamlit
 
-st.subheader("Faturamento Anual")
+
 st.plotly_chart(fig_total, use_container_width=True)
 
 st.markdown("---")
@@ -341,7 +341,7 @@ st.subheader("Faturamento Mensal")
 st.plotly_chart(fig, use_container_width=True)
 
 # ==========================================================
-# 📊 Aba 2 - Gráfico Trimestral Comparativo
+# 📊 Aba 2 - Grafico Trimestral Comparativo
 # ==========================================================
 with aba2:
     st.subheader("Faturamento Trimestral Comparativo")
