@@ -151,6 +151,7 @@ with aba2:
     st.write("🔍 Linhas válidas:", len(df_trimestre))
     st.write("📅 Intervalo de datas:", df_trimestre["Data"].min(), "→", df_trimestre["Data"].max())
     st.dataframe(fat_trimestral)
+    st.write("✅ Fat trimestral vazio?", fat_trimestral.empty)
 
     # ✅ Gráfico
     color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
