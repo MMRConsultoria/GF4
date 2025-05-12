@@ -1,4 +1,4 @@
-# pages/Testegerencial.py
+# pages/TesteGerencial.py
 
 import streamlit as st
 import pandas as pd
