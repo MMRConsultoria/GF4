@@ -133,14 +133,6 @@ with aba2:
 
     # ✅ Limpeza dos dados
     df_trimestre["Data"] = pd.to_datetime(df_trimestre["Data"], errors="coerce", dayfirst=True)
-#def limpar_valor(x):
-#    try:
-#        if isinstance(x, str):
-#            return float(x.replace("R$", "").replace(".", "").replace(",", ".").strip())
-#        return float(x)
-#    except:
-#        return None
-
     df_trimestre["Fat.Real"] = df_trimestre["Fat.Real"].apply(limpar_valor)
     df_trimestre = df_trimestre[df_trimestre["Data"].notna() & df_trimestre["Fat.Real"].notna()].copy()
 
@@ -155,22 +147,20 @@ with aba2:
     fat_trimestral["Ano"] = fat_trimestral["Ano"].astype(str)
     fat_trimestral = fat_trimestral.sort_values(["TrimestreNum", "Ano"])
 
-    # ✅ Gráfico
-    color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
-
+    # ✅ Mostrar preview
     st.write("🔍 Linhas válidas:", len(df_trimestre))
     st.write("📅 Intervalo de datas:", df_trimestre["Data"].min(), "→", df_trimestre["Data"].max())
-    st.write("🔍 Dados carregados:")
-    st.dataframe(df_trimestre.head()) 
-    st.write(fat_trimestral)
+    st.dataframe(fat_trimestral)
 
+    # ✅ Gráfico
+    color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
     fig_trimestre = px.bar(
         fat_trimestral,
         x="Nome Trimestre",
         y="Fat.Real",
         color="Ano",
         barmode="group",
-        text="Fat.Real",  # substitui text_auto que estava quebrando
+        text="Fat.Real",
         custom_data=["Ano"],
         color_discrete_map=color_map
     )
@@ -184,8 +174,8 @@ with aba2:
         yaxis=dict(showticklabels=False, showgrid=False, zeroline=False)
     )
 
-    # ✅ Mostrar gráfico na aba
     st.plotly_chart(fig_trimestre, use_container_width=True)
+
 
 
 
