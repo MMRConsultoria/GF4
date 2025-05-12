@@ -159,7 +159,7 @@ with aba2:
 # ================================
 with aba3:
     st.subheader("Faturamento Anual")
-
+    st.write("DEBUG: aba 3 carregou com", len(fat_trimestral), "linhas")
     fat_mensal = df_anos.groupby(["Mês", "Ano"])["Fat.Real"].sum().reset_index()
     meses = {
         1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
