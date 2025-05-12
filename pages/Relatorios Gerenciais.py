@@ -77,12 +77,12 @@ st.markdown("""
 # ================================
 aba1, aba2  = st.tabs([
     "📊 Graficos Anuais - Grupo",
-    "📥 Relatório Analitico"
+    "📥 Relatoio Analitico"
   
 ])
 
 # ================================
-# 📊 Aba 1 - Gráfico Anual
+# 📊 Aba 1 - Graficos Anuais
 # ================================
 with aba1:
     st.subheader("Faturamento Anual")
@@ -121,7 +121,7 @@ with aba1:
 
 
 # ================================
-# 📥 Aba 2 - Relatório Analítico
+# 📥 Aba 2 - Relatorio Analitico
 # ================================
 with aba2:
     st.subheader("📥 Relatório Analítico")
