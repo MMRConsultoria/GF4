@@ -427,12 +427,19 @@ with aba4:
             min_data = datas_validas.min().date()
             max_data = datas_validas.max().date()
 
-            data_inicio, data_fim = st.date_input(
+            data_range = st.date_input(
                 "Selecione o intervalo de datas:",
-                value=(None, None),
+                value=(min_data, max_data),  # fornece um intervalo válido por padrão
                 min_value=min_data,
                 max_value=max_data
-            )
+        )
+
+# Verifica se o usuário realmente selecionou dois valores
+if isinstance(data_range, tuple) and len(data_range) == 2:
+    data_inicio, data_fim = data_range
+else:
+    data_inicio, data_fim = None, None
+
 
             # Só executa se o usuário escolher um intervalo
             if data_inicio and data_fim:
