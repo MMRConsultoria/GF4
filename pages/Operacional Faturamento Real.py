@@ -455,10 +455,15 @@ with aba4:
                     "col8": "Valor Real (Externo)"
                 })
 
-                # Conversão
-                # Filtrar dados pelo intervalo de datas
+                # Conversão de datas
+                ev["Data"] = pd.to_datetime(ev["Data"], errors="coerce").dt.date
+                ex["Data"] = pd.to_datetime(ex["Data"], errors="coerce").dt.date
+
+                # Filtro por intervalo de datas
                 ev = ev[(ev["Data"] >= data_inicio) & (ev["Data"] <= data_fim)].copy()
                 ex = ex[(ex["Data"] >= data_inicio) & (ex["Data"] <= data_fim)].copy()
+
+                # Tratamento de valores
                 for col in ["Valor Bruto (Everest)", "Impostos (Everest)"]:
                     ev[col] = ev[col].apply(tratar_valor)
 
