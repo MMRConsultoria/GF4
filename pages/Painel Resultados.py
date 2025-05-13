@@ -148,9 +148,9 @@ with aba1:
         lambda row: f"{int(row['Ano'])}       R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
     )
     df_total["Ano"] = df_total["Ano"].astype(str)
-    df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=anos_ordenados, ordered=True)
+    
     anos_ordenados = df_total["Ano"].tolist()[::-1]  # Inverte a ordem
-
+    df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=anos_ordenados, ordered=True)
     
     fig_total = px.bar(
         df_total,
