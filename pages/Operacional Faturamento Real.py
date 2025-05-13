@@ -400,9 +400,8 @@ with aba3:
 
 
 # =======================================
-#  Aba 4 - Comparativo Everest
+# Aba 4 - Comparativo Everest (independente do upload)
 # =======================================
-
 # =======================================
 # Aba 4 - Comparativo Everest (independente do upload)
 # =======================================
@@ -424,20 +423,36 @@ with aba4:
         df_everest["col0"] = pd.to_datetime(df_everest["col0"], dayfirst=True, errors="coerce")
         df_externo["col0"] = pd.to_datetime(df_externo["col0"], dayfirst=True, errors="coerce")
 
-        # 📅 Filtro por período personalizado
+        # 📅 Seletor de datas com idioma PT-BR
         min_data = df_everest["col0"].min()
         max_data = df_everest["col0"].max()
-
         data_inicio, data_fim = st.date_input(
-            "Selecione o intervalo de datas",
+            "Selecione o intervalo de datas:",
             value=(min_data, max_data),
             min_value=min_data,
             max_value=max_data
         )
 
-        # Filtrar por intervalo de datas
+        # Mostrar datas em português
+        meses_pt = {
+            1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril",
+            5: "maio", 6: "junho", 7: "julho", 8: "agosto",
+            9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
+        }
+        dias_semana_pt = {
+            0: "segunda-feira", 1: "terça-feira", 2: "quarta-feira",
+            3: "quinta-feira", 4: "sexta-feira", 5: "sábado", 6: "domingo"
+        }
+
+        def formatar_data_br(data):
+            return f"{dias_semana_pt[data.weekday()]}, {data.day} de {meses_pt[data.month]} de {data.year}"
+
+        st.markdown(f"📆 Período selecionado: **{formatar_data_br(data_inicio)}** até **{formatar_data_br(data_fim)}**")
+
+        # Filtrar os dataframes
         ev = df_everest[(df_everest["col0"] >= pd.to_datetime(data_inicio)) & (df_everest["col0"] <= pd.to_datetime(data_fim))].reset_index(drop=True)
         ex = df_externo[(df_externo["col0"] >= pd.to_datetime(data_inicio)) & (df_externo["col0"] <= pd.to_datetime(data_fim))].reset_index(drop=True)
+
         # Garantir tamanho igual
         tam = min(len(ev), len(ex))
         diferencas = []
@@ -465,6 +480,7 @@ with aba4:
                     "Data": linha_ev["col0"].strftime("%d/%m/%Y") if pd.notnull(linha_ev["col0"]) else "",
                     "Loja (Everest - B)": linha_ev["col1"],
                     "Loja (Externo - D)": linha_ex["col3"],
+                    "Nome Loja (Externo - col2)": linha_ex["col2"],
                     "Valor H (Everest)": linha_ev["col7"],
                     "Valor G (Externo)": linha_ex["col6"],
                     "H - G (calculado)": round(val_ev - val_ex, 2),
