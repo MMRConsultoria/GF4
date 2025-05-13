@@ -488,8 +488,19 @@ with aba4:
                     "Valor Bruto (Everest)", "Valor Real (Everest)"
                 ]
 
-                df_resultado = df_comp[colunas_exibir].sort_values("Data")
+              # Filtrar apenas linhas com diferenças reais ou registros que existem só de um lado
+            df_filtrado = df_comp[
+                (df_comp["Valor Real (Everest)"] != df_comp["Valor Real (Externo)"]) |
+                (df_comp["Valor Real (Everest)"].isna()) |
+                (df_comp["Valor Real (Externo)"].isna())
+            ].copy()
 
+            df_resultado = df_filtrado[colunas_exibir].sort_values("Data")
+
+            if df_resultado.empty:
+                st.success("✅ Nenhuma diferença encontrada no período selecionado.")
+            else:
+                st.warning(f"⚠️ {len(df_resultado)} diferença(s) ou ausência(s) detectada(s):")
                 if df_resultado.size < 250_000:
                     st.dataframe(df_resultado.style.format({
                         "Valor Bruto (Externo)": "R$ {:,.2f}",
@@ -498,7 +509,7 @@ with aba4:
                         "Valor Real (Everest)": "R$ {:,.2f}"
                     }))
                 else:
-                    st.warning("⚠️ Dados grandes demais para aplicar formatação. Exibindo sem formatação para evitar travamentos.")
+                    st.warning("⚠️ Muitos dados para formatar. Exibindo sem estilo.")
                     st.dataframe(df_resultado)
             else:
                 st.info("👆 Selecione o intervalo de datas e clique em '🔄 Atualizar Dados' para visualizar.")
