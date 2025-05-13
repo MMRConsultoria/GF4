@@ -402,44 +402,76 @@ with aba3:
 # =======================================
 #  Aba 4 - Comparativo Everest
 # =======================================
+
 with aba4:
     st.header("📊 Comparativo Everest")
 
-    if 'df_final' in st.session_state:
-        df = st.session_state.df_final.copy()
+    try:
+        # 🔄 Conectar ao Google Sheets
+        planilha = gc.open("Faturamento Sistema Externo")
+        aba_everest = planilha.worksheet("Fat Everest")
+        aba_externo = planilha.worksheet("Fat Sistema Externo")
 
-        # Converter data novamente (caso esteja em string)
-        df["Data"] = pd.to_datetime(df["Data"], format="%d/%m/%Y", errors='coerce')
+        # 🔽 Ler os dados ignorando cabeçalho
+        dados_everest = pd.DataFrame(aba_everest.get_all_values()[1:])
+        dados_externo = pd.DataFrame(aba_externo.get_all_values()[1:])
 
-        df["Ano"] = df["Data"].dt.year
-        df["Mês"] = df["Data"].dt.month
-        anos = sorted(df["Ano"].dropna().unique())
-        meses = sorted(df["Mês"].dropna().unique())
+        # 🔃 Renomear por posição para evitar depender do nome da coluna
+        dados_everest.columns = [f"col{i}" for i in range(dados_everest.shape[1])]
+        dados_externo.columns = [f"col{i}" for i in range(dados_externo.shape[1])]
 
+        # 📅 Converter a primeira coluna (Data) para datetime
+        dados_everest["col0"] = pd.to_datetime(dados_everest["col0"], dayfirst=True, errors="coerce")
+        dados_externo["col0"] = pd.to_datetime(dados_externo["col0"], dayfirst=True, errors="coerce")
+
+        # 🎯 Filtro por mês e ano
         col1, col2 = st.columns(2)
-        ano_sel = col1.selectbox("Ano", anos, index=len(anos)-1)
-        mes_sel = col2.selectbox("Mês", meses, index=len(meses)-1)
+        ano_sel = col1.selectbox("Ano", sorted(dados_everest["col0"].dt.year.dropna().unique()), index=0)
+        mes_sel = col2.selectbox("Mês", sorted(dados_everest["col0"].dt.month.dropna().unique()), index=0)
 
-        df_periodo = df[(df["Ano"] == ano_sel) & (df["Mês"] == mes_sel)]
+        # 📍 Filtrar os dois dataframes
+        filtro_everest = dados_everest[dados_everest["col0"].dt.year == ano_sel]
+        filtro_everest = filtro_everest[filtro_everest["col0"].dt.month == mes_sel]
 
-        # Simular as colunas que comparam Everest vs Externo
-        # Substitua esse exemplo por seus dados reais se forem diferentes
-        if "Fat Everest" not in df_periodo.columns or "Fat Sistema Externo" not in df_periodo.columns:
-            st.warning("⚠️ Colunas 'Fat Everest' ou 'Fat Sistema Externo' não foram encontradas no dataframe.")
+        filtro_externo = dados_externo[dados_externo["col0"].dt.year == ano_sel]
+        filtro_externo = filtro_externo[filtro_externo["col0"].dt.month == mes_sel]
+
+        # 🔄 Resetar índice para garantir alinhamento
+        filtro_everest = filtro_everest.reset_index(drop=True)
+        filtro_externo = filtro_externo.reset_index(drop=True)
+
+        # 📊 Comparar as colunas desejadas
+        diferencas = []
+
+        for i in range(min(len(filtro_everest), len(filtro_externo))):
+            linha_ev = filtro_everest.loc[i]
+            linha_ex = filtro_externo.loc[i]
+
+            data_str = linha_ev["col0"].strftime("%d/%m/%Y") if pd.notnull(linha_ev["col0"]) else "sem data"
+
+            # Comparar col0 com col0 (data), col1 vs col3, col7 vs col6, col8 vs col9
+            if (
+                linha_ev["col1"] != linha_ex["col3"] or
+                linha_ev["col7"] != linha_ex["col6"] or
+                str(float(linha_ev["col7"]) - float(linha_ev["col6"])) != linha_ex["col8"]
+            ):
+                diferencas.append({
+                    "Data": data_str,
+                    "Loja (Everest)": linha_ev["col1"],
+                    "Loja (Externo)": linha_ex["col3"],
+                    "Valor Everest (H)": linha_ev["col7"],
+                    "Valor Externo (G)": linha_ex["col6"],
+                    "Diferença esperada (H-G)": str(float(linha_ev["col7"]) - float(linha_ev["col6"])),
+                    "Valor Informado Externo (I)": linha_ex["col8"]
+                })
+
+        # 📋 Exibir
+        if diferencas:
+            df_dif = pd.DataFrame(diferencas)
+            st.warning(f"⚠️ {len(df_dif)} diferença(s) encontrada(s):")
+            st.dataframe(df_dif)
         else:
-            col_everest = df_periodo["Fat Everest"].dropna().astype(str).str.strip().unique()
-            col_externo = df_periodo["Fat Sistema Externo"].dropna().astype(str).str.strip().unique()
+            st.success("✅ Nenhuma diferença encontrada no período selecionado.")
 
-            set_everest = set(col_everest)
-            set_externo = set(col_externo)
-
-            apenas_no_everest = sorted(list(set_everest - set_externo))
-            apenas_no_externo = sorted(list(set_externo - set_everest))
-
-            st.markdown("### ❌ Itens que estão **somente no Fat Everest**:")
-            st.write(apenas_no_everest if apenas_no_everest else "✅ Nenhuma diferença encontrada")
-
-            st.markdown("### ❌ Itens que estão **somente no Sistema Externo**:")
-            st.write(apenas_no_externo if apenas_no_externo else "✅ Nenhuma diferença encontrada")
-    else:
-        st.info("🔄 Faça o upload e processamento do arquivo na aba 1 antes de visualizar este comparativo.")
+    except Exception as e:
+        st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
