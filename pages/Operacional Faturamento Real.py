@@ -398,6 +398,10 @@ with aba3:
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
 
+# ================================
+# 📥 Aba 4 - Relatórios Operacionais
+# ================================
+
 with aba4:
     st.header("📊 Comparação entre Fat Everest e Sistema Externo")
 
