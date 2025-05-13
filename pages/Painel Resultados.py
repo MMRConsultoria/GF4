@@ -147,10 +147,10 @@ with aba1:
     df_total["AnoTexto"] = df_total.apply(
         lambda row: f"{int(row['Ano'])}       R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
     )
-    #df_total["Ano"] = df_total["Ano"].astype(str)
+    df_total["Ano"] = df_total["Ano"].astype(str)
     
-    #anos_ordenados = df_total["Ano"].tolist()[::-1]  # Inverte a ordem
-    #df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=anos_ordenados, ordered=True)
+    anos_ordenados = df_total["Ano"].tolist()[::-1]  # Inverte a ordem
+    df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=anos_ordenados, ordered=True)
     
     fig_total = px.bar(
         df_total,
@@ -196,11 +196,6 @@ with aba1:
             xref="x",
             yref="y"
         )
-
-    anos_ordenados = sorted(df_total["Ano"].astype(int).unique())  # mais antigo primeiro
-    df_total["Ano"] = df_total["Ano"].astype(str)
-    df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=[str(a) for a in anos_ordenados], ordered=True)
-        
     fig_total.update_layout(
         height=130,
         margin=dict(t=0, b=0, l=0, r=0),
