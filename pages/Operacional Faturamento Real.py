@@ -403,75 +403,77 @@ with aba3:
 #  Aba 4 - Comparativo Everest
 # =======================================
 
+# =======================================
+# Aba 4 - Comparativo Everest (independente do upload)
+# =======================================
 with aba4:
-    st.header("📊 Comparativo Everest")
+    st.header("📊 Comparativo Everest (via Google Sheets)")
 
     try:
-        # 🔄 Conectar ao Google Sheets
         planilha = gc.open("Faturamento Sistema Externo")
         aba_everest = planilha.worksheet("Fat Everest")
         aba_externo = planilha.worksheet("Fat Sistema Externo")
 
-        # 🔽 Ler os dados ignorando cabeçalho
-        dados_everest = pd.DataFrame(aba_everest.get_all_values()[1:])
-        dados_externo = pd.DataFrame(aba_externo.get_all_values()[1:])
+        df_everest = pd.DataFrame(aba_everest.get_all_values()[1:])  # Ignora cabeçalho
+        df_externo = pd.DataFrame(aba_externo.get_all_values()[1:])
 
-        # 🔃 Renomear por posição para evitar depender do nome da coluna
-        dados_everest.columns = [f"col{i}" for i in range(dados_everest.shape[1])]
-        dados_externo.columns = [f"col{i}" for i in range(dados_externo.shape[1])]
+        df_everest.columns = [f"col{i}" for i in range(df_everest.shape[1])]
+        df_externo.columns = [f"col{i}" for i in range(df_externo.shape[1])]
 
-        # 📅 Converter a primeira coluna (Data) para datetime
-        dados_everest["col0"] = pd.to_datetime(dados_everest["col0"], dayfirst=True, errors="coerce")
-        dados_externo["col0"] = pd.to_datetime(dados_externo["col0"], dayfirst=True, errors="coerce")
+        # Converter datas da coluna A (col0)
+        df_everest["col0"] = pd.to_datetime(df_everest["col0"], dayfirst=True, errors="coerce")
+        df_externo["col0"] = pd.to_datetime(df_externo["col0"], dayfirst=True, errors="coerce")
 
-        # 🎯 Filtro por mês e ano
+        # Filtros de período
+        anos = sorted(df_everest["col0"].dt.year.dropna().unique())
+        meses = sorted(df_everest["col0"].dt.month.dropna().unique())
+
         col1, col2 = st.columns(2)
-        ano_sel = col1.selectbox("Ano", sorted(dados_everest["col0"].dt.year.dropna().unique()), index=0)
-        mes_sel = col2.selectbox("Mês", sorted(dados_everest["col0"].dt.month.dropna().unique()), index=0)
+        ano_sel = col1.selectbox("Ano", anos, index=len(anos)-1)
+        mes_sel = col2.selectbox("Mês", meses, index=len(meses)-1)
 
-        # 📍 Filtrar os dois dataframes
-        filtro_everest = dados_everest[dados_everest["col0"].dt.year == ano_sel]
-        filtro_everest = filtro_everest[filtro_everest["col0"].dt.month == mes_sel]
+        # Filtrar os dataframes
+        ev = df_everest[(df_everest["col0"].dt.year == ano_sel) & (df_everest["col0"].dt.month == mes_sel)].reset_index(drop=True)
+        ex = df_externo[(df_externo["col0"].dt.year == ano_sel) & (df_externo["col0"].dt.month == mes_sel)].reset_index(drop=True)
 
-        filtro_externo = dados_externo[dados_externo["col0"].dt.year == ano_sel]
-        filtro_externo = filtro_externo[filtro_externo["col0"].dt.month == mes_sel]
-
-        # 🔄 Resetar índice para garantir alinhamento
-        filtro_everest = filtro_everest.reset_index(drop=True)
-        filtro_externo = filtro_externo.reset_index(drop=True)
-
-        # 📊 Comparar as colunas desejadas
+        # Garantir tamanho igual
+        tam = min(len(ev), len(ex))
         diferencas = []
 
-        for i in range(min(len(filtro_everest), len(filtro_externo))):
-            linha_ev = filtro_everest.loc[i]
-            linha_ex = filtro_externo.loc[i]
+        for i in range(tam):
+            linha_ev = ev.loc[i]
+            linha_ex = ex.loc[i]
 
-            data_str = linha_ev["col0"].strftime("%d/%m/%Y") if pd.notnull(linha_ev["col0"]) else "sem data"
+            def tratar_valor(valor):
+                return float(str(valor).replace("R$", "").replace(".", "").replace(",", ".").strip())
 
-            # Comparar col0 com col0 (data), col1 vs col3, col7 vs col6, col8 vs col9
+            try:
+                val_ev = tratar_valor(linha_ev["col7"])  # H
+                val_ex = tratar_valor(linha_ex["col6"])  # G
+                val_diff_ext = tratar_valor(linha_ex["col8"])  # I
+            except:
+                continue
+
             if (
-                linha_ev["col1"] != linha_ex["col3"] or
-                linha_ev["col7"] != linha_ex["col6"] or
-                str(float(linha_ev["col7"]) - float(linha_ev["col6"])) != linha_ex["col8"]
+                linha_ev["col1"] != linha_ex["col3"] or  # B vs D
+                round(val_ev, 2) != round(val_ex, 2) or
+                round(val_ev - val_ex, 2) != round(val_diff_ext, 2)
             ):
                 diferencas.append({
-                    "Data": data_str,
-                    "Loja (Everest)": linha_ev["col1"],
-                    "Loja (Externo)": linha_ex["col3"],
-                    "Valor Everest (H)": linha_ev["col7"],
-                    "Valor Externo (G)": linha_ex["col6"],
-                    "Diferença esperada (H-G)": str(float(linha_ev["col7"]) - float(linha_ev["col6"])),
-                    "Valor Informado Externo (I)": linha_ex["col8"]
+                    "Data": linha_ev["col0"].strftime("%d/%m/%Y") if pd.notnull(linha_ev["col0"]) else "",
+                    "Loja (Everest - B)": linha_ev["col1"],
+                    "Loja (Externo - D)": linha_ex["col3"],
+                    "Valor H (Everest)": linha_ev["col7"],
+                    "Valor G (Externo)": linha_ex["col6"],
+                    "H - G (calculado)": round(val_ev - val_ex, 2),
+                    "Valor I (Externo)": linha_ex["col8"]
                 })
 
-        # 📋 Exibir
         if diferencas:
-            df_dif = pd.DataFrame(diferencas)
-            st.warning(f"⚠️ {len(df_dif)} diferença(s) encontrada(s):")
-            st.dataframe(df_dif)
+            st.warning(f"⚠️ {len(diferencas)} diferença(s) encontrada(s):")
+            st.dataframe(pd.DataFrame(diferencas))
         else:
             st.success("✅ Nenhuma diferença encontrada no período selecionado.")
 
     except Exception as e:
-        st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
+        st.error(f"❌ Erro ao comparar dados: {e}")
