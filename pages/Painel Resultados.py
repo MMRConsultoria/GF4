@@ -148,10 +148,12 @@ with aba1:
         lambda row: f"{int(row['Ano'])}       R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
     )
     df_total["Ano"] = df_total["Ano"].astype(int)
-    df_total = df_total.sort_values(by="Ano", ascending=False)  # ano mais novo em cima
-    anos_ordenados_str = df_total["Ano"].astype(str).tolist()   # mantém ordem atual
+    anos_ordenados_str = sorted(df_total["Ano"].astype(str).tolist())  # ordem correta: 2023, 2024, 2025
     df_total["Ano"] = df_total["Ano"].astype(str)
+
+    # aplica categoria E ordena o DataFrame conforme anos_ordenados_str
     df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=anos_ordenados_str, ordered=True)
+    df_total = df_total.sort_values(by="Ano", ascending=True)
     
     fig_total = px.bar(
         df_total,
