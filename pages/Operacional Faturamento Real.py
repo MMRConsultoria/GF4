@@ -424,18 +424,20 @@ with aba4:
         df_everest["col0"] = pd.to_datetime(df_everest["col0"], dayfirst=True, errors="coerce")
         df_externo["col0"] = pd.to_datetime(df_externo["col0"], dayfirst=True, errors="coerce")
 
-        # Filtros de período
-        anos = sorted(df_everest["col0"].dt.year.dropna().unique())
-        meses = sorted(df_everest["col0"].dt.month.dropna().unique())
+        # 📅 Filtro por período personalizado
+        min_data = df_everest["col0"].min()
+        max_data = df_everest["col0"].max()
 
-        col1, col2 = st.columns(2)
-        ano_sel = col1.selectbox("Ano", anos, index=len(anos)-1)
-        mes_sel = col2.selectbox("Mês", meses, index=len(meses)-1)
+        data_inicio, data_fim = st.date_input(
+            "Selecione o intervalo de datas",
+            value=(min_data, max_data),
+            min_value=min_data,
+            max_value=max_data
+        )
 
-        # Filtrar os dataframes
-        ev = df_everest[(df_everest["col0"].dt.year == ano_sel) & (df_everest["col0"].dt.month == mes_sel)].reset_index(drop=True)
-        ex = df_externo[(df_externo["col0"].dt.year == ano_sel) & (df_externo["col0"].dt.month == mes_sel)].reset_index(drop=True)
-
+        # Filtrar por intervalo de datas
+        ev = df_everest[(df_everest["col0"] >= pd.to_datetime(data_inicio)) & (df_everest["col0"] <= pd.to_datetime(data_fim))].reset_index(drop=True)
+        ex = df_externo[(df_externo["col0"] >= pd.to_datetime(data_inicio)) & (df_externo["col0"] <= pd.to_datetime(data_fim))].reset_index(drop=True)
         # Garantir tamanho igual
         tam = min(len(ev), len(ex))
         diferencas = []
