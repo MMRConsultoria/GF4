@@ -448,10 +448,12 @@ with aba4:
                     "col7": "Valor Bruto (Everest)", "col6": "Impostos (Everest)"
                 })
                 ex = df_externo.rename(columns={
-                    "col0": "Data", "col2": "Nome Loja (Externo)", "col3": "Codigo",
-                    "col6": "Valor Bruto (Externo)", "col8": "Valor Real (Externo)"
+                    "col0": "Data",
+                    "col2": "Nome Loja Sistema Externo",
+                    "col3": "Codigo",
+                    "col6": "Valor Bruto (Externo)",
+                    "col8": "Valor Real (Externo)"
                 })
-
                 # Conversão
                 ev["Data"] = pd.to_datetime(ev["Data"], errors="coerce").dt.date
                 ex["Data"] = pd.to_datetime(ex["Data"], errors="coerce").dt.date
@@ -467,7 +469,7 @@ with aba4:
 
                 # Mapear nome da loja com base no código
                 mapa_nome_loja = ex.drop_duplicates(subset="Codigo")[["Codigo", "Nome Loja (Externo)"]].set_index("Codigo").to_dict()["Nome Loja (Externo)"]
-                ev["Nome Loja (Externo)"] = ev["Codigo"].map(mapa_nome_loja)
+                ev["Nome Loja Everest"] = ev["Codigo"].map(mapa_nome_loja)
 
                 # Merge completo (outer) com base em Data + Código
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
