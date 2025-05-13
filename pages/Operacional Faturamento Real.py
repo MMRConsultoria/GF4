@@ -400,9 +400,9 @@ with aba3:
 
 
 # =======================================
-#  Aba 3 - Comparativo Everest
+#  Aba 4 - Comparativo Everest
 # =======================================
-with aba3:
+with aba4:
     st.header("📊 Comparativo Everest")
 
     # 🔽 Seletor de período (exemplo com ano/mês)
