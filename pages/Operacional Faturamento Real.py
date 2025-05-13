@@ -471,16 +471,17 @@ with aba4:
                 mapa_nome_loja = ex.drop_duplicates(subset="Codigo")[["Codigo", "Nome Loja (Externo)"]].set_index("Codigo").to_dict()["Nome Loja (Externo)"]
                 ev["Nome Loja Everest"] = ev["Codigo"].map(mapa_nome_loja)
 
+                
                 # Merge completo (outer) com base em Data + Código
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
 
                 # Reordenar colunas para exibição lado a lado
                 colunas_exibir = [
-                    "Data", "Codigo", "Nome Loja (Externo)",
+                    "Data", "Codigo",
+                    "Nome Loja Sistema Externo", "Nome Loja Everest",
                     "Valor Bruto (Externo)", "Valor Real (Externo)",
                     "Valor Bruto (Everest)", "Valor Real (Everest)"
                 ]
-
                 # Exibir dataframe
                 st.dataframe(df_comp[colunas_exibir].sort_values("Data").style.format({
                     "Valor Bruto (Externo)": "R$ {:,.2f}",
