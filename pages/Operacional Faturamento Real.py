@@ -397,7 +397,6 @@ with aba3:
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
-
 # =======================================
 # Aba 4 - Comparativo Everest (independente do upload)
 # =======================================
@@ -436,6 +435,19 @@ with aba4:
                 data_inicio, data_fim = None, None
 
             if data_inicio is not None and data_fim is not None:
+                # Função para formatar a data em português
+                meses_pt = {
+                    1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril",
+                    5: "maio", 6: "junho", 7: "julho", 8: "agosto",
+                    9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
+                }
+                dias_pt = {
+                    0: "segunda-feira", 1: "terça-feira", 2: "quarta-feira",
+                    3: "quinta-feira", 4: "sexta-feira", 5: "sábado", 6: "domingo"
+                }
+                def data_pt(data):
+                    return f"{dias_pt[data.weekday()]}, {data.day} de {meses_pt[data.month]} de {data.year}"
+
                 st.markdown(f"📅 Período selecionado: **{data_pt(data_inicio)}** até **{data_pt(data_fim)}**")
 
                 ev = df_everest[
@@ -455,10 +467,14 @@ with aba4:
                         return None
 
                 # Renomear colunas para facilitar
-                ev = ev.rename(columns={"col0": "Data", "col1": "Codigo", "col7": "Valor Bruto Everest", "col8": "Valor Real Everest"})
-                ex = ex.rename(columns={"col0": "Data", "col2": "Nome Loja", "col3": "Codigo", "col7": "Valor Bruto Externo", "col8": "Valor Real Externo"})
+                ev = ev.rename(columns={
+                    "col0": "Data", "col1": "Codigo", "col7": "Valor Bruto Everest", "col8": "Valor Real Everest"
+                })
+                ex = ex.rename(columns={
+                    "col0": "Data", "col2": "Nome Loja", "col3": "Codigo",
+                    "col7": "Valor Bruto Externo", "col8": "Valor Real Externo"
+                })
 
-                # Converter tipos
                 ev["Data"] = pd.to_datetime(ev["Data"], errors="coerce").dt.date
                 ex["Data"] = pd.to_datetime(ex["Data"], errors="coerce").dt.date
 
@@ -468,16 +484,15 @@ with aba4:
                 for col in ["Valor Bruto Externo", "Valor Real Externo"]:
                     ex[col] = ex[col].apply(tratar_valor)
 
-                # Merge dos dois dataframes com base em Data e Código
+                # Merge dos dois dataframes com base em Data e Codigo
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="inner")
 
                 # Calcular diferença
                 df_comp["Diferença (Valor Real)"] = df_comp["Valor Real Everest"] - df_comp["Valor Real Externo"]
 
-                # Filtrar apenas as linhas com diferença
+                # Filtrar apenas linhas com diferença relevante (> 0.01)
                 df_diferencas = df_comp[df_comp["Diferença (Valor Real)"].abs() > 0.01].copy()
 
-                # Reorganizar colunas
                 colunas_exibir = [
                     "Data", "Codigo", "Nome Loja",
                     "Valor Bruto Externo", "Valor Real Externo",
@@ -498,3 +513,8 @@ with aba4:
                     st.success("✅ Nenhuma diferença encontrada no período selecionado.")
             else:
                 st.info("👆 Selecione o intervalo de datas para iniciar a análise.")
+        else:
+            st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
+    except Exception as e:
+        st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
+
