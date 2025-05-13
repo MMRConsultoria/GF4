@@ -398,11 +398,9 @@ with aba3:
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
 
-
 # =======================================
 # Aba 4 - Comparativo Everest (independente do upload)
 # =======================================
-
 with aba4:
     st.header("📊 Comparativo Everest (via Google Sheets)")
 
@@ -411,17 +409,15 @@ with aba4:
         aba_everest = planilha.worksheet("Fat Everest")
         aba_externo = planilha.worksheet("Fat Sistema Externo")
 
-        df_everest = pd.DataFrame(aba_everest.get_all_values()[1:])  # Ignora cabeçalho
+        df_everest = pd.DataFrame(aba_everest.get_all_values()[1:])
         df_externo = pd.DataFrame(aba_externo.get_all_values()[1:])
 
         df_everest.columns = [f"col{i}" for i in range(df_everest.shape[1])]
         df_externo.columns = [f"col{i}" for i in range(df_externo.shape[1])]
 
-        # Converter col0 em datetime
         df_everest["col0"] = pd.to_datetime(df_everest["col0"], dayfirst=True, errors="coerce")
         df_externo["col0"] = pd.to_datetime(df_externo["col0"], dayfirst=True, errors="coerce")
 
-        # Filtro só aparece se houver dados válidos
         datas_validas = df_everest["col0"].dropna()
         if not datas_validas.empty:
             min_data = datas_validas.min().date()
@@ -429,21 +425,18 @@ with aba4:
 
             data_range = st.date_input(
                 "Selecione o intervalo de datas:",
-                value=(min_data, max_data),  # fornece um intervalo válido por padrão
+                value=(min_data, max_data),
                 min_value=min_data,
                 max_value=max_data
-        )
+            )
 
-# Verifica se o usuário realmente selecionou dois valores
-if isinstance(data_range, tuple) and len(data_range) == 2:
-    data_inicio, data_fim = data_range
-else:
-    data_inicio, data_fim = None, None
+            if isinstance(data_range, tuple) and len(data_range) == 2:
+                data_inicio, data_fim = data_range
+            else:
+                data_inicio, data_fim = None, None
 
-
-            # Só executa se o usuário escolher um intervalo
-            if data_inicio and data_fim:
-                # Traduzir data para português (visualmente)
+            if data_inicio is not None and data_fim is not None:
+                # Exibir a data em português
                 meses_pt = {
                     1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril",
                     5: "maio", 6: "junho", 7: "julho", 8: "agosto",
@@ -459,9 +452,12 @@ else:
 
                 st.markdown(f"📅 Período selecionado: **{data_pt(data_inicio)}** até **{data_pt(data_fim)}**")
 
-                # Filtrar os dataframes
-                ev = df_everest[(df_everest["col0"].dt.date >= data_inicio) & (df_everest["col0"].dt.date <= data_fim)].reset_index(drop=True)
-                ex = df_externo[(df_externo["col0"].dt.date >= data_inicio) & (df_externo["col0"].dt.date <= data_fim)].reset_index(drop=True)
+                ev = df_everest[
+                    (df_everest["col0"].dt.date >= data_inicio) & (df_everest["col0"].dt.date <= data_fim)
+                ].reset_index(drop=True)
+                ex = df_externo[
+                    (df_externo["col0"].dt.date >= data_inicio) & (df_externo["col0"].dt.date <= data_fim)
+                ].reset_index(drop=True)
 
                 tam = min(len(ev), len(ex))
                 diferencas = []
@@ -481,7 +477,7 @@ else:
                         continue
 
                     if (
-                        linha_ev["col1"] != linha_ex["col3"] or  # B vs D
+                        linha_ev["col1"] != linha_ex["col3"] or
                         round(val_ev, 2) != round(val_ex, 2) or
                         round(val_ev - val_ex, 2) != round(val_diff_ext, 2)
                     ):
@@ -502,9 +498,9 @@ else:
                 else:
                     st.success("✅ Nenhuma diferença encontrada no período selecionado.")
             else:
-                st.info("👆 Selecione o intervalo de datas para realizar a análise.")
+                st.info("👆 Selecione o intervalo de datas para iniciar a análise.")
         else:
             st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
-
     except Exception as e:
         st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
+
