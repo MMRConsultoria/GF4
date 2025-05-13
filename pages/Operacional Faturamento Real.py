@@ -400,11 +400,9 @@ with aba3:
 # =======================================
 # Aba 4 - Comparativo Everest (independente do upload)
 # =======================================
-# =======================================
-# Aba 4 - Comparativo Everest (independente do upload)
-# =======================================
+
 with aba4:
-    st.header("📊 Comparativo Everest (via Google Sheets)")
+    st.header("📊 Comparativo Everest (via Google Sheets - completo, sem diferença)")
 
     try:
         planilha = gc.open("Faturamento Sistema Externo")
@@ -413,13 +411,6 @@ with aba4:
 
         df_everest = pd.DataFrame(aba_everest.get_all_values()[1:])
         df_externo = pd.DataFrame(aba_externo.get_all_values()[1:])
-
-        st.subheader("🔍 Preview das tabelas brutas (debug)")
-        st.write("Everest:")
-        st.dataframe(df_everest.head())
-
-        st.write("Sistema Externo:")
-        st.dataframe(df_externo.head())
 
         df_everest.columns = [f"col{i}" for i in range(df_everest.shape[1])]
         df_externo.columns = [f"col{i}" for i in range(df_externo.shape[1])]
@@ -445,86 +436,56 @@ with aba4:
                 data_inicio, data_fim = None, None
 
             if data_inicio is not None and data_fim is not None:
-                # Formatar datas em português
-                meses_pt = {
-                    1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril",
-                    5: "maio", 6: "junho", 7: "julho", 8: "agosto",
-                    9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
-                }
-                dias_pt = {
-                    0: "segunda-feira", 1: "terça-feira", 2: "quarta-feira",
-                    3: "quinta-feira", 4: "sexta-feira", 5: "sábado", 6: "domingo"
-                }
-
-                def data_pt(data):
-                    return f"{dias_pt[data.weekday()]}, {data.day} de {meses_pt[data.month]} de {data.year}"
-
-                st.markdown(f"📅 Período selecionado: **{data_pt(data_inicio)}** até **{data_pt(data_fim)}**")
-
-                ev = df_everest[
-                    (df_everest["col0"].dt.date >= data_inicio) & (df_everest["col0"].dt.date <= data_fim)
-                ].reset_index(drop=True)
-                ex = df_externo[
-                    (df_externo["col0"].dt.date >= data_inicio) & (df_externo["col0"].dt.date <= data_fim)
-                ].reset_index(drop=True)
-
-                ev.columns = [f"col{i}" for i in range(ev.shape[1])]
-                ex.columns = [f"col{i}" for i in range(ex.shape[1])]
-
                 def tratar_valor(valor):
                     try:
                         return float(str(valor).replace("R$", "").replace(".", "").replace(",", ".").strip())
                     except:
                         return None
 
-                # Renomear colunas com origem
-                ev = ev.rename(columns={
+                # Renomear colunas conforme imagem
+                ev = df_everest.rename(columns={
                     "col0": "Data", "col1": "Codigo",
-                    "col7": "Valor Bruto (Everest)", "col8": "Valor Real (Everest)"
+                    "col7": "Valor Bruto (Everest)", "col6": "Impostos (Everest)"
                 })
-                ex = ex.rename(columns={
+                ex = df_externo.rename(columns={
                     "col0": "Data", "col2": "Nome Loja (Externo)", "col3": "Codigo",
-                    "col7": "Valor Bruto (Externo)", "col8": "Valor Real (Externo)"
+                    "col6": "Valor Bruto (Externo)", "col8": "Valor Real (Externo)"
                 })
 
-                # Converter tipos
+                # Conversão
                 ev["Data"] = pd.to_datetime(ev["Data"], errors="coerce").dt.date
                 ex["Data"] = pd.to_datetime(ex["Data"], errors="coerce").dt.date
 
-                for col in ["Valor Bruto (Everest)", "Valor Real (Everest)"]:
+                for col in ["Valor Bruto (Everest)", "Impostos (Everest)"]:
                     ev[col] = ev[col].apply(tratar_valor)
 
                 for col in ["Valor Bruto (Externo)", "Valor Real (Externo)"]:
                     ex[col] = ex[col].apply(tratar_valor)
 
-                # Merge dos dois dataframes por Data e Código
-                df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="inner")
+                # Calcular Valor Real (Everest)
+                ev["Valor Real (Everest)"] = ev["Valor Bruto (Everest)"] - ev["Impostos (Everest)"]
 
-                # Calcular diferença dos valores reais
-                df_comp["Diferença (Valor Real)"] = df_comp["Valor Real (Everest)"] - df_comp["Valor Real (Externo)"]
+                # Mapear nome da loja com base no código
+                mapa_nome_loja = ex.drop_duplicates(subset="Codigo")[["Codigo", "Nome Loja (Externo)"]].set_index("Codigo").to_dict()["Nome Loja (Externo)"]
+                ev["Nome Loja (Externo)"] = ev["Codigo"].map(mapa_nome_loja)
 
-                # Filtrar apenas diferenças relevantes
-                df_diferencas = df_comp[df_comp["Diferença (Valor Real)"].abs() > 0.01].copy()
+                # Merge completo (outer) com base em Data + Código
+                df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
 
-                # Ordenar colunas
+                # Reordenar colunas para exibição lado a lado
                 colunas_exibir = [
                     "Data", "Codigo", "Nome Loja (Externo)",
                     "Valor Bruto (Externo)", "Valor Real (Externo)",
-                    "Valor Bruto (Everest)", "Valor Real (Everest)",
-                    "Diferença (Valor Real)"
+                    "Valor Bruto (Everest)", "Valor Real (Everest)"
                 ]
 
-                if not df_diferencas.empty:
-                    st.warning(f"⚠️ {len(df_diferencas)} diferença(s) encontrada(s):")
-                    st.dataframe(df_diferencas[colunas_exibir].style.format({
-                        "Valor Bruto (Externo)": "R$ {:,.2f}",
-                        "Valor Real (Externo)": "R$ {:,.2f}",
-                        "Valor Bruto (Everest)": "R$ {:,.2f}",
-                        "Valor Real (Everest)": "R$ {:,.2f}",
-                        "Diferença (Valor Real)": "R$ {:,.2f}"
-                    }))
-                else:
-                    st.success("✅ Nenhuma diferença encontrada no período selecionado.")
+                # Exibir dataframe
+                st.dataframe(df_comp[colunas_exibir].sort_values("Data").style.format({
+                    "Valor Bruto (Externo)": "R$ {:,.2f}",
+                    "Valor Real (Externo)": "R$ {:,.2f}",
+                    "Valor Bruto (Everest)": "R$ {:,.2f}",
+                    "Valor Real (Everest)": "R$ {:,.2f}"
+                }))
             else:
                 st.info("👆 Selecione o intervalo de datas para iniciar a análise.")
         else:
