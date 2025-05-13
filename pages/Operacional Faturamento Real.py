@@ -483,14 +483,14 @@ with aba4:
                     ):
                         diferencas.append({
                             "Data": linha_ev["col0"].strftime("%d/%m/%Y") if pd.notnull(linha_ev["col0"]) else "",
-                            "Loja (Everest - B)": linha_ev["col1"],
                             "Loja (Externo - D)": linha_ex["col3"],
                             "Nome Loja (Externo - col2)": linha_ex["col2"],
-                            "Valor H (Everest)": linha_ev["col7"],
                             "Valor G (Externo)": linha_ex["col6"],
-                            "H - G (calculado)": round(val_ev - val_ex, 2),
-                            "Valor I (Externo)": linha_ex["col8"]
-                        })
+                            "Valor I (Externo)": linha_ex["col8"],
+                            "Loja (Everest - B)": linha_ev["col1"],
+                            "Valor H (Everest)": linha_ev["col7"],
+                            "H - G (calculado)": round(val_ev - val_ex, 2)
+                    })
 
                 if diferencas:
                     st.warning(f"⚠️ {len(diferencas)} diferença(s) encontrada(s):")
