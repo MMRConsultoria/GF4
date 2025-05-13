@@ -198,9 +198,10 @@ with aba1:
     
     anos_ordenados = df_total["Ano"].tolist()[::-1]  # Inverte a ordem
     df_total["Ano"] = df_total["Ano"].astype(str)
-    df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=[str(a) for a in anos_ordenados], ordered=True)
-    
+    df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=anos_ordenados, ordered=True)
+
     fig_total.update_layout(
+        
         height=130,
         margin=dict(t=0, b=0, l=0, r=0),
         title=None,
