@@ -196,8 +196,8 @@ with aba1:
             yref="y"
         )
     
-    anos_ordenados = df_total["Ano"].tolist()[::-1]  # Inverte a ordem
     df_total["Ano"] = df_total["Ano"].astype(str)
+    anos_ordenados = df_total["Ano"].tolist()[::-1]
     df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=anos_ordenados, ordered=True)
 
     fig_total.update_layout(
