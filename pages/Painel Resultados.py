@@ -149,8 +149,10 @@ with aba1:
     )
     df_total["Ano"] = df_total["Ano"].astype(str)
     
-    anos_ordenados = df_total["Ano"].tolist()[::-1]  # Inverte a ordem
-    df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=anos_ordenados, ordered=True)
+    #anos_ordenados = df_total["Ano"].tolist()[::-1]  # Inverte a ordem
+    anos_ordenados = sorted(df_total["Ano"].astype(int).tolist())
+    #df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=anos_ordenados, ordered=True)
+    df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=[str(a) for a in anos_ordenados], ordered=True)
     
     fig_total = px.bar(
         df_total,
