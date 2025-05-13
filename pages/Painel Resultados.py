@@ -201,12 +201,17 @@ with aba1:
         margin=dict(t=0, b=0, l=0, r=0),
         title=None,
         xaxis=dict(visible=False),
-        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+        yaxis=dict(
+            categoryorder="array",
+            categoryarray=anos_ordenados,
+            showticklabels=False,
+            showgrid=False,
+            zeroline=False
+        ),
         yaxis_title=None,
         showlegend=False,
         plot_bgcolor="rgba(0,0,0,0)"
     )
-
     st.subheader("Faturamento Anual")
     st.plotly_chart(fig_total, use_container_width=True)
     st.markdown("---")
