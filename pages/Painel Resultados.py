@@ -201,7 +201,7 @@ with aba1:
     df_total["Ano"] = df_total["Ano"].astype(str)
     df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=[str(a) for a in anos_ordenados], ordered=True)
         
-   fig_total.update_layout(
+    fig_total.update_layout(
         height=130,
         margin=dict(t=0, b=0, l=0, r=0),
         title=None,
