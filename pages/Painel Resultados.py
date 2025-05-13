@@ -222,7 +222,11 @@ with aba2:
 with aba3:
     df_anos["Ano"] = df_anos["Data"].dt.year
     anos_disponiveis = sorted(df_anos["Ano"].dropna().unique())
-    anos_selecionados = st.multiselect("🗓️ Selecione os anos que deseja exibir", options=anos_disponiveis, default=anos_disponiveis)
+    anos_selecionados = st.multiselect(
+        "🗓️ Selecione os anos que deseja exibir",
+        options=sorted(anos_disponiveis, reverse=True),
+        default=sorted(anos_disponiveis, reverse=True)
+    )
 
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
