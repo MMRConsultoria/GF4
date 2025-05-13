@@ -147,11 +147,10 @@ with aba1:
     df_total["AnoTexto"] = df_total.apply(
         lambda row: f"{int(row['Ano'])}       R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
     )
+    df_total["Ano"] = df_total["Ano"].astype(int)
+    df_total = df_total.sort_values(by="Ano", ascending=False)  # ano mais novo em cima
+    anos_ordenados_str = df_total["Ano"].astype(str).tolist()   # mantém ordem atual
     df_total["Ano"] = df_total["Ano"].astype(str)
-    
-    anos_ordenados = sorted(df_total["Ano"].astype(int).tolist())
-    anos_ordenados_str = [str(a) for a in anos_ordenados]
-    df_total = df_total.sort_values(by="Ano", ascending=True)
     df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=anos_ordenados_str, ordered=True)
     
     fig_total = px.bar(
