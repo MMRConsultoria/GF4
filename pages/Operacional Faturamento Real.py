@@ -402,9 +402,7 @@ with aba3:
 # =======================================
 # Aba 4 - Comparativo Everest (independente do upload)
 # =======================================
-# =======================================
-# Aba 4 - Comparativo Everest (independente do upload)
-# =======================================
+
 with aba4:
     st.header("📊 Comparativo Everest (via Google Sheets)")
 
@@ -419,79 +417,87 @@ with aba4:
         df_everest.columns = [f"col{i}" for i in range(df_everest.shape[1])]
         df_externo.columns = [f"col{i}" for i in range(df_externo.shape[1])]
 
-        # Converter datas da coluna A (col0)
+        # Converter col0 em datetime
         df_everest["col0"] = pd.to_datetime(df_everest["col0"], dayfirst=True, errors="coerce")
         df_externo["col0"] = pd.to_datetime(df_externo["col0"], dayfirst=True, errors="coerce")
 
-        # 📅 Seletor de datas com idioma PT-BR
-        min_data = df_everest["col0"].min()
-        max_data = df_everest["col0"].max()
-        data_inicio, data_fim = st.date_input(
-            "Selecione o intervalo de datas:",
-            value=(min_data, max_data),
-            min_value=min_data,
-            max_value=max_data
-        )
+        # Filtro só aparece se houver dados válidos
+        datas_validas = df_everest["col0"].dropna()
+        if not datas_validas.empty:
+            min_data = datas_validas.min().date()
+            max_data = datas_validas.max().date()
 
-        # Mostrar datas em português
-        meses_pt = {
-            1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril",
-            5: "maio", 6: "junho", 7: "julho", 8: "agosto",
-            9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
-        }
-        dias_semana_pt = {
-            0: "segunda-feira", 1: "terça-feira", 2: "quarta-feira",
-            3: "quinta-feira", 4: "sexta-feira", 5: "sábado", 6: "domingo"
-        }
+            data_inicio, data_fim = st.date_input(
+                "Selecione o intervalo de datas:",
+                value=(None, None),
+                min_value=min_data,
+                max_value=max_data
+            )
 
-        def formatar_data_br(data):
-            return f"{dias_semana_pt[data.weekday()]}, {data.day} de {meses_pt[data.month]} de {data.year}"
+            # Só executa se o usuário escolher um intervalo
+            if data_inicio and data_fim:
+                # Traduzir data para português (visualmente)
+                meses_pt = {
+                    1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril",
+                    5: "maio", 6: "junho", 7: "julho", 8: "agosto",
+                    9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
+                }
+                dias_pt = {
+                    0: "segunda-feira", 1: "terça-feira", 2: "quarta-feira",
+                    3: "quinta-feira", 4: "sexta-feira", 5: "sábado", 6: "domingo"
+                }
 
-        st.markdown(f"📆 Período selecionado: **{formatar_data_br(data_inicio)}** até **{formatar_data_br(data_fim)}**")
+                def data_pt(data):
+                    return f"{dias_pt[data.weekday()]}, {data.day} de {meses_pt[data.month]} de {data.year}"
 
-        # Filtrar os dataframes
-        ev = df_everest[(df_everest["col0"] >= pd.to_datetime(data_inicio)) & (df_everest["col0"] <= pd.to_datetime(data_fim))].reset_index(drop=True)
-        ex = df_externo[(df_externo["col0"] >= pd.to_datetime(data_inicio)) & (df_externo["col0"] <= pd.to_datetime(data_fim))].reset_index(drop=True)
+                st.markdown(f"📅 Período selecionado: **{data_pt(data_inicio)}** até **{data_pt(data_fim)}**")
 
-        # Garantir tamanho igual
-        tam = min(len(ev), len(ex))
-        diferencas = []
+                # Filtrar os dataframes
+                ev = df_everest[(df_everest["col0"].dt.date >= data_inicio) & (df_everest["col0"].dt.date <= data_fim)].reset_index(drop=True)
+                ex = df_externo[(df_externo["col0"].dt.date >= data_inicio) & (df_externo["col0"].dt.date <= data_fim)].reset_index(drop=True)
 
-        for i in range(tam):
-            linha_ev = ev.loc[i]
-            linha_ex = ex.loc[i]
+                tam = min(len(ev), len(ex))
+                diferencas = []
 
-            def tratar_valor(valor):
-                return float(str(valor).replace("R$", "").replace(".", "").replace(",", ".").strip())
+                for i in range(tam):
+                    linha_ev = ev.loc[i]
+                    linha_ex = ex.loc[i]
 
-            try:
-                val_ev = tratar_valor(linha_ev["col7"])  # H
-                val_ex = tratar_valor(linha_ex["col6"])  # G
-                val_diff_ext = tratar_valor(linha_ex["col8"])  # I
-            except:
-                continue
+                    def tratar_valor(valor):
+                        return float(str(valor).replace("R$", "").replace(".", "").replace(",", ".").strip())
 
-            if (
-                linha_ev["col1"] != linha_ex["col3"] or  # B vs D
-                round(val_ev, 2) != round(val_ex, 2) or
-                round(val_ev - val_ex, 2) != round(val_diff_ext, 2)
-            ):
-                diferencas.append({
-                    "Data": linha_ev["col0"].strftime("%d/%m/%Y") if pd.notnull(linha_ev["col0"]) else "",
-                    "Loja (Everest - B)": linha_ev["col1"],
-                    "Loja (Externo - D)": linha_ex["col3"],
-                    "Nome Loja (Externo - col2)": linha_ex["col2"],
-                    "Valor H (Everest)": linha_ev["col7"],
-                    "Valor G (Externo)": linha_ex["col6"],
-                    "H - G (calculado)": round(val_ev - val_ex, 2),
-                    "Valor I (Externo)": linha_ex["col8"]
-                })
+                    try:
+                        val_ev = tratar_valor(linha_ev["col7"])  # H
+                        val_ex = tratar_valor(linha_ex["col6"])  # G
+                        val_diff_ext = tratar_valor(linha_ex["col8"])  # I
+                    except:
+                        continue
 
-        if diferencas:
-            st.warning(f"⚠️ {len(diferencas)} diferença(s) encontrada(s):")
-            st.dataframe(pd.DataFrame(diferencas))
+                    if (
+                        linha_ev["col1"] != linha_ex["col3"] or  # B vs D
+                        round(val_ev, 2) != round(val_ex, 2) or
+                        round(val_ev - val_ex, 2) != round(val_diff_ext, 2)
+                    ):
+                        diferencas.append({
+                            "Data": linha_ev["col0"].strftime("%d/%m/%Y") if pd.notnull(linha_ev["col0"]) else "",
+                            "Loja (Everest - B)": linha_ev["col1"],
+                            "Loja (Externo - D)": linha_ex["col3"],
+                            "Nome Loja (Externo - col2)": linha_ex["col2"],
+                            "Valor H (Everest)": linha_ev["col7"],
+                            "Valor G (Externo)": linha_ex["col6"],
+                            "H - G (calculado)": round(val_ev - val_ex, 2),
+                            "Valor I (Externo)": linha_ex["col8"]
+                        })
+
+                if diferencas:
+                    st.warning(f"⚠️ {len(diferencas)} diferença(s) encontrada(s):")
+                    st.dataframe(pd.DataFrame(diferencas))
+                else:
+                    st.success("✅ Nenhuma diferença encontrada no período selecionado.")
+            else:
+                st.info("👆 Selecione o intervalo de datas para realizar a análise.")
         else:
-            st.success("✅ Nenhuma diferença encontrada no período selecionado.")
+            st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
 
     except Exception as e:
-        st.error(f"❌ Erro ao comparar dados: {e}")
+        st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
