@@ -485,12 +485,18 @@ with aba4:
                     "Valor Bruto (Everest)", "Valor Real (Everest)"
                 ]
                 # Exibir dataframe
-                st.dataframe(df_comp[colunas_exibir].sort_values("Data").style.format({
-                    "Valor Bruto (Externo)": "R$ {:,.2f}",
-                    "Valor Real (Externo)": "R$ {:,.2f}",
-                    "Valor Bruto (Everest)": "R$ {:,.2f}",
-                    "Valor Real (Everest)": "R$ {:,.2f}"
-                }))
+               df_resultado = df_comp[colunas_exibir].sort_values("Data")
+
+                if df_resultado.size < 250_000:
+                    st.dataframe(df_resultado.style.format({
+                        "Valor Bruto (Externo)": "R$ {:,.2f}",
+                        "Valor Real (Externo)": "R$ {:,.2f}",
+                        "Valor Bruto (Everest)": "R$ {:,.2f}",
+                        "Valor Real (Everest)": "R$ {:,.2f}"
+                   }))
+                else:
+                    st.warning("⚠️ Dados grandes demais para aplicar formatação. Exibindo sem formatação para evitar travamentos.")
+                    st.dataframe(df_resultado)
             else:
                 st.info("👆 Selecione o intervalo de datas para iniciar a análise.")
         else:
