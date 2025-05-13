@@ -405,32 +405,41 @@ with aba3:
 with aba4:
     st.header("📊 Comparativo Everest")
 
-    # 🔽 Seletor de período (exemplo com ano/mês)
-    df["Ano"] = df["Data"].dt.year
-    df["Mês"] = df["Data"].dt.month
-    anos = sorted(df["Ano"].dropna().unique())
-    meses = sorted(df["Mês"].dropna().unique())
+    if 'df_final' in st.session_state:
+        df = st.session_state.df_final.copy()
 
-    col1, col2 = st.columns(2)
-    ano_sel = col1.selectbox("Ano", anos, index=len(anos)-1)
-    mes_sel = col2.selectbox("Mês", meses, index=len(meses)-1)
+        # Converter data novamente (caso esteja em string)
+        df["Data"] = pd.to_datetime(df["Data"], format="%d/%m/%Y", errors='coerce')
 
-    # 🔍 Filtrar por período
-    df_periodo = df[(df["Ano"] == ano_sel) & (df["Mês"] == mes_sel)]
+        df["Ano"] = df["Data"].dt.year
+        df["Mês"] = df["Data"].dt.month
+        anos = sorted(df["Ano"].dropna().unique())
+        meses = sorted(df["Mês"].dropna().unique())
 
-    # 🔄 Pegar listas distintas das duas colunas
-    col_everest = df_periodo["Fat Everest"].dropna().astype(str).str.strip().unique()
-    col_externo = df_periodo["Fat Sistema Externo"].dropna().astype(str).str.strip().unique()
+        col1, col2 = st.columns(2)
+        ano_sel = col1.selectbox("Ano", anos, index=len(anos)-1)
+        mes_sel = col2.selectbox("Mês", meses, index=len(meses)-1)
 
-    set_everest = set(col_everest)
-    set_externo = set(col_externo)
+        df_periodo = df[(df["Ano"] == ano_sel) & (df["Mês"] == mes_sel)]
 
-    apenas_no_everest = sorted(list(set_everest - set_externo))
-    apenas_no_externo = sorted(list(set_externo - set_everest))
+        # Simular as colunas que comparam Everest vs Externo
+        # Substitua esse exemplo por seus dados reais se forem diferentes
+        if "Fat Everest" not in df_periodo.columns or "Fat Sistema Externo" not in df_periodo.columns:
+            st.warning("⚠️ Colunas 'Fat Everest' ou 'Fat Sistema Externo' não foram encontradas no dataframe.")
+        else:
+            col_everest = df_periodo["Fat Everest"].dropna().astype(str).str.strip().unique()
+            col_externo = df_periodo["Fat Sistema Externo"].dropna().astype(str).str.strip().unique()
 
-    # 📋 Mostrar resultados
-    st.markdown("### ❌ Itens que estão **somente no Fat Everest**:")
-    st.write(apenas_no_everest if apenas_no_everest else "✅ Nenhuma diferença encontrada")
+            set_everest = set(col_everest)
+            set_externo = set(col_externo)
 
-    st.markdown("### ❌ Itens que estão **somente no Sistema Externo**:")
-    st.write(apenas_no_externo if apenas_no_externo else "✅ Nenhuma diferença encontrada")
+            apenas_no_everest = sorted(list(set_everest - set_externo))
+            apenas_no_externo = sorted(list(set_externo - set_everest))
+
+            st.markdown("### ❌ Itens que estão **somente no Fat Everest**:")
+            st.write(apenas_no_everest if apenas_no_everest else "✅ Nenhuma diferença encontrada")
+
+            st.markdown("### ❌ Itens que estão **somente no Sistema Externo**:")
+            st.write(apenas_no_externo if apenas_no_externo else "✅ Nenhuma diferença encontrada")
+    else:
+        st.info("🔄 Faça o upload e processamento do arquivo na aba 1 antes de visualizar este comparativo.")
