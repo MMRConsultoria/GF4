@@ -61,7 +61,7 @@ st.markdown("""
 # ================================
 # 3. Separação em ABAS
 # ================================
-aba1, aba2, aba3, aba4 = st.tabs(["📄 Upload e Processamento", "📥 Download Excel", "🔄 Atualizar Google Sheets","📊 Relatórios Operacionais"])
+aba1, aba2, aba3, aba4 = st.tabs(["📄 Upload e Processamento", "📥 Download Excel", "🔄 Atualizar Google Sheets","📊 Comparativo Everest"])
 
 # ================================
 # 📄 Aba 1 - Upload e Processamento
@@ -398,3 +398,39 @@ with aba3:
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
 
+
+# =======================================
+#  Aba 3 - Comparativo Everest
+# =======================================
+with aba3:
+    st.header("📊 Comparativo Everest")
+
+    # 🔽 Seletor de período (exemplo com ano/mês)
+    df["Ano"] = df["Data"].dt.year
+    df["Mês"] = df["Data"].dt.month
+    anos = sorted(df["Ano"].dropna().unique())
+    meses = sorted(df["Mês"].dropna().unique())
+
+    col1, col2 = st.columns(2)
+    ano_sel = col1.selectbox("Ano", anos, index=len(anos)-1)
+    mes_sel = col2.selectbox("Mês", meses, index=len(meses)-1)
+
+    # 🔍 Filtrar por período
+    df_periodo = df[(df["Ano"] == ano_sel) & (df["Mês"] == mes_sel)]
+
+    # 🔄 Pegar listas distintas das duas colunas
+    col_everest = df_periodo["Fat Everest"].dropna().astype(str).str.strip().unique()
+    col_externo = df_periodo["Fat Sistema Externo"].dropna().astype(str).str.strip().unique()
+
+    set_everest = set(col_everest)
+    set_externo = set(col_externo)
+
+    apenas_no_everest = sorted(list(set_everest - set_externo))
+    apenas_no_externo = sorted(list(set_externo - set_everest))
+
+    # 📋 Mostrar resultados
+    st.markdown("### ❌ Itens que estão **somente no Fat Everest**:")
+    st.write(apenas_no_everest if apenas_no_everest else "✅ Nenhuma diferença encontrada")
+
+    st.markdown("### ❌ Itens que estão **somente no Sistema Externo**:")
+    st.write(apenas_no_externo if apenas_no_externo else "✅ Nenhuma diferença encontrada")
