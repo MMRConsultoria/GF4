@@ -491,7 +491,11 @@ with aba4:
                 df_comp["Diferença (Valor Real)"] = df_comp["Valor Real Everest"] - df_comp["Valor Real Externo"]
 
                 # Filtrar apenas linhas com diferença relevante (> 0.01)
-                df_diferencas = df_comp[df_comp["Diferença (Valor Real)"].abs() > 0.01].copy()
+                df_diferencas = df_comp[df_comp["Diferença (Valor Real)"].abs() > 0.01].copy
+
+                st.subheader("🔎 Verificação manual (debug)")
+                st.write("Linhas com data 22/04/2025:")
+                st.write(df_comp[df_comp["Data"] == datetime(2025, 4, 22).date()])
 
                 colunas_exibir = [
                     "Data", "Codigo", "Nome Loja",
