@@ -149,7 +149,7 @@ with aba1:
     )
     df_total["Ano"] = df_total["Ano"].astype(str)
     df_total = df_total.sort_values("Ano", ascending=True)
-    anos_ordenados = df_total["Ano"].tolist()
+    anos_ordenados = df_total["Ano"].tolist()[::-1]  # Inverte a ordem
 
     
     fig_total = px.bar(
