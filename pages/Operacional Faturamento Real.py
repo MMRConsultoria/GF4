@@ -397,6 +397,7 @@ with aba3:
 
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
 # =======================================
 # Aba 4 - Comparativo Everest (independente do upload)
 # =======================================
@@ -430,14 +431,11 @@ with aba4:
                 max_value=max_data
             )
 
-            if isinstance(data_range, tuple) and len(data_range) == 2:
-                data_inicio, data_fim = data_range
-            else:
-                data_inicio, data_fim = None, None
-
             botao_atualizar = st.button("🔄 Atualizar Dados")
 
-            if botao_atualizar and data_inicio is not None and data_fim is not None:
+            if botao_atualizar and isinstance(data_range, tuple) and len(data_range) == 2:
+                data_inicio, data_fim = data_range
+
                 def tratar_valor(valor):
                     try:
                         return float(str(valor).replace("R$", "").replace(".", "").replace(",", ".").strip())
@@ -456,6 +454,7 @@ with aba4:
                     "col6": "Valor Bruto (Externo)",
                     "col8": "Valor Real (Externo)"
                 })
+
                 # Conversão
                 ev["Data"] = pd.to_datetime(ev["Data"], errors="coerce").dt.date
                 ex["Data"] = pd.to_datetime(ex["Data"], errors="coerce").dt.date
@@ -473,7 +472,6 @@ with aba4:
                 mapa_nome_loja = ex.drop_duplicates(subset="Codigo")[["Codigo", "Nome Loja Sistema Externo"]].set_index("Codigo").to_dict()["Nome Loja Sistema Externo"]
                 ev["Nome Loja Everest"] = ev["Codigo"].map(mapa_nome_loja)
 
-                
                 # Merge completo (outer) com base em Data + Código
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
 
@@ -484,8 +482,8 @@ with aba4:
                     "Valor Bruto (Externo)", "Valor Real (Externo)",
                     "Valor Bruto (Everest)", "Valor Real (Everest)"
                 ]
-                # Exibir dataframe
-               df_resultado = df_comp[colunas_exibir].sort_values("Data")
+
+                df_resultado = df_comp[colunas_exibir].sort_values("Data")
 
                 if df_resultado.size < 250_000:
                     st.dataframe(df_resultado.style.format({
@@ -493,13 +491,14 @@ with aba4:
                         "Valor Real (Externo)": "R$ {:,.2f}",
                         "Valor Bruto (Everest)": "R$ {:,.2f}",
                         "Valor Real (Everest)": "R$ {:,.2f}"
-                   }))
+                    }))
                 else:
                     st.warning("⚠️ Dados grandes demais para aplicar formatação. Exibindo sem formatação para evitar travamentos.")
                     st.dataframe(df_resultado)
             else:
-                st.info("👆 Selecione o intervalo de datas para iniciar a análise.")
+                st.info("👆 Selecione o intervalo de datas e clique em '🔄 Atualizar Dados' para visualizar.")
         else:
             st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
     except Exception as e:
         st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
+
