@@ -148,8 +148,8 @@ with aba1:
         lambda row: f"{int(row['Ano'])}       R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
     )
     df_total["Ano"] = df_total["Ano"].astype(str)
-    df_total = df_total.sort_values("Ano")  # Ordena do mais antigo para o mais recente
-
+    df_total = df_total.sort_values("Ano", ascending=False)
+    
     fig_total = px.bar(
         df_total,
         x="Fat.Real",
