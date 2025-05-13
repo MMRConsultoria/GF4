@@ -202,8 +202,7 @@ with aba1:
         title=None,
         xaxis=dict(visible=False),
         yaxis=dict(
-            categoryorder="array",
-            categoryarray=anos_ordenados,
+            categoryorder="category ascending",  # ✅ Usa a ordem definida pela categoria
             showticklabels=False,
             showgrid=False,
             zeroline=False
