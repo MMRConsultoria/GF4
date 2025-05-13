@@ -414,6 +414,13 @@ with aba4:
         df_everest = pd.DataFrame(aba_everest.get_all_values()[1:])
         df_externo = pd.DataFrame(aba_externo.get_all_values()[1:])
 
+        st.subheader("🔍 Preview das tabelas brutas (debug)")
+        st.write("Everest:")
+        st.dataframe(df_everest.head())
+
+        st.write("Sistema Externo:")
+        st.dataframe(df_externo.head())
+
         df_everest.columns = [f"col{i}" for i in range(df_everest.shape[1])]
         df_externo.columns = [f"col{i}" for i in range(df_externo.shape[1])]
 
