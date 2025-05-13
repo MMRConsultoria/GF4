@@ -201,17 +201,18 @@ with aba1:
     df_total["Ano"] = df_total["Ano"].astype(str)
     df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=[str(a) for a in anos_ordenados], ordered=True)
         
-    fig_total.update_layout(
+   fig_total.update_layout(
         height=130,
         margin=dict(t=0, b=0, l=0, r=0),
         title=None,
         xaxis=dict(visible=False),
         yaxis=dict(
-            categoryorder="category ascending",  # respeita a ordem do pd.Categorical
+            categoryorder="array",
+            categoryarray=anos_ordenados,
             showticklabels=False,
             showgrid=False,
             zeroline=False
-    ),
+        ),
         yaxis_title=None,
         showlegend=False,
         plot_bgcolor="rgba(0,0,0,0)"
