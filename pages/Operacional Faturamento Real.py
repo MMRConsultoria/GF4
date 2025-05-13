@@ -468,7 +468,7 @@ with aba4:
                 ev["Valor Real (Everest)"] = ev["Valor Bruto (Everest)"] - ev["Impostos (Everest)"]
 
                 # Mapear nome da loja com base no código
-                mapa_nome_loja = ex.drop_duplicates(subset="Codigo")[["Codigo", "Nome Loja (Externo)"]].set_index("Codigo").to_dict()["Nome Loja (Externo)"]
+                mapa_nome_loja = ex.drop_duplicates(subset="Codigo")[["Codigo", "Nome Loja Sistema Externo"]].set_index("Codigo").to_dict()["Nome Loja Sistema Externo"]
                 ev["Nome Loja Everest"] = ev["Codigo"].map(mapa_nome_loja)
 
                 
