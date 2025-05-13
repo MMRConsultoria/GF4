@@ -148,12 +148,17 @@ with aba1:
         lambda row: f"{int(row['Ano'])}       R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
     )
     df_total["Ano"] = df_total["Ano"].astype(int)
-    anos_ordenados_str = sorted(df_total["Ano"].astype(str).tolist())  # ordem correta: 2023, 2024, 2025
-    df_total["Ano"] = df_total["Ano"].astype(str)
 
-    # aplica categoria E ordena o DataFrame conforme anos_ordenados_str
+    # ORDEM CORRETA dos anos de cima para baixo (mais antigo no topo)
+    anos_ordenados = sorted(df_total["Ano"].unique())  # ex: [2023, 2024, 2025]
+    anos_ordenados_str = [str(ano) for ano in anos_ordenados]
+
+    # Converter a coluna "Ano" para string e categoria ordenada
+    df_total["Ano"] = df_total["Ano"].astype(str)
     df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=anos_ordenados_str, ordered=True)
-    df_total = df_total.sort_values(by="Ano", ascending=True)
+
+    # Reordenar o dataframe com base na ordem correta
+    df_total = df_total.sort_values("Ano", ascending=True)
     
     fig_total = px.bar(
         df_total,
@@ -207,7 +212,7 @@ with aba1:
         yaxis=dict(
             categoryorder="array",
             categoryarray=anos_ordenados_str,  # ordem natural: 2023 em cima, 2025 embaixo
-            showticklabels=False,
+            showticklabels=True,
             showgrid=False,
             zeroline=False
         ),
