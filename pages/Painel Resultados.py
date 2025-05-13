@@ -206,7 +206,7 @@ with aba1:
         xaxis=dict(visible=False),
         yaxis=dict(
             categoryorder="array",
-            categoryarray=anos_ordenados_str[::-1],  # aqui inverte a ordem na horizontal
+            categoryarray=anos_ordenados_str,  # ordem natural: 2023 em cima, 2025 embaixo
             showticklabels=False,
             showgrid=False,
             zeroline=False
