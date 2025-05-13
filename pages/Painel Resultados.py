@@ -99,8 +99,15 @@ with aba1:
     anos_comparacao = st.multiselect("📊 Anos para gráficos de comparação", options=anos_disponiveis, default=anos_disponiveis)
 
     df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"]).copy()
-    df_lojas = df_anos.groupby("Ano")["Loja"].nunique().reset_index()
+    # Normalizar nomes das lojas para evitar duplicações por acento, espaço ou caixa
+    df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower()
+
+    # Calcular a quantidade de lojas únicas por ano (com base em loja + ano únicos)
+    df_lojas = df_anos.drop_duplicates(subset=["Ano", "Loja"])
+    df_lojas = df_lojas.groupby("Ano")["Loja"].nunique().reset_index()
     df_lojas.columns = ["Ano", "Qtd_Lojas"]
+
+
     fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
 
     meses = {
