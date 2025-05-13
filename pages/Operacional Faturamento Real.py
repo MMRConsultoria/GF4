@@ -400,6 +400,9 @@ with aba3:
 # =======================================
 # Aba 4 - Comparativo Everest (independente do upload)
 # =======================================
+# =======================================
+# Aba 4 - Comparativo Everest (independente do upload)
+# =======================================
 with aba4:
     st.header("📊 Comparativo Everest (via Google Sheets)")
 
@@ -435,7 +438,7 @@ with aba4:
                 data_inicio, data_fim = None, None
 
             if data_inicio is not None and data_fim is not None:
-                # Função para formatar a data em português
+                # Formatar datas em português
                 meses_pt = {
                     1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril",
                     5: "maio", 6: "junho", 7: "julho", 8: "agosto",
@@ -445,6 +448,7 @@ with aba4:
                     0: "segunda-feira", 1: "terça-feira", 2: "quarta-feira",
                     3: "quinta-feira", 4: "sexta-feira", 5: "sábado", 6: "domingo"
                 }
+
                 def data_pt(data):
                     return f"{dias_pt[data.weekday()]}, {data.day} de {meses_pt[data.month]} de {data.year}"
 
@@ -466,51 +470,50 @@ with aba4:
                     except:
                         return None
 
-                # Renomear colunas para facilitar
+                # Renomear colunas com origem
                 ev = ev.rename(columns={
-                    "col0": "Data", "col1": "Codigo", "col7": "Valor Bruto Everest", "col8": "Valor Real Everest"
+                    "col0": "Data", "col1": "Codigo",
+                    "col7": "Valor Bruto (Everest)", "col8": "Valor Real (Everest)"
                 })
                 ex = ex.rename(columns={
-                    "col0": "Data", "col2": "Nome Loja", "col3": "Codigo",
-                    "col7": "Valor Bruto Externo", "col8": "Valor Real Externo"
+                    "col0": "Data", "col2": "Nome Loja (Externo)", "col3": "Codigo",
+                    "col7": "Valor Bruto (Externo)", "col8": "Valor Real (Externo)"
                 })
 
+                # Converter tipos
                 ev["Data"] = pd.to_datetime(ev["Data"], errors="coerce").dt.date
                 ex["Data"] = pd.to_datetime(ex["Data"], errors="coerce").dt.date
 
-                for col in ["Valor Bruto Everest", "Valor Real Everest"]:
+                for col in ["Valor Bruto (Everest)", "Valor Real (Everest)"]:
                     ev[col] = ev[col].apply(tratar_valor)
 
-                for col in ["Valor Bruto Externo", "Valor Real Externo"]:
+                for col in ["Valor Bruto (Externo)", "Valor Real (Externo)"]:
                     ex[col] = ex[col].apply(tratar_valor)
 
-                # Merge dos dois dataframes com base em Data e Codigo
+                # Merge dos dois dataframes por Data e Código
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="inner")
 
-                # Calcular diferença
-                df_comp["Diferença (Valor Real)"] = df_comp["Valor Real Everest"] - df_comp["Valor Real Externo"]
+                # Calcular diferença dos valores reais
+                df_comp["Diferença (Valor Real)"] = df_comp["Valor Real (Everest)"] - df_comp["Valor Real (Externo)"]
 
-                # Filtrar apenas linhas com diferença relevante (> 0.01)
-                df_diferencas = df_comp[df_comp["Diferença (Valor Real)"].abs() > 0.01].copy
+                # Filtrar apenas diferenças relevantes
+                df_diferencas = df_comp[df_comp["Diferença (Valor Real)"].abs() > 0.01].copy()
 
-                st.subheader("🔎 Verificação manual (debug)")
-                st.write("Linhas com data 22/04/2025:")
-                st.write(df_comp[df_comp["Data"] == datetime(2025, 4, 22).date()])
-
+                # Ordenar colunas
                 colunas_exibir = [
-                    "Data", "Codigo", "Nome Loja",
-                    "Valor Bruto Externo", "Valor Real Externo",
-                    "Valor Bruto Everest", "Valor Real Everest",
+                    "Data", "Codigo", "Nome Loja (Externo)",
+                    "Valor Bruto (Externo)", "Valor Real (Externo)",
+                    "Valor Bruto (Everest)", "Valor Real (Everest)",
                     "Diferença (Valor Real)"
                 ]
 
                 if not df_diferencas.empty:
                     st.warning(f"⚠️ {len(df_diferencas)} diferença(s) encontrada(s):")
                     st.dataframe(df_diferencas[colunas_exibir].style.format({
-                        "Valor Bruto Externo": "R$ {:,.2f}",
-                        "Valor Real Externo": "R$ {:,.2f}",
-                        "Valor Bruto Everest": "R$ {:,.2f}",
-                        "Valor Real Everest": "R$ {:,.2f}",
+                        "Valor Bruto (Externo)": "R$ {:,.2f}",
+                        "Valor Real (Externo)": "R$ {:,.2f}",
+                        "Valor Bruto (Everest)": "R$ {:,.2f}",
+                        "Valor Real (Everest)": "R$ {:,.2f}",
                         "Diferença (Valor Real)": "R$ {:,.2f}"
                     }))
                 else:
@@ -521,4 +524,3 @@ with aba4:
             st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
     except Exception as e:
         st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
-
