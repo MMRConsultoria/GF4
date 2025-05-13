@@ -435,7 +435,9 @@ with aba4:
             else:
                 data_inicio, data_fim = None, None
 
-            if data_inicio is not None and data_fim is not None:
+            botao_atualizar = st.button("🔄 Atualizar Dados")
+
+            if botao_atualizar and data_inicio is not None and data_fim is not None:
                 def tratar_valor(valor):
                     try:
                         return float(str(valor).replace("R$", "").replace(".", "").replace(",", ".").strip())
