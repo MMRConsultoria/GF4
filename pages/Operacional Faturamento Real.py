@@ -483,8 +483,8 @@ with aba4:
         datas_validas = df_everest["col0"].dropna()
 
         if not datas_validas.empty:
-            min_data = datas_validas.min().date()
-            max_data = datas_validas.max().date()
+           hoje = date.today()
+
 
             with st.form("comparativo_form"):
                 data_range = st.date_input(
