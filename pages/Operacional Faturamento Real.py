@@ -55,21 +55,21 @@ if 'df_final' in st.session_state:
     ultima_data_valida = df["Data"].dropna()
 
     if not ultima_data_valida.empty:
-    ultima_data = ultima_data_valida.max().strftime("%d/%m/%Y")
+        ultima_data = ultima_data_valida.max().strftime("%d/%m/%Y")
 
-    df["GrupoExibicao"] = df["Grupo"].apply(
-        lambda g: "Bares" if str(g).strip().lower() in ["amata", "aurora"]
-        else "Kopp" if str(g).strip().lower() == "kopp"
-        else "GF4"
-    )
+        df["GrupoExibicao"] = df["Grupo"].apply(
+            lambda g: "Bares" if str(g).strip().lower() in ["amata", "aurora"]
+            else "Kopp" if str(g).strip().lower() == "kopp"
+            else "GF4"
+        )
 
-    contagem = df.groupby("GrupoExibicao")["Loja"].nunique().to_dict()
-    qtde_bares = contagem.get("Bares", 0)
-    qtde_kopp = contagem.get("Kopp", 0)
-    qtde_gf4 = contagem.get("GF4", 0)
+        contagem = df.groupby("GrupoExibicao")["Loja"].nunique().to_dict()
+        qtde_bares = contagem.get("Bares", 0)
+        qtde_kopp = contagem.get("Kopp", 0)
+        qtde_gf4 = contagem.get("GF4", 0)
 
-    resumo_msg = f"<div style='font-size:13px; color:gray; margin-bottom:10px;'>📅 Última atualização: {ultima_data} — Bares ({qtde_bares}), Kopp ({qtde_kopp}), GF4 ({qtde_gf4})</div>"
-    st.markdown(resumo_msg, unsafe_allow_html=True)
+        resumo_msg = f"<div style='font-size:13px; color:gray; margin-bottom:10px;'>📅 Última atualização: {ultima_data} — Bares ({qtde_bares}), Kopp ({qtde_kopp}), GF4 ({qtde_gf4})</div>"
+        st.markdown(resumo_msg, unsafe_allow_html=True)
 
 
 
