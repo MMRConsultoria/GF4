@@ -465,7 +465,7 @@ with aba3:
 # =======================================
 
 with aba4:
-    #st.header("📊 Comparativo Everest (via Google Sheets - completo, sem diferença)")
+    # st.header("📊 Comparativo Everest (via Google Sheets - completo, sem diferença)")
 
     try:
         planilha = gc.open("Vendas diarias")
@@ -484,20 +484,19 @@ with aba4:
         datas_validas = df_everest["col0"].dropna()
 
         if not datas_validas.empty:
+            min_data = datas_validas.min().date()
+            max_data = datas_validas.max().date()
             hoje = date.today()
-
 
             with st.form("comparativo_form"):
                 data_range = st.date_input(
                     "Selecione o intervalo de datas:",
-                    value=(min_data, max_data),
+                    value=(hoje, hoje),
                     min_value=min_data,
                     max_value=max_data
                 )
                 botao_atualizar = st.form_submit_button("🔄 Atualizar Dados")
 
-        if botao_atualizar:
-            data_inicio, data_fim = data_range
             if botao_atualizar and isinstance(data_range, tuple) and len(data_range) == 2:
                 data_inicio, data_fim = data_range
 
@@ -507,7 +506,7 @@ with aba4:
                     except:
                         return None
 
-                # Renomear colunas conforme imagem
+                # Renomear colunas conforme posição
                 ev = df_everest.rename(columns={
                     "col0": "Data", "col1": "Codigo",
                     "col7": "Valor Bruto (Everest)", "col6": "Impostos (Everest)"
@@ -534,13 +533,14 @@ with aba4:
                 ev["Valor Real (Everest)"] = ev["Valor Bruto (Everest)"] - ev["Impostos (Everest)"]
 
                 # Mapear nome da loja com base no código
-                mapa_nome_loja = ex.drop_duplicates(subset="Codigo")[["Codigo", "Nome Loja Sistema Externo"]].set_index("Codigo").to_dict()["Nome Loja Sistema Externo"]
+                mapa_nome_loja = ex.drop_duplicates(subset="Codigo")[["Codigo", "Nome Loja Sistema Externo"]]\
+                                    .set_index("Codigo").to_dict()["Nome Loja Sistema Externo"]
                 ev["Nome Loja Everest"] = ev["Codigo"].map(mapa_nome_loja)
 
                 # Merge completo (outer) com base em Data + Código
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
 
-                # Reordenar colunas para exibição lado a lado
+                # Reordenar colunas
                 colunas_exibir = [
                     "Data", "Codigo",
                     "Nome Loja Sistema Externo", "Nome Loja Everest",
@@ -558,10 +558,8 @@ with aba4:
                         "Valor Real (Everest)": "R$ {:,.2f}"
                     }))
                 else:
-                    st.warning("⚠️ Dados grandes demais para aplicar formatação. Exibindo sem formatação para evitar travamentos.")
+                    st.warning("⚠️ Dados grandes demais para aplicar formatação. Exibindo sem formatação.")
                     st.dataframe(df_resultado)
-            else:
-                st.info("👆 Selecione o intervalo de datas e clique em '🔄 Atualizar Dados' para visualizar.")
         else:
             st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
     except Exception as e:
