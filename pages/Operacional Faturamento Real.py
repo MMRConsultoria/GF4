@@ -220,6 +220,7 @@ with aba1:
 
 
             else:
+                st.session_state.empresas_ok = len(empresas_nao_localizadas) == 0
                 st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
 
            # 🔗 Links úteis
@@ -373,7 +374,21 @@ with aba3:
                 duplicados.append(linha)  # Adiciona a linha duplicada à lista
 
         # Adicionar o botão de atualização do Google Sheets
-        if st.button("📥 Enviar dados para o Google Sheets"):
+            if st.session_state.get("empresas_ok", False):
+                if st.button("📥 Enviar dados para o Google Sheets"):
+                    with st.spinner("🔄 Atualizando o Google Sheets..."):
+                        try:
+                            if novos_dados:
+                            #Manter a primeira linha vazia para começar a inserção
+                            primeira_linha_vazia = len(valores_existentes) + 1
+
+                            # Enviar os novos dados para o Google Sheets
+                            aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
+                            ...
+                       except Exception as e:
+                            st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
+            else:
+                st.warning("⚠️ O botão de envio está desativado porque há empresas não cadastradas.")
            
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
