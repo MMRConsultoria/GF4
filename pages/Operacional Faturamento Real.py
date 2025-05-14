@@ -551,8 +551,8 @@ with aba4:
                 # ✅ Renomear colunas
                 df_resultado.columns = [
                     "Data",
-                    "Nome (Everest)", "Código", "Valor Bruto (Everest)", "Valor Real (Everest)",
-                    "Nome (Externo)", "Código", "Valor Bruto (Externo)", "Valor Real (Externo)"
+                    "Nome (Everest)", "Código (Everest)", "Valor Bruto (Everest)", "Valor Real (Everest)",
+                    "Nome (Externo)", "Código (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]
 
                 st.dataframe(df_resultado.style.format({
