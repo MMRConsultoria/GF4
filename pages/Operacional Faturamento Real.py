@@ -491,9 +491,14 @@ with aba4:
             with st.form("comparativo_form"):
                 data_range = st.date_input(
                     "Selecione o intervalo de datas:",
-                    value=(hoje, hoje),
+                   sugestao_data = min(hoje, max_data)
+
+                data_range = st.date_input(
+                    "Selecione o intervalo de datas:",
+                    value=(sugestao_data, sugestao_data),
                     min_value=min_data,
                     max_value=max_data
+                )
                 )
                 botao_atualizar = st.form_submit_button("🔄 Atualizar Dados")
 
