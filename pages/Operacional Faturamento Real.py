@@ -1,4 +1,4 @@
-# pages/OperacionalFaturamentoReal.py
+# pages/FaturamentoServico.py
 
 
 
@@ -20,8 +20,8 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
-planilha_empresa = gc.open("Vendas diarias")
-df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
+planilha_empresa = gc.open("Tabela")
+df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela_Empresa").get_all_records())
 
 # ================================
 # 2. Configuração inicial do app
@@ -61,7 +61,7 @@ st.markdown("""
 # ================================
 # 3. Separação em ABAS
 # ================================
-aba1, aba2, aba3, aba4 = st.tabs(["📄 Upload e Processamento", "📥 Download Excel", "🔄 Atualizar Google Sheets","📊 Comparativo Everest"])
+aba1, aba2, aba3, aba4 = st.tabs(["📄 Upload e Processamento", "📥 Download Excel", "🔄 Atualizar Google Sheets","📊 Relatórios Operacionais"])
 
 # ================================
 # 📄 Aba 1 - Upload e Processamento
@@ -208,7 +208,7 @@ with aba1:
                 <br>{empresas_nao_localizadas_str}
                 <br>
                 ✏️ Atualize a tabela clicando 
-                <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
+                <a href='https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
                 """
 
                 st.markdown(mensagem, unsafe_allow_html=True)
@@ -266,7 +266,7 @@ with aba3:
         
         # 🔗 Links úteis
         st.markdown("""
-          🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing)
+          🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
         """, unsafe_allow_html=True)
 
         # Criar a coluna "M" com a concatenação de "Data", "Fat.Total" e "Loja" como string para verificação de duplicação
@@ -322,7 +322,7 @@ with aba3:
         credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
         gc = gspread.authorize(credentials)
 
-        planilha_destino = gc.open("Vendas diarias")
+        planilha_destino = gc.open("Faturamento Sistema Externo")
         aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
         # Obter dados já existentes na aba
@@ -398,106 +398,3 @@ with aba3:
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
 
-# =======================================
-# Aba 4 - Comparativo Everest (independente do upload)
-# =======================================
-
-with aba4:
-    st.header("📊 Comparativo Everest (via Google Sheets - completo, sem diferença)")
-
-    try:
-        planilha = gc.open("Vendas Diarias")
-        aba_everest = planilha.worksheet("Everest")
-        aba_externo = planilha.worksheet("Fat Sistema Externo")
-
-        df_everest = pd.DataFrame(aba_everest.get_all_values()[1:])
-        df_externo = pd.DataFrame(aba_externo.get_all_values()[1:])
-
-        df_everest.columns = [f"col{i}" for i in range(df_everest.shape[1])]
-        df_externo.columns = [f"col{i}" for i in range(df_externo.shape[1])]
-
-        df_everest["col0"] = pd.to_datetime(df_everest["col0"], dayfirst=True, errors="coerce")
-        df_externo["col0"] = pd.to_datetime(df_externo["col0"], dayfirst=True, errors="coerce")
-
-        datas_validas = df_everest["col0"].dropna()
-        if not datas_validas.empty:
-            min_data = datas_validas.min().date()
-            max_data = datas_validas.max().date()
-
-            data_range = st.date_input(
-                "Selecione o intervalo de datas:",
-                value=(min_data, max_data),
-                min_value=min_data,
-                max_value=max_data
-            )
-
-            botao_atualizar = st.button("🔄 Atualizar Dados")
-
-            if botao_atualizar and isinstance(data_range, tuple) and len(data_range) == 2:
-                data_inicio, data_fim = data_range
-
-                def tratar_valor(valor):
-                    try:
-                        return float(str(valor).replace("R$", "").replace(".", "").replace(",", ".").strip())
-                    except:
-                        return None
-
-                # Renomear colunas conforme imagem
-                ev = df_everest.rename(columns={
-                    "col0": "Data", "col1": "Codigo",
-                    "col7": "Valor Bruto (Everest)", "col6": "Impostos (Everest)"
-                })
-                ex = df_externo.rename(columns={
-                    "col0": "Data",
-                    "col2": "Nome Loja Sistema Externo",
-                    "col3": "Codigo",
-                    "col6": "Valor Bruto (Externo)",
-                    "col8": "Valor Real (Externo)"
-                })
-
-                # Conversão
-                ev["Data"] = pd.to_datetime(ev["Data"], errors="coerce").dt.date
-                ex["Data"] = pd.to_datetime(ex["Data"], errors="coerce").dt.date
-
-                for col in ["Valor Bruto (Everest)", "Impostos (Everest)"]:
-                    ev[col] = ev[col].apply(tratar_valor)
-
-                for col in ["Valor Bruto (Externo)", "Valor Real (Externo)"]:
-                    ex[col] = ex[col].apply(tratar_valor)
-
-                # Calcular Valor Real (Everest)
-                ev["Valor Real (Everest)"] = ev["Valor Bruto (Everest)"] - ev["Impostos (Everest)"]
-
-                # Mapear nome da loja com base no código
-                mapa_nome_loja = ex.drop_duplicates(subset="Codigo")[["Codigo", "Nome Loja Sistema Externo"]].set_index("Codigo").to_dict()["Nome Loja Sistema Externo"]
-                ev["Nome Loja Everest"] = ev["Codigo"].map(mapa_nome_loja)
-
-                # Merge completo (outer) com base em Data + Código
-                df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
-
-                # Reordenar colunas para exibição lado a lado
-                colunas_exibir = [
-                    "Data", "Codigo",
-                    "Nome Loja Sistema Externo", "Nome Loja Everest",
-                    "Valor Bruto (Externo)", "Valor Real (Externo)",
-                    "Valor Bruto (Everest)", "Valor Real (Everest)"
-                ]
-
-                df_resultado = df_comp[colunas_exibir].sort_values("Data")
-
-                if df_resultado.size < 250_000:
-                    st.dataframe(df_resultado.style.format({
-                        "Valor Bruto (Externo)": "R$ {:,.2f}",
-                        "Valor Real (Externo)": "R$ {:,.2f}",
-                        "Valor Bruto (Everest)": "R$ {:,.2f}",
-                        "Valor Real (Everest)": "R$ {:,.2f}"
-                    }))
-                else:
-                    st.warning("⚠️ Dados grandes demais para aplicar formatação. Exibindo sem formatação para evitar travamentos.")
-                    st.dataframe(df_resultado)
-            else:
-                st.info("👆 Selecione o intervalo de datas e clique em '🔄 Atualizar Dados' para visualizar.")
-        else:
-            st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
-    except Exception as e:
-        st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
