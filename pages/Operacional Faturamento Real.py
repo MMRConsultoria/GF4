@@ -481,19 +481,22 @@ with aba4:
         df_externo["col0"] = pd.to_datetime(df_externo["col0"], dayfirst=True, errors="coerce")
 
         datas_validas = df_everest["col0"].dropna()
+
         if not datas_validas.empty:
             min_data = datas_validas.min().date()
             max_data = datas_validas.max().date()
 
-            data_range = st.date_input(
-                "Selecione o intervalo de datas:",
-                value=(min_data, max_data),
-                min_value=min_data,
-                max_value=max_data
-            )
+            with st.form("comparativo_form"):
+                data_range = st.date_input(
+                    "Selecione o intervalo de datas:",
+                    value=(min_data, max_data),
+                    min_value=min_data,
+                    max_value=max_data
+                )
+                botao_atualizar = st.form_submit_button("🔄 Atualizar Dados")
 
-            botao_atualizar = st.button("🔄 Atualizar Dados")
-
+        if botao_atualizar:
+            data_inicio, data_fim = data_range
             if botao_atualizar and isinstance(data_range, tuple) and len(data_range) == 2:
                 data_inicio, data_fim = data_range
 
