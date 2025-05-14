@@ -499,7 +499,6 @@ with aba4:
                     min_value=min_data,
                     max_value=max_data
                 )
-                )
                 botao_atualizar = st.form_submit_button("🔄 Atualizar Dados")
 
             if botao_atualizar and isinstance(data_range, tuple) and len(data_range) == 2:
