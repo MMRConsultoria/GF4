@@ -463,8 +463,6 @@ with aba3:
 # =======================================
 # Aba 4 - Comparativo Everest (independente do upload)
 # =======================================
-from datetime import date
-
 with aba4:
     # st.header("📊 Comparativo Everest (via Google Sheets - completo, sem diferença)")
 
