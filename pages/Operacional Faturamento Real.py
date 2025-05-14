@@ -20,8 +20,8 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
-planilha_empresa = gc.open("Tabela")
-df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela_Empresa").get_all_records())
+planilha_empresa = gc.open("Vendas diarias")
+df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
 
 # ================================
 # 2. Configuração inicial do app
@@ -208,7 +208,7 @@ with aba1:
                 <br>{empresas_nao_localizadas_str}
                 <br>
                 ✏️ Atualize a tabela clicando 
-                <a href='https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
+                <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
                 """
 
                 st.markdown(mensagem, unsafe_allow_html=True)
@@ -266,7 +266,7 @@ with aba3:
         
         # 🔗 Links úteis
         st.markdown("""
-          🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1_3uX7dlvKefaGDBUhWhyDSLbfXzAsw8bKRVvfiIz8ic/edit?usp=sharing)
+          🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing)
         """, unsafe_allow_html=True)
 
         # Criar a coluna "M" com a concatenação de "Data", "Fat.Total" e "Loja" como string para verificação de duplicação
@@ -322,7 +322,7 @@ with aba3:
         credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
         gc = gspread.authorize(credentials)
 
-        planilha_destino = gc.open("Faturamento Sistema Externo")
+        planilha_destino = gc.open("Vendas diarias")
         aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
         # Obter dados já existentes na aba
@@ -406,8 +406,8 @@ with aba4:
     st.header("📊 Comparativo Everest (via Google Sheets - completo, sem diferença)")
 
     try:
-        planilha = gc.open("Faturamento Sistema Externo")
-        aba_everest = planilha.worksheet("Fat Everest")
+        planilha = gc.open("Vendas Diarias")
+        aba_everest = planilha.worksheet("Everest")
         aba_externo = planilha.worksheet("Fat Sistema Externo")
 
         df_everest = pd.DataFrame(aba_everest.get_all_values()[1:])
