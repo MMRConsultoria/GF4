@@ -62,8 +62,8 @@ try:
 
         # Verifica se coluna "Data" está presente
         if "Data" in df.columns:
-            df["Data"] = pd.to_numeric(df["Data"], errors="coerce")
-            df["Data"] = pd.to_datetime("1899-12-30") + pd.to_timedelta(df["Data"], unit="D")
+            df["Data"] = pd.to_datetime(df["Data"].astype(str).str.strip(), dayfirst=True, errors="coerce")
+
 
             ultima_data_valida = df["Data"].dropna()
 
