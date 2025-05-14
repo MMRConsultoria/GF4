@@ -49,42 +49,57 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 try:
-    # Conecta à planilha e lê a aba com os dados do sistema externo
     planilha = gc.open("Vendas diarias")
     aba_fat = planilha.worksheet("Fat Sistema Externo")
-    df = pd.DataFrame(aba_fat.get_all_values())
+    data_raw = aba_fat.get_all_values()
 
-    # Usa a primeira linha como cabeçalho
-    df.columns = df.iloc[0]
-    df = df[1:]
+    # Converte para DataFrame e define o cabeçalho
+    if len(data_raw) > 1:
+        df = pd.DataFrame(data_raw[1:], columns=data_raw[0])  # usa a primeira linha como header
 
-    # Converte coluna "Data" de número serial para datetime
-    df["Data"] = pd.to_numeric(df["Data"], errors="coerce")
-    df["Data"] = pd.to_datetime("1899-12-30") + pd.to_timedelta(df["Data"], unit="D")
+        # Limpa espaços extras nos nomes de colunas
+        df.columns = df.columns.str.strip()
 
-    ultima_data_valida = df["Data"].dropna()
-    if not ultima_data_valida.empty:
-        ultima_data = ultima_data_valida.max().strftime("%d/%m/%Y")
+        # Verifica se coluna "Data" está presente
+        if "Data" in df.columns:
+            df["Data"] = pd.to_numeric(df["Data"], errors="coerce")
+            df["Data"] = pd.to_datetime("1899-12-30") + pd.to_timedelta(df["Data"], unit="D")
 
-        df["GrupoExibicao"] = df["Grupo"].apply(
-            lambda g: "Bares" if str(g).strip().lower() in ["amata", "aurora"]
-            else "Kopp" if str(g).strip().lower() == "kopp"
-            else "GF4"
-        )
+            ultima_data_valida = df["Data"].dropna()
 
-        contagem = df.groupby("GrupoExibicao")["Loja"].nunique().to_dict()
-        qtde_bares = contagem.get("Bares", 0)
-        qtde_kopp = contagem.get("Kopp", 0)
-        qtde_gf4 = contagem.get("GF4", 0)
+            if not ultima_data_valida.empty:
+                ultima_data = ultima_data_valida.max().strftime("%d/%m/%Y")
 
-        resumo_msg = f"""
-        <div style='font-size:13px; color:gray; margin-bottom:10px;'>
-        📅 Última atualização: {ultima_data} — Bares ({qtde_bares}), Kopp ({qtde_kopp}), GF4 ({qtde_gf4})
-        </div>
-        """
-        st.markdown(resumo_msg, unsafe_allow_html=True)
+                # Corrige coluna Grupo
+                df["Grupo"] = df["Grupo"].astype(str).str.strip().str.lower()
+                df["GrupoExibicao"] = df["Grupo"].apply(
+                    lambda g: "Bares" if g in ["amata", "aurora"]
+                    else "Kopp" if g == "kopp"
+                    else "GF4"
+                )
+
+                # Contagem de lojas únicas por grupo
+                contagem = df.groupby("GrupoExibicao")["Loja"].nunique().to_dict()
+                qtde_bares = contagem.get("Bares", 0)
+                qtde_kopp = contagem.get("Kopp", 0)
+                qtde_gf4 = contagem.get("GF4", 0)
+
+                resumo_msg = f"""
+                <div style='font-size:13px; color:gray; margin-bottom:10px;'>
+                📅 Última atualização: {ultima_data} — Bares ({qtde_bares}), Kopp ({qtde_kopp}), GF4 ({qtde_gf4})
+                </div>
+                """
+                st.markdown(resumo_msg, unsafe_allow_html=True)
+            else:
+                st.info("⚠️ Nenhuma data válida encontrada.")
+        else:
+            st.info("⚠️ Coluna 'Data' não encontrada no Google Sheets.")
+    else:
+        st.info("⚠️ Tabela vazia.")
 except Exception as e:
-    st.info(f"ℹ️ Dados ainda não disponíveis ou mal formatados: {e}")
+    st.error(f"❌ Erro ao processar dados do Google Sheets: {e}")
+st.write("👀 Cabeçalhos reais:", df.columns.tolist())
+st.write("📄 Primeiras linhas:", df.head())
 
 # Cabeçalho bonito (depois do estilo)
 st.markdown("""
