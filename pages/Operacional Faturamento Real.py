@@ -20,7 +20,7 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
-planilha_empresa = gc.open("Vendas Diarias")
+planilha_empresa = gc.open("Vendas diarias")
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
 
 # ================================
