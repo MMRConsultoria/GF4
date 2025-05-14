@@ -490,7 +490,7 @@ with aba4:
 
             with st.form("comparativo_form"):
                 data_range = st.date_input(
-                    "Selecione o intervalo de datas:",
+                   "Selecione o intervalo de datas:",
                    sugestao_data = min(hoje, max_data)
 
                 data_range = st.date_input(
