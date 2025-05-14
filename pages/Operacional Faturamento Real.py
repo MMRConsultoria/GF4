@@ -98,8 +98,6 @@ try:
         st.info("⚠️ Tabela vazia.")
 except Exception as e:
     st.error(f"❌ Erro ao processar dados do Google Sheets: {e}")
-st.write("👀 Cabeçalhos reais:", df.columns.tolist())
-st.write("📄 Primeiras linhas:", df.head())
 
 # Cabeçalho bonito (depois do estilo)
 st.markdown("""
