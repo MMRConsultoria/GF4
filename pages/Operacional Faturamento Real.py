@@ -379,13 +379,13 @@ with aba3:
                     with st.spinner("🔄 Atualizando o Google Sheets..."):
                         try:
                             if novos_dados:
-                            #Manter a primeira linha vazia para começar a inserção
-                            primeira_linha_vazia = len(valores_existentes) + 1
+                                #Manter a primeira linha vazia para começar a inserção
+                                primeira_linha_vazia = len(valores_existentes) + 1
 
-                            # Enviar os novos dados para o Google Sheets
-                            aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
-                            ...
-                       except Exception as e:
+                                # Enviar os novos dados para o Google Sheets
+                                aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
+                                ...
+                        except Exception as e:
                             st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
             else:
                 st.warning("⚠️ O botão de envio está desativado porque há empresas não cadastradas.")
