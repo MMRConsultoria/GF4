@@ -49,6 +49,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Resumo discreto abaixo do título (antes das abas)
+st.write("🔍 df_final está carregado:", 'df_final' in st.session_state)
 if 'df_final' in st.session_state:
     df = st.session_state.df_final.copy()
     df["Data"] = pd.to_datetime(df["Data"], errors="coerce", dayfirst=True)
