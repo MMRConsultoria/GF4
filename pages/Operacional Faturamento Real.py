@@ -332,7 +332,7 @@ with aba3:
         credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
         gc = gspread.authorize(credentials)
 
-        planilha_destino = gc.open("Faturamento Sistema Externo")
+        planilha_destino = gc.open("Vendas diarias")
         aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
         # Obter dados já existentes na aba
