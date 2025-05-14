@@ -311,11 +311,11 @@ with aba3:
         lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
         )
 
-        st.subheader("🔎 Valores únicos em 'Código Everest' antes da conversão:")
-        st.write(df_final['Código Everest'].unique())
+        #st.subheader("🔎 Valores únicos em 'Código Everest' antes da conversão:")
+        #st.write(df_final['Código Everest'].unique())
 
-        st.subheader("🧪 Tipos de dados em 'Código Everest':")
-        st.write(df_final['Código Everest'].apply(lambda x: f"{x} → {type(x)}").unique())
+        #st.subheader("🧪 Tipos de dados em 'Código Everest':")
+        #st.write(df_final['Código Everest'].apply(lambda x: f"{x} → {type(x)}").unique())
 
         def tentar_converter_para_inteiro(x):
              try:
