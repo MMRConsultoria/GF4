@@ -311,10 +311,20 @@ with aba3:
         lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
         )
 
-        # Corrigir colunas D e F (Código Everest e Código Grupo Everest): remover aspas e converter para número inteiro
-        df_final['Código Everest'] = df_final['Código Everest'].apply(
-        lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
-        )
+       st.subheader("🔎 Valores únicos em 'Código Everest' antes da conversão:")
+       st.write(df_final['Código Everest'].unique())
+
+       st.subheader("🧪 Tipos de dados em 'Código Everest':")
+       st.write(df_final['Código Everest'].apply(lambda x: f"{x} → {type(x)}").unique())
+
+       def tentar_converter_para_inteiro(x):
+            try:
+                x_str = str(x).replace("'", "").strip()
+                return int(float(x_str)) if x_str != "" else ""
+            except:
+                return ""
+
+        df_final['Código Everest'] = df_final['Código Everest'].apply(tentar_converter_para_inteiro)
 
         #df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(
         #lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
