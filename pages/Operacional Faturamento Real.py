@@ -373,7 +373,11 @@ with aba3:
                 duplicados.append(linha)  # Adiciona a linha duplicada à lista
 
         # Adicionar o botão de atualização do Google Sheets
-        if st.button("📥 Enviar dados para o Google Sheets"):
+        if st.session_state.get("empresas_ok", False):
+            if st.button("📥 Enviar dados para o Google Sheets"):
+                ...
+        else:
+            st.warning("⚠️ O botão de envio está desativado porque há empresas não cadastradas.")
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
                     if novos_dados:
