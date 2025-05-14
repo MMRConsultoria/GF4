@@ -52,7 +52,7 @@ st.markdown("""
 st.write("🔍 df_final está carregado:", 'df_final' in st.session_state)
 if 'df_final' in st.session_state:
     df = st.session_state.df_final.copy()
-    df["Data"] = pd.to_datetime(df["Data"], errors="coerce", dayfirst=True)
+    df["Data"] = pd.to_datetime(df["Data"], format="%d/%m/%Y", errors="coerce")
     ultima_data_valida = df["Data"].dropna()
 
     if not ultima_data_valida.empty:
