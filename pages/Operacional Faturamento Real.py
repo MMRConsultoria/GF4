@@ -263,6 +263,21 @@ with aba3:
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
+
+        # Verifica se há lojas não cadastradas
+        lojas_nao_cadastradas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
+
+        if len(lojas_nao_cadastradas) > 0:
+            st.warning(f"""
+            ⚠️ {len(lojas_nao_cadastradas)} loja(s) sem Código Everest:
+            <br>{'<br>'.join(lojas_nao_cadastradas)}
+            <br>
+            ✏️ Atualize a tabela clicando 
+            <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
+            """, unsafe_allow_html=True)
+            st.stop()
+
+        
         
         # 🔗 Links úteis
         st.markdown("""
