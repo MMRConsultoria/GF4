@@ -79,7 +79,8 @@ try:
                 )
 
                 # Contagem de lojas únicas por grupo
-                contagem = df.groupby("GrupoExibicao")["Loja"].nunique().to_dict()
+                df_ultima_data = df[df["Data"] == df["Data"].max()]
+                contagem = df_ultima_data.groupby("GrupoExibicao")["Loja"].nunique().to_dict()
                 qtde_bares = contagem.get("Bares", 0)
                 qtde_kopp = contagem.get("Kopp", 0)
                 qtde_gf4 = contagem.get("GF4", 0)
