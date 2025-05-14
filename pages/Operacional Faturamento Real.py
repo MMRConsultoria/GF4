@@ -49,22 +49,22 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Resumo discreto abaixo do título (antes das abas)
-if 'df_final' in st.session_state:
-    df = st.session_state.df_final.copy()
-    df["Data"] = pd.to_datetime(df["Data"], format="%d/%m/%Y", errors="coerce")
-    ultima_data_valida = df["Data"].dropna()
-    st.write("📄 df_final existe?", 'df_final' in st.session_state)
-        if 'df_final' in st.session_state:
-            df = st.session_state.df_final.copy()
-            st.write("📊 Primeiras linhas:", df.head())
-            st.write("🧪 Tipos:", df.dtypes)
-            st.write("📅 Coluna Data (bruta):", df["Data"].head())
+    if 'df_final' in st.session_state:
+        df = st.session_state.df_final.copy()
+        df["Data"] = pd.to_datetime(df["Data"], format="%d/%m/%Y", errors="coerce")
+        ultima_data_valida = df["Data"].dropna()
+        st.write("📄 df_final existe?", 'df_final' in st.session_state)
+            if 'df_final' in st.session_state:
+                df = st.session_state.df_final.copy()
+                st.write("📊 Primeiras linhas:", df.head())
+                st.write("🧪 Tipos:", df.dtypes)
+                st.write("📅 Coluna Data (bruta):", df["Data"].head())
 
-            df["Data"] = pd.to_datetime(df["Data"], format="%d/%m/%Y", errors="coerce")
-            st.write("📅 Coluna Data (convertida):", df["Data"].head())
+                df["Data"] = pd.to_datetime(df["Data"], format="%d/%m/%Y", errors="coerce")
+                st.write("📅 Coluna Data (convertida):", df["Data"].head())
 
-            ultima_data_valida = df["Data"].dropna()
-            st.write("📅 Datas válidas:", ultima_data_valida)
+                ultima_data_valida = df["Data"].dropna()
+                st.write("📅 Datas válidas:", ultima_data_valida)
     if not ultima_data_valida.empty:
         ultima_data = ultima_data_valida.max().strftime("%d/%m/%Y")
 
