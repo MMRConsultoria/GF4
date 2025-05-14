@@ -264,12 +264,11 @@ with aba3:
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
 
-        # Verifica se há lojas não cadastradas
+       # Verifica se há lojas sem código Everest
         lojas_nao_cadastradas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
 
-       
-        st.markdown(mensagem_html, unsafe_allow_html=True)
-        st.stop()
+        # Só continua se todas estiverem cadastradas
+        todas_lojas_ok = len(lojas_nao_cadastradas) == 0
         
         
         # 🔗 Links úteis
@@ -359,7 +358,7 @@ with aba3:
                 duplicados.append(linha)  # Adiciona a linha duplicada à lista
 
         # Adicionar o botão de atualização do Google Sheets
-        if st.button("📥 Enviar dados para o Google Sheets"):
+        if todas_lojas_ok and st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
                     if novos_dados:
