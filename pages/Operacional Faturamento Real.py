@@ -204,7 +204,7 @@ with aba1:
                 
                 # Construir a mensagem com o link direto
                 mensagem = f"""
-                ⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s): 
+                ⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s),cadastre e reprocesse novamente! 
                 <br>{empresas_nao_localizadas_str}
                 <br>
                 ✏️ Atualize a tabela clicando 
