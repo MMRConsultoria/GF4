@@ -464,7 +464,7 @@ with aba3:
 # =======================================
 
 with aba4:
-    st.header("📊 Comparativo Everest (via Google Sheets - completo, sem diferença)")
+    #st.header("📊 Comparativo Everest (via Google Sheets - completo, sem diferença)")
 
     try:
         planilha = gc.open("Vendas diarias")
