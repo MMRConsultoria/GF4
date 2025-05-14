@@ -20,8 +20,8 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
-planilha_empresa = gc.open("Tabela")
-df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela_Empresa").get_all_records())
+planilha_empresa = gc.open("Vendas Diarias")
+df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
 
 # ================================
 # 2. Configuração inicial do app
@@ -208,7 +208,7 @@ with aba1:
                 <br>{empresas_nao_localizadas_str}
                 <br>
                 ✏️ Atualize a tabela clicando 
-                <a href='https://docs.google.com/spreadsheets/d/13BvAIzgp7w7wrfkwM_MOnHqHYol-dpWiEZBjyODvI4Q/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
+                <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
                 """
 
                 st.markdown(mensagem, unsafe_allow_html=True)
