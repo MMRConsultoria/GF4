@@ -463,11 +463,9 @@ with aba3:
 # =======================================
 # Aba 4 - Comparativo Everest (independente do upload)
 # =======================================
-
+from datetime import date
 
 with aba4:
-    # st.header("📊 Comparativo Everest (via Google Sheets - completo, sem diferença)")
-
     try:
         planilha = gc.open("Vendas diarias")
         aba_everest = planilha.worksheet("Everest")
@@ -508,7 +506,6 @@ with aba4:
                     except:
                         return None
 
-                # Renomear colunas conforme posição
                 ev = df_everest.rename(columns={
                     "col0": "Data", "col1": "Codigo",
                     "col7": "Valor Bruto (Everest)", "col6": "Impostos (Everest)"
@@ -521,11 +518,10 @@ with aba4:
                     "col8": "Valor Real (Externo)"
                 })
 
-                # Conversão
                 ev["Data"] = pd.to_datetime(ev["Data"], errors="coerce").dt.date
                 ex["Data"] = pd.to_datetime(ex["Data"], errors="coerce").dt.date
 
-                #🔥 FILTRA pelos dados selecionados:
+                # 🔍 Filtrar pelas datas escolhidas
                 ev = ev[(ev["Data"] >= data_inicio) & (ev["Data"] <= data_fim)].copy()
                 ex = ex[(ex["Data"] >= data_inicio) & (ex["Data"] <= data_fim)].copy()
 
@@ -535,38 +531,41 @@ with aba4:
                 for col in ["Valor Bruto (Externo)", "Valor Real (Externo)"]:
                     ex[col] = ex[col].apply(tratar_valor)
 
-                # Calcular Valor Real (Everest)
+                # Valor Real Everest = Bruto - Impostos
                 ev["Valor Real (Everest)"] = ev["Valor Bruto (Everest)"] - ev["Impostos (Everest)"]
 
-                # Mapear nome da loja com base no código
+                # Nome Everest vindo do Externo
                 mapa_nome_loja = ex.drop_duplicates(subset="Codigo")[["Codigo", "Nome Loja Sistema Externo"]]\
                     .set_index("Codigo").to_dict()["Nome Loja Sistema Externo"]
                 ev["Nome Loja Everest"] = ev["Codigo"].map(mapa_nome_loja)
 
-                # Merge completo (outer) com base em Data + Código
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
 
-                # Reordenar colunas
-                colunas_exibir = [
-                    "Data", "Codigo",
-                    "Nome Loja Sistema Externo", "Nome Loja Everest",
-                    "Valor Bruto (Externo)", "Valor Real (Externo)",
-                    "Valor Bruto (Everest)", "Valor Real (Everest)"
+                # 🧾 Reordenar colunas no modelo da imagem
+                df_resultado = df_comp[[
+                    "Data",
+                    "Nome Loja Everest", "Codigo", "Valor Bruto (Everest)", "Valor Real (Everest)",
+                    "Nome Loja Sistema Externo", "Codigo", "Valor Bruto (Externo)", "Valor Real (Externo)"
+                ]].sort_values("Data")
+
+                # ✅ Renomear colunas
+                df_resultado.columns = [
+                    "Data",
+                    "Nome (Everest)", "Código", "Valor Bruto (Everest)", "Valor Real (Everest)",
+                    "Nome (Externo)", "Código", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]
 
-                df_resultado = df_comp[colunas_exibir].sort_values("Data")
+                st.dataframe(df_resultado.style.format({
+                    "Valor Bruto (Everest)": "R$ {:,.2f}",
+                    "Valor Real (Everest)": "R$ {:,.2f}",
+                    "Valor Bruto (Externo)": "R$ {:,.2f}",
+                    "Valor Real (Externo)": "R$ {:,.2f}"
+                }), height=600, use_container_width=True)
 
-                if df_resultado.size < 250_000:
-                    st.dataframe(df_resultado.style.format({
-                        "Valor Bruto (Externo)": "R$ {:,.2f}",
-                        "Valor Real (Externo)": "R$ {:,.2f}",
-                        "Valor Bruto (Everest)": "R$ {:,.2f}",
-                        "Valor Real (Everest)": "R$ {:,.2f}"
-                    }))
-                else:
-                    st.warning("⚠️ Dados grandes demais para aplicar formatação. Exibindo sem formatação.")
-                    st.dataframe(df_resultado)
         else:
             st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
+
     except Exception as e:
         st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
+
+
