@@ -537,11 +537,12 @@ with aba4:
 
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
 
-               # 🔍 Verificar diferenças APENAS entre valores numéricos reais
-                df_diff = df_comp[
-                    (df_comp["Valor Bruto (Everest)"] != df_comp["Valor Bruto (Externo)"]) |
-                    (df_comp["Valor Real (Everest)"] != df_comp["Valor Real (Externo)"])
-                ].copy()
+              # Comparação explícita com segurança
+                df_comp["Valor Bruto Iguais"] = df_comp["Valor Bruto (Everest)"] == df_comp["Valor Bruto (Externo)"]
+                df_comp["Valor Real Iguais"] = df_comp["Valor Real (Everest)"] == df_comp["Valor Real (Externo)"]
+
+                # Filtra apenas as linhas com pelo menos uma diferença
+                df_diff = df_comp[~(df_comp["Valor Bruto Iguais"] & df_comp["Valor Real Iguais"])].copy()
 
                 df_resultado = df_diff[[
                     "Data",
