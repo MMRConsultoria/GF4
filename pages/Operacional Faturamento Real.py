@@ -306,14 +306,17 @@ with aba3:
         lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
         )
 
-        # Corrigir colunas D e F (Código Everest e Código Grupo Everest): remover aspas e converter para número inteiro
-        df_final['Código Everest'] = df_final['Código Everest'].apply(
-        lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
-        )
+        # ✅ Função segura para conversão para inteiro
+        def to_int_safe(x):
+            try:
+                x_clean = str(x).replace("'", "").strip()
+                return int(x_clean)
+            except:
+                return ""
 
-        df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(
-        lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
-        )
+        # ✅ Aplica conversão segura nas colunas de códigos
+        df_final['Código Everest'] = df_final['Código Everest'].apply(to_int_safe)
+        df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(to_int_safe)
         
         
         # Conectar ao Google Sheets
