@@ -483,7 +483,7 @@ with aba4:
         datas_validas = df_everest["col0"].dropna()
 
         if not datas_validas.empty:
-           hoje = date.today()
+            hoje = date.today()
 
 
             with st.form("comparativo_form"):
