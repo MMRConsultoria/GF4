@@ -268,8 +268,8 @@ with aba3:
         lojas_nao_cadastradas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
 
        
-            st.markdown(mensagem_html, unsafe_allow_html=True)
-            st.stop()
+        st.markdown(mensagem_html, unsafe_allow_html=True)
+        st.stop()
         
         
         # 🔗 Links úteis
