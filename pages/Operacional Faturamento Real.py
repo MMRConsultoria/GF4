@@ -48,20 +48,24 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Resumo discreto abaixo do título (antes das abas)
-if 'df_final' in st.session_state:
-    df = st.session_state.df_final.copy()
-    st.write("📊 Primeiras linhas:", df.head())
-    st.write("🧪 Tipos:", df.dtypes)
-    st.write("📅 Coluna Data (bruta):", df["Data"].head())
+try:
+    # Conecta à planilha e lê a aba com os dados do sistema externo
+    planilha = gc.open("Vendas diarias")
+    aba_fat = planilha.worksheet("Fat Sistema Externo")
+    df = pd.DataFrame(aba_fat.get_all_values())
 
-    df["Data"] = pd.to_datetime(df["Data"], format="%d/%m/%Y", errors="coerce")
-    st.write("📅 Coluna Data (convertida):", df["Data"].head())
+    # Usa a primeira linha como cabeçalho
+    df.columns = df.iloc[0]
+    df = df[1:]
+
+    # Converte coluna "Data" de número serial para datetime
+    df["Data"] = pd.to_numeric(df["Data"], errors="coerce")
+    df["Data"] = pd.to_datetime("1899-12-30") + pd.to_timedelta(df["Data"], unit="D")
 
     ultima_data_valida = df["Data"].dropna()
-    st.write("📅 Datas válidas:", ultima_data_valida)
     if not ultima_data_valida.empty:
         ultima_data = ultima_data_valida.max().strftime("%d/%m/%Y")
+
         df["GrupoExibicao"] = df["Grupo"].apply(
             lambda g: "Bares" if str(g).strip().lower() in ["amata", "aurora"]
             else "Kopp" if str(g).strip().lower() == "kopp"
@@ -73,10 +77,14 @@ if 'df_final' in st.session_state:
         qtde_kopp = contagem.get("Kopp", 0)
         qtde_gf4 = contagem.get("GF4", 0)
 
-        resumo_msg = f"<div style='font-size:13px; color:gray; margin-bottom:10px;'>📅 Última atualização: {ultima_data} — Bares ({qtde_bares}), Kopp ({qtde_kopp}), GF4 ({qtde_gf4})</div>"
+        resumo_msg = f"""
+        <div style='font-size:13px; color:gray; margin-bottom:10px;'>
+        📅 Última atualização: {ultima_data} — Bares ({qtde_bares}), Kopp ({qtde_kopp}), GF4 ({qtde_gf4})
+        </div>
+        """
         st.markdown(resumo_msg, unsafe_allow_html=True)
-
-
+except Exception as e:
+    st.info(f"ℹ️ Dados ainda não disponíveis ou mal formatados: {e}")
 
 # Cabeçalho bonito (depois do estilo)
 st.markdown("""
