@@ -463,7 +463,7 @@ with aba3:
 # =======================================
 # Aba 4 - Integração Everest (independente do upload)
 # =======================================
-from datetime import date
+
 
 with aba4:
     try:
@@ -495,7 +495,7 @@ with aba4:
                     min_value=min_data,
                     max_value=max_data
                 )
-                botao_atualizar = st.form_submit_button("🔄 Auditar Integração")
+                botao_atualizar = st.form_submit_button("🔄 Atualizar Dados")
 
             if botao_atualizar and isinstance(data_range, tuple) and len(data_range) == 2:
                 data_inicio, data_fim = data_range
@@ -521,7 +521,6 @@ with aba4:
                 ev["Data"] = pd.to_datetime(ev["Data"], errors="coerce").dt.date
                 ex["Data"] = pd.to_datetime(ex["Data"], errors="coerce").dt.date
 
-                # 🔍 Filtrar pelas datas escolhidas
                 ev = ev[(ev["Data"] >= data_inicio) & (ev["Data"] <= data_fim)].copy()
                 ex = ex[(ex["Data"] >= data_inicio) & (ex["Data"] <= data_fim)].copy()
 
@@ -531,24 +530,31 @@ with aba4:
                 for col in ["Valor Bruto (Externo)", "Valor Real (Externo)"]:
                     ex[col] = ex[col].apply(tratar_valor)
 
-                # Valor Real Everest = Bruto - Impostos
                 ev["Valor Real (Everest)"] = ev["Valor Bruto (Everest)"] - ev["Impostos (Everest)"]
 
-                # Nome Everest vindo do Externo
                 mapa_nome_loja = ex.drop_duplicates(subset="Codigo")[["Codigo", "Nome Loja Sistema Externo"]]\
                     .set_index("Codigo").to_dict()["Nome Loja Sistema Externo"]
                 ev["Nome Loja Everest"] = ev["Codigo"].map(mapa_nome_loja)
 
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
 
-                # 🧾 Reordenar colunas no modelo da imagem
-                df_resultado = df_comp[[
+                # 🔍 Verificar diferenças (como string, inclusive valores)
+                df_comp["Diferente?"] = (
+                    df_comp["Nome Loja Everest"].astype(str).str.strip().str.lower() != df_comp["Nome Loja Sistema Externo"].astype(str).str.strip().str.lower()
+                ) | (
+                    df_comp["Valor Bruto (Everest)"].astype(str) != df_comp["Valor Bruto (Externo)"].astype(str)
+                ) | (
+                    df_comp["Valor Real (Everest)"].astype(str) != df_comp["Valor Real (Externo)"].astype(str)
+                )
+
+                df_diff = df_comp[df_comp["Diferente?"] == True].copy()
+
+                df_resultado = df_diff[[
                     "Data",
                     "Nome Loja Everest", "Codigo", "Valor Bruto (Everest)", "Valor Real (Everest)",
                     "Nome Loja Sistema Externo", "Codigo", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]].sort_values("Data")
 
-                # ✅ Renomear colunas
                 df_resultado.columns = [
                     "Data",
                     "Nome (Everest)", "Código (Everest)", "Valor Bruto (Everest)", "Valor Real (Everest)",
@@ -559,7 +565,7 @@ with aba4:
                     "Valor Bruto (Everest)": "R$ {:,.2f}",
                     "Valor Real (Everest)": "R$ {:,.2f}",
                     "Valor Bruto (Externo)": "R$ {:,.2f}",
-                    "Valor Real (Externo)": "R$ {:,.2f}"
+                    "Valor Real (Externo)": "R$ {:,.2f}",
                 }), height=600, use_container_width=True)
 
         else:
@@ -567,5 +573,3 @@ with aba4:
 
     except Exception as e:
         st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
-
-
