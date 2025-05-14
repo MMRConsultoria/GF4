@@ -23,11 +23,6 @@ gc = gspread.authorize(credentials)
 planilha_empresa = gc.open("Vendas diarias")
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
 
-# ✅ Limpar a tabela antes de fazer o merge
-df_empresa = df_empresa.dropna(how="all")  # Remove linhas totalmente vazias
-df_empresa = df_empresa[df_empresa["Loja"].notna()]  # Remove linhas sem loja
-df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()  # Padroniza nomes de loja
-
 # ================================
 # 2. Configuração inicial do app
 # ================================
@@ -316,19 +311,9 @@ with aba3:
         lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
         )
 
-        #df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(
-        #lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
-        #)
-
-        def tentar_converter_para_inteiro(x):
-            try:
-                x_str = str(x).replace("'", "").strip()
-                return int(float(x_str)) if x_str != "" else ""
-            except:
-                return ""
-
-        df_final['Código Everest'] = df_final['Código Everest'].apply(tentar_converter_para_inteiro)
-
+        df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(
+        lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
+        )
         
         
         # Conectar ao Google Sheets
