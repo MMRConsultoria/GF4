@@ -21,8 +21,8 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
-planilha = gc.open("Tabela")
-df_empresa = pd.DataFrame(planilha.worksheet("Tabela_Empresa").get_all_records())
+planilha = gc.open("Vendas diarias")
+df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
 
 # Upload do arquivo Excel
 uploaded_file = st.file_uploader(
