@@ -113,7 +113,7 @@ st.markdown("""
 # ================================
 # 3. Separação em ABAS
 # ================================
-aba1, aba2, aba3, aba4 = st.tabs(["📄 Upload e Processamento", "📥 Download Excel", "🔄 Atualizar Google Sheets","📊 Comparativo Everest"])
+aba1, aba2, aba3, aba4 = st.tabs(["📄 Upload e Processamento", "📥 Download Excel", "🔄 Atualizar Google Sheets","📊 Integração Everest"])
 
 # ================================
 # 📄 Aba 1 - Upload e Processamento
@@ -461,7 +461,7 @@ with aba3:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
 
 # =======================================
-# Aba 4 - Comparativo Everest (independente do upload)
+# Aba 4 - Integração Everest (independente do upload)
 # =======================================
 from datetime import date
 
@@ -495,7 +495,7 @@ with aba4:
                     min_value=min_data,
                     max_value=max_data
                 )
-                botao_atualizar = st.form_submit_button("🔄 Cpmparar Dados")
+                botao_atualizar = st.form_submit_button("🔄 Auditar Integração")
 
             if botao_atualizar and isinstance(data_range, tuple) and len(data_range) == 2:
                 data_inicio, data_fim = data_range
