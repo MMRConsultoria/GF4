@@ -487,20 +487,16 @@ with aba4:
             min_data = datas_validas.min().date()
             max_data = datas_validas.max().date()
             hoje = date.today()
+            sugestao_data = min(hoje, max_data)
 
             with st.form("comparativo_form"):
                 data_range = st.date_input(
-                   "Selecione o intervalo de datas:",
-                   sugestao_data = min(hoje, max_data)
-
-                data_range = st.date_input(
-                    "Selecione o intervalo de datas:",
-                    value=(sugestao_data, sugestao_data),
-                    min_value=min_data,
-                    max_value=max_data
-                )
-                botao_atualizar = st.form_submit_button("🔄 Atualizar Dados")
-
+                "Selecione o intervalo de datas:",
+                value=(sugestao_data, sugestao_data),
+                min_value=min_data,
+                max_value=max_data
+            )
+            botao_atualizar = st.form_submit_button("🔄 Atualizar Dados")
             if botao_atualizar and isinstance(data_range, tuple) and len(data_range) == 2:
                 data_inicio, data_fim = data_range
 
