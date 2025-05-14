@@ -220,7 +220,6 @@ with aba1:
 
 
             else:
-                st.session_state.empresas_ok = len(empresas_nao_localizadas) == 0
                 st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
 
            # 🔗 Links úteis
@@ -312,20 +311,10 @@ with aba3:
         lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
         )
 
-        #st.subheader("🔎 Valores únicos em 'Código Everest' antes da conversão:")
-        #st.write(df_final['Código Everest'].unique())
-
-        #st.subheader("🧪 Tipos de dados em 'Código Everest':")
-        #st.write(df_final['Código Everest'].apply(lambda x: f"{x} → {type(x)}").unique())
-
-        def tentar_converter_para_inteiro(x):
-             try:
-                x_str = str(x).replace("'", "").strip()
-                return int(float(x_str)) if x_str != "" else ""
-             except:
-                return ""
-
-        df_final['Código Everest'] = df_final['Código Everest'].apply(tentar_converter_para_inteiro)
+        # Corrigir colunas D e F (Código Everest e Código Grupo Everest): remover aspas e converter para número inteiro
+        df_final['Código Everest'] = df_final['Código Everest'].apply(
+        lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
+        )
 
         #df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(
         #lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
@@ -374,9 +363,7 @@ with aba3:
                 duplicados.append(linha)  # Adiciona a linha duplicada à lista
 
         # Adicionar o botão de atualização do Google Sheets
-           if st.button("📥 Enviar dados para o Google Sheets"):
-              
-           
+        if st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
                     if novos_dados:
