@@ -268,7 +268,7 @@ with aba3:
         lojas_nao_cadastradas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
 
         if len(lojas_nao_cadastradas) > 0:
-            mensagem_html = f"""
+        #    mensagem_html = f"""
         #    ⚠️ {len(lojas_nao_cadastradas)} loja(s) sem Código Everest:<br>
         #    {'<br>'.join(lojas_nao_cadastradas)}<br><br>
         #    ✏️ Atualize a tabela clicando 
