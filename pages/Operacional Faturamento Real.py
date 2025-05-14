@@ -463,6 +463,8 @@ with aba3:
 # =======================================
 # Aba 4 - Comparativo Everest (independente do upload)
 # =======================================
+
+
 with aba4:
     # st.header("📊 Comparativo Everest (via Google Sheets - completo, sem diferença)")
 
@@ -532,5 +534,35 @@ with aba4:
                 # Calcular Valor Real (Everest)
                 ev["Valor Real (Everest)"] = ev["Valor Bruto (Everest)"] - ev["Impostos (Everest)"]
 
-                # Mapear
+                # Mapear nome da loja com base no código
+                mapa_nome_loja = ex.drop_duplicates(subset="Codigo")[["Codigo", "Nome Loja Sistema Externo"]]\
+                    .set_index("Codigo").to_dict()["Nome Loja Sistema Externo"]
+                ev["Nome Loja Everest"] = ev["Codigo"].map(mapa_nome_loja)
 
+                # Merge completo (outer) com base em Data + Código
+                df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
+
+                # Reordenar colunas
+                colunas_exibir = [
+                    "Data", "Codigo",
+                    "Nome Loja Sistema Externo", "Nome Loja Everest",
+                    "Valor Bruto (Externo)", "Valor Real (Externo)",
+                    "Valor Bruto (Everest)", "Valor Real (Everest)"
+                ]
+
+                df_resultado = df_comp[colunas_exibir].sort_values("Data")
+
+                if df_resultado.size < 250_000:
+                    st.dataframe(df_resultado.style.format({
+                        "Valor Bruto (Externo)": "R$ {:,.2f}",
+                        "Valor Real (Externo)": "R$ {:,.2f}",
+                        "Valor Bruto (Everest)": "R$ {:,.2f}",
+                        "Valor Real (Everest)": "R$ {:,.2f}"
+                    }))
+                else:
+                    st.warning("⚠️ Dados grandes demais para aplicar formatação. Exibindo sem formatação.")
+                    st.dataframe(df_resultado)
+        else:
+            st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
+    except Exception as e:
+        st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
