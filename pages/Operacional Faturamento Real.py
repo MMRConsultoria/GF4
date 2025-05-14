@@ -467,7 +467,7 @@ with aba4:
     st.header("📊 Comparativo Everest (via Google Sheets - completo, sem diferença)")
 
     try:
-        planilha = gc.open("Faturamento Sistema Externo")
+        planilha = gc.open("Vendas diarias")
         aba_everest = planilha.worksheet("Everest")
         aba_externo = planilha.worksheet("Fat Sistema Externo")
 
