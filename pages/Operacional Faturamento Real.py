@@ -464,7 +464,6 @@ with aba3:
 # Aba 4 - Integração Everest (independente do upload)
 # =======================================
 
-
 with aba4:
     try:
         planilha = gc.open("Vendas diarias")
