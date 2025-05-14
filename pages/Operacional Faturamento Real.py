@@ -468,7 +468,7 @@ with aba4:
 
     try:
         planilha = gc.open("Faturamento Sistema Externo")
-        aba_everest = planilha.worksheet("Fat Everest")
+        aba_everest = planilha.worksheet("Everest")
         aba_externo = planilha.worksheet("Fat Sistema Externo")
 
         df_everest = pd.DataFrame(aba_everest.get_all_values()[1:])
