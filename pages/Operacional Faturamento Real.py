@@ -118,6 +118,7 @@ aba1, aba2, aba3, aba4 = st.tabs(["📄 Upload e Processamento", "📥 Download 
 # ================================
 # 📄 Aba 1 - Upload e Processamento
 # ================================
+
 with aba1:
     uploaded_file = st.file_uploader(
         "📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de faturamento",
@@ -130,8 +131,6 @@ with aba1:
             xls = pd.ExcelFile(uploaded_file)
             abas = xls.sheet_names
 
-
-            
             # =======================
             # 🔹 Faturamento Multi-Loja
             # =======================
@@ -145,54 +144,66 @@ with aba1:
                 df = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None, skiprows=4)
                 df.iloc[:, 2] = pd.to_datetime(df.iloc[:, 2], dayfirst=True, errors='coerce')
 
-            # 🔹 Processamento dos registros
-            registros = []
-            col = 3
-            while col < df.shape[1]:
-                nome_loja = str(df_raw.iloc[3, col]).strip()
-                if re.match(r"^\d+\s*-?\s*", nome_loja):
-                    nome_loja = nome_loja.split("-", 1)[-1].strip()
+                registros = []
+                col = 3
+                while col < df.shape[1]:
+                    nome_loja = str(df_raw.iloc[3, col]).strip()
+                    if re.match(r"^\d+\s*-?\s*", nome_loja):
+                        nome_loja = nome_loja.split("-", 1)[-1].strip()
+                        header_col = str(df.iloc[0, col]).strip().lower()
+                        if "fat.total" in header_col:
+                            for i in range(1, df.shape[0]):
+                                linha = df.iloc[i]
+                                valor_data = df.iloc[i, 2]
+                                valor_check = str(df.iloc[i, 1]).strip().lower()
+                                if pd.isna(valor_data) or valor_check in ["total", "subtotal"]:
+                                    continue
+                                valores = linha[col:col+5].values
+                                if pd.isna(valores).all():
+                                    continue
+                                registros.append([
+                                    valor_data, nome_loja, *valores,
+                                    valor_data.strftime("%b"), valor_data.year
+                                ])
+                        col += 5
+                    else:
+                        col += 1
 
-                    header_col = str(df.iloc[0, col]).strip().lower()
-                    if "fat.total" in header_col:
-                        for i in range(1, df.shape[0]):
-                            linha = df.iloc[i]
-                            valor_data = df.iloc[i, 2]
-                            valor_check = str(df.iloc[i, 1]).strip().lower()
+                if len(registros) == 0:
+                    st.warning("⚠️ Nenhum registro encontrado.")
 
-                            if pd.isna(valor_data) or valor_check in ["total", "subtotal"]:
-                                continue
+                df_final = pd.DataFrame(registros, columns=[
+                    "Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket", "Mês", "Ano"
+                ])
 
-                            data = valor_data
-                            valores = linha[col:col+5].values
+            # =======================
+            # 🔹 Relatório por Vendedor (CiSS)
+            # =======================
+            elif "Relatório 100113" in abas:
+                df = pd.read_excel(xls, sheet_name="Relatório 100113")
+                df["Loja"] = df["Código - Nome Empresa"].astype(str).str.split("-", n=1).str[-1].str.strip().str.lower()
+                df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
+                df["Fat.Total"] = pd.to_numeric(df["Valor Total"], errors="coerce")
+                df["Serv/Tx"] = pd.to_numeric(df["Taxa de Serviço"], errors="coerce")
+                df["Fat.Real"] = df["Fat.Total"] - df["Serv/Tx"]
+                df["Ticket"] = pd.to_numeric(df["Ticket Médio"], errors="coerce")
 
-                            if pd.isna(valores).all():
-                                continue
+                df_agrupado = df.groupby(["Data", "Loja"]).agg({
+                    "Fat.Total": "sum",
+                    "Serv/Tx": "sum",
+                    "Fat.Real": "sum",
+                    "Ticket": "mean"
+                }).reset_index()
 
-                            registros.append([
-                                data,
-                                nome_loja,
-                                *valores,
-                                data.strftime("%b"),
-                                data.year
-                            ])
-                    col += 5
-                else:
-                    col += 1
+                df_agrupado["Mês"] = df_agrupado["Data"].dt.strftime("%b").str.lower()
+                df_agrupado["Ano"] = df_agrupado["Data"].dt.year
+                df_final = df_agrupado
 
-            if len(registros) == 0:
-                st.warning("⚠️ Nenhum registro encontrado.")
+            else:
+                st.error("❌ O arquivo enviado não contém uma aba reconhecida. Esperado: 'FaturamentoDiarioPorLoja' ou 'Relatório 100113'.")
+                st.stop()
 
-            # 🔹 Montar df_final
-            df_final = pd.DataFrame(registros, columns=[
-                "Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket", "Mês", "Ano"
-            ])
-
-            df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.lower()
-            df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
-            df_final = pd.merge(df_final, df_empresa, on="Loja", how="left")
-
-            # 🔹 Ajustar dados
+            # ✅ Continuidade para ambos os formatos
             dias_traducao = {
                 "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
                 "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
@@ -200,17 +211,20 @@ with aba1:
             df_final.insert(1, "Dia da Semana", pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.day_name().map(dias_traducao))
             df_final["Data"] = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.strftime("%d/%m/%Y")
 
-            for col_val in ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas"]:
-                df_final[col_val] = pd.to_numeric(df_final[col_val], errors="coerce").round(2)
+            for col_val in ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket"]:
+                if col_val in df_final.columns:
+                    df_final[col_val] = pd.to_numeric(df_final[col_val], errors="coerce").round(2)
 
-            meses = {
-                "jan": "jan", "feb": "fev", "mar": "mar", "apr": "abr", "may": "mai", "jun": "jun",
-                "jul": "jul", "aug": "ago", "sep": "set", "oct": "out", "nov": "nov", "dec": "dez"
-            }
+            meses = {"jan": "jan", "feb": "fev", "mar": "mar", "apr": "abr", "may": "mai", "jun": "jun",
+                     "jul": "jul", "aug": "ago", "sep": "set", "oct": "out", "nov": "nov", "dec": "dez"}
             df_final["Mês"] = df_final["Mês"].str.lower().map(meses)
 
             df_final["Data_Ordenada"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce')
             df_final = df_final.sort_values(by=["Data_Ordenada", "Loja"]).drop(columns="Data_Ordenada")
+
+            df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
+            df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.lower()
+            df_final = pd.merge(df_final, df_empresa, on="Loja", how="left")
 
             colunas_finais = [
                 "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo",
@@ -222,32 +236,19 @@ with aba1:
             st.session_state.df_final = df_final
             st.session_state.atualizou_google = False
 
-            # 🔥 Agora exibir:
-            # 📄 Nome do Arquivo
-           # st.markdown(f"""
-              #  <div style='font-size:15px; font-weight: bold; margin-bottom:10px;'>
-                   # 📄 Arquivo selecionado: {uploaded_file.name}
-              #  </div>
-            #""", unsafe_allow_html=True)
-
-            # 📅 e 💰 Período e Valor Total
             datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
-
             if not datas_validas.empty:
                 data_inicial = datas_validas.min().strftime("%d/%m/%Y")
                 data_final = datas_validas.max().strftime("%d/%m/%Y")
-                
                 valor_total = df_final["Fat.Total"].sum().round(2)
                 valor_total_formatado = f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
                 col1, col2 = st.columns(2)
-
                 with col1:
                     st.markdown(f"""
-                        <div style='font-size:24px; font-weight: bold; margin-bottom:10px;'>📅 Período processado</div>
+                        <div style='font-size:24px; font-weight: bold; margin-bottom:10px;'>🗓️ Período processado</div>
                         <div style='font-size:30px; color:#000;'>{data_inicial} até {data_final}</div>
                     """, unsafe_allow_html=True)
-
                 with col2:
                     st.markdown(f"""
                         <div style='font-size:24px; font-weight: bold; margin-bottom:10px;'>💰 Valor total</div>
@@ -256,83 +257,20 @@ with aba1:
             else:
                 st.warning("⚠️ Não foi possível identificar o período de datas.")
 
-           # 🔎 Empresas não localizadas
             empresas_nao_localizadas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
-
             if len(empresas_nao_localizadas) > 0:
-                # Listar as empresas não localizadas
                 empresas_nao_localizadas_str = "<br>".join(empresas_nao_localizadas)
-                
-                # Construir a mensagem com o link direto
                 mensagem = f"""
-                ⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s),cadastre e reprocesse novamente! 
-                <br>{empresas_nao_localizadas_str}
-                <br>
-                ✏️ Atualize a tabela clicando 
+                ⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s), cadastre e reprocesse novamente! <br>{empresas_nao_localizadas_str}
+                <br>✏️ Atualize a tabela clicando 
                 <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
                 """
-
                 st.markdown(mensagem, unsafe_allow_html=True)
-
-
             else:
                 st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
 
-            elif "Relatório 100113" in abas:
-                df = pd.read_excel(xls, sheet_name="Relatório 100113")
-
-                # Normalizar nome da loja
-                df["Loja"] = df["Código - Nome Empresa"].astype(str).str.split("-", n=1).str[-1].str.strip().str.lower()
-
-                # Converter e tratar colunas numéricas
-                df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
-                df["Fat.Total"] = pd.to_numeric(df["Valor Total"], errors="coerce")
-                df["Serv/Tx"] = pd.to_numeric(df["Taxa de Serviço"], errors="coerce")
-                df["Fat.Real"] = df["Fat.Total"] - df["Serv/Tx"]
-                df["Ticket"] = pd.to_numeric(df["Ticket Médio"], errors="coerce")
-
-                # Agrupar por Data e Loja
-                df_agrupado = df.groupby(["Data", "Loja"]).agg({
-                    "Fat.Total": "sum",
-                    "Serv/Tx": "sum",
-                    "Fat.Real": "sum",
-                    "Ticket": "mean"
-                }).reset_index()
-
-                # Mês e Ano
-                df_agrupado["Mês"] = df_agrupado["Data"].dt.strftime("%b").str.lower()
-                df_agrupado["Ano"] = df_agrupado["Data"].dt.year
-
-                # Traduzir mês para português
-                meses = {
-                    "jan": "jan", "feb": "fev", "mar": "mar", "apr": "abr", "may": "mai", "jun": "jun",
-                    "jul": "jul", "aug": "ago", "sep": "set", "oct": "out", "nov": "nov", "dec": "dez"
-                }
-                df_agrupado["Mês"] = df_agrupado["Mês"].map(meses)
-
-                # Traduzir dia da semana
-                dias_semana = {
-                    "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
-                    "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
-                }
-                df_agrupado["Dia da Semana"] = df_agrupado["Data"].dt.day_name().map(dias_semana)
-
-                # Merge com Tabela Empresa
-                df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
-                df_agrupado["Loja"] = df_agrupado["Loja"].astype(str).str.strip().str.lower()
-                df_final = pd.merge(df_agrupado, df_empresa, on="Loja", how="left")
-
-                # Ajustar formato da data para dd/mm/yyyy
-                df_final["Data"] = df_final["Data"].dt.strftime("%d/%m/%Y")
-
-                # Reorganizar colunas no formato padrão
-                df_final = df_final[[
-                    "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo", "Código Grupo Everest",
-                    "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket", "Mês", "Ano"
-                ]]
-
-                st.session_state.df_final = df_final
-                st.success("✅ Novo relatório processado com sucesso!")
+        except Exception as e:
+            st.error(f"❌ Erro ao processar o arquivo: {e}")
 
 
 # ================================
