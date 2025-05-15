@@ -53,3 +53,4 @@ if st.button("Entrar"):
         else:
             st.error("❌ IP não autorizado.")
     else:
+        st.error("❌ Código, e-mail ou senha incorretos.")
