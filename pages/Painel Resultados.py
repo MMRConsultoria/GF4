@@ -315,34 +315,49 @@ with aba3:
         df_filtrado["Agrupador"] = df_filtrado["Dia"]
         df_filtrado["Ordem"] = pd.to_datetime(df_filtrado["Dia"], dayfirst=True)
 
-    # === Pivot Tabelas Separadas ===
-    tabela_bruto = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
-    tabela_real = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
+    # === MÉTRICA ===
+    tipo_metrica = st.radio("💰 Selecione a métrica:", ["Bruto", "Real", "Ambos"], horizontal=True)
 
-    # Ordenar colunas
-    ordem_agrupador = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)
-    colunas_ordenadas = list(ordem_agrupador["Agrupador"])
-    tabela_bruto = tabela_bruto.reindex(columns=colunas_ordenadas)
-    tabela_real = tabela_real.reindex(columns=colunas_ordenadas)
 
-    # Renomear colunas
-    tabela_bruto.columns = [f"{col} (Bruto)" for col in tabela_bruto.columns]
-    tabela_real.columns = [f"{col} (Real)" for col in tabela_real.columns]
+    
+   # === Pivot conforme métrica escolhida ===
+    if tipo_metrica == "Bruto":
+        tabela = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
+        tabela.insert(0, "Total Bruto", tabela.sum(axis=1))
+        linha_total = pd.DataFrame(tabela.sum()).T
+        linha_total.index = ["Total Geral"]
+        tabela_final = pd.concat([linha_total, tabela])
 
-    # Combinar
-    tabela_completa = pd.concat([tabela_bruto, tabela_real], axis=1)
+    elif tipo_metrica == "Real":
+        tabela = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
+        tabela.insert(0, "Total Real", tabela.sum(axis=1))
+        linha_total = pd.DataFrame(tabela.sum()).T
+        linha_total.index = ["Total Geral"]
+        tabela_final = pd.concat([linha_total, tabela])
 
-    # Totais por linha
-    tabela_completa.insert(0, "Total Real", tabela_real.sum(axis=1))
-    tabela_completa.insert(0, "Total Bruto", tabela_bruto.sum(axis=1))
+    else:  # Ambos
+        tabela_bruto = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
+        tabela_real = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
 
-    # Linha Total Geral
-    linha_total = pd.DataFrame(tabela_completa.sum()).T
-    linha_total.index = ["Total Geral"]
-    tabela_final = pd.concat([linha_total, tabela_completa])
+        # Ordenar colunas
+        ordem_agrupador = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)
+        colunas_ordenadas = list(ordem_agrupador["Agrupador"])
+        tabela_bruto = tabela_bruto.reindex(columns=colunas_ordenadas)
+        tabela_real = tabela_real.reindex(columns=colunas_ordenadas)
 
-    # 💄 Formatar
-    tabela_formatada = tabela_final.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        tabela_bruto.columns = [f"{col} (Bruto)" for col in tabela_bruto.columns]
+        tabela_real.columns = [f"{col} (Real)" for col in tabela_real.columns]
+
+        tabela = pd.concat([tabela_bruto, tabela_real], axis=1)
+
+        # Totais por linha
+        tabela.insert(0, "Total Real", tabela_real.sum(axis=1))
+        tabela.insert(0, "Total Bruto", tabela_bruto.sum(axis=1))
+
+        # Linha Total Geral
+        linha_total = pd.DataFrame(tabela.sum()).T
+        linha_total.index = ["Total Geral"]
+        tabela_final = pd.concat([linha_total, tabela])
 
     st.markdown("---")
     st.dataframe(tabela_formatada, use_container_width=True)
