@@ -318,9 +318,7 @@ with aba3:
     # === MÉTRICA ===
     tipo_metrica = st.radio("💰 Selecione a métrica:", ["Bruto", "Real", "Ambos"], horizontal=True)
 
-
-    
-   # === Pivot conforme métrica escolhida ===
+    # === Tabela conforme métrica ===
     if tipo_metrica == "Bruto":
         tabela = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
         tabela.insert(0, "Total Bruto", tabela.sum(axis=1))
@@ -354,15 +352,15 @@ with aba3:
         tabela.insert(0, "Total Real", tabela_real.sum(axis=1))
         tabela.insert(0, "Total Bruto", tabela_bruto.sum(axis=1))
 
-        # Linha Total Geral
         linha_total = pd.DataFrame(tabela.sum()).T
         linha_total.index = ["Total Geral"]
         tabela_final = pd.concat([linha_total, tabela])
 
-        st.markdown("---")
-        st.dataframe(tabela_formatada, use_container_width=True)
+    # === Exibir e exportar ===
+    tabela_formatada = tabela_final.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    st.markdown("---")
+    st.dataframe(tabela_formatada, use_container_width=True)
 
-    # 📥 Download Excel
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         tabela_final.to_excel(writer, sheet_name="Faturamento Detalhado", index=True)
