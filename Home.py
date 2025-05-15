@@ -7,7 +7,7 @@ st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
 
 # ✅ Verificação de login ANTES de exibir o conteúdo
 if not st.session_state.get("acesso_liberado"):
-    st.switch_page("login_seguro.py")  # Caminho corrigido
+    st.switch_page("pages/login_seguro.py")  # Caminho corrigido
     st.stop()
 
 # ✅ Exibe o logo do cliente na sidebar
