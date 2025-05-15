@@ -23,7 +23,7 @@ st.sidebar.markdown(
 
 # ✅ Conteúdo visível somente após login autorizado
 st.image("https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo-mmr.png", width=150)
-st.markdown("## Bem-vindo ao
+st.markdown("## Bem-vindo ao)
 
 
 # Conteúdo visível após login
