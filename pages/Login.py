@@ -2,13 +2,11 @@ import streamlit as st
 import requests
 st.set_page_config(page_title="Login | MMR Consultoria")
 
-query_params = st.experimental_get_query_params()
-codigo_param = query_params.get("codigo", [None])[0]
-empresa_param = query_params.get("empresa", [None])[0]
+params = st.query_params
+codigo_param = params.get("codigo")
+empresa_param = params.get("empresa")
 
-# ⚠️ Normaliza texto (boa prática)
-if empresa_param:
-    empresa_param = empresa_param.lower()
+
 
 # Bloquear se vier direto, sem passar pela página HTML
 if not codigo_param or not empresa_param:
