@@ -3,9 +3,8 @@ import requests
 st.set_page_config(page_title="Login | MMR Consultoria")
 
 params = st.query_params
-codigo_param = params.get("codigo")
-empresa_param = params.get("empresa")
-
+codigo_param = params.get("codigo", "").strip()
+empresa_param = params.get("empresa", "").strip().lower()
 
 
 # Bloquear se vier direto, sem passar pela página HTML
