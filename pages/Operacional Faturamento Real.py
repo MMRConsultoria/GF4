@@ -574,20 +574,7 @@ with aba4:
                     "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]
 
-                st.dataframe(
-                   df_resultado.style
-                        .apply(highlight_total_transparente, axis=1)
-                        .format({
-                            "Valor Bruto (Everest)": "R$ {:,.2f}",
-                            "Valor Real (Everest)": "R$ {:,.2f}",
-                            "Valor Bruto (Externo)": "R$ {:,.2f}",
-                            "Valor Real (Externo)": "R$ {:,.2f}"
-                        }),
-                    use_container_width=True,
-                    height=600
-                )
-
-
+                # ✅ Definida antes de usar!
                 def highlight_total_transparente(row):
                     for valor in row:
                         if pd.isna(valor):
@@ -597,7 +584,6 @@ with aba4:
                             return ["color: transparent"] * len(row)
                     return ["color: black"] * len(row)
 
-                
                 st.dataframe(
                     df_resultado.style
                         .apply(highlight_total_transparente, axis=1)
