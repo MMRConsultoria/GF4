@@ -1,30 +1,41 @@
 # Home.py
 import streamlit as st
-#from logo_sidebar import mostrar_logo_cliente
 
 # ✅ Configuração da página
 st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
 
 # ✅ Verificação de login ANTES de exibir o conteúdo
 if not st.session_state.get("acesso_liberado"):
-    st.switch_page("pages/Login.py")  # Caminho corrigido
+    st.switch_page("pages/Login.py")
     st.stop()
 
-# ✅ Exibe o logo do cliente na sidebar
-#mostrar_logo_cliente()
+# ✅ Código da empresa logada
+codigo_empresa = st.session_state.get("empresa")
 
-# ✅ Logo fixo na sidebar
-st.sidebar.markdown(
-    """
-    <div style="text-align: center; padding: 10px 0 30px 0;">
-        <img src="https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo_cliente.png" width="100">
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# ✅ Dicionário com logos por código
+LOGOS_CLIENTES = {
+    "1825": "https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo_grupofit.png",
+    "3377": "https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo_empresa2.png",
+    "0041": "https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo_empresa3.png"
+}
 
-# ✅ Conteúdo visível apenas após login autorizado
-st.image("https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo-mmr.png", width=150)
+# ✅ Busca o logo do cliente
+logo_cliente = LOGOS_CLIENTES.get(codigo_empresa)
+
+# ✅ Logo do cliente na sidebar
+if logo_cliente:
+    st.sidebar.markdown(
+        f"""
+        <div style="text-align: center; padding: 10px 0 30px 0;">
+            <img src="{logo_cliente}" width="100">
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# ✅ Logo principal na área central (cliente ou MMR)
+st.image(logo_cliente or "https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo-mmr.png", width=150)
+
+# ✅ Mensagem de boas-vindas
 st.markdown("## Bem-vindo ao Portal de Relatórios")
-
-st.success(f"✅ Acesso liberado para o código {st.session_state.get('empresa')}!")
+st.success(f"✅ Acesso liberado para o código {codigo_empresa}!")
