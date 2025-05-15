@@ -1,6 +1,19 @@
 import streamlit as st
 import requests
+st.set_page_config(page_title="Login | MMR Consultoria")
 
+query_params = st.experimental_get_query_params()
+codigo_param = query_params.get("codigo", [None])[0]
+empresa_param = query_params.get("empresa", [None])[0]
+
+# ⚠️ Normaliza texto (boa prática)
+if empresa_param:
+    empresa_param = empresa_param.lower()
+
+# Bloquear se vier direto, sem passar pela página HTML
+if not codigo_param or not empresa_param:
+    st.error("🚫 Acesso negado. Você deve acessar por meio do portal oficial da MMR Consultoria.")
+    st.stop()
 st.set_page_config(page_title="Login | MMR Consultoria")
 
 # 🔍 Descobrir IP externo do usuário
