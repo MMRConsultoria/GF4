@@ -569,9 +569,8 @@ with aba4:
                 df_comp = df_comp[
                     ~(
                         df_comp["Nome Loja Everest"].apply(contem_total) |
-                        df_comp["Nome Loja Sistema Externo"].apply(contem_total) |
-                        #df_comp["Nome Loja Everest"].isna() |
-                        #df_comp["Nome Loja Sistema Externo"].isna()
+                        df_comp["Nome Loja Sistema Externo"].apply(contem_total)
+                        
                      )
                 ]
 
