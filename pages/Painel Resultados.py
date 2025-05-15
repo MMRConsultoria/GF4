@@ -319,7 +319,7 @@ with aba3:
     )
 
     # ✅ Ordenar colunas cronologicamente
-    ordem_agrupador = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem")
+    ordem_agrupador = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)
     colunas_ordenadas = list(ordem_agrupador["Agrupador"])
     tabela = tabela.reindex(columns=colunas_ordenadas)
 
