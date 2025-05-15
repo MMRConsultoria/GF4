@@ -8,6 +8,14 @@ st.set_page_config(page_title="Login | MMR Consultoria")
 # Lista de IPs autorizados
 IPS_AUTORIZADOS = ["138.199.53.245", "201.10.22.33"]  # atualize conforme necessário
 
+
+ip_usuario = get_ip()
+st.write(f"🛠️ Seu IP: {ip_usuario}")  # Temporário para depuração
+
+if ip_usuario not in IPS_AUTORIZADOS:
+    st.error("❌ IP não autorizado.")
+    st.stop()
+
 # Usuários cadastrados
 USUARIOS = {
     "1825": {"email": "mari@mmr.com", "senha": "nova_senha_segura"},
