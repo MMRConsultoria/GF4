@@ -1,6 +1,6 @@
 # Home.py
 import streamlit as st
-from logo_sidebar import mostrar_logo_cliente
+#from logo_sidebar import mostrar_logo_cliente
 
 # ✅ Configuração da página
 st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
@@ -11,7 +11,7 @@ if not st.session_state.get("acesso_liberado"):
     st.stop()
 
 # ✅ Exibe o logo do cliente na sidebar
-mostrar_logo_cliente()
+#mostrar_logo_cliente()
 
 # ✅ Logo fixo na sidebar
 st.sidebar.markdown(
