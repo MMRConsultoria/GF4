@@ -79,6 +79,8 @@ with aba1:
     dados = aba.get_all_records()
     df = pd.DataFrame(dados)
 
+    st.write("🧪 Colunas carregadas:", df.columns.tolist())
+    
     def limpar_valor(x):
         try:
             if isinstance(x, str):
