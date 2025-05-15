@@ -289,32 +289,7 @@ if 'df_final' in st.session_state:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
-# ================================
-# 📥 Aba 2 - Download Excel
-# ================================
-with aba2:
-    st.header("📥 Download Relatório Excel")
 
-    if 'df_final' in st.session_state:
-        df_final = st.session_state.df_final
-
-        def to_excel(df):
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                df.to_excel(writer, index=False, sheet_name='Faturamento Servico')
-            output.seek(0)
-            return output
-
-        excel_data = to_excel(df_final)
-
-        st.download_button(
-            label="📥 Baixar Relatório Excel",
-            data=excel_data,
-            file_name="faturamento_servico.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-    else:
-        st.info("⚠️ Primeiro, faça o upload e processamento do arquivo na aba anterior.")
 # =======================================
 # Atualizar Google Sheets (Evitar duplicação)
 # =======================================
