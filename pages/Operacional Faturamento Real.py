@@ -573,8 +573,9 @@ with aba4:
                     "Nome (Everest)", "Código", "Valor Bruto (Everest)", "Valor Real (Everest)",
                     "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]
-                # Substituir None/NaN por string vazia para evitar "None" visível na tela
-                df_resultado = df_resultado.fillna("")
+                # Substituir apenas os NaN de colunas de texto
+                colunas_texto = ["Nome (Everest)", "Nome (Externo)"]
+                df_resultado[colunas_texto] = df_resultado[colunas_texto].fillna("")
 
                 # ✅ Definida antes de usar!
                 def highlight_total_transparente(row):
