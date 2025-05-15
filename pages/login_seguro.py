@@ -29,11 +29,10 @@ if ip_usuario not in IPS_AUTORIZADOS:
 
 # Usuários cadastrados
 USUARIOS = {
-    {"codigo": "1825","email": "mari@gmail.com", "senha": "1825"},
-    {"codigo": "1825","email": "andre.machado@grupofit.com.br", "senha": "Sala1825"},
-    #"3377": {"email": "joao@empresa.com", "senha": "joao123"},
-    #"0041": {"email": "ana@consultoria.com", "senha": "ana456"}
-}    
+    USUARIOS = [
+    {"codigo": "1825", "email": "mari@gmail.com", "senha": "1825"},
+    {"codigo": "1825", "email": "andre.machado@grupofit.com.br", "senha": "Sala1825"}
+]
 
 # ✅ Redireciona se já estiver logado
 if st.session_state.get("acesso_liberado"):
