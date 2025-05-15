@@ -106,7 +106,7 @@ with aba1:
     df["Nome Mês"] = df["Mês"].map(meses_portugues)
 
     anos_disponiveis = sorted(df["Ano"].dropna().unique())
-    anos_comparacao = st.multiselect("📊 Anos para gráficos de comparação", options=anos_disponiveis, default=anos_disponiveis)
+    #anos_comparacao = st.multiselect("📊 Anos para gráficos de comparação", options=anos_disponiveis, default=anos_disponiveis)
 
 
     if "Data" in df.columns and "Fat.Real" in df.columns and "Ano" in df.columns:
