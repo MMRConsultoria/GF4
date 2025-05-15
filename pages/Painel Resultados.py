@@ -78,8 +78,11 @@ with aba1:
     aba = planilha.worksheet("Fat Sistema Externo")
     dados = aba.get_all_records()
     df = pd.DataFrame(dados)
-
-    st.write("🧪 Colunas carregadas:", df.columns.tolist())
+    
+    # ✅ Limpa espaços invisíveis nos nomes das colunas
+    df.columns = df.columns.str.strip()
+    
+    #st.write("🧪 Colunas carregadas:", df.columns.tolist())
     
     def limpar_valor(x):
         try:
@@ -105,7 +108,15 @@ with aba1:
     anos_disponiveis = sorted(df["Ano"].dropna().unique())
     anos_comparacao = st.multiselect("📊 Anos para gráficos de comparação", options=anos_disponiveis, default=anos_disponiveis)
 
-    df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"]).copy()
+
+    if "Data" in df.columns and "Fat.Real" in df.columns and "Ano" in df.columns:
+        df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"]).copy()
+    else:
+        st.error("❌ A aba 'Fat Sistema Externo' não contém as colunas necessárias: 'Data', 'Ano' ou 'Fat.Real'.")
+        st.stop()
+
+    
+    #df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"]).copy()
     # Normalizar nomes das lojas para evitar duplicações por acento, espaço ou caixa
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower()
 
