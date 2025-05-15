@@ -600,8 +600,9 @@ with aba4:
                 # 🔹 Aplicar estilos
                 st.dataframe(
                     df_resultado.style
-                        .applymap(destacar_colunas_por_origem, subset=df_resultado.columns)
                         .apply(highlight_total_transparente, axis=1)
+                        .set_properties(subset=["Valor Bruto (Everest)", "Valor Real (Everest)"], **{"background-color": "#e6f2ff"})
+                        .set_properties(subset=["Valor Bruto (Externo)", "Valor Real (Externo)"], **{"background-color": "#fff5e6"})
                         .format({
                             "Valor Bruto (Everest)": "R$ {:,.2f}",
                             "Valor Real (Everest)": "R$ {:,.2f}",
