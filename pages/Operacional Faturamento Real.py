@@ -583,7 +583,7 @@ with aba4:
                         if "total" in valor or "subtotal" in valor:
                             return ["color: transparent"] * len(row)
                     return ["color: black"] * len(row)
-
+                df_resultado = df_resultado.reset_index(drop=True)
                 st.dataframe(
                     df_resultado.style
                         .apply(highlight_total_transparente, axis=1)
