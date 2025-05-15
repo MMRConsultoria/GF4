@@ -2,7 +2,6 @@ import streamlit as st
 import requests
 
 st.set_page_config(page_title="Login | MMR Consultoria")
-st.write(f"🛠️ Seu IP: {ip_usuario}")  # Pode remover depois
 
 # ✅ Captura segura dos parâmetros da URL
 params = st.query_params
@@ -14,7 +13,6 @@ if not codigo_param or not empresa_param:
     st.markdown("""
         <meta charset="UTF-8">
         <style>
-        /* Esconde tudo */
         #MainMenu, header, footer, .stSidebar, .stToolbar, .block-container { display: none !important; }
         body {
           background-color: #ffffff;
@@ -46,7 +44,6 @@ IPS_AUTORIZADOS = ["35.197.92.111", "201.10.22.33"]  # atualize conforme necess�
 
 # 👉 Captura o IP corretamente
 ip_usuario = get_ip()
-# st.write(f"🛠️ Seu IP: {ip_usuario}")  # Pode desativar após testes
 
 # ❌ Bloqueia se IP não estiver na lista
 if ip_usuario not in IPS_AUTORIZADOS:
@@ -70,6 +67,9 @@ USUARIOS = [
 # ✅ Redireciona se já estiver logado
 if st.session_state.get("acesso_liberado"):
     st.switch_page("Home.py")
+
+# ✅ Exibe o IP do usuário discretamente
+st.markdown(f"<p style='font-size:12px; color:#aaa;'>🛠️ Seu IP: <code>{ip_usuario}</code></p>", unsafe_allow_html=True)
 
 # 🧾 Tela de login
 st.title("🔐 Acesso Restrito")
