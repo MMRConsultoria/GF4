@@ -256,55 +256,82 @@ with aba2:
 # ================================
 # Aba 3: Análise por Período
 # ================================
+# ================================
+# Aba 3: Análise por Ano, Mês e Dia
+# ================================
 with aba3:
-    st.subheader("📊 Análise de Faturamento por Período")
-
-    periodo = st.radio("📅 Escolha o período para análise:", ["Por Ano", "Por Mês", "Por Dia"], horizontal=True)
+    st.subheader("📊 Análise de Faturamento com Filtros")
 
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
     df_anos["Ano"] = df_anos["Data"].dt.year
-    df_anos["Mês"] = df_anos["Data"].dt.strftime('%m/%Y')
+    df_anos["Mês Num"] = df_anos["Data"].dt.month
+    df_anos["Mês Nome"] = df_anos["Data"].dt.strftime('%B')
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
 
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+    anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
+    ano_selecionado = st.selectbox("📅 Selecione o ano:", anos_disponiveis)
 
-        if periodo == "Por Ano":
-            tabela = df_anos.pivot_table(index="Loja", columns="Ano", values="Fat.Real", aggfunc="sum", fill_value=0)
+    df_filtrado = df_anos[df_anos["Ano"] == ano_selecionado]
 
-        elif periodo == "Por Mês":
-            tabela = df_anos.pivot_table(index="Loja", columns="Mês", values="Fat.Real", aggfunc="sum", fill_value=0)
+    meses_disponiveis = df_filtrado["Mês Num"].unique()
+    meses_dict = {
+        1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
+        7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
+    }
+    meses_nomes = [meses_dict[m] for m in sorted(meses_disponiveis)]
+    meses_selecionados = st.multiselect("🗓️ Selecione os meses:", meses_nomes, default=meses_nomes)
 
-        elif periodo == "Por Dia":
-            tabela = df_anos.pivot_table(index="Loja", columns="Dia", values="Fat.Real", aggfunc="sum", fill_value=0)
+    # Converter os nomes de volta para número
+    meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
+    df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
-        # Totais
-        linha_total = tabela.sum().to_frame().T
-        linha_total.index = ["Total Geral"]
-        coluna_total = tabela.sum(axis=1)
-        tabela.insert(0, "Total Geral", coluna_total)
-        linha_total.insert(0, "Total Geral", coluna_total.sum())
-        tabela_com_total = pd.concat([linha_total, tabela])
+    dias_disponiveis = df_filtrado["Dia"].unique()
+    dias_selecionados = st.multiselect("📆 (Opcional) Selecione os dias específicos:", sorted(dias_disponiveis))
 
-        # Formatar valores para exibição
-        tabela_formatada = tabela_com_total.applymap(
-            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        )
+    if dias_selecionados:
+        df_filtrado = df_filtrado[df_filtrado["Dia"].isin(dias_selecionados)]
 
-        st.markdown("---")
-        st.dataframe(tabela_formatada)
+    agrupamento = st.radio("📂 Agrupar por:", ["Ano", "Mês", "Dia"], horizontal=True)
 
-        tabela_com_total.to_excel(writer, sheet_name="Faturamento", index=True)
+    if agrupamento == "Ano":
+        df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
+    elif agrupamento == "Mês":
+        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime('%m/%Y')
+    else:
+        df_filtrado["Agrupador"] = df_filtrado["Dia"]
+
+    tabela = df_filtrado.pivot_table(
+        index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0
+    )
+
+    # Totais
+    linha_total = tabela.sum().to_frame().T
+    linha_total.index = ["Total Geral"]
+    coluna_total = tabela.sum(axis=1)
+    tabela.insert(0, "Total Geral", coluna_total)
+    linha_total.insert(0, "Total Geral", coluna_total.sum())
+    tabela_com_total = pd.concat([linha_total, tabela])
+
+    # Formatar para exibição
+    tabela_formatada = tabela_com_total.applymap(
+        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    )
 
     st.markdown("---")
+    st.dataframe(tabela_formatada, use_container_width=True)
+
+    # Baixar Excel
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+        tabela_com_total.to_excel(writer, sheet_name="Faturamento", index=True)
+
     st.download_button(
         label="📥 Baixar Excel com Totais",
         data=buffer.getvalue(),
-        file_name="faturamento_agrupado.xlsx",
+        file_name="faturamento_filtrado.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
 
 # ================================
 # Aba 4: Analise Lojas
