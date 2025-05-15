@@ -1,65 +1,48 @@
+# login_seguro.py
 import streamlit as st
+import socket
 import requests
 
 st.set_page_config(page_title="Login | MMR Consultoria")
 
-# ================================
-# 🔒 CONFIGURAÇÕES
-# ================================
-# Lista de IPs permitidos
-IPS_AUTORIZADOS = [
-    "187.65.101.50",   # Exemplo IP de casa
-    "201.6.230.101",   # Exemplo IP do escritório
-    # Adicione aqui outros IPs confiáveis
-]
+# Lista de IPs autorizados
+IPS_AUTORIZADOS = ["189.54.123.45", "201.10.22.33"]  # atualize conforme necessário
 
-# Dados de login válidos
-credenciais_validas = {
-    "1825": {
-        "email": "mari@mmr.com",
-        "senha": "2522"
-    },
-    # Você pode adicionar mais empresas aqui
+# Usuários cadastrados
+USUARIOS = {
+    "1825": {"email": "mari@mmr.com", "senha": "nova_senha_segura"},
+    # adicione mais se quiser
 }
 
-# ================================
-# 🚫 VERIFICAÇÃO DE IP
-# ================================
-@st.cache_data(ttl=300)
-def obter_ip_usuario():
+# 🔍 Descobrir IP externo do usuário
+@st.cache_data(ttl=600)
+def get_ip():
     try:
-        response = requests.get("https://api.ipify.org?format=json")
-        return response.json()["ip"]
-    except Exception:
-        return None
+        return requests.get("https://api.ipify.org").text
+    except:
+        return "0.0.0.0"
 
-ip_usuario = obter_ip_usuario()
-if ip_usuario and ip_usuario not in IPS_AUTORIZADOS:
-    st.error(f"❌ Acesso negado para este IP: {ip_usuario}")
-    st.stop()
+ip_usuario = get_ip()
 
-# ================================
-# ✅ REDIRECIONAMENTO SE JÁ ESTIVER LOGADO
-# ================================
+# Se já estiver logado, redireciona
 if st.session_state.get("acesso_liberado"):
     st.switch_page("Home.py")
 
-# ================================
-# 🧾 FORMULÁRIO DE LOGIN
-# ================================
 st.title("🔐 Acesso Restrito")
-st.markdown("Informe o código da empresa, seu e-mail e senha para acessar os relatórios.")
+st.markdown("Informe o código da empresa, e-mail e senha.")
 
-codigo_empresa = st.text_input("Código da Empresa:")
+codigo = st.text_input("Código da Empresa:")
 email = st.text_input("E-mail:")
-senha = st.text_input("Senha", type="password")
+senha = st.text_input("Senha:", type="password")
 
 if st.button("Entrar"):
-    cred = credenciais_validas.get(codigo_empresa)
-    if cred and email == cred["email"] and senha == cred["senha"]:
-        st.session_state["acesso_liberado"] = True
-        st.session_state["empresa"] = codigo_empresa
-        st.success("✅ Login realizado com sucesso!")
-        st.switch_page("Home.py")
+    usuario = USUARIOS.get(codigo)
+    if usuario and usuario["senha"] == senha and usuario["email"] == email:
+        if ip_usuario in IPS_AUTORIZADOS:
+            st.session_state["acesso_liberado"] = True
+            st.session_state["empresa"] = codigo
+            st.switch_page("Home.py")
+        else:
+            st.error("❌ IP não autorizado.")
     else:
         st.error("❌ Código, e-mail ou senha incorretos.")
