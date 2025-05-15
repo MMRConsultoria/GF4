@@ -277,8 +277,21 @@ with aba1:
 
         except Exception as e:
             st.error(f"❌ Erro ao processar o arquivo: {e}")
+
+
+# ================================
+# 📥 Arquivo CiSS
+# ================================
+
+
+
 if uploaded_file:
-    df = pd.read_excel(uploaded_file, sheet_name="Relatório 100113")
+    xls = pd.ExcelFile(uploaded_file)
+    if "Relatório 100113" in xls.sheet_names:
+        df = pd.read_excel(xls, sheet_name="Relatório 100113")
+        # ... continua o processamento
+    else:
+        st.error("❌ O arquivo não contém a aba 'Relatório 100113'. Verifique se o arquivo enviado é o correto.")
 
     # Normalizar nome da loja
     df["Loja"] = df["Código - Nome Empresa"].astype(str).str.split("-", n=1).str[-1].str.strip().str.lower()
