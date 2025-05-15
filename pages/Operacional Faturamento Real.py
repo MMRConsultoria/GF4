@@ -553,7 +553,10 @@ with aba4:
                     .set_index("Codigo").to_dict()["Nome Loja Sistema Externo"]
                 ev["Nome Loja Everest"] = ev["Codigo"].map(mapa_nome_loja)
 
-                df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="inner", suffixes=("_Everest", "_Externo"))
+                df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
+
+                # Remover linhas com Código ou Valor faltando (evita total fantasma)
+                df_comp = df_comp.dropna(subset=["Codigo", "Data", "Valor Bruto (Everest)", "Valor Bruto (Externo)"], how='any')
 
                 
                 # ❌ Excluir qualquer linha com "total" ou "subtotal" nos nomes das lojas (Everest ou Externo)
