@@ -230,7 +230,7 @@ with aba1:
         yaxis=dict(
             categoryorder="array",
             categoryarray=anos_ordenados_str,  # ordem natural: 2023 em cima, 2025 embaixo
-            showticklabels=True,
+            showticklabels=False,
             showgrid=False,
             zeroline=False
         ),
