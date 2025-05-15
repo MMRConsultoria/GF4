@@ -13,6 +13,7 @@ import json
 import plotly.express as px
 import io
 
+st.set_page_config(page_title="Faturamento por Serviço", layout="wide")
 # 🔒 Bloqueia o acesso caso o usuário não esteja logado
 if not st.session_state.get("acesso_liberado"):
     st.stop()
@@ -30,7 +31,7 @@ df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela_Empresa").get_all_r
 # ================================
 # 2. Configuração inicial do app
 # ================================
-st.set_page_config(page_title="Faturamento por Serviço", layout="wide")
+
 
 # 🎨 Estilizar abas
 st.markdown("""
