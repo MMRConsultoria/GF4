@@ -29,7 +29,7 @@ if ip_usuario not in IPS_AUTORIZADOS:
 
 # Usuários cadastrados
 USUARIOS = {
-    "1825": {"email": "maricelisrossi@gmail.com", "senha": "Dir1825"},
+    "1825": {"email": "mari@gmail.com", "senha": "1825"},
     "1825": {"email": "andre.machado@grupofit.com.br", "senha": "Sala1825"},
     #"3377": {"email": "joao@empresa.com", "senha": "joao123"},
     #"0041": {"email": "ana@consultoria.com", "senha": "ana456"}
