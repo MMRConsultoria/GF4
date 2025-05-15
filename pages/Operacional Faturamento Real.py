@@ -590,10 +590,12 @@ with aba4:
 
                 # Estilo visual para destacar diferenças
                 def highlight_diferente_lado(row):
+                    estilo_transparente = ["color: transparent"] * len(row)
+
                     if pd.isna(row["Nome (Everest)"]):
-                        return ["background-color: #fff5e6"] * len(row)  # Externo apenas
+                       return ["background-color: #fff5e6; color: transparent"] * len(row)  # Somente Externo
                     elif pd.isna(row["Nome (Externo)"]):
-                        return ["background-color: #e6f2ff"] * len(row)  # Everest apenas
+                        return ["background-color: #e6f2ff; color: transparent"] * len(row)  # Somente Everest
                     else:
                         return [""] * len(row)
 
