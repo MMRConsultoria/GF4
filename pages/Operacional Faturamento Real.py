@@ -553,13 +553,10 @@ with aba4:
                     .set_index("Codigo").to_dict()["Nome Loja Sistema Externo"]
                 ev["Nome Loja Everest"] = ev["Codigo"].map(mapa_nome_loja)
 
+                # Merge externo para ver diferenças e ausências
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
 
-                # Remover linhas com Código ou Valor faltando (evita total fantasma)
-                #df_comp = df_comp.dropna(subset=["Codigo", "Data", "Valor Bruto (Everest)", "Valor Bruto (Externo)"], how='any')
-
-                
-                # 🔥 Remover linhas com nome ausente ou contendo 'total' ou 'subtotal'
+                # Remover linhas com "total" ou "subtotal"
                 def contem_total(valor):
                     if pd.isna(valor):
                         return False
@@ -570,10 +567,8 @@ with aba4:
                     ~(
                         df_comp["Nome Loja Everest"].apply(contem_total) |
                         df_comp["Nome Loja Sistema Externo"].apply(contem_total)
-                        
-                     )
+                    )
                 ]
-
 
                 # Verificar diferenças reais
                 df_comp["Valor Bruto Iguais"] = df_comp["Valor Bruto (Everest)"] == df_comp["Valor Bruto (Externo)"]
@@ -593,14 +588,31 @@ with aba4:
                     "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]
 
-                st.dataframe(df_resultado.style.format({
-                    "Valor Bruto (Everest)": "R$ {:,.2f}",
-                    "Valor Real (Everest)": "R$ {:,.2f}",
-                    "Valor Bruto (Externo)": "R$ {:,.2f}",
-                    "Valor Real (Externo)": "R$ {:,.2f}"
-                }), use_container_width=True, height=600)
+                # Estilo visual para destacar diferenças
+                def highlight_diferente_lado(row):
+                    if pd.isna(row["Nome (Everest)"]):
+                        return ["background-color: #fff5e6"] * len(row)  # Externo apenas
+                    elif pd.isna(row["Nome (Externo)"]):
+                        return ["background-color: #e6f2ff"] * len(row)  # Everest apenas
+                    else:
+                        return [""] * len(row)
+
+                st.dataframe(
+                    df_resultado.style
+                        .apply(highlight_diferente_lado, axis=1)
+                        .format({
+                            "Valor Bruto (Everest)": "R$ {:,.2f}",
+                            "Valor Real (Everest)": "R$ {:,.2f}",
+                            "Valor Bruto (Externo)": "R$ {:,.2f}",
+                            "Valor Real (Externo)": "R$ {:,.2f}"
+                        }),
+                    use_container_width=True,
+                    height=600
+                )
+
         else:
             st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
 
     except Exception as e:
         st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
+
