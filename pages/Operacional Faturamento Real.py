@@ -556,7 +556,7 @@ with aba4:
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
 
                 # Remover linhas com Código ou Valor faltando (evita total fantasma)
-                df_comp = df_comp.dropna(subset=["Codigo", "Data", "Valor Bruto (Everest)", "Valor Bruto (Externo)"], how='any')
+                #df_comp = df_comp.dropna(subset=["Codigo", "Data", "Valor Bruto (Everest)", "Valor Bruto (Externo)"], how='any')
 
                 
                 # 🔥 Remover linhas com nome ausente ou contendo 'total' ou 'subtotal'
