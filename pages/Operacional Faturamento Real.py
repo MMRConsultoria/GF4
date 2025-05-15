@@ -568,27 +568,40 @@ with aba4:
                     "Nome Loja Sistema Externo", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]].sort_values("Data")
 
-                df_resultado.columns = [
+                               df_resultado.columns = [
                     "Data",
                     "Nome (Everest)", "Código", "Valor Bruto (Everest)", "Valor Real (Everest)",
                     "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]
-                # Substituir apenas os NaN de colunas de texto
+
+                # ✅ Substituir apenas os NaNs de colunas de texto
                 colunas_texto = ["Nome (Everest)", "Nome (Externo)"]
                 df_resultado[colunas_texto] = df_resultado[colunas_texto].fillna("")
 
-                # ✅ Definida antes de usar!
+                # ✅ Resetar índice para ocultar número da linha
+                df_resultado = df_resultado.reset_index(drop=True)
+
+                # ✅ Estilizar linha se contiver "total" ou "subtotal"
                 def highlight_total_transparente(row):
                     for valor in row:
-                        if pd.isna(valor):
-                            continue
                         valor = str(valor).strip().lower()
                         if "total" in valor or "subtotal" in valor:
                             return ["color: transparent"] * len(row)
                     return ["color: black"] * len(row)
-                df_resultado = df_resultado.reset_index(drop=True)
+
+                # ✅ Estilizar colunas Everest e Externo com cores diferentes
+                def destacar_colunas_por_origem(col):
+                    if "Everest" in col:
+                        return "background-color: #e6f2ff"  # azul claro
+                    elif "Externo" in col:
+                        return "background-color: #fff5e6"  # laranja claro
+                    else:
+                        return ""
+
+                # ✅ Aplicar todos os estilos
                 st.dataframe(
                     df_resultado.style
+                        .applymap(destacar_colunas_por_origem, subset=df_resultado.columns)
                         .apply(highlight_total_transparente, axis=1)
                         .format({
                             "Valor Bruto (Everest)": "R$ {:,.2f}",
@@ -599,6 +612,7 @@ with aba4:
                     use_container_width=True,
                     height=600
                 )
+
 
         else:
             st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
