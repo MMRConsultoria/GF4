@@ -553,22 +553,8 @@ with aba4:
                     .set_index("Codigo").to_dict()["Nome Loja Sistema Externo"]
                 ev["Nome Loja Everest"] = ev["Codigo"].map(mapa_nome_loja)
 
-                # Merge externo para ver diferenças e ausências
+                # Merge externo para identificar ausências e diferenças
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
-
-                # Remover linhas com "total" ou "subtotal"
-                def contem_total(valor):
-                    if pd.isna(valor):
-                        return False
-                    valor = str(valor).strip().lower()
-                    return "total" in valor or "subtotal" in valor
-
-                df_comp = df_comp[
-                    ~(
-                        df_comp["Nome Loja Everest"].apply(contem_total) |
-                        df_comp["Nome Loja Sistema Externo"].apply(contem_total)
-                    )
-                ]
 
                 # Verificar diferenças reais
                 df_comp["Valor Bruto Iguais"] = df_comp["Valor Bruto (Everest)"] == df_comp["Valor Bruto (Externo)"]
@@ -588,20 +574,22 @@ with aba4:
                     "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]
 
-                # Estilo visual para destacar diferenças
-                def highlight_diferente_lado(row):
-                    estilo_transparente = ["color: transparent"] * len(row)
+                # Estilo visual: deixar texto invisível em linhas com 'total' ou 'subtotal'
+                def highlight_total_transparente(row):
+                    def contem_total(valor):
+                        if pd.isna(valor):
+                            return False
+                        valor = str(valor).strip().lower()
+                        return "total" in valor or "subtotal" in valor
 
-                    if pd.isna(row["Nome (Everest)"]):
-                       return ["background-color: #fff5e6; color: transparent"] * len(row)  # Somente Externo
-                    elif pd.isna(row["Nome (Externo)"]):
-                        return ["background-color: #e6f2ff; color: transparent"] * len(row)  # Somente Everest
+                    if contem_total(row["Nome (Everest)"]) or contem_total(row["Nome (Externo)"]):
+                        return ["color: transparent"] * len(row)
                     else:
-                        return [""] * len(row)
+                        return ["color: black"] * len(row)
 
                 st.dataframe(
                     df_resultado.style
-                        .apply(highlight_diferente_lado, axis=1)
+                        .apply(highlight_total_transparente, axis=1)
                         .format({
                             "Valor Bruto (Everest)": "R$ {:,.2f}",
                             "Valor Real (Everest)": "R$ {:,.2f}",
@@ -617,4 +605,3 @@ with aba4:
 
     except Exception as e:
         st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
-
