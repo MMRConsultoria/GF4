@@ -277,6 +277,58 @@ with aba1:
 
         except Exception as e:
             st.error(f"❌ Erro ao processar o arquivo: {e}")
+if uploaded_file:
+    df = pd.read_excel(uploaded_file, sheet_name="Relatório 100113")
+
+    # Normalizar nome da loja
+    df["Loja"] = df["Código - Nome Empresa"].astype(str).str.split("-", n=1).str[-1].str.strip().str.lower()
+    df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
+    df["Fat.Total"] = pd.to_numeric(df["Valor Total"], errors="coerce")
+    df["Serv/Tx"] = pd.to_numeric(df["Taxa de Serviço"], errors="coerce")
+    df["Fat.Real"] = df["Fat.Total"] - df["Serv/Tx"]
+    df["Ticket"] = pd.to_numeric(df["Ticket Médio"], errors="coerce")
+
+    # Agrupar por Data e Loja
+    df_agrupado = df.groupby(["Data", "Loja"]).agg({
+        "Fat.Total": "sum",
+        "Serv/Tx": "sum",
+        "Fat.Real": "sum",
+        "Ticket": "mean"
+    }).reset_index()
+
+    # Mês e Ano
+    df_agrupado["Mês"] = df_agrupado["Data"].dt.strftime("%b").str.lower()
+    df_agrupado["Ano"] = df_agrupado["Data"].dt.year
+
+    meses = {"jan": "jan", "feb": "fev", "mar": "mar", "apr": "abr", "may": "mai", "jun": "jun",
+             "jul": "jul", "aug": "ago", "sep": "set", "oct": "out", "nov": "nov", "dec": "dez"}
+    df_agrupado["Mês"] = df_agrupado["Mês"].map(meses)
+
+    # Dia da Semana
+    dias_semana = {
+        "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
+        "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
+    }
+    df_agrupado["Dia da Semana"] = df_agrupado["Data"].dt.day_name().map(dias_semana)
+
+    # Merge com a tabela empresa
+    df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
+    df_agrupado["Loja"] = df_agrupado["Loja"].astype(str).str.strip().str.lower()
+    df_final = pd.merge(df_agrupado, df_empresa, on="Loja", how="left")
+
+    # Ajustar data
+    df_final["Data"] = df_final["Data"].dt.strftime("%d/%m/%Y")
+
+    # Reordenar colunas
+    df_final = df_final[[
+        "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo", "Código Grupo Everest",
+        "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket", "Mês", "Ano"
+    ]]
+
+    st.session_state.df_final = df_final
+    st.success("✅ Novo relatório processado com sucesso!")
+
+
 
 # ================================
 # 📥 Aba 2 - Download Excel
