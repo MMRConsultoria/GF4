@@ -464,6 +464,13 @@ with aba3:
 # Aba 4 - Integração Everest (independente do upload)
 # =======================================
 
+from datetime import date
+import streamlit as st
+import pandas as pd
+
+# =======================================
+# Aba 4 - Integração Everest (independente do upload)
+# =======================================
 with aba4:
     try:
         planilha = gc.open("Vendas diarias")
@@ -528,6 +535,7 @@ with aba4:
                 for col in ["Valor Bruto (Externo)", "Valor Real (Externo)"]:
                     ex[col] = ex[col].apply(tratar_valor)
 
+                # Garante que a coluna de impostos exista
                 if "Impostos (Everest)" in ev.columns:
                     ev["Impostos (Everest)"] = pd.to_numeric(ev["Impostos (Everest)"], errors="coerce").fillna(0)
                     ev["Valor Real (Everest)"] = ev["Valor Bruto (Everest)"] - ev["Impostos (Everest)"]
@@ -535,7 +543,7 @@ with aba4:
                     st.warning("⚠️ Coluna 'Impostos (Everest)' não encontrada.")
                     ev["Valor Real (Everest)"] = ev["Valor Bruto (Everest)"]
 
-                # Arredondamento
+                # Arredonda para garantir comparação
                 ev["Valor Bruto (Everest)"] = pd.to_numeric(ev["Valor Bruto (Everest)"], errors="coerce").round(2)
                 ev["Valor Real (Everest)"] = pd.to_numeric(ev["Valor Real (Everest)"], errors="coerce").round(2)
                 ex["Valor Bruto (Externo)"] = pd.to_numeric(ex["Valor Bruto (Externo)"], errors="coerce").round(2)
@@ -553,6 +561,7 @@ with aba4:
 
                 df_diff = df_comp[~(df_comp["Valor Bruto Iguais"] & df_comp["Valor Real Iguais"])].copy()
 
+                # Organiza colunas e renomeia
                 df_resultado = df_diff[[
                     "Data",
                     "Nome Loja Everest", "Codigo", "Valor Bruto (Everest)", "Valor Real (Everest)",
@@ -565,14 +574,11 @@ with aba4:
                     "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]
 
-                st.write(
-                    df_resultado.style.format({
-                        "Valor Bruto (Everest)": "R$ {:,.2f}",
-                        "Valor Real (Everest)": "R$ {:,.2f}",
-                        "Valor Bruto (Externo)": "R$ {:,.2f}",
-                        "Valor Real (Externo)": "R$ {:,.2f}"
-                    }).hide(axis="index")
-                )
+                # Formata como R$ (sem Styler para evitar totais)
+                for col in ["Valor Bruto (Everest)", "Valor Real (Everest)", "Valor Bruto (Externo)", "Valor Real (Externo)"]:
+                    df_resultado[col] = df_resultado[col].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notnull(x) else "")
+
+                st.dataframe(df_resultado, use_container_width=True, height=600)
 
         else:
             st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
