@@ -260,7 +260,7 @@ with aba2:
 # Aba 3: Análise por Ano, Mês e Dia
 # ================================
 with aba3:
-    st.subheader("📊 Análise de Faturamento com Filtros por Período")
+    #st.subheader("📊 Análise de Faturamento com Filtros por Período")
 
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
