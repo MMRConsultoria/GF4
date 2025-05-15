@@ -559,14 +559,21 @@ with aba4:
                 # ❌ Excluir qualquer linha com "total" ou "subtotal" nos nomes das lojas (Everest ou Externo)
                 padrao_excluir = r"\b(total|subtotal)\b"
 
+               # Remover qualquer linha que tenha 'total' ou 'subtotal' nos nomes das lojas
+                def contem_total(valor):
+                    if pd.isna(valor):
+                        return False
+                    valor = str(valor).strip().lower()
+                    return "total" in valor or "subtotal" in valor
+
                 df_comp = df_comp[
                     ~(
-                        df_comp["Nome Loja Everest"].fillna("").str.lower().str.contains(padrao_excluir, na=False) |
-                        df_comp["Nome Loja Sistema Externo"].fillna("").str.lower().str.contains(padrao_excluir, na=False)
+                        df_comp["Nome Loja Everest"].apply(contem_total) |
+                        df_comp["Nome Loja Sistema Externo"].apply(contem_total)
                     )
-                ]
+                ]       
 
-                
+
                 # Verificar diferenças reais
                 df_comp["Valor Bruto Iguais"] = df_comp["Valor Bruto (Everest)"] == df_comp["Valor Bruto (Externo)"]
                 df_comp["Valor Real Iguais"] = df_comp["Valor Real (Everest)"] == df_comp["Valor Real (Externo)"]
