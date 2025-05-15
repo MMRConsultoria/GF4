@@ -253,60 +253,58 @@ with aba2:
 # ================================
 # Aba 3: Analise Mensal
 # ================================
+# ================================
+# Aba 3: Análise por Período
+# ================================
 with aba3:
+    st.subheader("📊 Análise de Faturamento por Período")
+
+    periodo = st.radio("📅 Escolha o período para análise:", ["Por Ano", "Por Mês", "Por Dia"], horizontal=True)
+
+    df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
+    df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
     df_anos["Ano"] = df_anos["Data"].dt.year
-    anos_disponiveis = sorted(df_anos["Ano"].dropna().unique())
-    anos_selecionados = st.multiselect(
-        "🗓️ Selecione os anos que deseja exibir",
-        options=sorted(anos_disponiveis, reverse=True),
-        default=sorted(anos_disponiveis, reverse=True)
-    )
+    df_anos["Mês"] = df_anos["Data"].dt.strftime('%m/%Y')
+    df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
 
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        for ano in anos_selecionados:
-            df_fat = df_anos[df_anos["Ano"] == ano].copy()
-            df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.lower().str.title()
-            df_fat["Fat.Real"] = pd.to_numeric(df_fat["Fat.Real"], errors="coerce")
 
-            meses_pt = {
-                "January": "Janeiro", "February": "Fevereiro", "March": "Março", "April": "Abril",
-                "May": "Maio", "June": "Junho", "July": "Julho", "August": "Agosto",
-                "September": "Setembro", "October": "Outubro", "November": "Novembro", "December": "Dezembro"
-            }
-            df_fat["Mês"] = df_fat["Data"].dt.strftime("%m - %B")
-            df_fat["Mês"] = df_fat["Mês"].apply(lambda x: f"{x[:6]}{meses_pt.get(x[6:], x[6:])}")
+        if periodo == "Por Ano":
+            tabela = df_anos.pivot_table(index="Loja", columns="Ano", values="Fat.Real", aggfunc="sum", fill_value=0)
 
-            tabela_fat_real = df_fat.pivot_table(
-                index="Loja",
-                columns="Mês",
-                values="Fat.Real",
-                aggfunc="sum",
-                fill_value=0
-            )
-            linha_total = tabela_fat_real.sum().to_frame().T
-            linha_total.index = ["Total Geral"]
-            coluna_total = tabela_fat_real.sum(axis=1)
-            tabela_fat_real.insert(0, "Total Geral", coluna_total)
-            linha_total.insert(0, "Total Geral", coluna_total.sum())
-            tabela_com_total = pd.concat([linha_total, tabela_fat_real])
+        elif periodo == "Por Mês":
+            tabela = df_anos.pivot_table(index="Loja", columns="Mês", values="Fat.Real", aggfunc="sum", fill_value=0)
 
-            tabela_formatada = tabela_com_total.applymap(
-                lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            )
+        elif periodo == "Por Dia":
+            tabela = df_anos.pivot_table(index="Loja", columns="Dia", values="Fat.Real", aggfunc="sum", fill_value=0)
 
-            st.markdown("---")
-            st.subheader(f"📋 Faturamento Real por Loja e Mês - {ano}")
-            st.dataframe(tabela_formatada)
-            tabela_com_total.to_excel(writer, sheet_name=f"Faturamento_{ano}")
+        # Totais
+        linha_total = tabela.sum().to_frame().T
+        linha_total.index = ["Total Geral"]
+        coluna_total = tabela.sum(axis=1)
+        tabela.insert(0, "Total Geral", coluna_total)
+        linha_total.insert(0, "Total Geral", coluna_total.sum())
+        tabela_com_total = pd.concat([linha_total, tabela])
+
+        # Formatar valores para exibição
+        tabela_formatada = tabela_com_total.applymap(
+            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        )
+
+        st.markdown("---")
+        st.dataframe(tabela_formatada)
+
+        tabela_com_total.to_excel(writer, sheet_name="Faturamento", index=True)
 
     st.markdown("---")
     st.download_button(
-        label="📥 Baixar Excel com Totais por Ano",
+        label="📥 Baixar Excel com Totais",
         data=buffer.getvalue(),
-        file_name="faturamento_real_totais_por_ano.xlsx",
+        file_name="faturamento_agrupado.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 # ================================
 # Aba 4: Analise Lojas
