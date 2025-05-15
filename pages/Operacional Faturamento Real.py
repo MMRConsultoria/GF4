@@ -555,14 +555,18 @@ with aba4:
 
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
 
-               # Remover linhas com "total" ou "subtotal" nos nomes de loja (Everest ou Externo)
-                padrao_excluir = r"(total|subtotal)"
+                
+                # ❌ Excluir qualquer linha com "total" ou "subtotal" nos nomes das lojas (Everest ou Externo)
+                padrao_excluir = r"\b(total|subtotal)\b"
+
                 df_comp = df_comp[
                     ~(
-                df_comp["Nome Loja Everest"].str.strip().str.lower().str.contains(padrao_excluir, na=False) |
-                df_comp["Nome Loja Sistema Externo"].str.strip().str.lower().str.contains(padrao_excluir, na=False)
+                        df_comp["Nome Loja Everest"].fillna("").str.lower().str.contains(padrao_excluir, na=False) |
+                        df_comp["Nome Loja Sistema Externo"].fillna("").str.lower().str.contains(padrao_excluir, na=False)
                     )
                 ]
+
+                
                 # Verificar diferenças reais
                 df_comp["Valor Bruto Iguais"] = df_comp["Valor Bruto (Everest)"] == df_comp["Valor Bruto (Externo)"]
                 df_comp["Valor Real Iguais"] = df_comp["Valor Real (Everest)"] == df_comp["Valor Real (Externo)"]
