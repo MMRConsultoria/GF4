@@ -128,13 +128,19 @@ with aba1:
         try:
             # 🔹 Carregar o arquivo
             xls = pd.ExcelFile(uploaded_file)
-            df_raw = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None)
+            abas = xls.sheet_names
 
-            # 🔹 Validar B1
-            texto_b1 = str(df_raw.iloc[0, 1]).strip().lower()
-            if texto_b1 != "faturamento diário sintético multi-loja":
-                st.error(f"❌ A célula B1 está com '{texto_b1}'. Corrija para 'Faturamento diário sintético multi-loja'.")
-                st.stop()
+
+            
+            # =======================
+            # 🔹 Faturamento Multi-Loja
+            # =======================
+            if "FaturamentoDiarioPorLoja" in abas:
+                df_raw = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None)
+                texto_b1 = str(df_raw.iloc[0, 1]).strip().lower()
+                if texto_b1 != "faturamento diário sintético multi-loja":
+                    st.error(f"❌ A célula B1 está com '{texto_b1}'. Corrija para 'Faturamento diário sintético multi-loja'.")
+                    st.stop()
 
             df = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None, skiprows=4)
             df.iloc[:, 2] = pd.to_datetime(df.iloc[:, 2], dayfirst=True, errors='coerce')
@@ -282,68 +288,62 @@ with aba1:
             st.error(f"❌ Erro ao processar o arquivo: {e}")
 
 
-# ================================
-# 📥 Arquivo CiSS
-# ================================
+# =======================
+            # 🔸 Relatório por Vendedor (CiSS)
+            # =======================
+            elif "Relatório 100113" in abas:
+                df = pd.read_excel(xls, sheet_name="Relatório 100113")
 
+                df["Loja"] = df["Código - Nome Empresa"].astype(str).str.split("-", n=1).str[-1].str.strip().str.lower()
+                df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
+                df["Fat.Total"] = pd.to_numeric(df["Valor Total"], errors="coerce")
+                df["Serv/Tx"] = pd.to_numeric(df["Taxa de Serviço"], errors="coerce")
+                df["Fat.Real"] = df["Fat.Total"] - df["Serv/Tx"]
+                df["Ticket"] = pd.to_numeric(df["Ticket Médio"], errors="coerce")
 
+                df_agrupado = df.groupby(["Data", "Loja"]).agg({
+                    "Fat.Total": "sum",
+                    "Serv/Tx": "sum",
+                    "Fat.Real": "sum",
+                    "Ticket": "mean"
+                }).reset_index()
 
-if uploaded_file:
-    xls = pd.ExcelFile(uploaded_file)
-    if "Relatório 100113" in xls.sheet_names:
-        df = pd.read_excel(xls, sheet_name="Relatório 100113")
-        # ... continua o processamento
-    else:
-        st.error("❌ O arquivo não contém a aba 'Relatório 100113'. Verifique se o arquivo enviado é o correto.")
+                df_agrupado["Mês"] = df_agrupado["Data"].dt.strftime("%b").str.lower()
+                df_agrupado["Ano"] = df_agrupado["Data"].dt.year
+                meses = {
+                    "jan": "jan", "feb": "fev", "mar": "mar", "apr": "abr", "may": "mai", "jun": "jun",
+                    "jul": "jul", "aug": "ago", "sep": "set", "oct": "out", "nov": "nov", "dec": "dez"
+                }
+                df_agrupado["Mês"] = df_agrupado["Mês"].map(meses)
 
-    # Normalizar nome da loja
-    df["Loja"] = df["Código - Nome Empresa"].astype(str).str.split("-", n=1).str[-1].str.strip().str.lower()
-    df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
-    df["Fat.Total"] = pd.to_numeric(df["Valor Total"], errors="coerce")
-    df["Serv/Tx"] = pd.to_numeric(df["Taxa de Serviço"], errors="coerce")
-    df["Fat.Real"] = df["Fat.Total"] - df["Serv/Tx"]
-    df["Ticket"] = pd.to_numeric(df["Ticket Médio"], errors="coerce")
+                dias_semana = {
+                    "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
+                    "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
+                }
+                df_agrupado["Dia da Semana"] = df_agrupado["Data"].dt.day_name().map(dias_semana)
 
-    # Agrupar por Data e Loja
-    df_agrupado = df.groupby(["Data", "Loja"]).agg({
-        "Fat.Total": "sum",
-        "Serv/Tx": "sum",
-        "Fat.Real": "sum",
-        "Ticket": "mean"
-    }).reset_index()
+                df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
+                df_agrupado["Loja"] = df_agrupado["Loja"].astype(str).str.strip().str.lower()
+                df_final = pd.merge(df_agrupado, df_empresa, on="Loja", how="left")
 
-    # Mês e Ano
-    df_agrupado["Mês"] = df_agrupado["Data"].dt.strftime("%b").str.lower()
-    df_agrupado["Ano"] = df_agrupado["Data"].dt.year
+                df_final["Data"] = df_final["Data"].dt.strftime("%d/%m/%Y")
 
-    meses = {"jan": "jan", "feb": "fev", "mar": "mar", "apr": "abr", "may": "mai", "jun": "jun",
-             "jul": "jul", "aug": "ago", "sep": "set", "oct": "out", "nov": "nov", "dec": "dez"}
-    df_agrupado["Mês"] = df_agrupado["Mês"].map(meses)
+                df_final = df_final[[
+                    "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo", "Código Grupo Everest",
+                    "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket", "Mês", "Ano"
+                ]]
 
-    # Dia da Semana
-    dias_semana = {
-        "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
-        "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
-    }
-    df_agrupado["Dia da Semana"] = df_agrupado["Data"].dt.day_name().map(dias_semana)
+                st.session_state.df_final = df_final
+                st.success("✅ Novo relatório processado com sucesso!")
 
-    # Merge com a tabela empresa
-    df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
-    df_agrupado["Loja"] = df_agrupado["Loja"].astype(str).str.strip().str.lower()
-    df_final = pd.merge(df_agrupado, df_empresa, on="Loja", how="left")
+            # =======================
+            # ⚠️ Nenhuma aba conhecida
+            # =======================
+            else:
+                st.error("❌ O arquivo enviado não contém uma aba reconhecida. Esperado: 'FaturamentoDiarioPorLoja' ou 'Relatório 100113'.")
 
-    # Ajustar data
-    df_final["Data"] = df_final["Data"].dt.strftime("%d/%m/%Y")
-
-    # Reordenar colunas
-    df_final = df_final[[
-        "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo", "Código Grupo Everest",
-        "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket", "Mês", "Ano"
-    ]]
-
-    st.session_state.df_final = df_final
-    st.success("✅ Novo relatório processado com sucesso!")
-
+        except Exception as e:
+            st.error(f"❌ Erro ao processar o arquivo: {e}")
 
 
 # ================================
