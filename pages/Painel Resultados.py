@@ -262,78 +262,67 @@ with aba2:
 # PainelResultados.py (trecho para a Aba 3)
 
 with aba3:
-    st.markdown("### 📋 Relatório Analítico Detalhado")
+  
 
-    # 🧩 Escolha do nível de agrupamento
-    nivel_agrupamento = st.selectbox("🔽 Nível de análise", ["Ano", "Mês", "Dia"])
+# Simulação de dados
+datas = pd.date_range(start="2024-01-01", end="2025-12-31", freq="D")
+lojas = ["Loja A", "Loja B"] * (len(datas) // 2)
+df = pd.DataFrame({
+    "Data": datas[:len(lojas)],
+    "Loja": lojas,
+    "Fat.Total": np.random.randint(1000, 5000, size=len(lojas)),
+    "Fat.Real": np.random.randint(800, 4500, size=len(lojas))
+})
 
-    # Agrupamentos baseados em datas
-    df_anos["Ano"] = df_anos["Data"].dt.year
-    df_anos["Mês"] = df_anos["Data"].dt.strftime("%m/%Y")
-    df_anos["Dia"] = df_anos["Data"].dt.strftime("%d/%m/%Y")
-    df_anos["Chave"] = df_anos[nivel_agrupamento]
+# Colunas auxiliares
+df["Ano"] = df["Data"].dt.year
+df["Mês"] = df["Data"].dt.strftime("%m/%Y")
+df["Dia"] = df["Data"].dt.strftime("%d/%m/%Y")
 
-    # ✅ Opções de métrica
-    tipo_metrica = st.radio("💰 Métrica:", ["Bruto", "Real", "Ambos"], horizontal=True)
+# Sidebar com opções
+filtro = st.sidebar.radio("🔎 Agrupar por:", ["Ano", "Mês", "Dia"], horizontal=True)
 
-    # 🔄 Gerar tabelas conforme a métrica
-    if tipo_metrica == "Bruto":
-        tabela = df_anos.pivot_table(index="Loja", columns="Chave", values="Fat.Total", aggfunc="sum", fill_value=0)
-        coluna_total = tabela.sum(axis=1)
-        tabela.insert(0, "Total Geral", coluna_total)
-        linha_total = pd.DataFrame(tabela.sum()).T
-        linha_total.index = ["Total Geral"]
-        tabela_final = pd.concat([linha_total, tabela])
+# Filtros dinâmicos
+if filtro == "Ano":
+    anos = df["Ano"].unique()
+    anos_sel = st.sidebar.multiselect("Selecione o(s) ano(s):", sorted(anos, reverse=True), default=sorted(anos, reverse=True))
+    df_filt = df[df["Ano"].isin(anos_sel)]
+    agrupado = df_filt.groupby(["Loja", "Ano"])[["Fat.Total", "Fat.Real"]].sum().reset_index()
+    coluna_periodo = "Ano"
+elif filtro == "Mês":
+    meses = df["Mês"].unique()
+    meses_sel = st.sidebar.multiselect("Selecione o(s) mês(es):", sorted(meses, reverse=True), default=sorted(meses, reverse=True))
+    df_filt = df[df["Mês"].isin(meses_sel)]
+    agrupado = df_filt.groupby(["Loja", "Mês"])[["Fat.Total", "Fat.Real"]].sum().reset_index()
+    coluna_periodo = "Mês"
+else:
+    dias = df["Dia"].unique()
+    dias_sel = st.sidebar.multiselect("Selecione o(s) dia(s):", sorted(dias, reverse=True), default=sorted(dias, reverse=True)[:10])
+    df_filt = df[df["Dia"].isin(dias_sel)]
+    agrupado = df_filt.groupby(["Loja", "Dia"])[["Fat.Total", "Fat.Real"]].sum().reset_index()
+    coluna_periodo = "Dia"
 
-    elif tipo_metrica == "Real":
-        tabela = df_anos.pivot_table(index="Loja", columns="Chave", values="Fat.Real", aggfunc="sum", fill_value=0)
-        coluna_total = tabela.sum(axis=1)
-        tabela.insert(0, "Total Geral", coluna_total)
-        linha_total = pd.DataFrame(tabela.sum()).T
-        linha_total.index = ["Total Geral"]
-        tabela_final = pd.concat([linha_total, tabela])
+# Pivotagem
+pivot = agrupado.pivot(index="Loja", columns=coluna_periodo, values=["Fat.Total", "Fat.Real"])
+pivot.columns = [f"{col[1]} ({'Bruto' if col[0]=='Fat.Total' else 'Real'})" for col in pivot.columns]
+pivot = pivot.fillna(0)
 
-    else:  # Ambos
-        tabela_bruto = df_anos.pivot_table(index="Loja", columns="Chave", values="Fat.Total", aggfunc="sum", fill_value=0)
-        tabela_bruto.columns = [f"{col} (Bruto)" for col in tabela_bruto.columns]
+# Inserir coluna de totais separados
+pivot.insert(0, "Total Bruto", pivot.filter(like="(Bruto)").sum(axis=1))
+pivot.insert(1, "Total Real", pivot.filter(like="(Real)").sum(axis=1))
 
-        tabela_real = df_anos.pivot_table(index="Loja", columns="Chave", values="Fat.Real", aggfunc="sum", fill_value=0)
-        tabela_real.columns = [f"{col} (Real)" for col in tabela_real.columns]
+# Inserir linha Total Geral com duas colunas separadas
+linha_total = pd.DataFrame(pivot.sum(axis=0)).T
+linha_total.index = ["Total Geral"]
+tabela_final = pd.concat([linha_total, pivot])
 
-        tabela = pd.concat([tabela_bruto, tabela_real], axis=1)
+# Formatar
+def moeda(val):
+    return f"R$ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-        # Calcular os totais separados
-        colunas_bruto = [c for c in tabela.columns if "(Bruto)" in c]
-        colunas_real = [c for c in tabela.columns if "(Real)" in c]
+st.markdown("### 📊 Tabela de Faturamento Detalhada")
+st.dataframe(tabela_final.applymap(moeda))
 
-        tabela["Total Geral (Bruto)"] = tabela[colunas_bruto].sum(axis=1)
-        tabela["Total Geral (Real)"] = tabela[colunas_real].sum(axis=1)
-
-        # Reorganizar colunas
-        cols_ordenadas = ["Total Geral (Bruto)", "Total Geral (Real)"] + \
-                         sorted([c for c in tabela.columns if c not in ["Total Geral (Bruto)", "Total Geral (Real)"]], reverse=True)
-        tabela = tabela[cols_ordenadas]
-
-        linha_total = pd.DataFrame(tabela.sum()).T
-        linha_total.index = ["Total Geral"]
-        tabela_final = pd.concat([linha_total, tabela])
-
-    # 💄 Formatar valores monetários
-    tabela_formatada = tabela_final.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
-    st.dataframe(tabela_formatada)
-
-    # 📥 Exportar para Excel
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        tabela_final.to_excel(writer, sheet_name=f"Relatorio_{nivel_agrupamento}", index=True)
-
-    st.download_button(
-        label="📥 Baixar Excel",
-        data=buffer.getvalue(),
-        file_name=f"relatorio_{nivel_agrupamento.lower()}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
 
 # ================================
 # Aba 4: Analise Lojas
