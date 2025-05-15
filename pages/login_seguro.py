@@ -1,4 +1,3 @@
-# login_seguro.py
 import streamlit as st
 import requests
 
@@ -15,9 +14,9 @@ def get_ip():
 # Lista de IPs autorizados
 IPS_AUTORIZADOS = ["35.197.92.111", "201.10.22.33"]  # atualize conforme necessário
 
-# 👉 Captura o IP corretamente (depois da definição da função)
+# 👉 Captura o IP corretamente
 ip_usuario = get_ip()
-st.write(f"🛠️ Seu IP: {ip_usuario}")  # Temporário para debug
+st.write(f"🛠️ Seu IP: {ip_usuario}")  # Pode remover depois do debug
 
 # ❌ Bloqueia se IP não estiver na lista
 if ip_usuario not in IPS_AUTORIZADOS:
@@ -26,12 +25,12 @@ if ip_usuario not in IPS_AUTORIZADOS:
     st.info("Copie este IP e envie para a equipe da MMR Consultoria para liberar o acesso.")
     st.stop()
 
-
-# Usuários cadastrados
-USUARIOS = {
-    USUARIOS = [
+# ✅ Lista de usuários (permite múltiplos com o mesmo código)
+USUARIOS = [
     {"codigo": "1825", "email": "mari@gmail.com", "senha": "1825"},
-    {"codigo": "1825", "email": "andre.machado@grupofit.com.br", "senha": "Sala1825"}
+    {"codigo": "1825", "email": "andre.machado@grupofit.com.br", "senha": "Sala1825"},
+    # {"codigo": "3377", "email": "joao@empresa.com", "senha": "joao123"},
+    # {"codigo": "0041", "email": "ana@consultoria.com", "senha": "ana456"}
 ]
 
 # ✅ Redireciona se já estiver logado
@@ -54,11 +53,8 @@ if st.button("Entrar"):
     )
 
     if usuario_encontrado:
-        if ip_usuario in IPS_AUTORIZADOS:
-            st.session_state["acesso_liberado"] = True
-            st.session_state["empresa"] = codigo
-            st.switch_page("Home.py")
-        else:
-            st.error("❌ IP não autorizado.")
+        st.session_state["acesso_liberado"] = True
+        st.session_state["empresa"] = codigo
+        st.switch_page("Home.py")
     else:
         st.error("❌ Código, e-mail ou senha incorretos.")
