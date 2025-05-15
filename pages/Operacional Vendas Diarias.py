@@ -14,6 +14,10 @@ import json
 import plotly.express as px
 from datetime import date
 
+# 🔒 Bloqueia o acesso caso o usuário não esteja logado
+if not st.session_state.get("acesso_liberado"):
+    st.stop()
+
 # ================================
 # 1. Conexão com Google Sheets
 # ================================
