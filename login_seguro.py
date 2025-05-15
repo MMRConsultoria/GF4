@@ -17,7 +17,7 @@ IPS_AUTORIZADOS = [
 credenciais_validas = {
     "1825": {
         "email": "mari@mmr.com",
-        "senha": "novaSenhaSegura123"
+        "senha": "2522"
     },
     # Você pode adicionar mais empresas aqui
 }
