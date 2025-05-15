@@ -580,9 +580,9 @@ with aba4:
                 # 🔹 Estilo linha: esconder texto de totais
                 def highlight_total_transparente(row):
                     for valor in row:
-                        valor = str(valor).strip().lower()
-                        if "total" in valor or "subtotal" in valor:
-                            return ["color: transparent"] * len(row)
+                        if isinstance(valor, str):
+                            if "total" in valor.lower() or "subtotal" in valor.lower():
+                                return ["color: transparent"] * len(row)
                     return ["color: black"] * len(row)
 
                 # 🔹 Estilo colunas: destacar por origem
