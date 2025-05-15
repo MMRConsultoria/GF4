@@ -359,8 +359,8 @@ with aba3:
         linha_total.index = ["Total Geral"]
         tabela_final = pd.concat([linha_total, tabela])
 
-    st.markdown("---")
-    st.dataframe(tabela_formatada, use_container_width=True)
+        st.markdown("---")
+        st.dataframe(tabela_formatada, use_container_width=True)
 
     # 📥 Download Excel
     buffer = io.BytesIO()
