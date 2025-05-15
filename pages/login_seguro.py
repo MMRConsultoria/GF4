@@ -36,7 +36,7 @@ USUARIOS = {
     "1825": {
         "email": "andre.machado@grupofit.com.br",
         "senha": "Casa1825"
-    }
+}
 
 # ✅ Redireciona se já estiver logado
 if st.session_state.get("acesso_liberado"):
