@@ -536,7 +536,6 @@ with aba4:
                 for col in ["Valor Bruto (Externo)", "Valor Real (Externo)"]:
                     ex[col] = ex[col].apply(tratar_valor)
 
-                # Cálculo e arredondamento
                 if "Impostos (Everest)" in ev.columns:
                     ev["Impostos (Everest)"] = pd.to_numeric(ev["Impostos (Everest)"], errors="coerce").fillna(0)
                     ev["Valor Real (Everest)"] = ev["Valor Bruto (Everest)"] - ev["Impostos (Everest)"]
@@ -548,15 +547,12 @@ with aba4:
                 ex["Valor Bruto (Externo)"] = pd.to_numeric(ex["Valor Bruto (Externo)"], errors="coerce").round(2)
                 ex["Valor Real (Externo)"] = pd.to_numeric(ex["Valor Real (Externo)"], errors="coerce").round(2)
 
-                # Mapear nome da loja (Everest)
                 mapa_nome_loja = ex.drop_duplicates(subset="Codigo")[["Codigo", "Nome Loja Sistema Externo"]]\
                     .set_index("Codigo").to_dict()["Nome Loja Sistema Externo"]
                 ev["Nome Loja Everest"] = ev["Codigo"].map(mapa_nome_loja)
 
-                # Merge externo para identificar ausências e diferenças
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
 
-                # Verificar diferenças reais
                 df_comp["Valor Bruto Iguais"] = df_comp["Valor Bruto (Everest)"] == df_comp["Valor Bruto (Externo)"]
                 df_comp["Valor Real Iguais"] = df_comp["Valor Real (Everest)"] == df_comp["Valor Real (Externo)"]
 
@@ -568,20 +564,20 @@ with aba4:
                     "Nome Loja Sistema Externo", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]].sort_values("Data")
 
-                               df_resultado.columns = [
+                df_resultado.columns = [
                     "Data",
                     "Nome (Everest)", "Código", "Valor Bruto (Everest)", "Valor Real (Everest)",
                     "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]
 
-                # ✅ Substituir apenas os NaNs de colunas de texto
+                # 🔹 Substituir None por string vazia só nas colunas de texto
                 colunas_texto = ["Nome (Everest)", "Nome (Externo)"]
                 df_resultado[colunas_texto] = df_resultado[colunas_texto].fillna("")
 
-                # ✅ Resetar índice para ocultar número da linha
+                # 🔹 Resetar índice
                 df_resultado = df_resultado.reset_index(drop=True)
 
-                # ✅ Estilizar linha se contiver "total" ou "subtotal"
+                # 🔹 Estilo linha: esconder texto de totais
                 def highlight_total_transparente(row):
                     for valor in row:
                         valor = str(valor).strip().lower()
@@ -589,16 +585,16 @@ with aba4:
                             return ["color: transparent"] * len(row)
                     return ["color: black"] * len(row)
 
-                # ✅ Estilizar colunas Everest e Externo com cores diferentes
+                # 🔹 Estilo colunas: destacar por origem
                 def destacar_colunas_por_origem(col):
                     if "Everest" in col:
-                        return "background-color: #e6f2ff"  # azul claro
+                        return "background-color: #e6f2ff"
                     elif "Externo" in col:
-                        return "background-color: #fff5e6"  # laranja claro
+                        return "background-color: #fff5e6"
                     else:
                         return ""
 
-                # ✅ Aplicar todos os estilos
+                # 🔹 Aplicar estilos
                 st.dataframe(
                     df_resultado.style
                         .applymap(destacar_colunas_por_origem, subset=df_resultado.columns)
@@ -613,9 +609,9 @@ with aba4:
                     height=600
                 )
 
-
         else:
             st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
 
     except Exception as e:
         st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
+
