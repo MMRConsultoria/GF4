@@ -7,11 +7,13 @@ from io import BytesIO
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+st.set_page_config(page_title="Relatório de Faturamento", layout="wide")
+
 # 🔒 Bloqueia o acesso caso o usuário não esteja logado
 if not st.session_state.get("acesso_liberado"):
     st.stop()
 
-st.set_page_config(page_title="Relatório de Faturamento", layout="wide")
+
 
 st.markdown("""
     <div style='display: flex; align-items: center; gap: 10px;'>
