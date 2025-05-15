@@ -1,14 +1,14 @@
+# Home.py
 import streamlit as st
 from logo_sidebar import mostrar_logo_cliente
 
-# ✅ Configuração da página (depois da verificação)
+# ✅ Configuração da página
 st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
 
-# ✅ Verificação de login ANTES de qualquer outra coisa
+# ✅ Verificação de login ANTES de exibir o conteúdo
 if not st.session_state.get("acesso_liberado"):
+    st.switch_page("pages/login_seguro.py")  # Redireciona se não estiver logado
     st.stop()
-
-
 
 # ✅ Exibe o logo do cliente na sidebar
 mostrar_logo_cliente()
@@ -23,7 +23,7 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 
-# ✅ Conteúdo visível somente após login autorizado
+# ✅ Conteúdo visível apenas após login autorizado
 st.image("https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo-mmr.png", width=150)
 st.markdown("## Bem-vindo ao Portal de Relatórios")
 
