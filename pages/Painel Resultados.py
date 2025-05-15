@@ -332,11 +332,14 @@ with aba3:
 
     # ✅ Total Geral correto
     if metrica != "Ambos":
+        coluna_total = tabela.sum(axis=1)
         linha_total = tabela.sum().to_frame().T
         linha_total.index = ["Total Geral"]
-        coluna_total = tabela.sum(axis=1)
-        tabela.insert(0, "Total Geral", coluna_total)
+
+        # Corrige valor de "Total Geral" (soma das somas por linha)
         linha_total.insert(0, "Total Geral", coluna_total.sum())
+        tabela.insert(0, "Total Geral", coluna_total)
+
         tabela_com_total = pd.concat([linha_total, tabela])
     else:
         coluna_total = tabela.sum(axis=1)
