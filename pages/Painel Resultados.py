@@ -13,7 +13,7 @@ import json
 import plotly.express as px
 import io
 
-st.set_page_config(page_title="Faturamento por Serviço", layout="wide")
+st.set_page_config(page_title="Vendas Diarias", layout="wide")
 # 🔒 Bloqueia o acesso caso o usuário não esteja logado
 if not st.session_state.get("acesso_liberado"):
     st.stop()
@@ -56,7 +56,7 @@ st.markdown("""
 st.markdown("""
     <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
         <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
-        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório de Faturamento por Serviço</h1>
+        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório Vendas Diarias</h1>
     </div>
 """, unsafe_allow_html=True)
 
@@ -66,7 +66,7 @@ st.markdown("""
 aba1, aba2, aba3, aba4 = st.tabs([
     "📈 Graficos Anuais",
     "📊 Graficos Trimestrais",
-    "📆 Analise Mensal",
+    "📆 Relatório Analitico",
     "📋 Analise Lojas"
 ])
 
@@ -251,7 +251,7 @@ with aba2:
     st.info("Ideal para mostrar evolução por ano ou por trimestre.")
 
 # ================================
-# Aba 3: Analise Mensal
+# Aba 3: Relatorio Analitico
 # ================================
 # ================================
 # Aba 3: Análise por Período
