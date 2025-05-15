@@ -300,7 +300,10 @@ with aba1:
 # =======================================
 
 with aba3:
-
+ # 🔗 Links úteis
+        st.markdown("""
+          🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing)
+        """, unsafe_allow_html=True)
      
     #st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
 
@@ -315,9 +318,9 @@ with aba3:
         
         
         # 🔗 Links úteis
-        st.markdown("""
-          🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing)
-        """, unsafe_allow_html=True)
+        #st.markdown("""
+          #🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing)
+        #""", unsafe_allow_html=True)
 
         # Criar a coluna "M" com a concatenação de "Data", "Fat.Total" e "Loja" como string para verificação de duplicação
         df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
