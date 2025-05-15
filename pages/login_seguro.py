@@ -29,10 +29,10 @@ if ip_usuario not in IPS_AUTORIZADOS:
 
 # Usuários cadastrados
 USUARIOS = {
-   "1825": {"email": "mar@gmail.com.br", "senha": "1825"},
-    "1826": {"email": "andre@gggg.com.br", "senha": "VIDA1825"},
-    "3377": {"email": "joao@empresa.com", "senha": "joao123"},
-    "0041": {"email": "ana@consultoria.com", "senha": "ana456"}
+    "1825": {"email": "maricelisrossi@gmail.com.br", "senha": "Dir1825"},#35.197.92.111#
+    "1825": {"email": "andre.machado@grupofit.com.br", "senha": "Sala1825"},#99.999.99.999#
+    #"3377": {"email": "joao@empresa.com", "senha": "joao123"},
+    #"0041": {"email": "ana@consultoria.com", "senha": "ana456"}
 }    
 
 # ✅ Redireciona se já estiver logado
