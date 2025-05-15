@@ -1,17 +1,20 @@
 import streamlit as st
 import requests
+
 st.set_page_config(page_title="Login | MMR Consultoria")
 
+# ✅ Captura segura dos parâmetros da URL
 params = st.query_params
-codigo_param = params.get("codigo", "").strip()
-empresa_param = params.get("empresa", "").strip().lower()
+codigo_param = (params.get("codigo") or "").strip()
+empresa_param = (params.get("empresa") or "").strip().lower()
 
+# ✅ Mostrar para debug (remova se quiser depois que funcionar)
+st.markdown(f"🧪 Código recebido: `{codigo_param}` | Empresa recebida: `{empresa_param}`")
 
-# Bloquear se vier direto, sem passar pela página HTML
+# ✅ Bloqueia se parâmetros não forem passados corretamente
 if not codigo_param or not empresa_param:
     st.error("🚫 Acesso negado. Você deve acessar por meio do portal oficial da MMR Consultoria.")
     st.stop()
-st.set_page_config(page_title="Login | MMR Consultoria")
 
 # 🔍 Descobrir IP externo do usuário
 @st.cache_data(ttl=600)
@@ -26,7 +29,7 @@ IPS_AUTORIZADOS = ["35.197.92.111", "201.10.22.33"]  # atualize conforme necess�
 
 # 👉 Captura o IP corretamente
 ip_usuario = get_ip()
-st.write(f"🛠️ Seu IP: {ip_usuario}")  # Pode remover depois do debug
+st.write(f"🛠️ Seu IP: {ip_usuario}")  # Pode remover depois
 
 # ❌ Bloqueia se IP não estiver na lista
 if ip_usuario not in IPS_AUTORIZADOS:
@@ -35,7 +38,7 @@ if ip_usuario not in IPS_AUTORIZADOS:
     st.info("Copie este IP e envie para a equipe da MMR Consultoria para liberar o acesso.")
     st.stop()
 
-# ✅ Lista de usuários (permite múltiplos com o mesmo código)
+# ✅ Lista de usuários
 USUARIOS = [
     {"codigo": "1825", "email": "maricelisrossi@gmail.com", "senha": "1825"},
     {"codigo": "1825", "email": "andre.machado@grupofit.com.br", "senha": "Sala1825"},
