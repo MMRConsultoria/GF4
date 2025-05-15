@@ -8,12 +8,28 @@ params = st.query_params
 codigo_param = (params.get("codigo") or "").strip()
 empresa_param = (params.get("empresa") or "").strip().lower()
 
-# ✅ Mostrar para debug (remova se quiser depois que funcionar)
-st.markdown(f"🧪 Código recebido: `{codigo_param}` | Empresa recebida: `{empresa_param}`")
-
-# ✅ Bloqueia se parâmetros não forem passados corretamente
+# ✅ Bloqueia acesso direto sem parâmetros
 if not codigo_param or not empresa_param:
-    st.error("🚫 Acesso negado. Você deve acessar por meio do portal oficial da MMR Consultoria.")
+    st.markdown("""
+        <meta charset="UTF-8">
+        <style>
+        /* Esconde tudo */
+        #MainMenu, header, footer, .stSidebar, .stToolbar, .block-container { display: none !important; }
+        body {
+          background-color: #ffffff;
+          font-family: Arial, sans-serif;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          margin: 0;
+        }
+        </style>
+        <div style="text-align: center;">
+            <h2 style="color:#555;">🚫 Acesso Negado</h2>
+            <p style="color:#888;">Você deve acessar pelo <strong>portal oficial da MMR Consultoria</strong>.</p>
+        </div>
+    """, unsafe_allow_html=True)
     st.stop()
 
 # 🔍 Descobrir IP externo do usuário
@@ -29,21 +45,25 @@ IPS_AUTORIZADOS = ["35.197.92.111", "201.10.22.33"]  # atualize conforme necess�
 
 # 👉 Captura o IP corretamente
 ip_usuario = get_ip()
-st.write(f"🛠️ Seu IP: {ip_usuario}")  # Pode remover depois
+# st.write(f"🛠️ Seu IP: {ip_usuario}")  # Pode desativar após testes
 
 # ❌ Bloqueia se IP não estiver na lista
 if ip_usuario not in IPS_AUTORIZADOS:
-    st.markdown("## 🔐 IP não autorizado")
-    st.code(ip_usuario, language="text")
-    st.info("Copie este IP e envie para a equipe da MMR Consultoria para liberar o acesso.")
+    st.markdown("""
+        <style>
+        #MainMenu, header, footer, .stSidebar { display: none; }
+        </style>
+        ## 🔐 IP não autorizado
+        Seu IP detectado: `""" + ip_usuario + """`
+
+        Copie este IP e envie para a equipe da MMR Consultoria para liberar o acesso.
+    """, unsafe_allow_html=True)
     st.stop()
 
 # ✅ Lista de usuários
 USUARIOS = [
     {"codigo": "1825", "email": "maricelisrossi@gmail.com", "senha": "1825"},
     {"codigo": "1825", "email": "andre.machado@grupofit.com.br", "senha": "Sala1825"},
-    # {"codigo": "3377", "email": "joao@empresa.com", "senha": "joao123"},
-    # {"codigo": "0041", "email": "ana@consultoria.com", "senha": "ana456"}
 ]
 
 # ✅ Redireciona se já estiver logado
