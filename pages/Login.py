@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 
 st.set_page_config(page_title="Login | MMR Consultoria")
+st.write(f"🛠️ Seu IP: {ip_usuario}")  # Pode remover depois
 
 # ✅ Captura segura dos parâmetros da URL
 params = st.query_params
