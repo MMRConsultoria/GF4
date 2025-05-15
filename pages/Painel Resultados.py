@@ -260,9 +260,10 @@ with aba2:
 # Aba 3: Análise por Ano, Mês e Dia
 # ================================
 with aba3:
-    #st.subheader("📊 Análise de Faturamento com Filtros por Período")
+    st.subheader("📊 Análise de Faturamento com Filtros e Métricas")
 
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
+    df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
     df_anos["Ano"] = df_anos["Data"].dt.year
     df_anos["Mês Num"] = df_anos["Data"].dt.month
@@ -270,39 +271,32 @@ with aba3:
     df_anos["Mês"] = df_anos["Data"].dt.strftime('%m/%Y')
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
 
-    # === ANO ===
+    # Filtro por ano
     anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
     ano_opcao = st.multiselect("📅 Selecione o(s) ano(s):", options=anos_disponiveis, default=anos_disponiveis)
-
     df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
 
-    # === MÊS ===
+    # Filtro por mês
     meses_dict = {
         1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
         7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
     }
-
     meses_disponiveis = sorted(df_filtrado["Mês Num"].unique())
     meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
 
-    meses_selecionados = st.multiselect(
-        "🗓️ Selecione o(s) mês(es):", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis
-    )
-
+    meses_selecionados = st.multiselect("🗓️ Selecione o(s) mês(es):", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis)
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
     df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
-    # === DIA ===
+    # Filtro por dia (opcional)
     dias_disponiveis = sorted(df_filtrado["Dia"].unique())
-    dias_selecionados = st.multiselect(
-        "📆 (Opcional) Selecione dia(s) específico(s):", options=dias_disponiveis
-    )
-
+    dias_selecionados = st.multiselect("📆 (Opcional) Selecione dia(s) específico(s):", options=dias_disponiveis)
     if dias_selecionados:
         df_filtrado = df_filtrado[df_filtrado["Dia"].isin(dias_selecionados)]
 
-    # === AGRUPAMENTO ===
+    # Escolha do agrupamento e métrica
     agrupamento = st.radio("📂 Agrupar por:", ["Ano", "Mês", "Dia"], horizontal=True)
+    metrica = st.selectbox("💰 Selecione a métrica:", ["Fat.Total", "Fat.Real", "Ambos"])
 
     if agrupamento == "Ano":
         df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
@@ -314,16 +308,30 @@ with aba3:
         df_filtrado["Agrupador"] = df_filtrado["Dia"]
         df_filtrado["Ordem"] = pd.to_datetime(df_filtrado["Dia"], dayfirst=True)
 
-    tabela = df_filtrado.pivot_table(
-        index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0
-    )
+    # Pivot da tabela
+    if metrica == "Fat.Total":
+        tabela = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
+    elif metrica == "Fat.Real":
+        tabela = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
+    else:
+        pivot_bruto = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
+        pivot_real = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
 
-    # ✅ Ordenar colunas cronologicamente
+        pivot_bruto.columns = [f"{col} (Bruto)" for col in pivot_bruto.columns]
+        pivot_real.columns = [f"{col} (Real)" for col in pivot_real.columns]
+        tabela = pd.concat([pivot_bruto, pivot_real], axis=1)
+
+    # Ordenar colunas do mais novo para o mais antigo
     ordem_agrupador = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)
-    colunas_ordenadas = list(ordem_agrupador["Agrupador"])
-    tabela = tabela.reindex(columns=colunas_ordenadas)
+    if metrica != "Ambos":
+        tabela = tabela[ordem_agrupador["Agrupador"]]
+    else:
+        colunas_ordenadas = []
+        for col in ordem_agrupador["Agrupador"]:
+            colunas_ordenadas.extend([f"{col} (Bruto)", f"{col} (Real)"])
+        tabela = tabela[[c for c in colunas_ordenadas if c in tabela.columns]]
 
-    # Totais
+    # Total geral
     linha_total = tabela.sum().to_frame().T
     linha_total.index = ["Total Geral"]
     coluna_total = tabela.sum(axis=1)
@@ -331,7 +339,7 @@ with aba3:
     linha_total.insert(0, "Total Geral", coluna_total.sum())
     tabela_com_total = pd.concat([linha_total, tabela])
 
-    # Formatar para exibição
+    # Formatar exibição
     tabela_formatada = tabela_com_total.applymap(
         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     )
@@ -339,7 +347,7 @@ with aba3:
     st.markdown("---")
     st.dataframe(tabela_formatada, use_container_width=True)
 
-    # Excel para download
+    # Download em Excel
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         tabela_com_total.to_excel(writer, sheet_name="Faturamento", index=True)
