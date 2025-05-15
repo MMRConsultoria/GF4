@@ -74,7 +74,7 @@ aba1, aba2, aba3, aba4 = st.tabs([
 # Aba 1: Graficos Anuais
 # ================================
 with aba1:
-    planilha = gc.open("Faturamento Sistema Externo")
+    planilha = gc.open("Vendas diarias")
     aba = planilha.worksheet("Fat Sistema Externo")
     dados = aba.get_all_records()
     df = pd.DataFrame(dados)
