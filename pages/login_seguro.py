@@ -6,7 +6,7 @@ import requests
 st.set_page_config(page_title="Login | MMR Consultoria")
 
 # Lista de IPs autorizados
-IPS_AUTORIZADOS = ["189.54.123.45", "201.10.22.33"]  # atualize conforme necessário
+IPS_AUTORIZADOS = ["138.199.53.245", "201.10.22.33"]  # atualize conforme necessário
 
 # Usuários cadastrados
 USUARIOS = {
