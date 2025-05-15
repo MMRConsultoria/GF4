@@ -1,12 +1,14 @@
 import streamlit as st
 from logo_sidebar import mostrar_logo_cliente
 
+# ✅ Configuração da página (depois da verificação)
+st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
+
 # ✅ Verificação de login ANTES de qualquer outra coisa
 if not st.session_state.get("acesso_liberado"):
     st.stop()
 
-# ✅ Configuração da página (depois da verificação)
-st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
+
 
 # ✅ Exibe o logo do cliente na sidebar
 mostrar_logo_cliente()
