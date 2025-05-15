@@ -587,6 +587,17 @@ with aba4:
                     height=600
                 )
 
+
+                def highlight_total_transparente(row):
+                    for valor in row:
+                        if pd.isna(valor):
+                            continue
+                        valor = str(valor).strip().lower()
+                        if "total" in valor or "subtotal" in valor:
+                            return ["color: transparent"] * len(row)
+                    return ["color: black"] * len(row)
+
+                
                 st.dataframe(
                     df_resultado.style
                         .apply(highlight_total_transparente, axis=1)
