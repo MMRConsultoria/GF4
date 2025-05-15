@@ -481,9 +481,17 @@ with aba4:
             datas_validas = datas_validas.dt.date
 
             if not datas_validas.empty:
+               from datetime import date
+
+            # Garantir tipo date para todas as datas
+            datas_validas = pd.to_datetime(df_everest["col0"], errors="coerce").dropna().dt.date
+
+            if not datas_validas.empty:
                 min_data = min(datas_validas)
-                max_data = max(datas_validas)
-                sugestao_data = max_data  # última data disponível
+                max_data_planilha = max(datas_validas)
+                hoje = date.today()
+                max_data = max(max_data_planilha, hoje)  # usar o maior entre hoje e planilha
+                sugestao_data = max_data  # sempre sugerir a data mais recente possível
 
                 with st.form("comparativo_form"):
                     data_range = st.date_input(
@@ -491,7 +499,7 @@ with aba4:
                         value=(sugestao_data, sugestao_data),
                         min_value=min_data,
                         max_value=max_data
-                   )
+                    )
                 botao_atualizar = st.form_submit_button("🔄 Atualizar Dados")
 
             if botao_atualizar and isinstance(data_range, tuple) and len(data_range) == 2:
