@@ -27,7 +27,7 @@ df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_r
 # ================================
 # 2. Configuração inicial do app
 # ================================
-st.set_page_config(page_title="Faturamento por Serviço", layout="wide")
+st.set_page_config(page_title="Vendas Diarias", layout="wide")
 #st.title("📋 Relatório de Vendas Diarias")
 
 # 🎨 Estilizar abas
