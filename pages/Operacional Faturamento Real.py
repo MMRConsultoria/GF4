@@ -555,8 +555,10 @@ with aba4:
 
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
 
-                # Excluir linhas com "total" ou "subtotal"
-                df_comp = df_comp[~df_comp["Nome Loja Everest"].astype(str).str.lower().str.contains("total|subtotal", na=False)]
+               # # Excluir linhas com "total" ou "subtotal"
+                df_comp = df_comp[
+                    df_comp["Nome Loja Everest"].str.strip().str.lower() != "total"
+                ]
 
                 # Verificar diferenças reais
                 df_comp["Valor Bruto Iguais"] = df_comp["Valor Bruto (Everest)"] == df_comp["Valor Bruto (Externo)"]
