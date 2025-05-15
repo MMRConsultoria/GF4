@@ -119,7 +119,10 @@ aba1, aba2, aba3, aba4 = st.tabs(["📄 Upload e Processamento", "📥 Download 
 # 📄 Aba 1 - Upload e Processamento
 # ================================
 with aba1:
-    uploaded_file = st.file_uploader("📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de faturamento", type=["xlsx"])
+    uploaded_file = st.file_uploader(
+    "📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de faturamento",
+    type=["xls", "xlsx"]
+    )    
 
     if uploaded_file:
         try:
