@@ -479,7 +479,7 @@ with aba4:
             min_data = datas_validas.min().date()
             max_data = datas_validas.max().date()
             hoje = date.today()
-            sugestao_data = max_data
+            sugestao_data = min(max_data, date.today()) 
 
             with st.form("comparativo_form"):
                 data_range = st.date_input(
