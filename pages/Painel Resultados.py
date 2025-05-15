@@ -260,9 +260,10 @@ with aba2:
 # Aba 3: Análise por Ano, Mês e Dia
 # ================================
 with aba3:
-    #st.subheader("📊 Análise de Faturamento com Filtros por Período")
+    st.markdown("### 📊 Análise de Faturamento por Período")
 
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
+    df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
     df_anos["Ano"] = df_anos["Data"].dt.year
     df_anos["Mês Num"] = df_anos["Data"].dt.month
@@ -293,7 +294,7 @@ with aba3:
     df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
     # === DIA ===
-    dias_disponiveis = sorted(df_filtrado["Dia"].unique())
+    dias_disponiveis = sorted(df_filtrado["Dia"].unique(), reverse=True)
     dias_selecionados = st.multiselect(
         "📆 (Opcional) Selecione dia(s) específico(s):", options=dias_disponiveis
     )
@@ -314,40 +315,47 @@ with aba3:
         df_filtrado["Agrupador"] = df_filtrado["Dia"]
         df_filtrado["Ordem"] = pd.to_datetime(df_filtrado["Dia"], dayfirst=True)
 
-    tabela = df_filtrado.pivot_table(
-        index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0
-    )
+    # === Pivot Tabelas Separadas ===
+    tabela_bruto = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
+    tabela_real = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
 
-    # ✅ Ordenar colunas cronologicamente
+    # Ordenar colunas
     ordem_agrupador = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)
     colunas_ordenadas = list(ordem_agrupador["Agrupador"])
-    tabela = tabela.reindex(columns=colunas_ordenadas)
+    tabela_bruto = tabela_bruto.reindex(columns=colunas_ordenadas)
+    tabela_real = tabela_real.reindex(columns=colunas_ordenadas)
 
-    # Totais
-    linha_total = tabela.sum().to_frame().T
+    # Renomear colunas
+    tabela_bruto.columns = [f"{col} (Bruto)" for col in tabela_bruto.columns]
+    tabela_real.columns = [f"{col} (Real)" for col in tabela_real.columns]
+
+    # Combinar
+    tabela_completa = pd.concat([tabela_bruto, tabela_real], axis=1)
+
+    # Totais por linha
+    tabela_completa.insert(0, "Total Real", tabela_real.sum(axis=1))
+    tabela_completa.insert(0, "Total Bruto", tabela_bruto.sum(axis=1))
+
+    # Linha Total Geral
+    linha_total = pd.DataFrame(tabela_completa.sum()).T
     linha_total.index = ["Total Geral"]
-    coluna_total = tabela.sum(axis=1)
-    tabela.insert(0, "Total Geral", coluna_total)
-    linha_total.insert(0, "Total Geral", coluna_total.sum())
-    tabela_com_total = pd.concat([linha_total, tabela])
+    tabela_final = pd.concat([linha_total, tabela_completa])
 
-    # Formatar para exibição
-    tabela_formatada = tabela_com_total.applymap(
-        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    )
+    # 💄 Formatar
+    tabela_formatada = tabela_final.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
     st.markdown("---")
     st.dataframe(tabela_formatada, use_container_width=True)
 
-    # Excel para download
+    # 📥 Download Excel
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        tabela_com_total.to_excel(writer, sheet_name="Faturamento", index=True)
+        tabela_final.to_excel(writer, sheet_name="Faturamento Detalhado", index=True)
 
     st.download_button(
         label="📥 Baixar Excel com Totais",
         data=buffer.getvalue(),
-        file_name="faturamento_filtrado.xlsx",
+        file_name="faturamento_detalhado.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
