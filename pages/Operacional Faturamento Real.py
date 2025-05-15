@@ -586,7 +586,7 @@ with aba4:
                                 return ["color: transparent"] * len(row)
                         except:
                             continue
-                   return ["color: black"] * len(row)
+                    return ["color: black"] * len(row)
 
                 # 🔹 Estilo colunas: destacar por origem
                 def destacar_colunas_por_origem(col):
