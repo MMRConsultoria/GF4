@@ -29,8 +29,8 @@ if ip_usuario not in IPS_AUTORIZADOS:
 
 # Usuários cadastrados
 USUARIOS = {
-    "1825": {"email": "mari@gmail.com", "senha": "1825"},
-    "1825": {"email": "andre.machado@grupofit.com.br", "senha": "Sala1825"},
+    {"codigo": "1825","email": "mari@gmail.com", "senha": "1825"},
+    {"codigo": "1825","email": "andre.machado@grupofit.com.br", "senha": "Sala1825"},
     #"3377": {"email": "joao@empresa.com", "senha": "joao123"},
     #"0041": {"email": "ana@consultoria.com", "senha": "ana456"}
 }    
@@ -49,8 +49,12 @@ senha = st.text_input("Senha:", type="password")
 
 # ✅ Botão de login
 if st.button("Entrar"):
-    usuario = USUARIOS.get(codigo)
-    if usuario and usuario["senha"] == senha and usuario["email"] == email:
+    usuario_encontrado = next(
+        (u for u in USUARIOS if u["codigo"] == codigo and u["email"] == email and u["senha"] == senha),
+        None
+    )
+
+    if usuario_encontrado:
         if ip_usuario in IPS_AUTORIZADOS:
             st.session_state["acesso_liberado"] = True
             st.session_state["empresa"] = codigo
