@@ -574,18 +574,18 @@ with aba4:
                     "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]
 
-                # Estilo visual: deixar texto invisível em linhas com 'total' ou 'subtotal'
-                def highlight_total_transparente(row):
-                    def contem_total(valor):
-                        if pd.isna(valor):
-                            return False
-                        valor = str(valor).strip().lower()
-                        return "total" in valor or "subtotal" in valor
-
-                    if contem_total(row["Nome (Everest)"]) or contem_total(row["Nome (Externo)"]):
-                        return ["color: transparent"] * len(row)
-                    else:
-                        return ["color: black"] * len(row)
+                st.dataframe(
+                   df_resultado.style
+                        .apply(highlight_total_transparente, axis=1)
+                        .format({
+                            "Valor Bruto (Everest)": "R$ {:,.2f}",
+                            "Valor Real (Everest)": "R$ {:,.2f}",
+                            "Valor Bruto (Externo)": "R$ {:,.2f}",
+                            "Valor Real (Externo)": "R$ {:,.2f}"
+                        }),
+                    use_container_width=True,
+                    height=600
+                )
 
                 st.dataframe(
                     df_resultado.style
