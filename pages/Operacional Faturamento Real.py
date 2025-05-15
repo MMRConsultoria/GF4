@@ -288,7 +288,7 @@ with aba1:
             st.error(f"❌ Erro ao processar o arquivo: {e}")
 
 
-# =======================
+            # =======================
             # 🔸 Relatório por Vendedor (CiSS)
             # =======================
             elif "Relatório 100113" in abas:
