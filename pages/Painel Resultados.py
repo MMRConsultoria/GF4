@@ -271,12 +271,12 @@ with aba3:
     df_anos["Mês"] = df_anos["Data"].dt.strftime('%m/%Y')
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
 
-    # Filtro por ano
+    # 🎯 Filtro por ano
     anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
     ano_opcao = st.multiselect("📅 Selecione o(s) ano(s):", options=anos_disponiveis, default=anos_disponiveis)
     df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
 
-    # Filtro por mês
+    # 🎯 Filtro por mês
     meses_dict = {
         1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
         7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
@@ -288,13 +288,13 @@ with aba3:
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
     df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
-    # Filtro por dia (opcional)
+    # 🎯 Filtro por dia
     dias_disponiveis = sorted(df_filtrado["Dia"].unique())
     dias_selecionados = st.multiselect("📆 (Opcional) Selecione dia(s) específico(s):", options=dias_disponiveis)
     if dias_selecionados:
         df_filtrado = df_filtrado[df_filtrado["Dia"].isin(dias_selecionados)]
 
-    # Escolha do agrupamento e métrica
+    # 📦 Agrupamento e métrica
     agrupamento = st.radio("📂 Agrupar por:", ["Ano", "Mês", "Dia"], horizontal=True)
     metrica = st.selectbox("💰 Selecione a métrica:", ["Fat.Total", "Fat.Real", "Ambos"])
 
@@ -308,7 +308,7 @@ with aba3:
         df_filtrado["Agrupador"] = df_filtrado["Dia"]
         df_filtrado["Ordem"] = pd.to_datetime(df_filtrado["Dia"], dayfirst=True)
 
-    # Pivot da tabela
+    # 🔄 Pivot table
     if metrica == "Fat.Total":
         tabela = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
     elif metrica == "Fat.Real":
@@ -316,12 +316,11 @@ with aba3:
     else:
         pivot_bruto = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
         pivot_real = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
-
         pivot_bruto.columns = [f"{col} (Bruto)" for col in pivot_bruto.columns]
         pivot_real.columns = [f"{col} (Real)" for col in pivot_real.columns]
         tabela = pd.concat([pivot_bruto, pivot_real], axis=1)
 
-    # Ordenar colunas do mais novo para o mais antigo
+    # ⏳ Ordenar colunas do mais novo para o mais antigo
     ordem_agrupador = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)
     if metrica != "Ambos":
         tabela = tabela[ordem_agrupador["Agrupador"]]
@@ -331,15 +330,23 @@ with aba3:
             colunas_ordenadas.extend([f"{col} (Bruto)", f"{col} (Real)"])
         tabela = tabela[[c for c in colunas_ordenadas if c in tabela.columns]]
 
-    # Total geral
-    linha_total = tabela.sum().to_frame().T
-    linha_total.index = ["Total Geral"]
-    coluna_total = tabela.sum(axis=1)
-    tabela.insert(0, "Total Geral", coluna_total)
-    linha_total.insert(0, "Total Geral", coluna_total.sum())
-    tabela_com_total = pd.concat([linha_total, tabela])
+    # ✅ Total Geral correto
+    if metrica != "Ambos":
+        linha_total = tabela.sum().to_frame().T
+        linha_total.index = ["Total Geral"]
+        coluna_total = tabela.sum(axis=1)
+        tabela.insert(0, "Total Geral", coluna_total)
+        linha_total.insert(0, "Total Geral", coluna_total.sum())
+        tabela_com_total = pd.concat([linha_total, tabela])
+    else:
+        coluna_total = tabela.sum(axis=1)
+        linha_total = pd.DataFrame(tabela.sum()).T
+        linha_total.index = ["Total Geral"]
+        tabela.insert(0, "Total Geral", coluna_total)
+        linha_total.insert(0, "Total Geral", coluna_total.sum())
+        tabela_com_total = pd.concat([linha_total, tabela])
 
-    # Formatar exibição
+    # 💄 Formatação visual
     tabela_formatada = tabela_com_total.applymap(
         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     )
@@ -347,7 +354,7 @@ with aba3:
     st.markdown("---")
     st.dataframe(tabela_formatada, use_container_width=True)
 
-    # Download em Excel
+    # 📥 Download em Excel
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         tabela_com_total.to_excel(writer, sheet_name="Faturamento", index=True)
