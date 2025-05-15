@@ -13,7 +13,7 @@ def get_ip():
         return "0.0.0.0"
 
 # Lista de IPs autorizados
-IPS_AUTORIZADOS = ["138.199.53.245", "201.10.22.33"]  # atualize conforme necessário
+IPS_AUTORIZADOS = ["35.197.92.111", "201.10.22.33"]  # atualize conforme necessário
 
 # 👉 Captura o IP corretamente (depois da definição da função)
 ip_usuario = get_ip()
@@ -21,14 +21,22 @@ st.write(f"🛠️ Seu IP: {ip_usuario}")  # Temporário para debug
 
 # ❌ Bloqueia se IP não estiver na lista
 if ip_usuario not in IPS_AUTORIZADOS:
-    st.error("❌ IP não autorizado.")
+    st.markdown("## 🔐 IP não autorizado")
+    st.code(ip_usuario, language="text")
+    st.info("Copie este IP e envie para a equipe da MMR Consultoria para liberar o acesso.")
     st.stop()
+
 
 # Usuários cadastrados
 USUARIOS = {
-    "1825": {"email": "mari@mmr.com", "senha": "nova_senha_segura"},
+    "1825": {"email": "maricelisrossi@gmail.com.br", "senha": "Dir1825"},
     # adicione mais se quiser
-}
+},
+
+    "1825": {
+        "email": "andre.machado@grupofit.com.br",
+        "senha": "Casa1825"
+    }
 
 # ✅ Redireciona se já estiver logado
 if st.session_state.get("acesso_liberado"):
