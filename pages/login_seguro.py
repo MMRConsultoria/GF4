@@ -27,7 +27,7 @@ if ip_usuario not in IPS_AUTORIZADOS:
 
 # ✅ Lista de usuários (permite múltiplos com o mesmo código)
 USUARIOS = [
-    {"codigo": "1825", "email": "mari@gmail.com", "senha": "1825"},
+    {"codigo": "1825", "email": "maricelisrossi@gmail.com", "senha": "1825"},
     {"codigo": "1825", "email": "andre.machado@grupofit.com.br", "senha": "Sala1825"},
     # {"codigo": "3377", "email": "joao@empresa.com", "senha": "joao123"},
     # {"codigo": "0041", "email": "ana@consultoria.com", "senha": "ana456"}
