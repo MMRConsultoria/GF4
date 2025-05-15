@@ -1,20 +1,17 @@
-
 import streamlit as st
 from logo_sidebar import mostrar_logo_cliente
 
-st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
-
-# Garante que a chave exista
-if "acesso_liberado" not in st.session_state:
-    st.session_state["acesso_liberado"] = False
-
-# Se não estiver logado, para o app
-if not st.session_state["acesso_liberado"]:
+# ✅ Verificação de login ANTES de qualquer outra coisa
+if not st.session_state.get("acesso_liberado"):
     st.stop()
 
-# Logo e layout
+# ✅ Configuração da página (depois da verificação)
+st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
+
+# ✅ Exibe o logo do cliente na sidebar
 mostrar_logo_cliente()
 
+# ✅ Logo fixo na sidebar
 st.sidebar.markdown(
     """
     <div style="text-align: center; padding: 10px 0 30px 0;">
@@ -23,6 +20,11 @@ st.sidebar.markdown(
     """,
     unsafe_allow_html=True
 )
+
+# ✅ Conteúdo visível somente após login autorizado
+st.image("https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo-mmr.png", width=150)
+st.markdown("## Bem-vindo ao
+
 
 # Conteúdo visível após login
 st.image("https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo-mmr.png", width=150)
