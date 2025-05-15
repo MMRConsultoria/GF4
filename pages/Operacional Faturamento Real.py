@@ -536,40 +536,34 @@ with aba4:
                 for col in ["Valor Bruto (Externo)", "Valor Real (Externo)"]:
                     ex[col] = ex[col].apply(tratar_valor)
 
-                # Garante que a coluna de impostos exista
+                # Cálculo e arredondamento
                 if "Impostos (Everest)" in ev.columns:
                     ev["Impostos (Everest)"] = pd.to_numeric(ev["Impostos (Everest)"], errors="coerce").fillna(0)
                     ev["Valor Real (Everest)"] = ev["Valor Bruto (Everest)"] - ev["Impostos (Everest)"]
                 else:
-                    st.warning("⚠️ Coluna 'Impostos (Everest)' não encontrada.")
                     ev["Valor Real (Everest)"] = ev["Valor Bruto (Everest)"]
 
-                # Arredonda os valores para garantir comparação exata
                 ev["Valor Bruto (Everest)"] = pd.to_numeric(ev["Valor Bruto (Everest)"], errors="coerce").round(2)
                 ev["Valor Real (Everest)"] = pd.to_numeric(ev["Valor Real (Everest)"], errors="coerce").round(2)
                 ex["Valor Bruto (Externo)"] = pd.to_numeric(ex["Valor Bruto (Externo)"], errors="coerce").round(2)
                 ex["Valor Real (Externo)"] = pd.to_numeric(ex["Valor Real (Externo)"], errors="coerce").round(2)
 
-                # Mapeia nome da loja do sistema externo para a base Everest
-                mapa_nome_loja = ex.drop_duplicates(subset="Codigo")[["Codigo", "Nome Loja Sistema Externo"]] \
+                # Mapear nome da loja (Everest)
+                mapa_nome_loja = ex.drop_duplicates(subset="Codigo")[["Codigo", "Nome Loja Sistema Externo"]]\
                     .set_index("Codigo").to_dict()["Nome Loja Sistema Externo"]
                 ev["Nome Loja Everest"] = ev["Codigo"].map(mapa_nome_loja)
 
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
 
-                # 🔴 Excluir linhas com total/subtotal
-                df_comp = df_comp[
-                    ~df_comp["Nome Loja Everest"].astype(str).str.lower().str.contains("total|subtotal", na=False) &
-                    ~df_comp["Nome Loja Sistema Externo"].astype(str).str.lower().str.contains("total|subtotal", na=False)
-                ]
+                # Excluir linhas com "total" ou "subtotal"
+                df_comp = df_comp[~df_comp["Nome Loja Everest"].astype(str).str.lower().str.contains("total|subtotal", na=False)]
 
-                # Verifica diferenças reais
+                # Verificar diferenças reais
                 df_comp["Valor Bruto Iguais"] = df_comp["Valor Bruto (Everest)"] == df_comp["Valor Bruto (Externo)"]
                 df_comp["Valor Real Iguais"] = df_comp["Valor Real (Everest)"] == df_comp["Valor Real (Externo)"]
 
                 df_diff = df_comp[~(df_comp["Valor Bruto Iguais"] & df_comp["Valor Real Iguais"])].copy()
 
-                # Organiza colunas e renomeia
                 df_resultado = df_diff[[
                     "Data",
                     "Nome Loja Everest", "Codigo", "Valor Bruto (Everest)", "Valor Real (Everest)",
@@ -588,7 +582,6 @@ with aba4:
                     "Valor Bruto (Externo)": "R$ {:,.2f}",
                     "Valor Real (Externo)": "R$ {:,.2f}"
                 }), use_container_width=True, height=600)
-
         else:
             st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
 
