@@ -316,28 +316,43 @@ with aba3:
         tabela_final = pd.concat([linha_total, tabela])
 
     else:  # Ambos
-        tabela_bruto = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
-        tabela_real = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
+        tab_bruto = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
+        tab_real = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
 
-        # Ordenar colunas
-        ordem_agrupador = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)
-        colunas_ordenadas = list(ordem_agrupador["Agrupador"])
-        tabela_bruto = tabela_bruto.reindex(columns=colunas_ordenadas)
-        tabela_real = tabela_real.reindex(columns=colunas_ordenadas)
+        # ✅ Ordenação decrescente
+        ordem = (
+            df_filtrado[["Agrupador", "Ordem"]]
+            .drop_duplicates()
+            .sort_values("Ordem", ascending=False)
+            .Agrupador.tolist()
+        )
 
-        tabela_bruto.columns = [f"{col} (Bruto)" for col in tabela_bruto.columns]
-        tabela_real.columns = [f"{col} (Real)" for col in tabela_real.columns]
+        tab_bruto = tab_bruto.reindex(columns=ordem)
+        tab_real = tab_real.reindex(columns=ordem)
 
-        tabela = pd.concat([tabela_bruto, tabela_real], axis=1)
+        # ✅ Renomear colunas
+        tab_bruto.columns = [f"{col} (Bruto)" for col in tab_bruto.columns]
+        tab_real.columns = [f"{col} (Real)" for col in tab_real.columns]
 
-        # Totais por linha
-        tabela.insert(0, "Total Real", tabela_real.sum(axis=1))
-        tabela.insert(0, "Total Bruto", tabela_bruto.sum(axis=1))
+        # ✅ Intercalar colunas
+        colunas_intercaladas = []
+        for col in ordem:
+            colunas_intercaladas.append(f"{col} (Bruto)")
+            colunas_intercaladas.append(f"{col} (Real)")
 
+        tabela = pd.concat([tab_bruto, tab_real], axis=1)
+        tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
+
+        # Totais
+        tabela.insert(0, "Total Real", tab_real.sum(axis=1))
+        tabela.insert(0, "Total Bruto", tab_bruto.sum(axis=1))
         linha_total = pd.DataFrame(tabela.sum()).T
         linha_total.index = ["Total Geral"]
         tabela_final = pd.concat([linha_total, tabela])
 
+
+
+    
     # === Exibir e exportar ===
     tabela_formatada = tabela_final.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     st.markdown("---")
