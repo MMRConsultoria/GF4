@@ -334,13 +334,16 @@ with aba3:
 
     if agrupamento == "Ano":
         df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
-        df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("Y").dt.to_timestamp()
+        df_filtrado["Ordem"] = pd.to_datetime(df_filtrado["Ano"], format="%Y")
+
     elif agrupamento == "Mês":
-        df_filtrado["Agrupador"] = df_filtrado["Mês"]
+        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%m/%Y")
         df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
-    else:
-        df_filtrado["Agrupador"] = df_filtrado["Dia"]
-        df_filtrado["Ordem"] = pd.to_datetime(df_filtrado["Dia"], dayfirst=True)
+
+    elif agrupamento == "Dia":
+        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
+        df_filtrado["Ordem"] = df_filtrado["Data"]
+
 
     # === MÉTRICA ===
     tipo_metrica = st.radio("💰 Selecione a métrica:", ["Bruto", "Real", "Ambos"], horizontal=True)
