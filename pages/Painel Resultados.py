@@ -261,7 +261,19 @@ with aba2:
 # ================================
 with aba3:
   
+    st.markdown("""
+        <style>
+        /* Cor dos chips de seleção (anos e meses) */
+        .stMultiSelect [data-baseweb="tag"] {
+            background-color: #555555 !important;  /* cinza escuro */
+            color: white !important;
+        }
 
+        .stMultiSelect [data-baseweb="tag"] span {
+            font-weight: 600;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
     # depois vem seus filtros
     # st.multiselect("Ano")
