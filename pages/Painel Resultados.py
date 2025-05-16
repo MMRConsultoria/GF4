@@ -349,20 +349,32 @@ with aba3:
     tipo_metrica = st.radio("💰 Selecione a métrica:", ["Bruto", "Real", "Ambos"], horizontal=True)
 
     # === Tabela conforme métrica ===
+
     if tipo_metrica == "Bruto":
         tabela = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
+
+        # Ordenar colunas em ordem decrescente
+        ordem_agrupador = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)
+        colunas_ordenadas = list(ordem_agrupador["Agrupador"])
+        tabela = tabela.reindex(columns=colunas_ordenadas)
+
         tabela.insert(0, "Total Bruto", tabela.sum(axis=1))
         linha_total = pd.DataFrame(tabela.sum()).T
         linha_total.index = ["Total Geral"]
         tabela_final = pd.concat([linha_total, tabela])
-
+    
     elif tipo_metrica == "Real":
         tabela = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
+
+        # Ordenar colunas em ordem decrescente
+        ordem_agrupador = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)
+        colunas_ordenadas = list(ordem_agrupador["Agrupador"])
+        tabela = tabela.reindex(columns=colunas_ordenadas)
+
         tabela.insert(0, "Total Real", tabela.sum(axis=1))
         linha_total = pd.DataFrame(tabela.sum()).T
         linha_total.index = ["Total Geral"]
         tabela_final = pd.concat([linha_total, tabela])
-
         
         # Ordenar colunas em ordem decrescente usando a data real (Ordem)
         ordem_agrupador = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates()
