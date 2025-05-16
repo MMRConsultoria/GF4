@@ -360,6 +360,12 @@ with aba3:
         linha_total.index = ["Total Geral"]
         tabela_final = pd.concat([linha_total, tabela])
 
+        
+        # Ordenar colunas em ordem decrescente usando a data real (Ordem)
+        ordem_agrupador = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates()
+        ordem_agrupador = ordem_agrupador.sort_values("Ordem", ascending=False)
+        colunas_ordenadas = list(ordem_agrupador["Agrupador"])
+        tabela = tabela.reindex(columns=colunas_ordenadas)
     else:  # Ambos
         tab_bruto = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
         tab_real = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
