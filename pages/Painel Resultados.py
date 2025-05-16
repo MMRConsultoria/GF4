@@ -265,8 +265,8 @@ with aba3:
         <style>
         /* Cor dos chips de seleção (anos e meses) */
         .stMultiSelect [data-baseweb="tag"] {
-            background-color: #333333 !important;  /* cinza escuro */
-            color: white !important;
+            background-color: #bbbbbb !important;  /* cinza claro */
+            color: black !important;
         }
 
         .stMultiSelect [data-baseweb="tag"] span {
