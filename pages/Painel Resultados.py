@@ -261,7 +261,7 @@ with aba2:
 # ================================
 with aba3:
 
-   with aba3:
+  
     st.markdown("""
         <style>
         /* Estilo para os chips dos multiselects (anos e meses) */
