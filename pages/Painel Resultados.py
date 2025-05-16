@@ -368,6 +368,30 @@ with aba3:
         file_name="faturamento_detalhado.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+# ===============================
+# 📦 Resumo por Grupo Interativo
+# ===============================
+st.markdown("## 🧾 Resumo Interativo por Grupo e Loja")
+
+# ✅ Agrupar por Grupo
+grupos = df_filtrado["Grupo"].dropna().unique()
+grupos_ordenados = sorted(grupos)
+
+for grupo in grupos_ordenados:
+    df_grupo = df_filtrado[df_filtrado["Grupo"] == grupo].copy()
+
+    total_bruto = df_grupo["Fat.Total"].sum()
+    total_real = df_grupo["Fat.Real"].sum()
+
+    with st.expander(f"📦 Grupo {grupo} | Total Bruto: R$ {total_bruto:,.2f} | Total Real: R$ {total_real:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")):
+        df_lojas = df_grupo.groupby("Loja")[["Fat.Total", "Fat.Real"]].sum().reset_index()
+        df_lojas.columns = ["Loja", "Faturamento Bruto", "Faturamento Real"]
+
+        df_lojas_formatada = df_lojas.copy()
+        df_lojas_formatada["Faturamento Bruto"] = df_lojas["Faturamento Bruto"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        df_lojas_formatada["Faturamento Real"] = df_lojas["Faturamento Real"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+        st.dataframe(df_lojas_formatada, use_container_width=True)
 
 
 # ================================
