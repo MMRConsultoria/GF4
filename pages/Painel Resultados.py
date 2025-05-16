@@ -261,24 +261,7 @@ with aba2:
 # ================================
 with aba3:
   
-st.markdown("""
-    <style>
-    /* Estilo para os chips dos multiselects (anos e meses) */
-    .stMultiSelect div[data-baseweb="tag"] {
-        background-color: #4a4a4a !important;  /* cinza escuro */
-        color: white !important;
-        font-weight: bold;
-    }
-    .stMultiSelect div[data-baseweb="tag"] span {
-        color: white !important;
-    }
 
-    /* Ícone de fechar (X) */
-    .stMultiSelect div[data-baseweb="tag"] svg {
-        fill: white !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
 
     # depois vem seus filtros
     # st.multiselect("Ano")
