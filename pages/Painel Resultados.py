@@ -308,14 +308,18 @@ with aba3:
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
     df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
-    # === DIA ===
-    dias_disponiveis = sorted(df_filtrado["Dia"].unique())
-    dias_selecionados = st.multiselect(
-        "📆 (Opcional) Selecione dia(s) específico(s):", options=dias_disponiveis
+    # === DIA COM CALENDÁRIO ===
+    data_inicio, data_fim = st.date_input(
+        "📆 Selecione o intervalo de dias:",
+        value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()],
+        min_value=df_filtrado["Data"].min(),
+        max_value=df_filtrado["Data"].max()
     )
 
-    if dias_selecionados:
-        df_filtrado = df_filtrado[df_filtrado["Dia"].isin(dias_selecionados)]
+    df_filtrado = df_filtrado[
+        (df_filtrado["Data"] >= pd.to_datetime(data_inicio)) &
+        (df_filtrado["Data"] <= pd.to_datetime(data_fim))
+    ].copy()
 
     # === AGRUPAMENTO ===
     agrupamento = st.radio("📂 Agrupar por:", ["Ano", "Mês", "Dia"], horizontal=True)
