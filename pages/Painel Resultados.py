@@ -275,14 +275,47 @@ with aba3:
     data_min = df_anos["Data"].min()
     data_max = df_anos["Data"].max()
 
-    data_inicio, data_fim = st.date_input(
-        "📆 Selecione o intervalo de datas:",
-        value=[data_min, data_max],
-        min_value=data_min,
-        max_value=data_max
+    #data_inicio, data_fim = st.date_input(
+    #    "📆 Selecione o intervalo de datas:",
+    #    value=[data_min, data_max],
+    #    min_value=data_min,
+    #    max_value=data_max
+    #)
+
+    #df_filtrado = df_anos[(df_anos["Data"] >= pd.to_datetime(data_inicio)) & (df_anos["Data"] <= pd.to_datetime(data_fim))]
+
+
+
+    # === ANO ===
+    anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
+    ano_opcao = st.multiselect("📅 Selecione o(s) ano(s):", options=anos_disponiveis, default=anos_disponiveis)
+
+    df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
+
+    # === MÊS ===
+    meses_dict = {
+        1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
+        7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
+    }
+
+    meses_disponiveis = sorted(df_filtrado["Mês Num"].unique())
+    meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
+
+    meses_selecionados = st.multiselect(
+        "🗓️ Selecione o(s) mês(es):", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis
     )
 
-    df_filtrado = df_anos[(df_anos["Data"] >= pd.to_datetime(data_inicio)) & (df_anos["Data"] <= pd.to_datetime(data_fim))]
+    meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
+    df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
+
+    # === DIA ===
+    dias_disponiveis = sorted(df_filtrado["Dia"].unique())
+    dias_selecionados = st.multiselect(
+        "📆 (Opcional) Selecione dia(s) específico(s):", options=dias_disponiveis
+    )
+
+    if dias_selecionados:
+        df_filtrado = df_filtrado[df_filtrado["Dia"].isin(dias_selecionados)]
 
     # === AGRUPAMENTO ===
     agrupamento = st.radio("📂 Agrupar por:", ["Ano", "Mês", "Dia"], horizontal=True)
