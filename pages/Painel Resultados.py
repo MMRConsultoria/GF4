@@ -260,8 +260,50 @@ with aba2:
 # Aba 3: Análise por Ano, Mês e Dia
 # ================================
 with aba3:
-    #st.markdown("### 📊 Análise de Faturamento por Período")
 
+    st.markdown("""
+        <style>
+        /* Cinza escuro para multiselects (anos e meses) */
+        .stMultiSelect div[data-baseweb="tag"] {
+            background-color: #444 !important;
+            color: white !important;
+        }
+
+        /* Rótulo do radio button ativo */
+        .stRadio > div[role="radiogroup"] > label[data-testid="stMarkdownContainer"] {
+            color: #333 !important;
+            font-weight: 600;
+        }
+
+        /* Radio buttons marcados */
+        div[data-baseweb="radio"] input:checked + div {
+            background-color: #444 !important;
+            border-color: #333 !important;
+        }
+
+        /* Botão selecionado (tab azul de cima) */
+        button[data-baseweb="tab"][aria-selected="true"] {
+            background-color: #333 !important;
+            color: white !important;
+        }
+
+        /* Borda dos campos de data */
+        .stDateInput input {
+            border: 1px solid #aaa !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # 👇 Seus filtros começam aqui
+    # st.multiselect("Selecione o(s) ano(s):", ...)
+    # st.multiselect("Selecione o(s) mês(es):", ...)
+
+
+
+
+    
+    #st.markdown("### 📊 Análise de Faturamento por Período")
+    
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
