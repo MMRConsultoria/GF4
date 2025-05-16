@@ -260,7 +260,7 @@ with aba2:
 # Aba 3: Análise por Ano, Mês e Dia
 # ================================
 with aba3:
-    st.markdown("### 📊 Análise de Faturamento por Período")
+    #st.markdown("### 📊 Análise de Faturamento por Período")
 
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
