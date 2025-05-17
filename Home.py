@@ -15,7 +15,7 @@ codigo_empresa = st.session_state.get("empresa")
 # ✅ Dicionário com logos por código
 LOGOS_CLIENTES = {
     "1825": "https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo_grupofit.png",
-    "3377": "https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo_empresa2.png",
+    "3377": "https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/rossi_ferramentas_logo.png",
     "0041": "https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo_empresa3.png"
 }
 
