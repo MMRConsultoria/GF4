@@ -62,6 +62,7 @@ if ip_usuario not in IPS_AUTORIZADOS:
 USUARIOS = [
     {"codigo": "1825", "email": "maricelisrossi@gmail.com", "senha": "1825"},
     {"codigo": "1825", "email": "andre.machado@grupofit.com.br", "senha": "Sala1825"},
+    {"codigo": "3377", "email": "maricelisrossi@gmail.com", "senha": "1825"},
 ]
 
 # ✅ Redireciona se já estiver logado
