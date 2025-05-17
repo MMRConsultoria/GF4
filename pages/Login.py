@@ -40,7 +40,7 @@ def get_ip():
         return "0.0.0.0"
 
 # Lista de IPs autorizados
-IPS_AUTORIZADOS = ["35.203.151.101", "201.10.22.33"]  # atualize conforme necessário
+IPS_AUTORIZADOS = ["34.127.88.74", "201.10.22.33"]  # atualize conforme necessário
 
 # 👉 Captura o IP corretamente
 ip_usuario = get_ip()
