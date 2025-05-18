@@ -455,6 +455,8 @@ from st_aggrid import AgGrid, GridOptionsBuilder
 import streamlit as st
 import pandas as pd
 
+st.set_page_config(page_title="Meu App", layout="wide")
+
 st.set_page_config(page_title="Teste Agrupamento", layout="wide")
 
 # ✅ Dados de exemplo
