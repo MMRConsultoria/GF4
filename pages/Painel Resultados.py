@@ -1,5 +1,6 @@
 # pages/PainelResultados.py
-
+import streamlit as st
+st.set_page_config(page_title="Vendas Diarias", layout="wide")  # ✅ Escolha um título só
 
 import streamlit as st
 import pandas as pd
@@ -15,8 +16,8 @@ import io
 from st_aggrid import AgGrid, GridOptionsBuilder
 
 
-st.set_page_config(page_title="Painel Agrupado", layout="wide")
-st.set_page_config(page_title="Vendas Diarias", layout="wide")
+#st.set_page_config(page_title="Painel Agrupado", layout="wide")
+#st.set_page_config(page_title="Vendas Diarias", layout="wide")
 # 🔒 Bloqueia o acesso caso o usuário não esteja logado
 if not st.session_state.get("acesso_liberado"):
     st.stop()
