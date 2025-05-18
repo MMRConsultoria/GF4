@@ -456,7 +456,7 @@ import pandas as pd
 import io
 
 with aba4:
-    st.markdown("## 📊 Painel Interativo por Grupo e Loja")
+    st.markdown("## 📊 Painel Interativo por Grupo e Loja (Otimizado)")
 
     # Preparo dos dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
@@ -471,6 +471,7 @@ with aba4:
     ano_sel = st.multiselect("📅 Ano(s) - Aba 4", anos, default=anos)
     df = df_anos[df_anos["Ano"].isin(ano_sel)]
 
+    # Mês
     meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
                   7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"}
     meses_disp = sorted(df["Mês Num"].unique())
@@ -479,12 +480,14 @@ with aba4:
     meses_num = [k for k, v in meses_dict.items() if v in meses_sel]
     df = df[df["Mês Num"].isin(meses_num)]
 
+    # Dias
     data_inicio, data_fim = st.date_input("📆 Dias - Aba 4", value=[df["Data"].min(), df["Data"].max()])
     df = df[(df["Data"] >= pd.to_datetime(data_inicio)) & (df["Data"] <= pd.to_datetime(data_fim))].copy()
 
+    # Agrupamento por data
     df["Agrupador"] = df["Data"].dt.strftime("%d/%m/%Y")
 
-    # Tabelas intercaladas
+    # Intercalar colunas
     tab_bruto = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
     tab_real = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
 
@@ -493,40 +496,37 @@ with aba4:
 
     tabela_lojas = pd.concat([tab_bruto, tab_real], axis=1)
 
-    # Colunas intercaladas
+    # Colunas intercaladas (limitando a no máximo 14)
     datas = df["Agrupador"].sort_values().unique()
     colunas_final = []
     for d in datas:
         colunas_final.extend([f"{d} (Bruto)", f"{d} (Real)"])
+    colunas_final = colunas_final[-14:]  # limita a últimos 7 dias
     tabela_lojas = tabela_lojas[[c for c in colunas_final if c in tabela_lojas.columns]]
 
-    # Preparo para AgGrid
+    # AgGrid com dados numéricos puros (sem formatação de string)
     df_ag = tabela_lojas.copy().reset_index()
     df_ag = df_ag.sort_values(["Grupo", "Loja"])
 
-    for col in df_ag.columns[2:]:
-        df_ag[col] = df_ag[col].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
     gb = GridOptionsBuilder.from_dataframe(df_ag)
-    gb.configure_default_column(groupable=True, wrapText=True, autoHeight=True)
-    gb.configure_column("Grupo", header_name="Grupo", pinned="left", width=120)
+    gb.configure_default_column(groupable=True, wrapText=False, autoHeight=False)
+    gb.configure_column("Grupo", header_name="Grupo", pinned="left", width=100)
     gb.configure_column("Loja", header_name="Loja", pinned="left", width=180)
-    gb.configure_grid_options(domLayout='normal')
+    gb.configure_grid_options(domLayout='normal', suppressRowClickSelection=True, pagination=True, paginationPageSize=20)
 
     grid_options = gb.build()
 
-    # Mostra AgGrid
-    st.markdown("### 📋 Tabela Interativa por Grupo e Loja")
+    st.markdown("### 🧾 Tabela Agrupada (leve)")
     AgGrid(df_ag, gridOptions=grid_options, fit_columns_on_grid_load=True, height=500)
 
-    # Download Excel
+    # Download Excel (completo)
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         tabela_lojas.reset_index().to_excel(writer, sheet_name="Faturamento Detalhado", index=False)
 
     st.download_button(
-        label="📥 Baixar Excel com Totais",
+        label="📥 Baixar Excel",
         data=buffer.getvalue(),
-        file_name="faturamento_interativo_aggrid.xlsx",
+        file_name="faturamento_aggrid_otimizado.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
