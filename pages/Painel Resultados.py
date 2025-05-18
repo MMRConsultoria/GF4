@@ -463,94 +463,87 @@ with aba4:
     df_anos["Mês"] = df_anos["Data"].dt.strftime('%m/%Y')
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
 
-    # Filtros
+    # === Filtros (IDs únicos para evitar conflitos com aba3) ===
     anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
-    ano_opcao = st.multiselect("📅 Ano(s) - Interativo:", options=anos_disponiveis, default=anos_disponiveis)
+    ano_opcao = st.multiselect("📅 Ano(s) - Aba 4", options=anos_disponiveis, default=anos_disponiveis)
+    df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
 
-    meses_selecionados = st.multiselect("🗓️ Mês(es) - Interativo:", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis)
+    meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
+                  7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"}
 
-    data_inicio, data_fim = st.date_input("📆 Dias - Interativo:", value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()],
-                                          min_value=df_filtrado["Data"].min(), max_value=df_filtrado["Data"].max())
+    meses_disponiveis = sorted(df_filtrado["Mês Num"].unique())
+    meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
+    meses_selecionados = st.multiselect("🗓️ Mês(es) - Aba 4", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis)
+    meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
+    df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
-    agrupamento = st.radio("📂 Agrupamento - Interativo:", ["Ano", "Mês", "Dia"], horizontal=True)
+    data_inicio, data_fim = st.date_input("📆 Dias - Aba 4",
+        value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()],
+        min_value=df_filtrado["Data"].min(),
+        max_value=df_filtrado["Data"].max()
+    )
 
-    tipo_metrica = st.radio("💰 Métrica - Interativo:", ["Bruto", "Real", "Ambos"], horizontal=True)
+    df_filtrado = df_filtrado[
+        (df_filtrado["Data"] >= pd.to_datetime(data_inicio)) &
+        (df_filtrado["Data"] <= pd.to_datetime(data_fim))
+    ].copy()
 
-    if tipo_metrica == "Bruto":
-        tabela = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
-    elif tipo_metrica == "Real":
-        tabela = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
-    else:
-        tab_bruto = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
-        tab_real = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
-        ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
-        tab_bruto = tab_bruto.reindex(columns=ordem)
-        tab_real = tab_real.reindex(columns=ordem)
-        tab_bruto.columns = [f"{col} (Bruto)" for col in tab_bruto.columns]
-        tab_real.columns = [f"{col} (Real)" for col in tab_real.columns]
-        tabela = pd.concat([tab_bruto, tab_real], axis=1)
-        colunas_intercaladas = []
-        for col in ordem:
-            colunas_intercaladas.append(f"{col} (Bruto)")
-            colunas_intercaladas.append(f"{col} (Real)")
-        tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
+    # Agrupador por dia
+    df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
 
-    # Totais
-    if tipo_metrica != "Ambos":
-        ordem_agrupador = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)
-        colunas_ordenadas = list(ordem_agrupador["Agrupador"])
-        tabela = tabela.reindex(columns=colunas_ordenadas)
+    # Tabelas por loja
+    tab_bruto = df_filtrado.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
+    tab_real = df_filtrado.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
 
-    if tipo_metrica in ["Bruto", "Ambos"]:
-        tabela.insert(0, "Total Bruto", tabela.filter(like="Bruto").sum(axis=1))
-    if tipo_metrica in ["Real", "Ambos"]:
-        tabela.insert(0, "Total Real", tabela.filter(like="Real").sum(axis=1))
+    # Renomear colunas
+    tab_bruto.columns = [f"{col} (Bruto)" for col in tab_bruto.columns]
+    tab_real.columns = [f"{col} (Real)" for col in tab_real.columns]
 
-    linha_total = pd.DataFrame(tabela.sum()).T
-    linha_total.index = ["Total Geral"]
-    tabela_final = pd.concat([linha_total, tabela])
+    # Concatenar e ordenar colunas
+    tabela_loja = pd.concat([tab_bruto, tab_real], axis=1)
+    datas = df_filtrado["Agrupador"].sort_values().unique()
+    colunas_intercaladas = []
+    for data in datas:
+        colunas_intercaladas.append(f"{data} (Bruto)")
+        colunas_intercaladas.append(f"{data} (Real)")
+    tabela_loja = tabela_loja[[col for col in colunas_intercaladas if col in tabela_loja.columns]]
 
-    # Exibição interativa por grupo
-    tabela_final = tabela_final.reset_index().rename(columns={"index": "Loja"})
-    tabela_final["Grupo"] = df_filtrado.iloc[:, 4]  # Coluna E
+    # Tabela por grupo
+    tabela_grupo = tabela_loja.groupby("Grupo").sum()
 
-    for col in ["Total Bruto", "Total Real"]:
-        if col in tabela_final.columns:
-            tabela_final[col] = pd.to_numeric(tabela_final[col], errors="coerce").fillna(0)
+    st.markdown("### 🗂️ Totais por Grupo (clique para expandir lojas)")
 
-    st.markdown("---")
-    st.markdown("### 🧾 Tabela por Grupo de Empresa")
-    grupos = tabela_final["Grupo"].dropna().unique()
+    for grupo in sorted(tabela_grupo.index):
+        total_grupo = tabela_grupo.loc[grupo].copy()
+        total_bruto = total_grupo[[c for c in total_grupo.index if "(Bruto)" in c]].sum()
+        total_real = total_grupo[[c for c in total_grupo.index if "(Real)" in c]].sum()
 
-    for grupo in sorted(grupos):
-        df_grupo = tabela_final[tabela_final["Grupo"] == grupo].copy()
-        df_grupo = df_grupo[df_grupo["Loja"] != "Total Geral"]
-
-        total_bruto = df_grupo["Total Bruto"].sum() if "Total Bruto" in df_grupo.columns else 0
-        total_real = df_grupo["Total Real"].sum() if "Total Real" in df_grupo.columns else 0
-
-        with st.expander(f"📁 {grupo} | R$ {total_real:,.2f} Real | R$ {total_bruto:,.2f} Bruto", expanded=False):
-            df_formatado = df_grupo.drop(columns=["Grupo"]).set_index("Loja")
-            df_formatado = df_formatado.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (int, float)) else x)
+        titulo = f"🌟 {grupo} — Total Bruto: R$ {total_bruto:,.2f} | Total Real: R$ {total_real:,.2f}"
+        with st.expander(titulo, expanded=False):
+            df_lojas = tabela_loja.loc[grupo]
+            if isinstance(df_lojas, pd.Series):
+                df_lojas = df_lojas.to_frame().T  # Caso só uma loja
+            df_formatado = df_lojas.copy()
+            df_formatado.index.name = "🏪 Loja"
+            df_formatado = df_formatado.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
             st.dataframe(df_formatado, use_container_width=True)
 
-    df_total = tabela_final[tabela_final["Loja"] == "Total Geral"].drop(columns=["Grupo"]).set_index("Loja")
-    df_total_formatado = df_total.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (int, float)) else x)
-    st.markdown("### 📊 Total Geral")
-    st.dataframe(df_total_formatado, use_container_width=True)
+    # Total geral
+    st.markdown("### 🧾 Total Geral")
+    total_geral = tabela_grupo.sum()
+    total_geral_formatado = total_geral.apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    st.dataframe(total_geral_formatado.to_frame().T, use_container_width=True)
 
     # Exportar
+    st.markdown("---")
+    import io
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        tabela_final.to_excel(writer, sheet_name="Faturamento Detalhado", index=False)
+        tabela_loja.reset_index().to_excel(writer, sheet_name="Faturamento Interativo", index=False)
 
     st.download_button(
         label="📥 Baixar Excel com Totais",
         data=buffer.getvalue(),
-        file_name="faturamento_interativo.xlsx",
+        file_name="faturamento_interativo_grupo.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
-
-
- 
