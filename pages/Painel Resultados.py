@@ -451,19 +451,22 @@ with aba3:
 # ================================
 # Aba 4: Analise Lojas
 # ================================
-with aba4:
-    st.markdown("## 🧩 Faturamento por Grupo (Visão Estilo Excel)")
+from st_aggrid import AgGrid, GridOptionsBuilder
+import pandas as pd
+import io
 
-    # Pré-processamento
+with aba4:
+    st.markdown("## 📊 Painel Interativo por Grupo e Loja")
+
+    # Preparo dos dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
     df_anos["Ano"] = df_anos["Data"].dt.year
     df_anos["Mês Num"] = df_anos["Data"].dt.month
-    df_anos["Mês Nome"] = df_anos["Data"].dt.strftime('%B')
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
 
-    # Filtros (com IDs únicos)
+    # Filtros
     anos = sorted(df_anos["Ano"].unique(), reverse=True)
     ano_sel = st.multiselect("📅 Ano(s) - Aba 4", anos, default=anos)
     df = df_anos[df_anos["Ano"].isin(ano_sel)]
@@ -476,61 +479,54 @@ with aba4:
     meses_num = [k for k, v in meses_dict.items() if v in meses_sel]
     df = df[df["Mês Num"].isin(meses_num)]
 
-    # Filtro por intervalo de dias
     data_inicio, data_fim = st.date_input("📆 Dias - Aba 4", value=[df["Data"].min(), df["Data"].max()])
     df = df[(df["Data"] >= pd.to_datetime(data_inicio)) & (df["Data"] <= pd.to_datetime(data_fim))].copy()
 
     df["Agrupador"] = df["Data"].dt.strftime("%d/%m/%Y")
 
-    # Tabelas intercaladas por grupo
-    bruto = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
-    real = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
+    # Tabelas intercaladas
+    tab_bruto = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
+    tab_real = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
 
-    bruto.columns = [f"{col} (Bruto)" for col in bruto.columns]
-    real.columns = [f"{col} (Real)" for col in real.columns]
+    tab_bruto.columns = [f"{col} (Bruto)" for col in tab_bruto.columns]
+    tab_real.columns = [f"{col} (Real)" for col in tab_real.columns]
 
-    tabela_lojas = pd.concat([bruto, real], axis=1)
+    tabela_lojas = pd.concat([tab_bruto, tab_real], axis=1)
 
-    # Organizar colunas
+    # Colunas intercaladas
     datas = df["Agrupador"].sort_values().unique()
     colunas_final = []
     for d in datas:
         colunas_final.extend([f"{d} (Bruto)", f"{d} (Real)"])
     tabela_lojas = tabela_lojas[[c for c in colunas_final if c in tabela_lojas.columns]]
 
-    # Tabela principal por grupo (resumo)
-    tabela_grupo = tabela_lojas.groupby("Grupo").sum()
-    tabela_grupo_formatada = tabela_grupo.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    # Preparo para AgGrid
+    df_ag = tabela_lojas.copy().reset_index()
+    df_ag = df_ag.sort_values(["Grupo", "Loja"])
 
-    st.markdown("### 📋 Tabela Resumo por Grupo")
-    st.dataframe(tabela_grupo_formatada, use_container_width=True)
+    for col in df_ag.columns[2:]:
+        df_ag[col] = df_ag[col].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
-    # Expanders por grupo com detalhes por loja
-    st.markdown("### 🔎 Detalhamento por Loja (clique para abrir)")
-    for grupo in sorted(tabela_lojas.index.get_level_values(0).unique()):
-        df_lojas = tabela_lojas.loc[grupo]
-        if isinstance(df_lojas, pd.Series):  # Caso só uma loja
-            df_lojas = df_lojas.to_frame().T
-        df_lojas_formatado = df_lojas.copy()
-        df_lojas_formatado.index.name = "🏪 Loja"
-        df_lojas_formatado = df_lojas_formatado.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        with st.expander(f"📂 {grupo}"):
-            st.dataframe(df_lojas_formatado, use_container_width=True)
+    gb = GridOptionsBuilder.from_dataframe(df_ag)
+    gb.configure_default_column(groupable=True, wrapText=True, autoHeight=True)
+    gb.configure_column("Grupo", header_name="Grupo", pinned="left", width=120)
+    gb.configure_column("Loja", header_name="Loja", pinned="left", width=180)
+    gb.configure_grid_options(domLayout='normal')
 
-    # Total geral
-    st.markdown("### 📊 Total Geral")
-    total_geral = tabela_grupo.sum()
-    total_geral_formatado = total_geral.apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-    st.dataframe(total_geral_formatado.to_frame().T, use_container_width=True)
+    grid_options = gb.build()
 
-    # Download
-    import io
+    # Mostra AgGrid
+    st.markdown("### 📋 Tabela Interativa por Grupo e Loja")
+    AgGrid(df_ag, gridOptions=grid_options, fit_columns_on_grid_load=True, height=500)
+
+    # Download Excel
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         tabela_lojas.reset_index().to_excel(writer, sheet_name="Faturamento Detalhado", index=False)
+
     st.download_button(
         label="📥 Baixar Excel com Totais",
         data=buffer.getvalue(),
-        file_name="faturamento_estilo_excel.xlsx",
+        file_name="faturamento_interativo_aggrid.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
