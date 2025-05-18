@@ -456,11 +456,7 @@ with aba3:
 # Aba 4: Analise Lojas
 # ================================
 with aba4:
-    import pandas as pd
-    import io
-    from st_aggrid import AgGrid, GridOptionsBuilder
-
-    st.markdown("## 📊 Painel Interativo por Grupo (clique para expandir)")
+    st.markdown("## 🧾 Faturamento Consolidado por Grupo")
 
     # Prepara o DataFrame
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.title()
@@ -486,66 +482,28 @@ with aba4:
     data_inicio, data_fim = st.date_input("📆 Intervalo de Dias", value=[df["Data"].min(), df["Data"].max()])
     df = df[(df["Data"] >= pd.to_datetime(data_inicio)) & (df["Data"] <= pd.to_datetime(data_fim))].copy()
 
-    df["Agrupador"] = df["Data"].dt.strftime("%d/%m/%Y")
+    # Agrupamento por grupo
+    df_grupo = df.groupby("Grupo").agg(
+        Total_Bruto=("Fat.Total", "sum"),
+        Total_Real=("Fat.Real", "sum")
+    ).reset_index()
 
-    # Tabela intercalada Bruto / Real
-    tab_bruto = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
-    tab_real = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
+    # Formatação
+    df_grupo["Total_Bruto"] = df_grupo["Total_Bruto"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    df_grupo["Total_Real"] = df_grupo["Total_Real"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
-    tab_bruto.columns = [f"{col} (Bruto)" for col in tab_bruto.columns]
-    tab_real.columns = [f"{col} (Real)" for col in tab_real.columns]
+    # Exibição
+    st.markdown("### 📋 Tabela por Grupo")
+    st.dataframe(df_grupo, use_container_width=True)
 
-    tabela_lojas = pd.concat([tab_bruto, tab_real], axis=1)
-
-    # Colunas limitadas (últimos 12 = 6 dias)
-    datas = df["Agrupador"].sort_values().unique()
-    colunas_final = []
-    for d in datas:
-        colunas_final.extend([f"{d} (Bruto)", f"{d} (Real)"])
-    colunas_final = colunas_final[-12:]  # Limita p/ performance
-    tabela_lojas = tabela_lojas[[c for c in colunas_final if c in tabela_lojas.columns]]
-
-    # Certifique-se de que 'Grupo' está presente e não nulo
-    df_ag = tabela_lojas.reset_index().sort_values(["Grupo", "Loja"])
-    df_ag = df_ag.fillna("Grupo não definido")
-
-    # ✅ Verifique que "Grupo" existe
-    assert "Grupo" in df_ag.columns, "Coluna 'Grupo' ausente do DataFrame!"
-
-    # Configurar o AgGrid com agrupamento correto
-    gb = GridOptionsBuilder.from_dataframe(df_ag)
-    gb.configure_default_column(groupable=True, enableRowGroup=True)
-    gb.configure_column("Grupo", rowGroup=True, hide=True)  # ✅ agrupamento ativo
-    gb.configure_column("Loja", header_name="Loja", width=200)
-    gb.configure_grid_options(
-        groupDisplayType="singleColumn",  # ✅ mostra só os grupos
-        pagination=True,
-        paginationPageSize=20
-    )
-    grid_options = gb.build()
-
-    # ✅ Configurar o AgGrid com agrupamento por grupo
-    gb = GridOptionsBuilder.from_dataframe(df_ag)
-    gb.configure_default_column(groupable=True, enableRowGroup=True)
-    gb.configure_column("Grupo", rowGroup=True, hide=True)  # ✅ ativa agrupamento
-    gb.configure_column("Loja", header_name="Loja", width=200)
-    gb.configure_grid_options(
-        groupDisplayType="singleColumn",  # ✅ mostra só os grupos inicialmente
-        pagination=True,
-        paginationPageSize=20
-    )
-    grid_options = gb.build()
-
-    # ✅ Renderiza tabela com grupos colapsáveis
-    AgGrid(df_ag, gridOptions=grid_options, fit_columns_on_grid_load=True, height=500)
     # Download Excel
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        tabela_lojas.reset_index().to_excel(writer, sheet_name="Faturamento", index=False)
+        df_grupo.to_excel(writer, sheet_name="Totais por Grupo", index=False)
 
     st.download_button(
-        label="📥 Baixar Excel",
+        label="📥 Baixar Excel por Grupo",
         data=buffer.getvalue(),
-        file_name="faturamento_grupo_expandido.xlsx",
+        file_name="totais_por_grupo.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
