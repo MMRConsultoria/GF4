@@ -455,7 +455,7 @@ with aba3:
 # ================================
 # Aba 4: Analise Lojas
 # ================================
-with aba3:
+with aba4:
     st.markdown("## 📊 Análise de Faturamento por Período")
 
     st.markdown("""
