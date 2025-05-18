@@ -455,7 +455,7 @@ with aba3:
 # ================================
 # Aba 4: Analise Lojas
 # ================================
-with aba4:
+with aba3:
     st.markdown("## 📊 Análise de Faturamento por Período")
 
     st.markdown("""
@@ -502,7 +502,7 @@ with aba4:
     agrupamento = st.radio("📂 Agrupar por:", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba3")
     if agrupamento == "Ano":
         df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
-        df_filtrado["Ordem"] = pd.to_datetime(df_filtrado["Ano"], format="%Y")
+        df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
     elif agrupamento == "Mês":
         df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%m/%Y")
         df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
@@ -511,15 +511,12 @@ with aba4:
         df_filtrado["Ordem"] = df_filtrado["Data"]
 
     # === VISUALIZAR POR ===
-    modo_visao = st.radio("🕁️ Visualizar por:", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba3")
+    modo_visao = st.radio("👁️ Visualizar por:", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba3")
 
     # === MÉTRICA ===
     tipo_metrica = st.radio("💰 Selecione a métrica:", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba3")
 
     ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
-    # ✅ Ordena colunas pela ordem do agrupador (mais recente primeiro)
-    colunas_ordenadas = [col for col in ordem if col in tabela.columns]
-    tabela = tabela[colunas_ordenadas]
 
     if modo_visao == "Por Grupo":
         df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
@@ -559,6 +556,17 @@ with aba4:
                 colunas_intercaladas.append(f"{col} (Real)")
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
+    # Ordena colunas pela ordem correta
+    colunas_ordenadas = [col for col in ordem if col in tabela.columns or col + " (Bruto)" in tabela.columns or col + " (Real)" in tabela.columns]
+    todas_colunas = []
+    for col in colunas_ordenadas:
+        if tipo_metrica == "Ambos":
+            if f"{col} (Bruto)" in tabela.columns: todas_colunas.append(f"{col} (Bruto)")
+            if f"{col} (Real)" in tabela.columns: todas_colunas.append(f"{col} (Real)")
+        else:
+            todas_colunas.append(col)
+    tabela = tabela[todas_colunas]
+
     tabela.insert(0, "Total", tabela.sum(axis=1))
     total_geral = pd.DataFrame(tabela.sum()).T
     total_geral.index = ["Total Geral"]
@@ -573,7 +581,7 @@ with aba4:
         tabela_final.to_excel(writer, sheet_name="Faturamento", index=True)
 
     st.download_button(
-        label="📅 Baixar Excel com Totais",
+        label="📥 Baixar Excel com Totais",
         data=buffer.getvalue(),
         file_name="faturamento_detalhado.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
