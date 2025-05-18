@@ -456,9 +456,10 @@ with aba3:
 # Aba 4: Analise Lojas
 # ================================
 with aba4:
-    st.markdown("## 🧾 Faturamento Consolidado por Grupo")
+    st.markdown("## 📋 Faturamento Consolidado")
+    modo_visualizacao = st.radio("📊 Visualizar por:", ["Por Loja", "Por Grupo"], horizontal=True)
 
-    # Prepara o DataFrame
+    # Prepara base
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
@@ -482,28 +483,65 @@ with aba4:
     data_inicio, data_fim = st.date_input("📆 Intervalo de Dias", value=[df["Data"].min(), df["Data"].max()])
     df = df[(df["Data"] >= pd.to_datetime(data_inicio)) & (df["Data"] <= pd.to_datetime(data_fim))].copy()
 
-    # Agrupamento por grupo
-    df_grupo = df.groupby("Grupo").agg(
-        Total_Bruto=("Fat.Total", "sum"),
-        Total_Real=("Fat.Real", "sum")
-    ).reset_index()
+    df["Agrupador"] = df["Data"].dt.strftime("%d/%m/%Y")
 
-    # Formatação
-    df_grupo["Total_Bruto"] = df_grupo["Total_Bruto"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-    df_grupo["Total_Real"] = df_grupo["Total_Real"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+    # =====================
+    # VISUALIZAÇÃO POR LOJA
+    # =====================
+    if modo_visualizacao == "Por Loja":
+        tab_bruto = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
+        tab_real = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
 
-    # Exibição
-    st.markdown("### 📋 Tabela por Grupo")
-    st.dataframe(df_grupo, use_container_width=True)
+        tab_bruto.columns = [f"{col} (Bruto)" for col in tab_bruto.columns]
+        tab_real.columns = [f"{col} (Real)" for col in tab_real.columns]
 
-    # Download Excel
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        df_grupo.to_excel(writer, sheet_name="Totais por Grupo", index=False)
+        tabela_lojas = pd.concat([tab_bruto, tab_real], axis=1)
 
-    st.download_button(
-        label="📥 Baixar Excel por Grupo",
-        data=buffer.getvalue(),
-        file_name="totais_por_grupo.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+        # Limitar datas recentes
+        datas = df["Agrupador"].sort_values().unique()
+        colunas_final = []
+        for d in datas:
+            colunas_final.extend([f"{d} (Bruto)", f"{d} (Real)"])
+        colunas_final = colunas_final[-12:]  # últimos 6 dias
+        tabela_lojas = tabela_lojas[[c for c in colunas_final if c in tabela_lojas.columns]]
+
+        st.markdown("### 🏪 Tabela por Loja")
+        st.dataframe(tabela_lojas.reset_index(), use_container_width=True)
+
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+            tabela_lojas.reset_index().to_excel(writer, sheet_name="Por Loja", index=False)
+
+        st.download_button(
+            label="📥 Baixar Excel por Loja",
+            data=buffer.getvalue(),
+            file_name="faturamento_por_loja.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+    # =====================
+    # VISUALIZAÇÃO POR GRUPO
+    # =====================
+    else:
+        df_grupo = df.groupby("Grupo").agg(
+            Total_Bruto=("Fat.Total", "sum"),
+            Total_Real=("Fat.Real", "sum")
+        ).reset_index()
+
+        # Formatação
+        df_grupo["Total_Bruto"] = df_grupo["Total_Bruto"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        df_grupo["Total_Real"] = df_grupo["Total_Real"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+        st.markdown("### 🧾 Tabela por Grupo")
+        st.dataframe(df_grupo, use_container_width=True)
+
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+            df_grupo.to_excel(writer, sheet_name="Por Grupo", index=False)
+
+        st.download_button(
+            label="📥 Baixar Excel por Grupo",
+            data=buffer.getvalue(),
+            file_name="faturamento_por_grupo.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
