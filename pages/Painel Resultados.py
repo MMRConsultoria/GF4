@@ -465,41 +465,16 @@ with aba4:
 
     # Filtros
     anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
-    ano_opcao = st.multiselect("📅 Selecione o(s) ano(s):", options=anos_disponiveis, default=anos_disponiveis)
-    df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
+    ano_opcao = st.multiselect("📅 Ano(s) - Interativo:", options=anos_disponiveis, default=anos_disponiveis)
 
-    meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
-                  7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"}
+    meses_selecionados = st.multiselect("🗓️ Mês(es) - Interativo:", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis)
 
-    meses_disponiveis = sorted(df_filtrado["Mês Num"].unique())
-    meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
-    meses_selecionados = st.multiselect("🗓️ Selecione o(s) mês(es):", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis)
-    meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
-    df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
+    data_inicio, data_fim = st.date_input("📆 Dias - Interativo:", value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()],
+                                          min_value=df_filtrado["Data"].min(), max_value=df_filtrado["Data"].max())
 
-    data_inicio, data_fim = st.date_input("📆 Selecione o intervalo de dias:",
-        value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()],
-        min_value=df_filtrado["Data"].min(),
-        max_value=df_filtrado["Data"].max()
-    )
+    agrupamento = st.radio("📂 Agrupamento - Interativo:", ["Ano", "Mês", "Dia"], horizontal=True)
 
-    df_filtrado = df_filtrado[
-        (df_filtrado["Data"] >= pd.to_datetime(data_inicio)) &
-        (df_filtrado["Data"] <= pd.to_datetime(data_fim))
-    ].copy()
-
-    agrupamento = st.radio("📂 Agrupar por:", ["Ano", "Mês", "Dia"], horizontal=True)
-    if agrupamento == "Ano":
-        df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
-        df_filtrado["Ordem"] = pd.to_datetime(df_filtrado["Ano"], format="%Y")
-    elif agrupamento == "Mês":
-        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%m/%Y")
-        df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
-    else:
-        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
-        df_filtrado["Ordem"] = df_filtrado["Data"]
-
-    tipo_metrica = st.radio("💰 Selecione a métrica:", ["Bruto", "Real", "Ambos"], horizontal=True)
+    tipo_metrica = st.radio("💰 Métrica - Interativo:", ["Bruto", "Real", "Ambos"], horizontal=True)
 
     if tipo_metrica == "Bruto":
         tabela = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
