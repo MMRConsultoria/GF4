@@ -524,8 +524,20 @@ with aba4:
     )
     grid_options = gb.build()
 
-    # ✅ Renderizar tabela com grupos
-    AgGrid(df_ag, gridOptions=grid_options, fit_columns_on_grid_load=True, height=500)
+    # ✅ Configurar o AgGrid com agrupamento por grupo
+    gb = GridOptionsBuilder.from_dataframe(df_ag)
+    gb.configure_default_column(groupable=True, enableRowGroup=True)
+    gb.configure_column("Grupo", rowGroup=True, hide=True)  # ✅ ativa agrupamento
+    gb.configure_column("Loja", header_name="Loja", width=200)
+    gb.configure_grid_options(
+        groupDisplayType="singleColumn",  # ✅ mostra só os grupos inicialmente
+        pagination=True,
+        paginationPageSize=20
+    )
+    grid_options = gb.build()
+
+# ✅ Renderiza tabela com grupos colapsáveis
+AgGrid(df_ag, gridOptions=grid_options, fit_columns_on_grid_load=True, height=500)
     # Download Excel
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
