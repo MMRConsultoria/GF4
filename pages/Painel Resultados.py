@@ -453,17 +453,4 @@ with aba3:
 # Aba 4: Analise Lojas
 # ================================
 with aba4:
-   st.markdown("### 📊 Resumo por Grupo e Loja")
-
-# Supondo que 'Grupo' esteja no seu df_filtrado
-df_filtrado["Grupo"] = df_filtrado["Grupo"].fillna("Sem Grupo")
-
-grupos = df_filtrado["Grupo"].unique()
-
-for grupo in sorted(grupos):
-    st.subheader(f"🗂️ Grupo: {grupo}")
-    
-    df_grupo = df_filtrado[df_filtrado["Grupo"] == grupo]
-    lojas_grupo = df_grupo["Loja"].unique()
-    
-    total_grupo = df_grupo.groupby("Loja")[["Fat.Total", "Fat.Real"]]()
+ 
