@@ -456,9 +456,9 @@ import pandas as pd
 import io
 
 with aba4:
-    st.markdown("## 📂 Painel Interativo: Clique no Grupo para Expandir as Lojas")
+    st.markdown("## 📂 Painel Interativo por Grupo (clique para ver as lojas)")
 
-    # === Prepara dados ===
+    # Preparo
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
@@ -466,7 +466,7 @@ with aba4:
     df_anos["Mês Num"] = df_anos["Data"].dt.month
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
 
-    # === Filtros ===
+    # Filtros
     anos = sorted(df_anos["Ano"].unique(), reverse=True)
     ano_sel = st.multiselect("📅 Ano(s)", anos, default=anos)
     df = df_anos[df_anos["Ano"].isin(ano_sel)]
@@ -493,34 +493,29 @@ with aba4:
     tab_real.columns = [f"{col} (Real)" for col in tab_real.columns]
     tabela_lojas = pd.concat([tab_bruto, tab_real], axis=1)
 
-    # Limita colunas para performance
+    # Limita colunas para leveza
     datas = df["Agrupador"].sort_values().unique()
     colunas_final = []
     for d in datas:
         colunas_final.extend([f"{d} (Bruto)", f"{d} (Real)"])
-    colunas_final = colunas_final[-12:]  # últimos 6 dias = 12 colunas
+    colunas_final = colunas_final[-12:]
     tabela_lojas = tabela_lojas[[c for c in colunas_final if c in tabela_lojas.columns]]
 
-    # Prepara DataFrame para AgGrid
-    df_ag = tabela_lojas.copy().reset_index()
-    df_ag = df_ag.sort_values(["Grupo", "Loja"])
+    # Prepara DataFrame final
+    df_ag = tabela_lojas.reset_index().sort_values(["Grupo", "Loja"])
 
-    # === AgGrid interativo com row grouping ===
+    # === AgGrid com grupo colapsável ===
     gb = GridOptionsBuilder.from_dataframe(df_ag)
-    gb.configure_default_column(groupable=True, enableRowGroup=True)
+    gb.configure_default_column(groupable=True)
     gb.configure_column("Grupo", rowGroup=True, hide=True)
     gb.configure_column("Loja", header_name="Loja", width=180)
     gb.configure_grid_options(
-        groupDisplayType="multipleColumns",
-        enableRowGroup=True,
-        suppressRowClickSelection=True,
+        groupDisplayType="singleColumn",  # ✅ mostra só os grupos colapsados
         pagination=True,
         paginationPageSize=20
     )
-
     grid_options = gb.build()
 
-    # Mostra a tabela
     AgGrid(df_ag, gridOptions=grid_options, fit_columns_on_grid_load=True, height=500)
 
     # Download
@@ -531,6 +526,6 @@ with aba4:
     st.download_button(
         label="📥 Baixar Excel",
         data=buffer.getvalue(),
-        file_name="faturamento_expandido.xlsx",
+        file_name="faturamento_expandido_por_grupo.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
