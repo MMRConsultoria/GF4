@@ -505,24 +505,27 @@ with aba4:
     colunas_final = colunas_final[-12:]  # Limita p/ performance
     tabela_lojas = tabela_lojas[[c for c in colunas_final if c in tabela_lojas.columns]]
 
-    # Prepara para AgGrid
+    # Certifique-se de que 'Grupo' está presente e não nulo
     df_ag = tabela_lojas.reset_index().sort_values(["Grupo", "Loja"])
-    df_ag = df_ag.fillna("Não definido")  # Prevê casos sem grupo
+    df_ag = df_ag.fillna("Grupo não definido")
 
-    # === AgGrid Config ===
+    # ✅ Verifique que "Grupo" existe
+    assert "Grupo" in df_ag.columns, "Coluna 'Grupo' ausente do DataFrame!"
+
+    # Configurar o AgGrid com agrupamento correto
     gb = GridOptionsBuilder.from_dataframe(df_ag)
     gb.configure_default_column(groupable=True, enableRowGroup=True)
-    gb.configure_column("Grupo", rowGroup=True, hide=True)
+    gb.configure_column("Grupo", rowGroup=True, hide=True)  # ✅ agrupamento ativo
     gb.configure_column("Loja", header_name="Loja", width=200)
     gb.configure_grid_options(
-        groupDisplayType="singleColumn",  # ✅ Só os grupos visíveis
+        groupDisplayType="singleColumn",  # ✅ mostra só os grupos
         pagination=True,
         paginationPageSize=20
     )
     grid_options = gb.build()
 
+    # ✅ Renderizar tabela com grupos
     AgGrid(df_ag, gridOptions=grid_options, fit_columns_on_grid_load=True, height=500)
-
     # Download Excel
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
