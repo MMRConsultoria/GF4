@@ -452,27 +452,29 @@ with aba3:
 # Aba 4: Analise Lojas
 # ================================
 from st_aggrid import AgGrid, GridOptionsBuilder
+import streamlit as st
 import pandas as pd
 
-# Exemplo simplificado com Grupo, Loja e Faturamento
+st.set_page_config(page_title="Teste Agrupamento", layout="wide")
+
+# ✅ Dados de exemplo
 df_ag = pd.DataFrame({
     "Grupo": ["A", "A", "B", "B", "C"],
     "Loja": ["Loja 1", "Loja 2", "Loja 3", "Loja 4", "Loja 5"],
     "Faturamento": [1000, 2000, 3000, 4000, 5000]
 })
 
-# === Configurar agrupamento corretamente ===
+# ✅ Configuração do AgGrid
 gb = GridOptionsBuilder.from_dataframe(df_ag)
-gb.configure_default_column(groupable=True)
+gb.configure_default_column(groupable=True, enableRowGroup=True)
 
-# ✅ Agrupar por Grupo, e esconder a coluna (será usada só como agrupador)
+# Agrupamento por Grupo, esconde coluna
 gb.configure_column("Grupo", rowGroup=True, hide=True)
 
-# === ESSENCIAL ===
+# Este é o segredo: exibe só o grupo como linha "pai"
 gb.configure_grid_options(groupDisplayType="singleColumn")
 
-# Finaliza grid
 grid_options = gb.build()
 
-# Renderiza
-AgGrid(df_ag, gridOptions=grid_options, fit_columns_on_grid_load=True)
+# ✅ Renderiza a tabela agrupada
+AgGrid(df_ag, gridOptions=grid_options, fit_columns_on_grid_load=True, height=400)
