@@ -452,7 +452,6 @@ with aba3:
 # Aba 4: Analise Lojas
 # ================================
 with aba4:
-    with aba4:
     st.markdown("## 🧩 Painel Interativo por Grupo de Empresa")
 
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
