@@ -580,7 +580,7 @@ with aba3:
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         tabela_final.to_excel(writer, sheet_name="Faturamento", index=True)
 
-   st.download_button(
+    st.download_button(
         label="📥 Baixar Excel com Totais",
         data=buffer.getvalue(),
         file_name="faturamento_detalhado.xlsx",
