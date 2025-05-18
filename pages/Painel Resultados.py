@@ -517,6 +517,9 @@ with aba4:
     tipo_metrica = st.radio("💰 Selecione a métrica:", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba3")
 
     ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
+    # ✅ Ordena colunas pela ordem do agrupador (mais recente primeiro)
+    colunas_ordenadas = [col for col in ordem if col in tabela.columns]
+    tabela = tabela[colunas_ordenadas]
 
     if modo_visao == "Por Grupo":
         df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
