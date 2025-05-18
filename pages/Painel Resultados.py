@@ -12,7 +12,10 @@ from oauth2client.service_account import ServiceAccountCredentials
 import json
 import plotly.express as px
 import io
+from st_aggrid import AgGrid, GridOptionsBuilder
 
+
+st.set_page_config(page_title="Painel Agrupado", layout="wide")
 st.set_page_config(page_title="Vendas Diarias", layout="wide")
 # 🔒 Bloqueia o acesso caso o usuário não esteja logado
 if not st.session_state.get("acesso_liberado"):
