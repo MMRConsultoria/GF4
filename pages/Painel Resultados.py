@@ -458,7 +458,6 @@ with aba3:
 with aba3:
     st.markdown("## 📊 Análise de Faturamento por Período")
 
-    # Estilo dos chips de seleção
     st.markdown("""
         <style>
         .stMultiSelect [data-baseweb="tag"] {
@@ -471,7 +470,7 @@ with aba3:
         </style>
     """, unsafe_allow_html=True)
 
-    # Normalização
+    # Normaliza dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
@@ -481,11 +480,9 @@ with aba3:
     df_anos["Mês"] = df_anos["Data"].dt.strftime('%m/%Y')
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
 
-    # FILTROS
-    modo_visao = st.radio("👁️ Visualizar por:", ["Por Loja", "Por Grupo"], horizontal=True)
-
+    # === FILTROS ===
     anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
-    ano_opcao = st.multiselect("📅 Selecione o(s) ano(s):", options=anos_disponiveis, default=anos_disponiveis)
+    ano_opcao = st.multiselect("📅 Selecione ano(s):", options=anos_disponiveis, default=anos_disponiveis, key="ano_aba3")
     df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
 
     meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
@@ -493,40 +490,33 @@ with aba3:
 
     meses_disponiveis = sorted(df_filtrado["Mês Num"].unique())
     meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
-
-    meses_selecionados = st.multiselect("🗓️ Selecione o(s) mês(es):", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis)
+    meses_selecionados = st.multiselect("🗓️ Selecione o(s) mês(es):", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis, key="meses_aba3")
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
     df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
+    # === DIA COM CALENDÁRIO ===
     data_inicio, data_fim = st.date_input("📆 Selecione o intervalo de dias:", value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()])
-    df_filtrado = df_filtrado[
-        (df_filtrado["Data"] >= pd.to_datetime(data_inicio)) &
-        (df_filtrado["Data"] <= pd.to_datetime(data_fim))
-    ].copy()
+    df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
 
-    # AGRUPAMENTO
-    agrupamento = st.radio("📂 Agrupar por:", ["Ano", "Mês", "Dia"], horizontal=True)
-
+    # === AGRUPAMENTO ===
+    agrupamento = st.radio("📂 Agrupar por:", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba3")
     if agrupamento == "Ano":
         df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
         df_filtrado["Ordem"] = pd.to_datetime(df_filtrado["Ano"], format="%Y")
-
     elif agrupamento == "Mês":
         df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%m/%Y")
         df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
-
     elif agrupamento == "Dia":
         df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
         df_filtrado["Ordem"] = df_filtrado["Data"]
 
+    # === VISUALIZAR POR ===
+    modo_visao = st.radio("🕁️ Visualizar por:", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba3")
+
+    # === MÉTRICA ===
+    tipo_metrica = st.radio("💰 Selecione a métrica:", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba3")
+
     ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
-
-    # MÉTRICA
-    tipo_metrica = st.radio("💰 Selecione a métrica:", ["Bruto", "Real", "Ambos"], horizontal=True)
-
-    # ===========================
-    # VISÃO POR GRUPO OU POR LOJA
-    # ===========================
 
     if modo_visao == "Por Grupo":
         df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
@@ -544,17 +534,14 @@ with aba3:
             tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
             tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
             tabela = pd.concat([tab_b, tab_r], axis=1)
-
             colunas_intercaladas = []
             for col in ordem:
                 colunas_intercaladas.append(f"{col} (Bruto)")
                 colunas_intercaladas.append(f"{col} (Real)")
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
-
-    else:  # Por Loja
+    else:
         tab_b = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
         tab_r = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
-
         if tipo_metrica == "Bruto":
             tabela = tab_b
         elif tipo_metrica == "Real":
@@ -563,31 +550,27 @@ with aba3:
             tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
             tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
             tabela = pd.concat([tab_b, tab_r], axis=1)
-
             colunas_intercaladas = []
             for col in ordem:
                 colunas_intercaladas.append(f"{col} (Bruto)")
                 colunas_intercaladas.append(f"{col} (Real)")
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
-    # Inserir total geral no topo
     tabela.insert(0, "Total", tabela.sum(axis=1))
     total_geral = pd.DataFrame(tabela.sum()).T
     total_geral.index = ["Total Geral"]
     tabela_final = pd.concat([total_geral, tabela])
 
-    # Formatada para exibição
     tabela_formatada = tabela_final.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x)
     st.markdown("---")
     st.dataframe(tabela_formatada, use_container_width=True)
 
-    # Download Excel
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         tabela_final.to_excel(writer, sheet_name="Faturamento", index=True)
 
     st.download_button(
-        label="📥 Baixar Excel com Totais",
+        label="📅 Baixar Excel com Totais",
         data=buffer.getvalue(),
         file_name="faturamento_detalhado.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
