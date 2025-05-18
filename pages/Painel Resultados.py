@@ -536,8 +536,8 @@ with aba4:
     )
     grid_options = gb.build()
 
-# ✅ Renderiza tabela com grupos colapsáveis
-AgGrid(df_ag, gridOptions=grid_options, fit_columns_on_grid_load=True, height=500)
+    # ✅ Renderiza tabela com grupos colapsáveis
+    AgGrid(df_ag, gridOptions=grid_options, fit_columns_on_grid_load=True, height=500)
     # Download Excel
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
