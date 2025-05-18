@@ -8,3 +8,4 @@ gspread-dataframe
 openpyxl
 gspread-formatting
 plotly
+streamlit-aggrid
