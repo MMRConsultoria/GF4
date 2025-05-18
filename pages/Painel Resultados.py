@@ -455,93 +455,140 @@ with aba3:
 # ================================
 # Aba 4: Analise Lojas
 # ================================
-with aba4:
-    st.markdown("## 📋 Faturamento Consolidado")
-    modo_visualizacao = st.radio("📊 Visualizar por:", ["Por Loja", "Por Grupo"], horizontal=True)
+with aba3:
+    st.markdown("## 📊 Análise de Faturamento por Período")
 
-    # Prepara base
-    df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.title()
+    # Estilo dos chips de seleção
+    st.markdown("""
+        <style>
+        .stMultiSelect [data-baseweb="tag"] {
+            background-color: #bbbbbb !important;
+            color: black !important;
+        }
+        .stMultiSelect [data-baseweb="tag"] span {
+            font-weight: 600;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Normalização
+    df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
     df_anos["Ano"] = df_anos["Data"].dt.year
     df_anos["Mês Num"] = df_anos["Data"].dt.month
+    df_anos["Mês Nome"] = df_anos["Data"].dt.strftime('%B')
+    df_anos["Mês"] = df_anos["Data"].dt.strftime('%m/%Y')
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
 
-    # Filtros
-    anos = sorted(df_anos["Ano"].unique(), reverse=True)
-    ano_sel = st.multiselect("📅 Ano(s)", anos, default=anos)
-    df = df_anos[df_anos["Ano"].isin(ano_sel)]
+    # FILTROS
+    modo_visao = st.radio("👁️ Visualizar por:", ["Por Loja", "Por Grupo"], horizontal=True)
+
+    anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
+    ano_opcao = st.multiselect("📅 Selecione o(s) ano(s):", options=anos_disponiveis, default=anos_disponiveis)
+    df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
 
     meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
                   7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"}
-    meses_disp = sorted(df["Mês Num"].unique())
-    meses_nomes = [meses_dict[m] for m in meses_disp]
-    meses_sel = st.multiselect("🗓️ Mês(es)", meses_nomes, default=meses_nomes)
-    meses_num = [k for k, v in meses_dict.items() if v in meses_sel]
-    df = df[df["Mês Num"].isin(meses_num)]
 
-    data_inicio, data_fim = st.date_input("📆 Intervalo de Dias", value=[df["Data"].min(), df["Data"].max()])
-    df = df[(df["Data"] >= pd.to_datetime(data_inicio)) & (df["Data"] <= pd.to_datetime(data_fim))].copy()
+    meses_disponiveis = sorted(df_filtrado["Mês Num"].unique())
+    meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
 
-    df["Agrupador"] = df["Data"].dt.strftime("%d/%m/%Y")
+    meses_selecionados = st.multiselect("🗓️ Selecione o(s) mês(es):", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis)
+    meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
+    df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
-    # =====================
-    # VISUALIZAÇÃO POR LOJA
-    # =====================
-    if modo_visualizacao == "Por Loja":
-        tab_bruto = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
-        tab_real = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
+    data_inicio, data_fim = st.date_input("📆 Selecione o intervalo de dias:", value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()])
+    df_filtrado = df_filtrado[
+        (df_filtrado["Data"] >= pd.to_datetime(data_inicio)) &
+        (df_filtrado["Data"] <= pd.to_datetime(data_fim))
+    ].copy()
 
-        tab_bruto.columns = [f"{col} (Bruto)" for col in tab_bruto.columns]
-        tab_real.columns = [f"{col} (Real)" for col in tab_real.columns]
+    # AGRUPAMENTO
+    agrupamento = st.radio("📂 Agrupar por:", ["Ano", "Mês", "Dia"], horizontal=True)
 
-        tabela_lojas = pd.concat([tab_bruto, tab_real], axis=1)
+    if agrupamento == "Ano":
+        df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
+        df_filtrado["Ordem"] = pd.to_datetime(df_filtrado["Ano"], format="%Y")
 
-        # Limitar datas recentes
-        datas = df["Agrupador"].sort_values().unique()
-        colunas_final = []
-        for d in datas:
-            colunas_final.extend([f"{d} (Bruto)", f"{d} (Real)"])
-        colunas_final = colunas_final[-12:]  # últimos 6 dias
-        tabela_lojas = tabela_lojas[[c for c in colunas_final if c in tabela_lojas.columns]]
+    elif agrupamento == "Mês":
+        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%m/%Y")
+        df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
 
-        st.markdown("### 🏪 Tabela por Loja")
-        st.dataframe(tabela_lojas.reset_index(), use_container_width=True)
+    elif agrupamento == "Dia":
+        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
+        df_filtrado["Ordem"] = df_filtrado["Data"]
 
-        buffer = io.BytesIO()
-        with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-            tabela_lojas.reset_index().to_excel(writer, sheet_name="Por Loja", index=False)
+    ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
 
-        st.download_button(
-            label="📥 Baixar Excel por Loja",
-            data=buffer.getvalue(),
-            file_name="faturamento_por_loja.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+    # MÉTRICA
+    tipo_metrica = st.radio("💰 Selecione a métrica:", ["Bruto", "Real", "Ambos"], horizontal=True)
 
-    # =====================
-    # VISUALIZAÇÃO POR GRUPO
-    # =====================
-    else:
-        df_grupo = df.groupby("Grupo").agg(
-            Total_Bruto=("Fat.Total", "sum"),
-            Total_Real=("Fat.Real", "sum")
+    # ===========================
+    # VISÃO POR GRUPO OU POR LOJA
+    # ===========================
+
+    if modo_visao == "Por Grupo":
+        df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
+            Bruto=("Fat.Total", "sum"),
+            Real=("Fat.Real", "sum")
         ).reset_index()
 
-        # Formatação
-        df_grupo["Total_Bruto"] = df_grupo["Total_Bruto"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-        df_grupo["Total_Real"] = df_grupo["Total_Real"].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        if tipo_metrica == "Bruto":
+            tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
+        elif tipo_metrica == "Real":
+            tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
+        else:
+            tab_b = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
+            tab_r = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
+            tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
+            tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
+            tabela = pd.concat([tab_b, tab_r], axis=1)
 
-        st.markdown("### 🧾 Tabela por Grupo")
-        st.dataframe(df_grupo, use_container_width=True)
+            colunas_intercaladas = []
+            for col in ordem:
+                colunas_intercaladas.append(f"{col} (Bruto)")
+                colunas_intercaladas.append(f"{col} (Real)")
+            tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
-        buffer = io.BytesIO()
-        with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-            df_grupo.to_excel(writer, sheet_name="Por Grupo", index=False)
+    else:  # Por Loja
+        tab_b = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
+        tab_r = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
 
-        st.download_button(
-            label="📥 Baixar Excel por Grupo",
-            data=buffer.getvalue(),
-            file_name="faturamento_por_grupo.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        if tipo_metrica == "Bruto":
+            tabela = tab_b
+        elif tipo_metrica == "Real":
+            tabela = tab_r
+        else:
+            tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
+            tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
+            tabela = pd.concat([tab_b, tab_r], axis=1)
+
+            colunas_intercaladas = []
+            for col in ordem:
+                colunas_intercaladas.append(f"{col} (Bruto)")
+                colunas_intercaladas.append(f"{col} (Real)")
+            tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
+
+    # Inserir total geral no topo
+    tabela.insert(0, "Total", tabela.sum(axis=1))
+    total_geral = pd.DataFrame(tabela.sum()).T
+    total_geral.index = ["Total Geral"]
+    tabela_final = pd.concat([total_geral, tabela])
+
+    # Formatada para exibição
+    tabela_formatada = tabela_final.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x)
+    st.markdown("---")
+    st.dataframe(tabela_formatada, use_container_width=True)
+
+    # Download Excel
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+        tabela_final.to_excel(writer, sheet_name="Faturamento", index=True)
+
+    st.download_button(
+        label="📥 Baixar Excel com Totais",
+        data=buffer.getvalue(),
+        file_name="faturamento_detalhado.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
