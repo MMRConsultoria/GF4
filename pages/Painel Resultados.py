@@ -447,6 +447,28 @@ with aba3:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
+df_tabela = tabela_final.reset_index().rename(columns={"index": "Loja"})
+df_tabela = df_tabela.merge(df_empresa[["Loja", "Grupo"]], on="Loja", how="left")
+df_tabela["Grupo"] = df_tabela["Grupo"].fillna("Outros")
+
+grupos_unicos = df_tabela["Grupo"].unique()
+
+st.markdown("## 📊 Faturamento por Grupo de Empresa")
+
+for grupo in sorted(grupos_unicos):
+    df_grupo = df_tabela[df_tabela["Grupo"] == grupo].copy()
+    
+    # Pula o Total Geral se existir
+    df_grupo = df_grupo[df_grupo["Loja"] != "Total Geral"]
+
+    total_bruto = df_grupo["Total Bruto"].sum()
+    total_real = df_grupo["Total Real"].sum()
+
+    with st.expander(f"📁 {grupo} | R$ {total_real:,.2f} Real | R$ {total_bruto:,.2f} Bruto", expanded=False):
+        df_formatado = df_grupo.drop(columns=["Grupo"]).set_index("Loja")
+        df_formatado = df_formatado.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+        st.dataframe(df_formatado, use_container_width=True)
 
 
 # ================================
