@@ -453,4 +453,7 @@ with aba3:
 # Aba 4: Analise Lojas
 # ================================
 with aba4:
+    st.info("Você pode colocar tabelas detalhadas e botões de download aqui.")
+
+with aba4:
  
