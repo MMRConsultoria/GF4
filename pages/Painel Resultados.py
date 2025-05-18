@@ -456,9 +456,9 @@ import pandas as pd
 import io
 
 with aba4:
-    st.markdown("## 📊 Painel Interativo por Grupo e Loja (Otimizado)")
+    st.markdown("## 📂 Painel Interativo: Clique no Grupo para Expandir as Lojas")
 
-    # Preparo dos dados
+    # === Prepara dados ===
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
@@ -466,67 +466,71 @@ with aba4:
     df_anos["Mês Num"] = df_anos["Data"].dt.month
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
 
-    # Filtros
+    # === Filtros ===
     anos = sorted(df_anos["Ano"].unique(), reverse=True)
-    ano_sel = st.multiselect("📅 Ano(s) - Aba 4", anos, default=anos)
+    ano_sel = st.multiselect("📅 Ano(s)", anos, default=anos)
     df = df_anos[df_anos["Ano"].isin(ano_sel)]
 
-    # Mês
     meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
                   7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"}
     meses_disp = sorted(df["Mês Num"].unique())
     meses_nomes = [meses_dict[m] for m in meses_disp]
-    meses_sel = st.multiselect("🗓️ Mês(es) - Aba 4", meses_nomes, default=meses_nomes)
+    meses_sel = st.multiselect("🗓️ Mês(es)", meses_nomes, default=meses_nomes)
     meses_num = [k for k, v in meses_dict.items() if v in meses_sel]
     df = df[df["Mês Num"].isin(meses_num)]
 
-    # Dias
-    data_inicio, data_fim = st.date_input("📆 Dias - Aba 4", value=[df["Data"].min(), df["Data"].max()])
+    data_inicio, data_fim = st.date_input("📆 Intervalo de Dias", value=[df["Data"].min(), df["Data"].max()])
     df = df[(df["Data"] >= pd.to_datetime(data_inicio)) & (df["Data"] <= pd.to_datetime(data_fim))].copy()
 
-    # Agrupamento por data
+    # Agrupador
     df["Agrupador"] = df["Data"].dt.strftime("%d/%m/%Y")
 
-    # Intercalar colunas
+    # Tabelas
     tab_bruto = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
     tab_real = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
 
     tab_bruto.columns = [f"{col} (Bruto)" for col in tab_bruto.columns]
     tab_real.columns = [f"{col} (Real)" for col in tab_real.columns]
-
     tabela_lojas = pd.concat([tab_bruto, tab_real], axis=1)
 
-    # Colunas intercaladas (limitando a no máximo 14)
+    # Limita colunas para performance
     datas = df["Agrupador"].sort_values().unique()
     colunas_final = []
     for d in datas:
         colunas_final.extend([f"{d} (Bruto)", f"{d} (Real)"])
-    colunas_final = colunas_final[-14:]  # limita a últimos 7 dias
+    colunas_final = colunas_final[-12:]  # últimos 6 dias = 12 colunas
     tabela_lojas = tabela_lojas[[c for c in colunas_final if c in tabela_lojas.columns]]
 
-    # AgGrid com dados numéricos puros (sem formatação de string)
+    # Prepara DataFrame para AgGrid
     df_ag = tabela_lojas.copy().reset_index()
     df_ag = df_ag.sort_values(["Grupo", "Loja"])
 
+    # === AgGrid interativo com row grouping ===
     gb = GridOptionsBuilder.from_dataframe(df_ag)
-    gb.configure_default_column(groupable=True, wrapText=False, autoHeight=False)
-    gb.configure_column("Grupo", header_name="Grupo", pinned="left", width=100)
-    gb.configure_column("Loja", header_name="Loja", pinned="left", width=180)
-    gb.configure_grid_options(domLayout='normal', suppressRowClickSelection=True, pagination=True, paginationPageSize=20)
+    gb.configure_default_column(groupable=True, enableRowGroup=True)
+    gb.configure_column("Grupo", rowGroup=True, hide=True)
+    gb.configure_column("Loja", header_name="Loja", width=180)
+    gb.configure_grid_options(
+        groupDisplayType="multipleColumns",
+        enableRowGroup=True,
+        suppressRowClickSelection=True,
+        pagination=True,
+        paginationPageSize=20
+    )
 
     grid_options = gb.build()
 
-    st.markdown("### 🧾 Tabela Agrupada (leve)")
+    # Mostra a tabela
     AgGrid(df_ag, gridOptions=grid_options, fit_columns_on_grid_load=True, height=500)
 
-    # Download Excel (completo)
+    # Download
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        tabela_lojas.reset_index().to_excel(writer, sheet_name="Faturamento Detalhado", index=False)
+        tabela_lojas.reset_index().to_excel(writer, sheet_name="Faturamento", index=False)
 
     st.download_button(
         label="📥 Baixar Excel",
         data=buffer.getvalue(),
-        file_name="faturamento_aggrid_otimizado.xlsx",
+        file_name="faturamento_expandido.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
