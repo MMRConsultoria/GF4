@@ -453,79 +453,26 @@ with aba3:
 # ================================
 from st_aggrid import AgGrid, GridOptionsBuilder
 import pandas as pd
-import io
 
-with aba4:
-    st.markdown("## 📂 Painel Interativo por Grupo (clique para ver as lojas)")
+# Exemplo simplificado com Grupo, Loja e Faturamento
+df_ag = pd.DataFrame({
+    "Grupo": ["A", "A", "B", "B", "C"],
+    "Loja": ["Loja 1", "Loja 2", "Loja 3", "Loja 4", "Loja 5"],
+    "Faturamento": [1000, 2000, 3000, 4000, 5000]
+})
 
-    # Preparo
-    df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
-    df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
-    df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
-    df_anos["Ano"] = df_anos["Data"].dt.year
-    df_anos["Mês Num"] = df_anos["Data"].dt.month
-    df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
+# === Configurar agrupamento corretamente ===
+gb = GridOptionsBuilder.from_dataframe(df_ag)
+gb.configure_default_column(groupable=True)
 
-    # Filtros
-    anos = sorted(df_anos["Ano"].unique(), reverse=True)
-    ano_sel = st.multiselect("📅 Ano(s)", anos, default=anos)
-    df = df_anos[df_anos["Ano"].isin(ano_sel)]
+# ✅ Agrupar por Grupo, e esconder a coluna (será usada só como agrupador)
+gb.configure_column("Grupo", rowGroup=True, hide=True)
 
-    meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
-                  7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"}
-    meses_disp = sorted(df["Mês Num"].unique())
-    meses_nomes = [meses_dict[m] for m in meses_disp]
-    meses_sel = st.multiselect("🗓️ Mês(es)", meses_nomes, default=meses_nomes)
-    meses_num = [k for k, v in meses_dict.items() if v in meses_sel]
-    df = df[df["Mês Num"].isin(meses_num)]
+# === ESSENCIAL ===
+gb.configure_grid_options(groupDisplayType="singleColumn")
 
-    data_inicio, data_fim = st.date_input("📆 Intervalo de Dias", value=[df["Data"].min(), df["Data"].max()])
-    df = df[(df["Data"] >= pd.to_datetime(data_inicio)) & (df["Data"] <= pd.to_datetime(data_fim))].copy()
+# Finaliza grid
+grid_options = gb.build()
 
-    # Agrupador
-    df["Agrupador"] = df["Data"].dt.strftime("%d/%m/%Y")
-
-    # Tabelas
-    tab_bruto = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
-    tab_real = df.pivot_table(index=["Grupo", "Loja"], columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
-
-    tab_bruto.columns = [f"{col} (Bruto)" for col in tab_bruto.columns]
-    tab_real.columns = [f"{col} (Real)" for col in tab_real.columns]
-    tabela_lojas = pd.concat([tab_bruto, tab_real], axis=1)
-
-    # Limita colunas para leveza
-    datas = df["Agrupador"].sort_values().unique()
-    colunas_final = []
-    for d in datas:
-        colunas_final.extend([f"{d} (Bruto)", f"{d} (Real)"])
-    colunas_final = colunas_final[-12:]
-    tabela_lojas = tabela_lojas[[c for c in colunas_final if c in tabela_lojas.columns]]
-
-    # Prepara DataFrame final
-    df_ag = tabela_lojas.reset_index().sort_values(["Grupo", "Loja"])
-
-    # === AgGrid com grupo colapsável ===
-    gb = GridOptionsBuilder.from_dataframe(df_ag)
-    gb.configure_default_column(groupable=True)
-    gb.configure_column("Grupo", rowGroup=True, hide=True)
-    gb.configure_column("Loja", header_name="Loja", width=180)
-    gb.configure_grid_options(
-        groupDisplayType="singleColumn",  # ✅ mostra só os grupos colapsados
-        pagination=True,
-        paginationPageSize=20
-    )
-    grid_options = gb.build()
-
-    AgGrid(df_ag, gridOptions=grid_options, fit_columns_on_grid_load=True, height=500)
-
-    # Download
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        tabela_lojas.reset_index().to_excel(writer, sheet_name="Faturamento", index=False)
-
-    st.download_button(
-        label="📥 Baixar Excel",
-        data=buffer.getvalue(),
-        file_name="faturamento_expandido_por_grupo.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+# Renderiza
+AgGrid(df_ag, gridOptions=grid_options, fit_columns_on_grid_load=True)
