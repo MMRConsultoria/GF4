@@ -447,25 +447,60 @@ with aba3:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
-df_tabela = tabela_final.reset_index().rename(columns={"index": "Loja"})
-df_tabela = df_tabela.merge(df_empresa[["Loja", "Grupo"]], on="Loja", how="left")
-df_tabela["Grupo"] = df_tabela["Grupo"].fillna("Outros")
 
-grupos_unicos = df_tabela["Grupo"].unique()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 🧼 Garante que os nomes das colunas estão padronizados
+tabela_final.columns = tabela_final.columns.str.strip()
+
+# Se o índice for a loja, traz para uma coluna normal
+df_tabela = tabela_final.reset_index().rename(columns={"index": "Loja"})
+
+# Verifica se 'Grupo' está na coluna E
+df_tabela["Grupo"] = df_tabela.iloc[:, 4]  # Coluna E = índice 4 (0-based)
+
+# ⚠️ Garante que as colunas numéricas estejam convertidas
+for col in ["Total Bruto", "Total Real"]:
+    if col in df_tabela.columns:
+        df_tabela[col] = pd.to_numeric(df_tabela[col], errors="coerce").fillna(0)
+
+# Exibição por grupo
+grupos_unicos = df_tabela["Grupo"].dropna().unique()
 
 st.markdown("## 📊 Faturamento por Grupo de Empresa")
 
 for grupo in sorted(grupos_unicos):
     df_grupo = df_tabela[df_tabela["Grupo"] == grupo].copy()
     
-    # Pula o Total Geral se existir
-    df_grupo = df_grupo[df_grupo["Loja"] != "Total Geral"]
+    # Evita erro se a coluna não existir
+    if "Total Bruto" not in df_grupo.columns or "Total Real" not in df_grupo.columns:
+        st.warning(f"❗Colunas 'Total Bruto' ou 'Total Real' ausentes para o grupo {grupo}")
+        continue
 
     total_bruto = df_grupo["Total Bruto"].sum()
     total_real = df_grupo["Total Real"].sum()
 
     with st.expander(f"📁 {grupo} | R$ {total_real:,.2f} Real | R$ {total_bruto:,.2f} Bruto", expanded=False):
-        df_formatado = df_grupo.drop(columns=["Grupo"]).set_index("Loja")
+        df_formatado = df_grupo[["Loja", "Total Bruto", "Total Real"]].copy()
+        df_formatado = df_formatado.set_index("Loja")
+
+        # Formatação brasileira
         df_formatado = df_formatado.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
         st.dataframe(df_formatado, use_container_width=True)
