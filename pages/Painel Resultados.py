@@ -457,33 +457,34 @@ with aba3:
 # ================================
 with aba4:
 
-    st.markdown("## 📊 Análise de Faturamento por Período")
-
     st.markdown("""
-    <style>
-    /* Reduz margem entre elementos */
-    div[data-testid="stVerticalBlock"] > div {
-        margin-bottom: 0.2rem !important;
-    }
+<style>
+/* Remove margens verticais entre todos os componentes visuais */
+div[data-testid="stVerticalBlock"] {
+    gap: 0.2rem !important;
+    row-gap: 0.2rem !important;
+}
 
-    /* Reduz espaço entre os blocos do multiselect e date_input */
-    .stMultiSelect, .stDateInput {
-        margin-bottom: 0.1rem !important;
-        padding-bottom: 0rem !important;
-    }
+/* Remove espaço interno entre radio, multiselect, dateinput */
+section > div > div > div > div {
+    margin-bottom: 0.1rem !important;
+    padding-bottom: 0rem !important;
+}
 
-    /* Reduz ainda mais entre qualquer campo */
-    [data-baseweb="select"], [data-testid="stDateInput"] {
-        margin-bottom: 0.2rem !important;
-    }
+/* Remove espaço extra nos chips do multiselect */
+.css-1v0mbdj, .css-1n76uvr {
+    margin-bottom: 0rem !important;
+}
 
-    /* Controla padding geral do container */
-    .block-container {
-        padding-top: 0.5rem !important;
-        padding-bottom: 0.5rem !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+/* Afina padding geral da página */
+.block-container {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
     # Normaliza dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
