@@ -461,35 +461,26 @@ with aba4:
 
     st.markdown("""
     <style>
-    /* Remove espaçamento vertical entre os blocos de filtros */
+    /* Reduz margem entre elementos */
     div[data-testid="stVerticalBlock"] > div {
-        margin-bottom: 0.1rem !important;
-    }
-
-    /* Reduz espaço entre itens de radio e multiselect */
-    div[data-baseweb="radio"] > div,
-    div[data-baseweb="select"] {
-        margin-bottom: 0.1rem !important;
-    }
-
-    /* Reduz padding geral da página */
-    .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
-    }
-
-    /* Espaçamento interno nos filtros */
-    .stRadio, .stMultiSelect, .stDateInput, .stTextInput, .stDownloadButton {
         margin-bottom: 0.2rem !important;
+    }
+
+    /* Reduz espaço entre os blocos do multiselect e date_input */
+    .stMultiSelect, .stDateInput {
+        margin-bottom: 0.1rem !important;
         padding-bottom: 0rem !important;
     }
 
-    /* Reduz espaços entre headers/textos */
-    h1, h2, h3, h4, h5, h6, p {
-        margin-top: 0.2rem !important;
-        margin-bottom: 0.3rem !important;
+    /* Reduz ainda mais entre qualquer campo */
+    [data-baseweb="select"], [data-testid="stDateInput"] {
+        margin-bottom: 0.2rem !important;
+    }
+
+    /* Controla padding geral do container */
+    .block-container {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
     }
     </style>
     """, unsafe_allow_html=True)
