@@ -570,6 +570,42 @@ with aba4:
     tabela.insert(0, "Total", tabela.sum(axis=1))
     total_geral = pd.DataFrame(tabela.sum()).T
     total_geral.index = ["Total Geral"]
+
+
+
+
+     # === INSERIR TOTAL ===
+    if tipo_metrica == "Ambos":
+        cols_bruto = [col for col in tabela.columns if "(Bruto)" in col or col == "Total Bruto"]
+        cols_real = [col for col in tabela.columns if "(Real)" in col or col == "Total Real"]
+
+        total_row = pd.DataFrame(index=["Total Geral"])
+        total_row["Total Bruto"] = tabela[cols_bruto].sum(numeric_only=True).sum()
+        total_row["Total Real"] = tabela[cols_real].sum(numeric_only=True).sum()
+
+        for col in tabela.columns:
+            if col not in ["Total Bruto", "Total Real"]:
+                total_row[col] = tabela[col].sum(numeric_only=True)
+
+        tabela_final = pd.concat([total_row, tabela])
+
+    else:
+        cols_validas = [col for col in tabela.columns if col != "Total"]
+        tabela.insert(0, "Total", tabela[cols_validas].sum(axis=1))
+        total_geral = pd.DataFrame(tabela[cols_validas].sum()).T
+        total_geral.index = ["Total Geral"]
+        tabela_final = pd.concat([total_geral, tabela])
+
+
+
+
+
+
+
+
+
+
+    
     tabela_final = pd.concat([total_geral, tabela])
 
     tabela_formatada = tabela_final.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x)
