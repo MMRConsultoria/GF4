@@ -532,7 +532,18 @@ with aba4:
         df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
         df_filtrado["Ordem"] = df_filtrado["Data"]
 
-    ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
+
+    # Garante ordenação correta (ordem decrescente por data)
+    ordem = (
+        df_filtrado[["Agrupador", "Ordem"]]
+        .drop_duplicates()
+        .sort_values("Ordem", ascending=False)
+        .dropna()
+        .Agrupador
+        .tolist()
+    )
+    
+    df_filtrado["Data"] = pd.to_datetime(df_filtrado["Data"], dayfirst=True, errors="coerce")
 
     # ===================
     # Geração da Tabela
