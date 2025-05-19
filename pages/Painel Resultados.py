@@ -494,11 +494,9 @@ with aba4:
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
     df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
-    # === DIA COM CALENDÁRIO ===
     data_inicio, data_fim = st.date_input("📆 Selecione o intervalo de dias:", value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()])
     df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
 
-    # === AGRUPAMENTO ===
     agrupamento = st.radio("📂 Agrupar por:", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba3")
     if agrupamento == "Ano":
         df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
@@ -510,10 +508,7 @@ with aba4:
         df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
         df_filtrado["Ordem"] = df_filtrado["Data"]
 
-    # === VISUALIZAR POR ===
     modo_visao = st.radio("👁️ Visualizar por:", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba3")
-
-    # === MÉTRICA ===
     tipo_metrica = st.radio("💰 Selecione a métrica:", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba3")
 
     ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
@@ -556,8 +551,8 @@ with aba4:
                 colunas_intercaladas.append(f"{col} (Real)")
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
-    # Ordena colunas pela ordem correta
-    colunas_ordenadas = [col for col in ordem if col in tabela.columns or col + " (Bruto)" in tabela.columns or col + " (Real)" in tabela.columns]
+    # Ordenar colunas
+    colunas_ordenadas = [col for col in ordem if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns]
     todas_colunas = []
     for col in colunas_ordenadas:
         if tipo_metrica == "Ambos":
@@ -567,14 +562,7 @@ with aba4:
             todas_colunas.append(col)
     tabela = tabela[todas_colunas]
 
-    tabela.insert(0, "Total", tabela.sum(axis=1))
-    total_geral = pd.DataFrame(tabela.sum()).T
-    total_geral.index = ["Total Geral"]
-
-
-
-
-     # === INSERIR TOTAL ===
+    # Inserir Totais corretamente
     if tipo_metrica == "Ambos":
         cols_bruto = [col for col in tabela.columns if "(Bruto)" in col or col == "Total Bruto"]
         cols_real = [col for col in tabela.columns if "(Real)" in col or col == "Total Real"]
@@ -588,25 +576,12 @@ with aba4:
                 total_row[col] = tabela[col].sum(numeric_only=True)
 
         tabela_final = pd.concat([total_row, tabela])
-
     else:
         cols_validas = [col for col in tabela.columns if col != "Total"]
         tabela.insert(0, "Total", tabela[cols_validas].sum(axis=1))
         total_geral = pd.DataFrame(tabela[cols_validas].sum()).T
         total_geral.index = ["Total Geral"]
         tabela_final = pd.concat([total_geral, tabela])
-
-
-
-
-
-
-
-
-
-
-    
-    tabela_final = pd.concat([total_geral, tabela])
 
     tabela_formatada = tabela_final.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x)
     st.markdown("---")
@@ -623,4 +598,3 @@ with aba4:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         key="download_aba3"
     )
-
