@@ -464,14 +464,14 @@ def pode_executar_agora():
     hora_local = agora.hour
     return hora_local >= 9
 
-st.markdown("---")  # Linha separadora
 
-st.subheader("🚀 Atualização Externa (Google Apps Script)")
+
+st.subheader("🚀 Atualização DRE")
 
 if pode_executar_agora():
     if st.button("📤 Atualizar via Script Externo"):
         try:
-            url_script = "https://script.google.com/macros/s/AKfycbw10hPDPuHg_j_1_R8gdMynM6Oo8vWzx7YXdvhWe65gIhulGM2md9_hQh8iXwM5iafYtw/exec"  # Substituir pelo seu link
+            url_script = " https://script.google.com/macros/s/AKfycbxzD4Y-2g9E7ss_Tx-glixqcKPQ1hVzBS0PYl7vklBxt08NxUouiiLJitJymC-Y7F4wgA/exec"  # Substituir pelo seu link
             resposta = requests.get(url_script)
 
             if resposta.status_code == 200:
