@@ -586,18 +586,24 @@ with aba4:
         total_geral.index = ["Total Geral"]
         tabela_final = pd.concat([total_geral, tabela])
 
-    tabela_formatada = tabela_final.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x)
-    st.markdown("---")
-    st.dataframe(tabela_formatada, use_container_width=True)
+        # === Contador de Lojas ou Grupos ===
+        quantidade = tabela.shape[0]
+        nome = "Grupos" if modo_visao == "Por Grupo" else "Lojas"
+        st.markdown(f"**🔢 Total de {nome}: {quantidade}**")
 
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        tabela_final.to_excel(writer, sheet_name="Faturamento", index=True)
+    
+        tabela_formatada = tabela_final.applymap(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x)
+        st.markdown("---")
+        st.dataframe(tabela_formatada, use_container_width=True)
 
-    st.download_button(
-        label="📥 Baixar Excel com Totais",
-        data=buffer.getvalue(),
-        file_name="faturamento_detalhado.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="download_aba3"
-    )
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+            tabela_final.to_excel(writer, sheet_name="Faturamento", index=True)
+
+        st.download_button(
+            label="📥 Baixar Excel com Totais",
+            data=buffer.getvalue(),
+            file_name="faturamento_detalhado.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key="download_aba3"
+        )
