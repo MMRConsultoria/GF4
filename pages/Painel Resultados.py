@@ -550,7 +550,7 @@ with aba4:
     )
     
     # Filtro para exibir ou não a coluna Total
-    exibir_total_opcao = st.radio("📊**Coluna Total:**", ["Sim", "Não"], index=0, horizontal=True)
+    exibir_total_opcao = st.radio(label="", options=["Sim", "Não"], index=0, horizontal=True)
     exibir_total = exibir_total_opcao == "Sim"
 
     # Criação do agrupador e ordem com base na escolha
