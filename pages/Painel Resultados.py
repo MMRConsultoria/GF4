@@ -461,8 +461,8 @@ with aba4:
     <style>
     /* Zera espaçamentos verticais padrão */
     div[data-testid="stVerticalBlock"] {
-        gap: 0.3rem !important;
-        row-gap: 0rem !important;
+        gap: 0.4rem !important;
+        row-gap: 0.4rem !important;
     }
 
     /* Alinha chips (multiselect) com campo de data */
