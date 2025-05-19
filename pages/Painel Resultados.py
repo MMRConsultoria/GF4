@@ -557,11 +557,6 @@ with aba4:
    
 
 
-    
-
-    modo_visao = st.radio("", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba3")
-    tipo_metrica = st.radio("", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba3")
-
     ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
 
     if modo_visao == "Por Grupo":
