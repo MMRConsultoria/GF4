@@ -536,15 +536,15 @@ with aba4:
 
     
     #agrupamento = st.radio("", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba3")
-    if agrupamento == "Ano":
-        df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
-        df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
-    elif agrupamento == "Mês":
-        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%m/%Y")
-        df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
-    elif agrupamento == "Dia":
-        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
-        df_filtrado["Ordem"] = df_filtrado["Data"]
+    #if agrupamento == "Ano":
+        #df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
+        #df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
+    #elif agrupamento == "Mês":
+        #df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%m/%Y")
+        #df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
+    #elif agrupamento == "Dia":
+        #df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
+        #df_filtrado["Ordem"] = df_filtrado["Data"]
 
     # Agora sim pode ordenar
     ordem = (
