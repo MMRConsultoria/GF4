@@ -639,7 +639,6 @@ section > div > div > div > div {
     tabela_formatada = tabela_final.applymap(
         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x
     )
-    st.markdown("---")
     st.dataframe(tabela_formatada, use_container_width=True)
 
     buffer = io.BytesIO()
