@@ -468,7 +468,8 @@ def pode_executar_agora():
 if pode_executar_agora():
     if st.button("🚀 Atualizar Dados Externos (Web App)"):
         try:
-            url_script = "https://script.google.com/macros/s/SEU_ID_DO_WEBAPP/exec"  # 🔁 Substitua pelo seu
+            
+            url_script = "https://script.google.com/macros/s/AKfycbw10hPDPuHg_j_1_R8gdMynM6Oo8vWzx7YXdvhWe65gIhulGM2md9_hQh8iXwM5iafYtw/exec"  # 🔁 Substitua pelo seu
             resposta = requests.get(url_script)
 
             if resposta.status_code == 200:
