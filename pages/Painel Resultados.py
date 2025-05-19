@@ -457,7 +457,9 @@ with aba3:
 # ================================
 with aba4:
 
-  st.markdown("""
+    st.markdown("## 📊 Análise de Faturamento por Período")
+
+    st.markdown("""
     <style>
     /* Remove espaçamento vertical entre os blocos de filtros */
     div[data-testid="stVerticalBlock"] > div {
@@ -492,8 +494,6 @@ with aba4:
     </style>
     """, unsafe_allow_html=True)
 
-
-    
     # Normaliza dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
@@ -575,7 +575,6 @@ with aba4:
                 colunas_intercaladas.append(f"{col} (Real)")
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
-    # Ordenar colunas
     colunas_ordenadas = [col for col in ordem if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns]
     todas_colunas = []
     for col in colunas_ordenadas:
@@ -586,7 +585,6 @@ with aba4:
             todas_colunas.append(col)
     tabela = tabela[todas_colunas]
 
-    # Inserir Totais corretamente
     if tipo_metrica == "Ambos":
         cols_bruto = [col for col in tabela.columns if "(Bruto)" in col]
         cols_real = [col for col in tabela.columns if "(Real)" in col]
@@ -609,7 +607,6 @@ with aba4:
         total_geral.index = ["Total Geral"]
         tabela_final = pd.concat([total_geral, tabela])
 
-    # === Contador de Lojas ou Grupos ===
     quantidade = tabela.shape[0]
     nome = "Grupos" if modo_visao == "Por Grupo" else "Lojas"
     st.markdown(f"**🔢 Total de {nome}: {quantidade}**")
