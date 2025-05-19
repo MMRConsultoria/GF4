@@ -457,44 +457,44 @@ with aba3:
 # ================================
 with aba4:
 
-    st.markdown("""
+   st.markdown("""
 <style>
-/* Remove espaçamento vertical geral */
+/* Zera espaçamentos verticais padrão */
 div[data-testid="stVerticalBlock"] {
     gap: 0rem !important;
     row-gap: 0rem !important;
 }
 
-/* Multiselect: força alinhamento mais próximo */
-[data-testid="stMultiSelect"] {
-    margin-bottom: -0.3rem !important;
+/* Alinha chips (multiselect) com campo de data */
+.stMultiSelect {
+    margin-bottom: -0.6rem !important;
 }
 
-/* Date input: reduz espaço vertical */
-[data-testid="stDateInput"] {
-    margin-top: -0.2rem !important;
-    margin-bottom: -0.2rem !important;
+/* Reduz espaço do campo de data com os rádios */
+div[data-testid="stDateInput"] {
+    margin-top: -0.4rem !important;
+    margin-bottom: -0.4rem !important;
+    padding-bottom: 0rem !important;
 }
 
-/* Radio container */
-[data-testid="stRadio"] {
-    margin-top: -0.2rem !important;
-    margin-bottom: -0.2rem !important;
-}
-
-/* Remove espaço adicional entre os rádios */
-[data-baseweb="radio"] {
-    margin-top: 0rem !important;
-    margin-bottom: 0rem !important;
-}
-
-/* Radio wrapper */
+/* Elimina margens entre rádios */
 .stRadio {
+    margin-top: -0.5rem !important;
+    margin-bottom: -0.5rem !important;
+}
+
+/* Refina ainda mais os blocos invisíveis */
+section > div > div > div > div {
     margin-top: 0rem !important;
     margin-bottom: 0rem !important;
 }
 
-/* Padding da página geral */
+/* Zera padding entre colunas internas (radio) */
+[data-baseweb="radio"] {
+    margin: 0rem !important;
+}
+
+/* Padding geral da página */
 .block-container {
     padding-top: 0.5rem !important;
     padding-bottom: 0.5rem !important;
