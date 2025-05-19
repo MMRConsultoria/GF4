@@ -518,7 +518,7 @@ with aba4:
 
     with col3:
         tipo_metrica = st.radio("Métrica:", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba3")
-
+    df_filtrado["Data"] = pd.to_datetime(df_filtrado["Data"], dayfirst=True, errors="coerce")
     # ===================
     # Agrupador e Ordem
     # ===================
@@ -543,7 +543,7 @@ with aba4:
         .tolist()
     )
     
-    df_filtrado["Data"] = pd.to_datetime(df_filtrado["Data"], dayfirst=True, errors="coerce")
+   
 
     # ===================
     # Geração da Tabela
