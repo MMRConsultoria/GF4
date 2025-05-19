@@ -495,10 +495,10 @@ with aba4:
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
     df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
-    data_inicio, data_fim = st.date_input("📆 Selecione o intervalo de dias:", value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()])
+    data_inicio, data_fim = st.date_input("", value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()])
     df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
 
-    agrupamento = st.radio("📂 Agrupar por:", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba3")
+    agrupamento = st.radio("", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba3")
     if agrupamento == "Ano":
         df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
         df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
@@ -509,8 +509,8 @@ with aba4:
         df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
         df_filtrado["Ordem"] = df_filtrado["Data"]
 
-    modo_visao = st.radio("👁️ Visualizar por:", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba3")
-    tipo_metrica = st.radio("💰 Selecione a métrica:", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba3")
+    modo_visao = st.radio("", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba3")
+    tipo_metrica = st.radio("", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba3")
 
     ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
 
