@@ -452,9 +452,35 @@ with aba3:
                     #    st.info("✅ Dados atualizados google sheets.")
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
-
-    else:
+else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
+    from datetime import datetime
+import requests
+
+# 🔘 Botão que chama o Apps Script (após as 9h)
+def pode_executar_agora():
+    # Obtem hora atual no fuso horário de Brasília
+    agora = datetime.now()
+    hora_local = agora.hour
+    return hora_local >= 9
+
+if pode_executar_agora():
+    if st.button("🚀 Atualizar Dados Externos (Web App)"):
+        try:
+            url_script = "https://script.google.com/macros/s/SEU_ID_DO_WEBAPP/exec"  # 🔁 Substitua pelo seu
+            resposta = requests.get(url_script)
+
+            if resposta.status_code == 200:
+                st.success("✅ Atualização realizada com sucesso!")
+                st.info(resposta.text)
+            else:
+                st.error(f"❌ Erro ao executar script: {resposta.status_code}")
+        except Exception as e:
+            st.error(f"❌ Falha ao conectar: {e}")
+else:
+    st.warning("⏰ A atualização externa só está disponível após às 9h (horário de Brasília).")
+
 
 # =======================================
 # Aba 4 - Integração Everest (independente do upload)
