@@ -452,7 +452,7 @@ with aba3:
                     #    st.info("✅ Dados atualizados google sheets.")
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
-else:
+    else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
 
     from datetime import datetime
