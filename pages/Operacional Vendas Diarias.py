@@ -462,7 +462,7 @@ import requests
 def pode_executar_agora():
     agora = datetime.now()
     hora_local = agora.hour
-    return hora_local >= 9
+    return hora_local >= 12
 
 
 
