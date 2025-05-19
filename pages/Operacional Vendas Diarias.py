@@ -455,32 +455,35 @@ with aba3:
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
 
-    from datetime import datetime
+from datetime import datetime
 import requests
 
 # 🔘 Botão que chama o Apps Script (após as 9h)
 def pode_executar_agora():
-    # Obtem hora atual no fuso horário de Brasília
     agora = datetime.now()
     hora_local = agora.hour
     return hora_local >= 9
 
+st.markdown("---")  # Linha separadora
+
+st.subheader("🚀 Atualização Externa (Google Apps Script)")
+
 if pode_executar_agora():
-    if st.button("🚀 Atualizar Dados Externos (Web App)"):
+    if st.button("📤 Atualizar via Script Externo"):
         try:
-            
-            url_script = "https://script.google.com/macros/s/AKfycbw10hPDPuHg_j_1_R8gdMynM6Oo8vWzx7YXdvhWe65gIhulGM2md9_hQh8iXwM5iafYtw/exec"  # 🔁 Substitua pelo seu
+            url_script = "https://script.google.com/macros/s/SEU_ID_DO_WEBAPP/exec"  # Substituir pelo seu link
             resposta = requests.get(url_script)
 
             if resposta.status_code == 200:
                 st.success("✅ Atualização realizada com sucesso!")
                 st.info(resposta.text)
             else:
-                st.error(f"❌ Erro ao executar script: {resposta.status_code}")
+                st.error(f"❌ Erro ao executar o script: {resposta.status_code}")
         except Exception as e:
             st.error(f"❌ Falha ao conectar: {e}")
 else:
     st.warning("⏰ A atualização externa só está disponível após às 9h (horário de Brasília).")
+
 
 
 # =======================================
