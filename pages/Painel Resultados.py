@@ -465,36 +465,30 @@ div[data-testid="stVerticalBlock"] {
     row-gap: 0rem !important;
 }
 
-/* Remove espaço entre chips e data */
-div[data-testid="stVerticalBlock"] > div:nth-child(2) {
-    margin-bottom: -0.4rem !important;
+/* Multiselect: força alinhamento mais próximo */
+[data-testid="stMultiSelect"] {
+    margin-bottom: -0.3rem !important;
 }
 
-/* Remove espaço entre data e rádios */
-div[data-testid="stVerticalBlock"] > div:nth-child(3) {
+/* Date input: reduz espaço vertical */
+[data-testid="stDateInput"] {
     margin-top: -0.2rem !important;
     margin-bottom: -0.2rem !important;
 }
 
-/* Radio: zera margens */
+/* Radio container */
+[data-testid="stRadio"] {
+    margin-top: -0.2rem !important;
+    margin-bottom: -0.2rem !important;
+}
+
+/* Remove espaço adicional entre os rádios */
 [data-baseweb="radio"] {
     margin-top: 0rem !important;
     margin-bottom: 0rem !important;
 }
 
-/* Multiselect: força alinhamento mais próximo */
-.stMultiSelect {
-    margin-bottom: 0rem !important;
-    padding-bottom: 0rem !important;
-}
-
-/* Date input */
-[data-testid="stDateInput"] {
-    margin-bottom: 0rem !important;
-    padding-bottom: 0rem !important;
-}
-
-/* Radio container */
+/* Radio wrapper */
 .stRadio {
     margin-top: 0rem !important;
     margin-bottom: 0rem !important;
@@ -507,6 +501,7 @@ div[data-testid="stVerticalBlock"] > div:nth-child(3) {
 }
 </style>
 """, unsafe_allow_html=True)
+
 
     # Normaliza dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
