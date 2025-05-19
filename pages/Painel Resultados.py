@@ -521,16 +521,28 @@ with aba4:
     data_inicio, data_fim = st.date_input("", value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()])
     df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
 
-    agrupamento = st.radio("", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba3")
-    if agrupamento == "Ano":
-        df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
-        df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
-    elif agrupamento == "Mês":
-        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%m/%Y")
-        df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
-    elif agrupamento == "Dia":
-        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
-        df_filtrado["Ordem"] = df_filtrado["Data"]
+    #agrupamento = st.radio("", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba3")
+    #if agrupamento == "Ano":
+    #    df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
+    #    df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
+    #elif agrupamento == "Mês":
+    #    df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%m/%Y")
+    #    df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
+    #elif agrupamento == "Dia":
+    #    df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
+    #    df_filtrado["Ordem"] = df_filtrado["Data"]
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba3")
+
+    with col2:
+        modo_visao = st.radio(" ", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba3")
+
+    with col3:
+        tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba3")
+    
 
     modo_visao = st.radio("", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba3")
     tipo_metrica = st.radio("", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba3")
