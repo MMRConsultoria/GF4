@@ -457,7 +457,7 @@ with aba3:
 # ================================
 with aba4:
 
-   st.markdown("""
+    st.markdown("""
     <style>
     /* Zera espaçamentos verticais padrão */
     div[data-testid="stVerticalBlock"] {
