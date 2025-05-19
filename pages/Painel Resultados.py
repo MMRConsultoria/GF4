@@ -460,16 +460,33 @@ with aba4:
     st.markdown("## 📊 Análise de Faturamento por Período")
 
     st.markdown("""
-        <style>
-        .stMultiSelect [data-baseweb="tag"] {
-            background-color: #bbbbbb !important;
-            color: black !important;
-        }
-        .stMultiSelect [data-baseweb="tag"] span {
-            font-weight: 600;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    <style>
+    /* Estilo dos chips dos filtros */
+    .stMultiSelect [data-baseweb="tag"] {
+        background-color: #bbbbbb !important;
+        color: black !important;
+    }
+    .stMultiSelect [data-baseweb="tag"] span {
+        font-weight: 600;
+    }
+
+    /* Reduz margens entre componentes */
+    .stRadio, .stMultiSelect, .stDateInput, .stMarkdown {
+        margin-bottom: 0.2rem !important;
+    }
+
+    /* Reduz espaço entre blocos do Streamlit */
+    section.main > div {
+        gap: 0.2rem !important;
+    }
+
+    /* Espaço menor entre textos */
+    .stMarkdown h3, .stMarkdown h2, .stMarkdown p {
+        margin-bottom: 0.1rem !important;
+        margin-top: 0.2rem !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
     # Normaliza dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
