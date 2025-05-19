@@ -543,6 +543,12 @@ with aba4:
     with col3:
         tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba4")
 
+
+    st.markdown(
+        "<div style='margin-bottom: -0.5rem'><b>📊 Coluna Total:</b></div>",
+        unsafe_allow_html=True
+    )
+    
     # Filtro para exibir ou não a coluna Total
     exibir_total_opcao = st.radio("📊**Coluna Total:**", ["Sim", "Não"], index=0, horizontal=True)
     exibir_total = exibir_total_opcao == "Sim"
