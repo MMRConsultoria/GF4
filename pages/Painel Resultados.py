@@ -459,24 +459,35 @@ with aba4:
 
     st.markdown("""
 <style>
-/* Remove margens verticais entre todos os componentes visuais */
+/* Reduz espaçamento geral entre os blocos principais */
 div[data-testid="stVerticalBlock"] {
-    gap: 0.2rem !important;
-    row-gap: 0.2rem !important;
+    gap: 0.1rem !important;
+    row-gap: 0.1rem !important;
 }
 
-/* Remove espaço interno entre radio, multiselect, dateinput */
+/* Remove margem entre elementos visuais dentro de cada coluna */
 section > div > div > div > div {
     margin-bottom: 0.1rem !important;
     padding-bottom: 0rem !important;
 }
 
-/* Remove espaço extra nos chips do multiselect */
-.css-1v0mbdj, .css-1n76uvr {
+/* Remove espaço entre os botões do multiselect */
+.css-1n76uvr, .css-1v0mbdj {
+    margin-bottom: 0rem !important;
+    padding-bottom: 0rem !important;
+}
+
+/* Remove espaço adicional entre os rádios */
+.stRadio > div {
     margin-bottom: 0rem !important;
 }
 
-/* Afina padding geral da página */
+/* Remove margem inferior dos grupos de rádio */
+[data-baseweb="radio"] {
+    margin-bottom: 0rem !important;
+}
+
+/* Deixa o bloco geral da página bem compacto */
 .block-container {
     padding-top: 0.5rem !important;
     padding-bottom: 0.5rem !important;
