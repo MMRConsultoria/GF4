@@ -544,16 +544,15 @@ with aba4:
         tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba4")
 
     #✅ Adicione aqui:
-    col_label, col_radio = st.columns([1, 3])
+    col1, col2 = st.columns([1, 3])
 
-    with col_label:
-        st.markdown("📊 **Coluna Total:**")
+    with col1:
+        st.markdown("**Coluna Total:**", unsafe_allow_html=True)
 
-    with col_radio:
+    with col2:
         opcao_total = st.radio(label="", options=["Sim", "Não"], index=0, horizontal=True)
 
     exibir_total = opcao_total == "Sim"
-
 
     # Variável booleana que você usa no restante do código
     exibir_total = opcao_total == "Sim"
