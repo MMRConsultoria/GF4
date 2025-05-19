@@ -544,7 +544,12 @@ with aba4:
         tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba4")
 
     #✅ Adicione aqui:
-    exibir_total = st.checkbox("📊 Exibir coluna Total", value=True)
+    col_radio, _ = st.columns([1.5, 5])
+    with col_radio:
+        opcao_total = st.radio("📊 Exibir coluna Total", ["Sim", "Não"], index=0, horizontal=True)
+
+    # Variável booleana que você usa no restante do código
+    exibir_total = opcao_total == "Sim"
 
     # Criação do agrupador e ordem com base na escolha
     if agrupamento == "Ano":
