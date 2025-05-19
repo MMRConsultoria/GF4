@@ -471,7 +471,7 @@ def pode_executar_agora():
 if pode_executar_agora():
     if st.button("📤 Atualizar DRE"):
         try:
-            url_script = " https://script.google.com/macros/s/AKfycbxzD4Y-2g9E7ss_Tx-glixqcKPQ1hVzBS0PYl7vklBxt08NxUouiiLJitJymC-Y7F4wgA/exec"  # Substituir pelo seu link
+            url_script = "https://script.google.com/macros/s/AKfycbw-gK_KYcSyqyfimHTuXFLEDxKvWdW4k0o_kOPE-r-SWxL-SpogE2U9wiZt7qCZoH-gqQ/exec"  # Substituir pelo seu link
             resposta = requests.get(url_script)
 
             if resposta.status_code == 200:
