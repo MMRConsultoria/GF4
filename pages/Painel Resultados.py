@@ -459,55 +459,55 @@ with aba4:
 
     st.markdown("""
 <style>
-/* Reduz espaçamento geral entre os blocos principais */
+/* Remove espaçamento vertical geral */
 div[data-testid="stVerticalBlock"] {
-    gap: 0.1rem !important;
-    row-gap: 0.1rem !important;
+    gap: 0rem !important;
+    row-gap: 0rem !important;
 }
 
-/* Remove margem entre elementos visuais dentro de cada coluna */
-section > div > div > div > div {
-    margin-bottom: 0.1rem !important;
-    padding-bottom: 0rem !important;
+/* Remove espaço entre chips e data */
+div[data-testid="stVerticalBlock"] > div:nth-child(2) {
+    margin-bottom: -0.4rem !important;
 }
 
-/* Remove espaço entre os botões do multiselect */
-.css-1n76uvr, .css-1v0mbdj {
-    margin-bottom: 0rem !important;
-    padding-bottom: 0rem !important;
+/* Remove espaço entre data e rádios */
+div[data-testid="stVerticalBlock"] > div:nth-child(3) {
+    margin-top: -0.2rem !important;
+    margin-bottom: -0.2rem !important;
 }
 
-/* Reduz espaço entre Multiselect (chips) e DateInput */
-.stMultiSelect {
-    margin-bottom: 0.2rem !important;
-    padding-bottom: 0rem !important;
-}
-
-/* Reduz espaço entre DateInput e os rádios */
-[data-testid="stDateInput"] {
-    margin-bottom: 0.2rem !important;
-    padding-bottom: 0rem !important;
-}
-
-/* Remove espaço adicional entre os rádios */
-.stRadio > div {
-    margin-bottom: 0rem !important;
-}
-
-/* Remove margem inferior dos grupos de rádio */
+/* Radio: zera margens */
 [data-baseweb="radio"] {
+    margin-top: 0rem !important;
     margin-bottom: 0rem !important;
 }
 
-/* Deixa o bloco geral da página bem compacto */
+/* Multiselect: força alinhamento mais próximo */
+.stMultiSelect {
+    margin-bottom: 0rem !important;
+    padding-bottom: 0rem !important;
+}
+
+/* Date input */
+[data-testid="stDateInput"] {
+    margin-bottom: 0rem !important;
+    padding-bottom: 0rem !important;
+}
+
+/* Radio container */
+.stRadio {
+    margin-top: 0rem !important;
+    margin-bottom: 0rem !important;
+}
+
+/* Padding da página geral */
 .block-container {
     padding-top: 0.5rem !important;
     padding-bottom: 0.5rem !important;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
 }
 </style>
 """, unsafe_allow_html=True)
+
     # Normaliza dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
