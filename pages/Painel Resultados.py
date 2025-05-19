@@ -515,7 +515,7 @@ with aba4:
 
     # === FILTROS ===
     anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
-    ano_opcao = st.multiselect("📅 Selecione ano(s):", options=anos_disponiveis, default=anos_disponiveis, key="ano_aba3")
+    ano_opcao = st.multiselect("📅 Selecione ano/mês(s):", options=anos_disponiveis, default=anos_disponiveis, key="ano_aba3")
     df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
 
     meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
@@ -523,7 +523,7 @@ with aba4:
 
     meses_disponiveis = sorted(df_filtrado["Mês Num"].unique())
     meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
-    meses_selecionados = st.multiselect("🗓️ Selecione o(s) mês(es):", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis, key="meses_aba3")
+    meses_selecionados = st.multiselect("", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis, key="meses_aba3")
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
     df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
