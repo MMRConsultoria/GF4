@@ -546,7 +546,7 @@ with aba4:
     #✅ Adicione aqui:
     col_radio, _ = st.columns([1.5, 5])
     with col_radio:
-        opcao_total = st.radio("📊 Exibir coluna Total", ["Sim", "Não"], index=0, horizontal=True)
+        opcao_total = st.radio(", ["Sim(Coluna Total)", "Não(Coluna Total)"], index=0, horizontal=True)
 
     # Variável booleana que você usa no restante do código
     exibir_total = opcao_total == "Sim"
