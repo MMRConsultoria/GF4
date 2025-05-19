@@ -522,6 +522,7 @@ with aba4:
     df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
 
 
+    # Filtros laterais lado a lado
     col1, col2, col3 = st.columns(3)
 
     with col1:
@@ -533,26 +534,29 @@ with aba4:
     with col3:
         tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba4")
 
+    # Criação do agrupador e ordem com base na escolha
+    if agrupamento == "Ano":
+        df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
+        df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
 
-    
-    #agrupamento = st.radio("", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba3")
-    #if agrupamento == "Ano":
-        #df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
-        #df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
-    #elif agrupamento == "Mês":
-        #df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%m/%Y")
-        #df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
-    #elif agrupamento == "Dia":
-        #df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
-        #df_filtrado["Ordem"] = df_filtrado["Data"]
+    elif agrupamento == "Mês":
+        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%m/%Y")
+        df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
 
-    # Agora sim pode ordenar
+    elif agrupamento == "Dia":
+        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
+        df_filtrado["Ordem"] = df_filtrado["Data"]
+
+    # Garante a ordem correta
     ordem = (
         df_filtrado[["Agrupador", "Ordem"]]
         .drop_duplicates()
         .dropna()
         .sort_values("Ordem", ascending=False)
     )["Agrupador"].tolist()
+   
+
+
     
 
     modo_visao = st.radio("", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba3")
