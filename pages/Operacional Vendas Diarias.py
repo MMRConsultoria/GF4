@@ -549,28 +549,7 @@ with aba4:
                 data_inicio, data_fim = data_range
 
 
-            # Layout em colunas
-            col1, col2, col3 = st.columns(3)
-
-            # Primeira linha de filtros (Ano/Mês/Dia)
-            with col1:
-                tipo_periodo = st.radio(" ", ["Ano", "Mês", "Dia"], index=0, horizontal=False)
-
-            with col2:
-                tipo_visao = st.radio(" ", ["Por Loja", "Por Grupo"], index=0, horizontal=False)
-
-            with col3:
-                tipo_valor = st.radio(" ", ["Bruto", "Real", "Ambos"], index=0, horizontal=False)
-
-            # Exibir total de lojas separado abaixo
-            st.markdown("#### 🧮 Total de Lojas: 82")
-
-
-
-
-
-
-                
+           
                 def tratar_valor(valor):
                     try:
                         return float(str(valor).replace("R$", "").replace(".", "").replace(",", ".").strip())
