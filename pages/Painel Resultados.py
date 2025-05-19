@@ -544,7 +544,7 @@ with aba4:
         tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba4")
 
     #✅ Adicione aqui:
-    col1, col2 = st.columns([1, 3])
+    col1, col2 = st.columns([0, 1])
 
    # Filtro para exibir ou não a coluna Total
     col1, col2 = st.columns([1.1, 5])
