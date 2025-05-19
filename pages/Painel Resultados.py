@@ -461,42 +461,27 @@ with aba4:
 
     st.markdown("""
     <style>
-    /* Estilo dos chips dos filtros */
-    .stMultiSelect [data-baseweb="tag"] {
-        background-color: #bbbbbb !important;
-        color: black !important;
-    }
-    .stMultiSelect [data-baseweb="tag"] span {
-        font-weight: 600;
+    /* Remove margem inferior entre os elementos */
+    .stRadio, .stMultiSelect, .stDateInput, .stTextInput, .stDownloadButton {
+        padding-bottom: 0px !important;
+        margin-bottom: 0px !important;
     }
 
-    /* Reduz espaçamento geral entre blocos */
-    .block-container {
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-        padding-left: 1.5rem;
-        padding-right: 1.5rem;
+    /* Compacta os blocos verticais entre os filtros */
+    div[data-testid="stVerticalBlock"] > div {
+        margin-bottom: 0.1rem !important;
     }
 
-    /* Reduz espaço entre filtros e botões */
-    div[data-testid="stHorizontalBlock"] {
-        gap: 0.3rem !important;
-        margin-bottom: 0.2rem !important;
+    /* Evita espaços internos nos widgets */
+    .st-eb, .st-c5, .st-c6 {
+        padding: 0rem !important;
+        margin: 0rem !important;
     }
 
-    .stRadio, .stMultiSelect, .stDateInput, .stDownloadButton, .stMarkdown {
-        margin-bottom: 0.3rem !important;
-    }
-
-    /* Reduz margens entre títulos e conteúdo */
-    h1, h2, h3, h4, h5, h6, p {
-        margin-top: 0.2rem !important;
-        margin-bottom: 0.3rem !important;
-    }
-
-    /* Ajusta espaço entre seções */
+    /* Reduz ainda mais espaço entre containers principais */
     section.main > div {
-        gap: 0.3rem !important;
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
