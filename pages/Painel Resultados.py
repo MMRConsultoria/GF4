@@ -457,33 +457,39 @@ with aba3:
 # ================================
 with aba4:
 
-    st.markdown("## 📊 Análise de Faturamento por Período")
+   st.markdown("""
+<style>
+/* Remove espaçamento vertical entre os blocos de filtros */
+div[data-testid="stVerticalBlock"] > div {
+    margin-bottom: 0.1rem !important;
+}
 
-    st.markdown("""
-    <style>
-    /* Remove margem inferior entre os elementos */
-    .stRadio, .stMultiSelect, .stDateInput, .stTextInput, .stDownloadButton {
-        padding-bottom: 0px !important;
-        margin-bottom: 0px !important;
-    }
+/* Reduz espaço entre itens de radio e multiselect */
+div[data-baseweb="radio"] > div,
+div[data-baseweb="select"] {
+    margin-bottom: 0.1rem !important;
+}
 
-    /* Compacta os blocos verticais entre os filtros */
-    div[data-testid="stVerticalBlock"] > div {
-        margin-bottom: 0.1rem !important;
-    }
+/* Reduz padding geral da página */
+.block-container {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
 
-    /* Evita espaços internos nos widgets */
-    .st-eb, .st-c5, .st-c6 {
-        padding: 0rem !important;
-        margin: 0rem !important;
-    }
+/* Espaçamento interno nos filtros */
+.stRadio, .stMultiSelect, .stDateInput, .stTextInput, .stDownloadButton {
+    margin-bottom: 0.2rem !important;
+    padding-bottom: 0rem !important;
+}
 
-    /* Reduz ainda mais espaço entre containers principais */
-    section.main > div {
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
-    }
-    </style>
+/* Reduz espaços entre headers/textos */
+h1, h2, h3, h4, h5, h6, p {
+    margin-top: 0.2rem !important;
+    margin-bottom: 0.3rem !important;
+}
+</style>
 """, unsafe_allow_html=True)
 
 
