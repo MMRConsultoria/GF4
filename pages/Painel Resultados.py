@@ -549,7 +549,7 @@ with aba4:
     with col1:
         st.markdown(
         """
-            <div style='padding-top: 0.4rem; font-weight: 600;'>Coluna Total:</div>
+            <div style='padding-top: 0.2rem; font-weight: 600;'>Coluna Total:</div>
             """, 
             unsafe_allow_html=True
         )
