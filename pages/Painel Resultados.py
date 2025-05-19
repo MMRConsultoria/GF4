@@ -545,7 +545,7 @@ with aba4:
 
 
     st.markdown(
-        "<div style='margin-bottom: -0.8rem'><b>📊 Coluna Total:</b></div>",
+        "<div style='margin-bottom: -0.1rem'><b>📊 Coluna Total:</b></div>",
         unsafe_allow_html=True
     )
     
