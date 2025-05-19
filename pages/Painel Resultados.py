@@ -470,24 +470,39 @@ with aba4:
         font-weight: 600;
     }
 
-    /* Reduz margens entre componentes */
-    .stRadio, .stMultiSelect, .stDateInput, .stMarkdown {
+    /* Reduz espaçamento geral entre blocos */
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+
+    /* Reduz espaço entre filtros e botões */
+    div[data-testid="stHorizontalBlock"] {
+        gap: 0.3rem !important;
         margin-bottom: 0.2rem !important;
     }
 
-    /* Reduz espaço entre blocos do Streamlit */
-    section.main > div {
-        gap: 0.2rem !important;
+    .stRadio, .stMultiSelect, .stDateInput, .stDownloadButton, .stMarkdown {
+        margin-bottom: 0.3rem !important;
     }
 
-    /* Espaço menor entre textos */
-    .stMarkdown h3, .stMarkdown h2, .stMarkdown p {
-        margin-bottom: 0.1rem !important;
+    /* Reduz margens entre títulos e conteúdo */
+    h1, h2, h3, h4, h5, h6, p {
         margin-top: 0.2rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+
+    /* Ajusta espaço entre seções */
+    section.main > div {
+        gap: 0.3rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
+
+    
     # Normaliza dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
