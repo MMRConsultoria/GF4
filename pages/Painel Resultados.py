@@ -543,6 +543,9 @@ with aba4:
     with col3:
         tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba4")
 
+    #✅ Adicione aqui:
+    exibir_total = st.checkbox("📊 Exibir coluna Total", value=True)
+
     # Criação do agrupador e ordem com base na escolha
     if agrupamento == "Ano":
         df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
@@ -632,10 +635,10 @@ with aba4:
     else:
         cols_validas = [col for col in tabela.columns if col != "Total"]
         if exibir_total:
-        tabela["Total"] = tabela[cols_validas].sum(axis=1)
-        tabela = tabela[["Total"] + cols_validas]
-    else:
-        tabela = tabela[cols_validas]
+            tabela["Total"] = tabela[cols_validas].sum(axis=1)
+            tabela = tabela[["Total"] + cols_validas]
+        else:
+            tabela = tabela[cols_validas]
 
         
         total_geral = pd.DataFrame(tabela.sum(numeric_only=True)).T
