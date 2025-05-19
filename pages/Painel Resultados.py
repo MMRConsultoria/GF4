@@ -456,19 +456,37 @@ with aba3:
 # Aba 4: Analise Lojas
 # ================================
 with aba4:
+
     st.markdown("## 📊 Análise de Faturamento por Período")
 
     st.markdown("""
     <style>
-    /* Ajustes de espaçamento */
+    /* Remove espaçamento vertical entre os blocos de filtros */
     div[data-testid="stVerticalBlock"] > div {
         margin-bottom: 0.1rem !important;
     }
 
-    .block-container {
-        padding: 1rem !important;
+    /* Reduz espaço entre itens de radio e multiselect */
+    div[data-baseweb="radio"] > div,
+    div[data-baseweb="select"] {
+        margin-bottom: 0.1rem !important;
     }
 
+    /* Reduz padding geral da página */
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    /* Espaçamento interno nos filtros */
+    .stRadio, .stMultiSelect, .stDateInput, .stTextInput, .stDownloadButton {
+        margin-bottom: 0.2rem !important;
+        padding-bottom: 0rem !important;
+    }
+
+    /* Reduz espaços entre headers/textos */
     h1, h2, h3, h4, h5, h6, p {
         margin-top: 0.2rem !important;
         margin-bottom: 0.3rem !important;
@@ -476,9 +494,7 @@ with aba4:
     </style>
     """, unsafe_allow_html=True)
 
-    # =====================
-    # Pré-processamento
-    # =====================
+    # Normaliza dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
@@ -488,9 +504,7 @@ with aba4:
     df_anos["Mês"] = df_anos["Data"].dt.strftime('%m/%Y')
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
 
-    # ===============
-    # Filtros
-    # ===============
+    # === FILTROS ===
     anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
     ano_opcao = st.multiselect("📅 Selecione ano(s):", options=anos_disponiveis, default=anos_disponiveis, key="ano_aba3")
     df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
@@ -504,24 +518,10 @@ with aba4:
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
     df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
-    data_inicio, data_fim = st.date_input("📆 Intervalo de datas:", value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()])
+    data_inicio, data_fim = st.date_input("", value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()])
     df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
 
-    # Filtros lado a lado
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        agrupamento = st.radio("Agrupamento:", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba3")
-
-    with col2:
-        modo_visao = st.radio("Visualização:", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba3")
-
-    with col3:
-        tipo_metrica = st.radio("Métrica:", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba3")
-    df_filtrado["Data"] = pd.to_datetime(df_filtrado["Data"], dayfirst=True, errors="coerce")
-    # ===================
-    # Agrupador e Ordem
-    # ===================
+    agrupamento = st.radio("", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba3")
     if agrupamento == "Ano":
         df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
         df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
@@ -532,22 +532,11 @@ with aba4:
         df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
         df_filtrado["Ordem"] = df_filtrado["Data"]
 
+    modo_visao = st.radio("", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba3")
+    tipo_metrica = st.radio("", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba3")
 
-    # Garante ordenação correta (ordem decrescente por data)
-    ordem = (
-        df_filtrado[["Agrupador", "Ordem"]]
-        .drop_duplicates()
-        .sort_values("Ordem", ascending=False)
-        .dropna()
-        .Agrupador
-        .tolist()
-    )
-    
-   
+    ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
 
-    # ===================
-    # Geração da Tabela
-    # ===================
     if modo_visao == "Por Grupo":
         df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
             Bruto=("Fat.Total", "sum"),
@@ -586,12 +575,23 @@ with aba4:
                 colunas_intercaladas.append(f"{col} (Real)")
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
-    # =====================
-    # Pós-processamento
-    # =====================
+    colunas_ordenadas = [col for col in ordem if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns]
+    todas_colunas = []
+    for col in colunas_ordenadas:
+        if tipo_metrica == "Ambos":
+            if f"{col} (Bruto)" in tabela.columns: todas_colunas.append(f"{col} (Bruto)")
+            if f"{col} (Real)" in tabela.columns: todas_colunas.append(f"{col} (Real)")
+        else:
+            todas_colunas.append(col)
+    tabela = tabela[todas_colunas]
+
     if tipo_metrica == "Ambos":
-        tabela["Total Bruto"] = tabela[[c for c in tabela.columns if "(Bruto)" in c]].sum(axis=1)
-        tabela["Total Real"] = tabela[[c for c in tabela.columns if "(Real)" in c]].sum(axis=1)
+        cols_bruto = [col for col in tabela.columns if "(Bruto)" in col]
+        cols_real = [col for col in tabela.columns if "(Real)" in col]
+
+        tabela["Total Bruto"] = tabela[cols_bruto].sum(axis=1)
+        tabela["Total Real"] = tabela[cols_real].sum(axis=1)
+
         colunas_finais = ["Total Bruto", "Total Real"] + [col for col in tabela.columns if col not in ["Total Bruto", "Total Real"]]
         tabela = tabela[colunas_finais]
 
@@ -599,8 +599,9 @@ with aba4:
         total_row.index = ["Total Geral"]
         tabela_final = pd.concat([total_row, tabela])
     else:
-        tabela["Total"] = tabela.sum(axis=1, numeric_only=True)
-        tabela = tabela[["Total"] + [col for col in tabela.columns if col != "Total"]]
+        cols_validas = [col for col in tabela.columns if col != "Total"]
+        tabela["Total"] = tabela[cols_validas].sum(axis=1)
+        tabela = tabela[["Total"] + cols_validas]
 
         total_geral = pd.DataFrame(tabela.sum(numeric_only=True)).T
         total_geral.index = ["Total Geral"]
