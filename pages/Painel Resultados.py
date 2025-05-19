@@ -458,49 +458,49 @@ with aba3:
 with aba4:
 
    st.markdown("""
-<style>
-/* Zera espaçamentos verticais padrão */
-div[data-testid="stVerticalBlock"] {
-    gap: 0rem !important;
-    row-gap: 0rem !important;
-}
+    <style>
+    /* Zera espaçamentos verticais padrão */
+    div[data-testid="stVerticalBlock"] {
+        gap: 0rem !important;
+        row-gap: 0rem !important;
+    }
 
-/* Alinha chips (multiselect) com campo de data */
-.stMultiSelect {
-    margin-bottom: -0.6rem !important;
-}
+    /* Alinha chips (multiselect) com campo de data */
+    .stMultiSelect {
+        margin-bottom: -0.6rem !important;
+    }
 
-/* Reduz espaço do campo de data com os rádios */
-div[data-testid="stDateInput"] {
-    margin-top: -0.4rem !important;
-    margin-bottom: -0.4rem !important;
-    padding-bottom: 0rem !important;
-}
+    /* Reduz espaço do campo de data com os rádios */
+    div[data-testid="stDateInput"] {
+        margin-top: -0.4rem !important;
+        margin-bottom: -0.4rem !important;
+        padding-bottom: 0rem !important;
+    }
 
-/* Elimina margens entre rádios */
-.stRadio {
-    margin-top: -0.5rem !important;
-    margin-bottom: -0.5rem !important;
-}
+    /* Elimina margens entre rádios */
+    .stRadio {
+        margin-top: -0.5rem !important;
+        margin-bottom: -0.5rem !important;
+    }
 
-/* Refina ainda mais os blocos invisíveis */
-section > div > div > div > div {
-    margin-top: 0rem !important;
-    margin-bottom: 0rem !important;
-}
+    /* Refina ainda mais os blocos invisíveis */
+    section > div > div > div > div {
+        margin-top: 0rem !important;
+        margin-bottom: 0rem !important;
+    }
 
-/* Zera padding entre colunas internas (radio) */
-[data-baseweb="radio"] {
-    margin: 0rem !important;
-}
+    /* Zera padding entre colunas internas (radio) */
+    [data-baseweb="radio"] {
+        margin: 0rem !important;
+    }
 
-/* Padding geral da página */
-.block-container {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-}
-</style>
-""", unsafe_allow_html=True)
+    /* Padding geral da página */
+    .block-container {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 
     # Normaliza dados
