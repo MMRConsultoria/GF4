@@ -469,7 +469,7 @@ with aba3:
     #st.subheader("🚀 Atualização DRE")
 
     if pode_executar_agora():
-        if st.button("📤 Atualizar DRE"):
+        if st.button("📤 Atualizar DRE Após as 10h"):
             try:
                 url_script = "https://script.google.com/macros/s/AKfycbw-gK_KYcSyqyfimHTuXFLEDxKvWdW4k0o_kOPE-r-SWxL-SpogE2U9wiZt7qCZoH-gqQ/exec"  # Substituir pelo seu link
                 resposta = requests.get(url_script)
