@@ -466,10 +466,10 @@ def pode_executar_agora():
 
 
 
-st.subheader("🚀 Atualização DRE")
+#st.subheader("🚀 Atualização DRE")
 
 if pode_executar_agora():
-    if st.button("📤 Atualizar via Script Externo"):
+    if st.button("📤 Atualizar DRE"):
         try:
             url_script = " https://script.google.com/macros/s/AKfycbxzD4Y-2g9E7ss_Tx-glixqcKPQ1hVzBS0PYl7vklBxt08NxUouiiLJitJymC-Y7F4wgA/exec"  # Substituir pelo seu link
             resposta = requests.get(url_script)
