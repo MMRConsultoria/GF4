@@ -546,22 +546,10 @@ with aba4:
     #✅ Adicione aqui:
     col1, col2 = st.columns([1, 3])
 
-    with col1:
-        st.markdown(
-        """
-            <div style='padding-top: 0.2rem; font-weight: 600;'>Coluna Total:</div>
-            """, 
-            unsafe_allow_html=True
-        )
+   # Filtro para exibir ou não a coluna Total
+    exibir_total_opcao = st.radio("📊 Coluna Total:", ["Sim", "Não"], index=0, horizontal=True)
+    exibir_total = exibir_total_opcao == "Sim"
 
-    with col2:
-        opcao_total = st.radio(label="", options=["Sim", "Não"], index=0, horizontal=True)
-
-    exibir_total = opcao_total == "Sim"
-
-
-    # Variável booleana que você usa no restante do código
-    exibir_total = opcao_total == "Sim"
 
     # Criação do agrupador e ordem com base na escolha
     if agrupamento == "Ano":
