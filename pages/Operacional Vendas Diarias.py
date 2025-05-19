@@ -471,7 +471,7 @@ st.subheader("🚀 Atualização Externa (Google Apps Script)")
 if pode_executar_agora():
     if st.button("📤 Atualizar via Script Externo"):
         try:
-            url_script = "https://script.google.com/macros/s/SEU_ID_DO_WEBAPP/exec"  # Substituir pelo seu link
+            url_script = "https://script.google.com/macros/s/AKfycbw10hPDPuHg_j_1_R8gdMynM6Oo8vWzx7YXdvhWe65gIhulGM2md9_hQh8iXwM5iafYtw/exec"  # Substituir pelo seu link
             resposta = requests.get(url_script)
 
             if resposta.status_code == 200:
