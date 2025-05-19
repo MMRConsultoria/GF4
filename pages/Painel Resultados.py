@@ -622,11 +622,11 @@ with aba4:
         cols_bruto = [col for col in tabela.columns if "(Bruto)" in col]
         cols_real = [col for col in tabela.columns if "(Real)" in col]
 
-    if exibir_total:
-        tabela["Total Bruto"] = tabela[cols_bruto].sum(axis=1)
-        tabela["Total Real"] = tabela[cols_real].sum(axis=1)
-        colunas_finais = ["Total Bruto", "Total Real"] + [col for col in tabela.columns if col not in ["Total Bruto", "Total Real"]]
-        tabela = tabela[colunas_finais]
+        if exibir_total:
+            tabela["Total Bruto"] = tabela[cols_bruto].sum(axis=1)
+            tabela["Total Real"] = tabela[cols_real].sum(axis=1)
+            colunas_finais = ["Total Bruto", "Total Real"] + [col for col in tabela.columns if col not in ["Total Bruto", "Total Real"]]
+            tabela = tabela[colunas_finais]
 
     
         total_row = pd.DataFrame(tabela.sum(numeric_only=True)).T
