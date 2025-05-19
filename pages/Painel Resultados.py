@@ -535,13 +535,13 @@ with aba4:
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba3")
+        agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
 
     with col2:
-        modo_visao = st.radio(" ", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba3")
+        modo_visao = st.radio(" ", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba4")
 
     with col3:
-        tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba3")
+        tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba4")
     
 
     modo_visao = st.radio("", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba3")
