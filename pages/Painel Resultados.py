@@ -477,6 +477,18 @@ section > div > div > div > div {
     padding-bottom: 0rem !important;
 }
 
+/* Reduz espaço entre Multiselect (chips) e DateInput */
+.stMultiSelect {
+    margin-bottom: 0.2rem !important;
+    padding-bottom: 0rem !important;
+}
+
+/* Reduz espaço entre DateInput e os rádios */
+[data-testid="stDateInput"] {
+    margin-bottom: 0.2rem !important;
+    padding-bottom: 0rem !important;
+}
+
 /* Remove espaço adicional entre os rádios */
 .stRadio > div {
     margin-bottom: 0rem !important;
@@ -496,7 +508,6 @@ section > div > div > div > div {
 }
 </style>
 """, unsafe_allow_html=True)
-
     # Normaliza dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
