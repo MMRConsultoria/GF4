@@ -456,6 +456,7 @@ with aba3:
 # Aba 4: Analise Lojas
 # ================================
 with aba4:
+  with aba3:
     st.markdown("## 📊 Análise de Faturamento por Período")
 
     st.markdown("""
@@ -564,22 +565,24 @@ with aba4:
 
     # Inserir Totais corretamente
     if tipo_metrica == "Ambos":
-        cols_bruto = [col for col in tabela.columns if "(Bruto)" in col or col == "Total Bruto"]
-        cols_real = [col for col in tabela.columns if "(Real)" in col or col == "Total Real"]
+        cols_bruto = [col for col in tabela.columns if "(Bruto)" in col]
+        cols_real = [col for col in tabela.columns if "(Real)" in col]
 
-        total_row = pd.DataFrame(index=["Total Geral"])
-        total_row["Total Bruto"] = tabela[cols_bruto].sum(numeric_only=True).sum()
-        total_row["Total Real"] = tabela[cols_real].sum(numeric_only=True).sum()
+        tabela["Total Bruto"] = tabela[cols_bruto].sum(axis=1)
+        tabela["Total Real"] = tabela[cols_real].sum(axis=1)
 
-        for col in tabela.columns:
-            if col not in ["Total Bruto", "Total Real"]:
-                total_row[col] = tabela[col].sum(numeric_only=True)
+        colunas_finais = ["Total Bruto", "Total Real"] + [col for col in tabela.columns if col not in ["Total Bruto", "Total Real"]]
+        tabela = tabela[colunas_finais]
 
+        total_row = pd.DataFrame(tabela.sum(numeric_only=True)).T
+        total_row.index = ["Total Geral"]
         tabela_final = pd.concat([total_row, tabela])
     else:
         cols_validas = [col for col in tabela.columns if col != "Total"]
-        tabela.insert(0, "Total", tabela[cols_validas].sum(axis=1))
-        total_geral = pd.DataFrame(tabela[cols_validas].sum()).T
+        tabela["Total"] = tabela[cols_validas].sum(axis=1)
+        tabela = tabela[["Total"] + cols_validas]
+
+        total_geral = pd.DataFrame(tabela.sum(numeric_only=True)).T
         total_geral.index = ["Total Geral"]
         tabela_final = pd.concat([total_geral, tabela])
 
