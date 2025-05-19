@@ -543,18 +543,8 @@ with aba4:
     with col3:
         tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba4")
 
-    #✅ Adicione aqui:
-    col1, col2 = st.columns([0, 1])
-
-   # Filtro para exibir ou não a coluna Total
-    col1, col2 = st.columns([1.1, 5])
-
-    with col1:
-        st.markdown("📊 **Coluna Total:**", unsafe_allow_html=True)
-
-    with col2:
-        exibir_total_opcao = st.radio(label="", options=["Sim", "Não"], index=0, horizontal=True)
-
+    # Filtro para exibir ou não a coluna Total
+    exibir_total_opcao = st.radio("📊 Coluna Total:", ["Sim", "Não"], index=0, horizontal=True)
     exibir_total = exibir_total_opcao == "Sim"
 
     # Criação do agrupador e ordem com base na escolha
