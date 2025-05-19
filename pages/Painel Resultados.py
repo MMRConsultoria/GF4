@@ -461,7 +461,7 @@ with aba4:
     <style>
     /* Zera espaçamentos verticais padrão */
     div[data-testid="stVerticalBlock"] {
-        gap: 0rem !important;
+        gap: 0.3rem !important;
         row-gap: 0rem !important;
     }
 
@@ -544,7 +544,7 @@ with aba4:
         tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba4")
 
     #✅ Adicione aqui:
-    exibir_total = st.radio("📊 Exibir coluna Total", value=True)
+    exibir_total = st.checkbox("📊 Exibir coluna Total", value=True)
 
     # Criação do agrupador e ordem com base na escolha
     if agrupamento == "Ano":
