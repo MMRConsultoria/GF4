@@ -381,20 +381,12 @@ with aba4:
 
 
     # Filtros laterais lado a lado
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4 = st.columns([1.2, 2, 2, 2])  # col1 levemente mais estreita
 
     with col1:
-        st.markdown(
-            """
-            <div style="padding-top: -0.7rem;">
-                <label style="display: none;"></label>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
+        st.write("")  # Garante altura igual às outras colunas com título
         exibir_total = st.radio(
-            " ",  # Espaço em branco para evitar altura automática do label
+            " ", 
             options=[True, False],
             format_func=lambda x: "Total Sim" if x else "Total Não",
             index=0,
