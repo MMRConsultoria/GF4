@@ -678,73 +678,69 @@ with aba4:
         else:
             tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
 
-
-
-    
     tabela_formatada = tabela_final.applymap(
         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x
     )
     st.dataframe(tabela_formatada, use_container_width=True)
 
-    buffer = io.BytesIO()
 
-    # Mostra no Streamlit
-    st.dataframe(tabela_formatada, use_container_width=True)
+buffer = io.BytesIO()
 
-    # 🟦 Exporta Excel formatado (substitua daqui...)
-    buffer = io.BytesIO()
+# Cria uma cópia limpa da tabela final
+tabela_exportar = tabela_final.copy()
 
-    # Remove formatação textual da tabela
-    tabela_exportar = tabela_final.copy()
+with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+    # Exporta sem resetar o índice e sem cabeçalhos automáticos
+    tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=True, header=False, startrow=1)
 
-    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=False, header=False, startrow=1)
+    workbook = writer.book
+    worksheet = writer.sheets["Faturamento"]
 
-        workbook = writer.book
-        worksheet = writer.sheets["Faturamento"]
+    # Estilos
+    header_format = workbook.add_format({
+        'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
+        'align': 'center', 'valign': 'vcenter', 'border': 1
+    })
+    even_row_format = workbook.add_format({
+        'bg_color': '#DCE6F1', 'border': 1, 'num_format': 'R$ #,##0.00'
+    })
+    odd_row_format = workbook.add_format({
+        'bg_color': '#FFFFFF', 'border': 1, 'num_format': 'R$ #,##0.00'
+    })
+    bold_row_format = workbook.add_format({
+        'bold': True, 'border': 1, 'num_format': 'R$ #,##0.00'
+    })
 
-        # Estilos
-        header_format = workbook.add_format({
-            'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
-            'align': 'center', 'valign': 'vcenter', 'border': 1
-        })
-        even_row_format = workbook.add_format({
-            'bg_color': '#DCE6F1', 'border': 1, 'num_format': 'R$ #,##0.00'
-        })
-        odd_row_format = workbook.add_format({
-            'bg_color': '#FFFFFF', 'border': 1, 'num_format': 'R$ #,##0.00'
-        })
-        bold_row_format = workbook.add_format({
-            'bold': True, 'border': 1, 'num_format': 'R$ #,##0.00'
-        })
+    # Cabeçalhos (linha 0 manual)
+    headers = [tabela_exportar.index.name or ""] + list(tabela_exportar.columns)
+    for col_num, header in enumerate(headers):
+        worksheet.write(0, col_num, header, header_format)
 
-        # Cabeçalhos
-        headers = [tabela_final.index.name or ""] + list(tabela_final.columns)
-        for col_num, header in enumerate(headers):
-            worksheet.write(0, col_num, header, header_format)
+    # Escreve os dados com formatação correta
+    df_reset = tabela_exportar.reset_index()
+    for row_num, (idx, row) in enumerate(df_reset.iterrows(), start=1):
+        is_total = idx == "Total Geral"
+        row_format = bold_row_format if is_total else (even_row_format if row_num % 2 == 0 else odd_row_format)
 
-        # Escreve os dados formatados corretamente (com valor real e não texto)
-        df_reset = tabela_final.reset_index()
-        for row_num, (idx, row) in enumerate(df_reset.iterrows(), start=1):
-            is_total = idx == "Total Geral"
-            row_format = bold_row_format if is_total else (even_row_format if row_num % 2 == 0 else odd_row_format)
+        worksheet.write(row_num, 0, idx, row_format)  # escreve índice
 
-            worksheet.write(row_num, 0, idx, row_format)
-            for col_num, val in enumerate(row, start=1):
-                if isinstance(val, (int, float)):
-                    worksheet.write_number(row_num, col_num, val, row_format)
-                else:
-                    worksheet.write(row_num, col_num, val, row_format)
+        for col_num, val in enumerate(row, start=1):
+            try:
+                worksheet.write_number(row_num, col_num, float(val), row_format)
+            except:
+                worksheet.write(row_num, col_num, val, row_format)
 
-        worksheet.set_column(0, len(headers), 18)
-        worksheet.hide_gridlines(option=2)
+    # Ajusta largura e oculta grade
+    worksheet.set_column(0, len(headers), 18)
+    worksheet.hide_gridlines(option=2)
 
-  
-    # ✅ Botão download sem recalcular nada
-    st.download_button(
-        label="📥 Baixar Excel Igual à Tabela",
-        data=buffer.getvalue(),
-        file_name="faturamento_visual.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="download_excel_visual"
-    )
+# Botão de download
+st.download_button(
+    label="📥 Baixar Excel Igual à Tabela",
+    data=buffer.getvalue(),
+    file_name="faturamento_visual.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    key="download_excel_visual"
+)
+
+    
