@@ -696,17 +696,15 @@ with aba4:
     st.dataframe(tabela_formatada, use_container_width=True)
 
 buffer = io.BytesIO()
-
-# Cópia limpa da tabela
 tabela_exportar = tabela_final.copy()
 
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-    tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=True, header=False, startrow=1)
+    tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=False, startrow=1)
 
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
 
-    # Estilos
+    # Cabeçalhos formatados
     header_format = workbook.add_format({
         'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
         'align': 'center', 'valign': 'vcenter', 'border': 1
@@ -721,26 +719,24 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'bold': True, 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
-    # ✅ Escreve cabeçalho na linha 0
-    headers = [tabela_exportar.index.name or ""] + list(tabela_exportar.columns)
-    for col_num, header in enumerate(headers):
+    # Cabeçalho manual
+    for col_num, header in enumerate(tabela_exportar.columns):
         worksheet.write(0, col_num, header, header_format)
 
-    # ✅ Escreve os dados (com índice corretamente na coluna A)
-    for row_num, (idx, row) in enumerate(tabela_exportar.iterrows(), start=1):
-        is_total = idx == "Total Geral"
+    # Dados com zebrinha e negrito no Total Geral
+    for row_num, row in enumerate(tabela_exportar.itertuples(index=False), start=1):
+        is_total = getattr(row, "Loja") == "Total Geral"
         row_format = bold_row_format if is_total else (even_row_format if row_num % 2 == 0 else odd_row_format)
 
-        worksheet.write(row_num, 0, idx, row_format)  # escreve índice
-
-        for col_num, val in enumerate(row, start=1):
-            if isinstance(val, (int, float)):
+        for col_num, val in enumerate(row):
+            if isinstance(val, (float, int)):
                 worksheet.write_number(row_num, col_num, val, row_format)
             else:
                 worksheet.write(row_num, col_num, val, row_format)
 
-    worksheet.set_column(0, len(headers), 18)
+    worksheet.set_column(0, len(tabela_exportar.columns), 18)
     worksheet.hide_gridlines(option=2)
+
 
 # Botão download
 st.download_button(
