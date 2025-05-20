@@ -695,16 +695,20 @@ with aba4:
     )
     st.dataframe(tabela_formatada, use_container_width=True)
 
+# Cria buffer
 buffer = io.BytesIO()
-tabela_exportar = tabela_final.copy()
 
+# Garante que "Grupo" e "Loja" estão como colunas
+df_reset = tabela_final.copy()
+
+# Início do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-    tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=False, startrow=1)
+    df_reset.to_excel(writer, sheet_name="Faturamento", index=False, startrow=1)
 
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
 
-    # Cabeçalhos formatados
+    # Estilos
     header_format = workbook.add_format({
         'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
         'align': 'center', 'valign': 'vcenter', 'border': 1
@@ -719,31 +723,28 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'bold': True, 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
-    # Cabeçalho manual
-    for col_num, header in enumerate(tabela_exportar.columns):
+    # Escreve cabeçalhos
+    for col_num, header in enumerate(df_reset.columns):
         worksheet.write(0, col_num, header, header_format)
 
-    # Dados com zebrinha e negrito no Total Geral
-    for row_num, row in enumerate(tabela_exportar.itertuples(index=False), start=1):
-        is_total = row["Loja"] == "Total Geral"
+    # Escreve linhas com zebrinha
+    for row_num, (_, row) in enumerate(df_reset.iterrows(), start=1):
+        is_total = str(row.get("Loja", "")) == "Total Geral"
         row_format = bold_row_format if is_total else (even_row_format if row_num % 2 == 0 else odd_row_format)
 
         for col_num, val in enumerate(row):
-            if isinstance(val, (float, int)):
+            if isinstance(val, (int, float)):
                 worksheet.write_number(row_num, col_num, val, row_format)
             else:
                 worksheet.write(row_num, col_num, val, row_format)
 
-    worksheet.set_column(0, len(tabela_exportar.columns), 18)
+    worksheet.set_column(0, len(df_reset.columns), 18)
     worksheet.hide_gridlines(option=2)
 
-
-# Botão download
+# Download
 st.download_button(
-    label="📥 Baixar Excel",
+    label="📥 Baixar Excel com Grupo e Loja",
     data=buffer.getvalue(),
-    file_name="faturamento_visual.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    key="download_excel_visual"
+    file_name="faturamento_com_grupo.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
-
