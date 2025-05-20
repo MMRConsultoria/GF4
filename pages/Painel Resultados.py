@@ -344,12 +344,30 @@ with aba4:
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
     df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
-    #data_inicio, data_fim = st.date_input("", value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()])
-    hoje = datetime.today().date()
-    data_minima = df_filtrado["Data"].min().date() if not df_filtrado.empty else hoje
-    data_maxima = df_filtrado["Data"].max().date() if not df_filtrado.empty else hoje
-    data_inicio, data_fim = st.date_input("", value=[hoje, hoje], min_value=data_minima, max_value=data_maxima)
-    
+   # Garantir que "hoje" seja do tipo date
+    hoje = date.today()
+
+    # Verifica se df_filtrado tem dados válidos para datas
+    if not df_filtrado.empty and pd.to_datetime(df_filtrado["Data"], errors="coerce").notna().any():
+        data_minima = pd.to_datetime(df_filtrado["Data"], errors="coerce").min().date()
+        data_maxima = pd.to_datetime(df_filtrado["Data"], errors="coerce").max().date()
+
+        # Garante que "hoje" esteja dentro do intervalo
+        if hoje < data_minima:
+            hoje = data_minima
+        elif hoje > data_maxima:
+            hoje = data_maxima
+    else:
+        data_minima = hoje
+        data_maxima = hoje
+
+    # Campo de data seguro
+    data_inicio, data_fim = st.date_input(
+        "📅 Período:",
+        value=[hoje, hoje],
+        min_value=data_minima,
+        max_value=data_maxima
+    )
     df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
 
 
