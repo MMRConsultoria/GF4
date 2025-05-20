@@ -627,7 +627,8 @@ with aba4:
             if f"{col} (Bruto)" in tabela.columns: todas_colunas.append(f"{col} (Bruto)")
             if f"{col} (Real)" in tabela.columns: todas_colunas.append(f"{col} (Real)")
         else:
-            todas_colunas.append(col)
+            if col in tabela.columns:
+                todas_colunas.append(col)
 
         # Adiciona Grupo e Loja (se existirem)
         colunas_existentes = ["Grupo", "Loja"] + todas_colunas
