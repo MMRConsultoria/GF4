@@ -610,12 +610,15 @@ with aba4:
                 colunas_intercaladas.append(f"{col} (Bruto)")
                 colunas_intercaladas.append(f"{col} (Real)")
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
-
+            
             # Adiciona colunas separadas de Grupo e Loja
             tabela = tabela.reset_index()  # "Loja" vira coluna
             tabela = tabela.merge(df_filtrado[["Loja", "Grupo"]].drop_duplicates(), on="Loja", how="left")
-            tabela = tabela[["Grupo", "Loja"] + [col for col in tabela.columns if col not in ["Grupo", "Loja"]]]
+            #tabela = tabela[["Grupo", "Loja"] + [col for col in tabela.columns if col not in ["Grupo", "Loja"]]]
 
+            outras_colunas = [col for col in tabela.columns if col not in ["Grupo", "Loja"]]
+            tabela = tabela[["Grupo", "Loja"] + outras_colunas]
+            
                # ✅ Adiciona linha Total Geral com Grupo vazio e Loja = "Total Geral"
             total_row = pd.DataFrame(tabela.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)).T
             total_row.insert(0, "Loja", "Total Geral")
