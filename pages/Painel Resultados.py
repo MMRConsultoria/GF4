@@ -694,14 +694,16 @@ with aba4:
     # ✅ Remove "Total Geral" da tabela original (se existir) ANTES de qualquer concat
     tabela_ordenar = tabela_final.drop(index="Total Geral", errors="ignore")
     
-      # ✅ Reinsere Total Geral no topo (se existir)
+     # ✅ Remove "Total Geral" da tabela original (se existir) ANTES de qualquer concat
+    tabela_ordenar = tabela_final.drop(index="Total Geral", errors="ignore")
+
+    # ✅ Reinsere "Total Geral" como primeira linha, garantidamente única
     if "Total Geral" in tabela_final.index:
         total_row = tabela_final.loc[["Total Geral"]]
         tabela_final = pd.concat([total_row, tabela_ordenar])
     else:
         tabela_final = tabela_ordenar
 
-       #tabela_final = tabela_final[~((tabela_final.index == "Total Geral") & tabela_final.duplicated(keep='first'))]
 
     # ===== EXPORTAÇÃO COM FORMATAÇÃO =====
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
