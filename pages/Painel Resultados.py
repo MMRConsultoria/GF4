@@ -252,7 +252,7 @@ with aba1:
 # Aba 2: Graficos Trimestrais
 # ================================
 with aba2:
-    st.info("Ideal para mostrar evolução por ano ou por trimestre.")
+    st.info("em desenvolvimento.")
 
 # ================================
 # Aba 3: Relatorio Analitico
