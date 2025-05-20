@@ -683,14 +683,12 @@ with aba4:
     )
     st.dataframe(tabela_formatada, use_container_width=True)
 
-
 buffer = io.BytesIO()
 
-# Cria uma cópia limpa da tabela final
+# Cópia limpa da tabela
 tabela_exportar = tabela_final.copy()
 
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-    # Exporta sem resetar o índice e sem cabeçalhos automáticos
     tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=True, header=False, startrow=1)
 
     workbook = writer.book
@@ -711,30 +709,28 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'bold': True, 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
-    # Cabeçalhos (linha 0 manual)
+    # ✅ Escreve cabeçalho na linha 0
     headers = [tabela_exportar.index.name or ""] + list(tabela_exportar.columns)
     for col_num, header in enumerate(headers):
         worksheet.write(0, col_num, header, header_format)
 
-    # Escreve os dados com formatação correta
-    df_reset = tabela_exportar.reset_index()
-    for row_num, (idx, row) in enumerate(df_reset.iterrows(), start=1):
+    # ✅ Escreve os dados (com índice corretamente na coluna A)
+    for row_num, (idx, row) in enumerate(tabela_exportar.iterrows(), start=1):
         is_total = idx == "Total Geral"
         row_format = bold_row_format if is_total else (even_row_format if row_num % 2 == 0 else odd_row_format)
 
         worksheet.write(row_num, 0, idx, row_format)  # escreve índice
 
         for col_num, val in enumerate(row, start=1):
-            try:
-                worksheet.write_number(row_num, col_num, float(val), row_format)
-            except:
+            if isinstance(val, (int, float)):
+                worksheet.write_number(row_num, col_num, val, row_format)
+            else:
                 worksheet.write(row_num, col_num, val, row_format)
 
-    # Ajusta largura e oculta grade
     worksheet.set_column(0, len(headers), 18)
     worksheet.hide_gridlines(option=2)
 
-# Botão de download
+# Botão download
 st.download_button(
     label="📥 Baixar Excel Igual à Tabela",
     data=buffer.getvalue(),
@@ -743,4 +739,3 @@ st.download_button(
     key="download_excel_visual"
 )
 
-    
