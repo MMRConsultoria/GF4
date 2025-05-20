@@ -544,13 +544,13 @@ with aba4:
         tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba4")
     
     with col4:
-    st.markdown("<br>", unsafe_allow_html=True)  # espaço visual
-    exibir_total_opcao = st.radio("📊 Coluna Total:", ["Sim", "Não"], index=0, horizontal=True)
-    exibir_total = exibir_total_opcao == "Sim"
+        st.markdown("<br>", unsafe_allow_html=True)  # espaço visual
+        exibir_total_opcao = st.radio("📊 Coluna Total:", ["Sim", "Não"], index=0, horizontal=True)
+        exibir_total = exibir_total_opcao == "Sim"
 
     # Filtro para exibir ou não a coluna Total
-    exibir_total_opcao = st.radio("📊 Coluna Total:", ["Sim", "Não"], index=0, horizontal=True)
-    exibir_total = exibir_total_opcao == "Sim"
+    #exibir_total_opcao = st.radio("📊 Coluna Total:", ["Sim", "Não"], index=0, horizontal=True)
+    #exibir_total = exibir_total_opcao == "Sim"
 
     # Criação do agrupador e ordem com base na escolha
     if agrupamento == "Ano":
