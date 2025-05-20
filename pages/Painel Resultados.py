@@ -656,107 +656,112 @@ with aba4:
     )
     st.dataframe(tabela_formatada, use_container_width=True)
 
-    buffer = io.BytesIO()
-    # ✅ Detecta se "Total Geral" existe
-    tem_total = "Total Geral" in tabela_final.index
+    import io
 
-    # ✅ Se existir, separa e remove da tabela principal
-    if tem_total:
-        total_row = tabela_final.loc[["Total Geral"]].copy()
-        tabela_sem_total = tabela_final.drop(index="Total Geral", errors="ignore")
-    else:
-        tabela_sem_total = tabela_final.copy()
+buffer = io.BytesIO()
 
-    # ✅ Detecta a coluna de data mais recente para ordenação
-    colunas_validas = [
-        col for col in tabela_sem_total.columns
-        if "Total" not in col and any(x in col for x in ["/", "20"])
-    ]
+# ✅ Detecta se "Total Geral" existe
+tem_total = "Total Geral" in tabela_final.index
 
-    def parse_coluna_data(col):
-        try:
-            if "/" in col:
-                partes = col.split("/")
-                if len(partes[1]) == 4:
-                    return pd.to_datetime(f"01/{col}", format="%d/%m/%Y")
-                elif len(partes[0]) == 4:
-                    return pd.to_datetime(f"{col}/01", format="%Y/%m/%d")
-            elif col.isdigit() or col.startswith("20"):
-                return pd.to_datetime(f"01/01/{col}", format="%d/%m/%Y")
-        except:
-            return pd.NaT
+# ✅ Se existir, separa e remove da tabela principal
+if tem_total:
+    total_row = tabela_final.loc[["Total Geral"]].copy()
+    tabela_sem_total = tabela_final.drop(index="Total Geral", errors="ignore")
+else:
+    tabela_sem_total = tabela_final.copy()
+
+# ✅ Detecta a coluna de data mais recente para ordenação
+colunas_validas = [
+    col for col in tabela_sem_total.columns
+    if "Total" not in col and any(x in col for x in ["/", "20"])
+]
+
+def parse_coluna_data(col):
+    try:
+        if "/" in col:
+            partes = col.split("/")
+            if len(partes[1]) == 4:
+                return pd.to_datetime(f"01/{col}", format="%d/%m/%Y")
+            elif len(partes[0]) == 4:
+                return pd.to_datetime(f"{col}/01", format="%Y/%m/%d")
+        elif col.isdigit() or col.startswith("20"):
+            return pd.to_datetime(f"01/01/{col}", format="%d/%m/%Y")
+    except:
         return pd.NaT
+    return pd.NaT
 
-    datas_colunas_validas = [
-        (col, parse_coluna_data(col)) for col in colunas_validas
-        if pd.notnull(parse_coluna_data(col))
-    ]   
-    if datas_colunas_validas:
-        col_mais_recente = max(datas_colunas_validas, key=lambda x: x[1])[0]
-        tabela_sem_total = tabela_sem_total.sort_values(by=col_mais_recente, ascending=False)
+datas_colunas_validas = [
+    (col, parse_coluna_data(col)) for col in colunas_validas
+    if pd.notnull(parse_coluna_data(col))
+]   
 
-    # ✅ Reinsere Total Geral no topo (somente se existia antes)
-    if tem_total:
-   
-       tabela_final = pd.concat([total_row, tabela_sem_total])
-    else:
-        tabela_final = tabela_sem_total
-       
+if datas_colunas_validas:
+    col_mais_recente = max(datas_colunas_validas, key=lambda x: x[1])[0]
+    tabela_sem_total = tabela_sem_total.sort_values(by=col_mais_recente, ascending=False)
 
-    # ===== EXPORTAÇÃO COM FORMATAÇÃO =====
-    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        tabela_final.to_excel(writer, sheet_name="Faturamento", startrow=1)
+# ✅ Reinsere Total Geral no topo (somente se existia antes)
+if tem_total:
+    tabela_final = pd.concat([total_row, tabela_sem_total])
+else:
+    tabela_final = tabela_sem_total
 
-        workbook = writer.book
-        worksheet = writer.sheets["Faturamento"]
+# ===== EXPORTAÇÃO COM FORMATAÇÃO =====
+with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+    tabela_final.to_excel(writer, sheet_name="Faturamento", startrow=1)
 
-        # Cabeçalho
-        header_format = workbook.add_format({
-            'bold': True,
-            'bg_color': '#4F81BD',
-            'font_color': 'white',
-            'align': 'center',
-            'valign': 'vcenter',
-            'border': 1
-        })
+    workbook = writer.book
+    worksheet = writer.sheets["Faturamento"]
 
-        even_row_format = workbook.add_format({
-            'bg_color': '#DCE6F1',
-            'border': 1,
-            'num_format': 'R$ #,##0.00'
-        })
+    # Cabeçalho
+    header_format = workbook.add_format({
+        'bold': True,
+        'bg_color': '#4F81BD',
+        'font_color': 'white',
+        'align': 'center',
+        'valign': 'vcenter',
+        'border': 1
+    })
 
-        odd_row_format = workbook.add_format({
-            'bg_color': '#FFFFFF',
-            'border': 1,
-            'num_format': 'R$ #,##0.00'
-        })
+    even_row_format = workbook.add_format({
+        'bg_color': '#DCE6F1',
+        'border': 1,
+        'num_format': 'R$ #,##0.00'
+    })
 
-        bold_row_format = workbook.add_format({
-            'bold': True,
-            'border': 1,
-            'num_format': 'R$ #,##0.00'
-        })
+    odd_row_format = workbook.add_format({
+        'bg_color': '#FFFFFF',
+        'border': 1,
+        'num_format': 'R$ #,##0.00'
+    })
 
-        headers = [tabela_final.index.name or ""] + list(tabela_final.columns)
-        for col_num, header in enumerate(headers):
-            worksheet.write(0, col_num, header, header_format)
+    bold_row_format = workbook.add_format({
+        'bold': True,
+        'border': 1,
+        'num_format': 'R$ #,##0.00'
+    })
 
-        df_reset = tabela_final.reset_index()
-        for row_num in range(1, len(df_reset) + 1):
-            is_total = df_reset.iloc[row_num - 1, 0] == "Total Geral"
-            row_format = bold_row_format if is_total else (even_row_format if row_num % 2 == 0 else odd_row_format)
+    # Cabeçalhos
+    headers = [tabela_final.index.name or ""] + list(tabela_final.columns)
+    for col_num, header in enumerate(headers):
+        worksheet.write(0, col_num, header, header_format)
 
-            for col_num in range(len(headers)):
-                valor = df_reset.iloc[row_num - 1, col_num]
-                worksheet.write(row_num, col_num, valor, row_format)
+    # Corpo da tabela
+    df_reset = tabela_final.reset_index()
+    for row_num in range(1, len(df_reset) + 1):
+        is_total = df_reset.iloc[row_num - 1, 0] == "Total Geral"
+        row_format = bold_row_format if is_total else (
+            even_row_format if row_num % 2 == 0 else odd_row_format
+        )
+        for col_num in range(len(headers)):
+            valor = df_reset.iloc[row_num - 1, col_num]
+            worksheet.write(row_num, col_num, valor, row_format)
 
-        for i in range(len(headers)):
-            worksheet.set_column(i, i, 18)
+    for i in range(len(headers)):
+        worksheet.set_column(i, i, 18)
 
-        worksheet.hide_gridlines(option=2)
+    worksheet.hide_gridlines(option=2)
 
-# Botão download
+# Botão de download
 st.download_button(
     label="📥 Baixar Excel com Totais",
     data=buffer.getvalue(),
