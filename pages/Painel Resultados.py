@@ -687,92 +687,64 @@ with aba4:
     st.dataframe(tabela_formatada, use_container_width=True)
 
     import io
+import pandas as pd
 
 buffer = io.BytesIO()
 
-# Verifica se existe "Total Geral"
-tem_total = "Total Geral" in tabela_final.index
-if tem_total:
-    total_row = tabela_final.loc[["Total Geral"]]
-    tabela_sem_total = tabela_final.drop(index="Total Geral", errors="ignore")
-else:
-    tabela_sem_total = tabela_final.copy()
-
-# Detecta a coluna de data mais recente para ordenação
-colunas_validas = [
-    col for col in tabela_sem_total.columns
-    if "Total" not in col and any(sep in col for sep in ["/", "20"])
-]
-
-def parse_coluna(col):
-    try:
-        if "/" in col:
-            return pd.to_datetime("01/" + col, dayfirst=True, errors="coerce")
-        elif col.isdigit() and len(col) == 4:
-            return pd.to_datetime(f"01/01/{col}", dayfirst=True)
-    except:
-        return pd.NaT
-    return pd.NaT
-
-datas_convertidas = [(col, parse_coluna(col)) for col in colunas_validas if pd.notnull(parse_coluna(col))]
-if datas_convertidas:
-    col_mais_recente = max(datas_convertidas, key=lambda x: x[1])[0]
-    tabela_sem_total = tabela_sem_total.sort_values(by=col_mais_recente, ascending=False)
-
-# Reinsere Total Geral no topo
-if tem_total:
-    tabela_final = pd.concat([total_row, tabela_sem_total])
-else:
-    tabela_final = tabela_sem_total.copy()
-
-# ===== EXPORTAÇÃO =====
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-    tabela_final.to_excel(writer, sheet_name="Faturamento", startrow=1)
+    # Grava os dados formatados como DataFrame plano (sem mexer nos dados)
+    tabela_formatada.to_excel(writer, sheet_name="Faturamento", index=True, startrow=1)
 
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
 
+    # Estilos
     header_format = workbook.add_format({
-        'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
-        'align': 'center', 'valign': 'vcenter', 'border': 1
+        'bold': True,
+        'bg_color': '#4F81BD',
+        'font_color': 'white',
+        'align': 'center',
+        'valign': 'vcenter',
+        'border': 1
     })
 
     even_row_format = workbook.add_format({
-        'bg_color': '#DCE6F1', 'border': 1, 'num_format': 'R$ #,##0.00'
+        'bg_color': '#DCE6F1',
+        'border': 1,
+        'num_format': 'R$ #,##0.00'
     })
 
     odd_row_format = workbook.add_format({
-        'bg_color': '#FFFFFF', 'border': 1, 'num_format': 'R$ #,##0.00'
+        'bg_color': '#FFFFFF',
+        'border': 1,
+        'num_format': 'R$ #,##0.00'
     })
 
-    bold_row_format = workbook.add_format({
-        'bold': True, 'border': 1, 'num_format': 'R$ #,##0.00'
-    })
-
-    headers = [tabela_final.index.name or ""] + list(tabela_final.columns)
+    # Cabeçalhos
+    headers = [tabela_formatada.index.name or ""] + list(tabela_formatada.columns)
     for col_num, header in enumerate(headers):
         worksheet.write(0, col_num, header, header_format)
 
-    df_reset = tabela_final.reset_index(drop=False).drop_duplicates(subset=tabela_final.index.name)
+    # Linhas com zebrinha
+    df_reset = tabela_formatada.reset_index()
     for row_num in range(1, len(df_reset) + 1):
-        is_total = df_reset.iloc[row_num - 1, 0] == "Total Geral"
-        row_format = bold_row_format if is_total else (
-            even_row_format if row_num % 2 == 0 else odd_row_format
-        )
+        row_format = even_row_format if row_num % 2 == 0 else odd_row_format
         for col_num in range(len(headers)):
             valor = df_reset.iloc[row_num - 1, col_num]
             worksheet.write(row_num, col_num, valor, row_format)
 
+    # Ajuste largura
     for i in range(len(headers)):
         worksheet.set_column(i, i, 18)
 
+    # Remove grade fora da tabela
     worksheet.hide_gridlines(option=2)
 
 # Botão de download
 st.download_button(
-    label="📥 Baixar Excel com Totais",
+    label="📥 Baixar Excel Formatado (Visual)",
     data=buffer.getvalue(),
-    file_name="faturamento_detalhado.xlsx",
+    file_name="faturamento_formatado.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    key="download_aba3"
+    key="download_formatado"
 )
