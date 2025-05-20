@@ -658,9 +658,12 @@ with aba4:
 
     buffer = io.BytesIO()
 
-    # ✅ Remove "Total Geral" da base original para ordenar
-    tem_total = "Total Geral" in tabela_final.index
-    tabela_ordenar = tabela_final.drop(index="Total Geral", errors="ignore")
+    # ✅ Se existir, separa e remove da tabela principal
+    if tem_total:
+        total_row = tabela_final.loc[["Total Geral"]].copy()
+        tabela_sem_total = tabela_final.drop(index="Total Geral", errors="ignore")
+    else:
+        tabela_sem_total = tabela_final.copy()
 
     # ✅ Detecta a coluna de data mais recente para ordenação
     colunas_validas = [
@@ -682,21 +685,21 @@ with aba4:
             return pd.NaT
         return pd.NaT
 
-    datas_colunas = [(col, parse_coluna_data(col)) for col in colunas_validas]
-    datas_colunas_validas = [(col, dt) for col, dt in datas_colunas if pd.notnull(dt)]
-
+    datas_colunas_validas = [
+        (col, parse_coluna_data(col)) for col in colunas_validas
+        if pd.notnull(parse_coluna_data(col))
+    ]   
     if datas_colunas_validas:
         col_mais_recente = max(datas_colunas_validas, key=lambda x: x[1])[0]
         tabela_ordenar = tabela_ordenar.sort_values(by=col_mais_recente, ascending=False)
 
     # ✅ Reinsere Total Geral no topo (somente se existia antes)
     if tem_total:
-        total_row = tabela_final.loc[["Total Geral"]]
-        tabela_final = pd.concat([total_row, tabela_ordenar])
-
-        tabela_final = tabela_final[~((tabela_final.index == "Total Geral") & tabela_final.duplicated(keep="first"))]
+   
+       tabela_final = pd.concat([total_row, tabela_sem_total])
     else:
-        tabela_final = tabela_ordenar
+        tabela_final = tabela_sem_total
+       
 
     # ===== EXPORTAÇÃO COM FORMATAÇÃO =====
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
