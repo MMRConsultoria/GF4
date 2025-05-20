@@ -656,18 +656,18 @@ with aba4:
     )
     st.dataframe(tabela_formatada, use_container_width=True)
 
-    buffer = io.BytesIO()
+   buffer = io.BytesIO()
 
-   # ✅ Remove "Total Geral" para ordenar
+    # ✅ Remove "Total Geral" da base original para ordenar
+    tem_total = "Total Geral" in tabela_final.index
     tabela_ordenar = tabela_final.drop(index="Total Geral", errors="ignore")
 
-    # ✅ Filtra colunas que contêm datas (ignora totais)
+    # ✅ Detecta a coluna de data mais recente para ordenação
     colunas_validas = [
         col for col in tabela_ordenar.columns
         if "Total" not in col and any(x in col for x in ["/", "20"])
     ]
 
-    # ✅ Converte nomes de colunas em datas
     def parse_coluna_data(col):
         try:
             if "/" in col:
@@ -682,28 +682,19 @@ with aba4:
             return pd.NaT
         return pd.NaT
 
-    # ✅ Identifica a coluna mais recente
     datas_colunas = [(col, parse_coluna_data(col)) for col in colunas_validas]
     datas_colunas_validas = [(col, dt) for col, dt in datas_colunas if pd.notnull(dt)]
 
-    # ✅ Ordena pela mais recente
     if datas_colunas_validas:
         col_mais_recente = max(datas_colunas_validas, key=lambda x: x[1])[0]
         tabela_ordenar = tabela_ordenar.sort_values(by=col_mais_recente, ascending=False)
 
-    # ✅ Remove "Total Geral" da tabela original (se existir) ANTES de qualquer concat
-    tabela_ordenar = tabela_final.drop(index="Total Geral", errors="ignore")
-    
-     # ✅ Remove "Total Geral" da tabela original (se existir) ANTES de qualquer concat
-    tabela_ordenar = tabela_final.drop(index="Total Geral", errors="ignore")
-
-    # ✅ Reinsere "Total Geral" como primeira linha, garantidamente única
-    if "Total Geral" in tabela_final.index:
+    # ✅ Reinsere Total Geral no topo (somente se existia antes)
+    if tem_total:
         total_row = tabela_final.loc[["Total Geral"]]
         tabela_final = pd.concat([total_row, tabela_ordenar])
     else:
         tabela_final = tabela_ordenar
-
 
     # ===== EXPORTAÇÃO COM FORMATAÇÃO =====
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
@@ -744,7 +735,7 @@ with aba4:
         for col_num, header in enumerate(headers):
             worksheet.write(0, col_num, header, header_format)
 
-        df_reset = tabela_final.reset_index().drop_duplicates()
+        df_reset = tabela_final.reset_index()
         for row_num in range(1, len(df_reset) + 1):
             is_total = df_reset.iloc[row_num - 1, 0] == "Total Geral"
             row_format = bold_row_format if is_total else (even_row_format if row_num % 2 == 0 else odd_row_format)
@@ -753,7 +744,6 @@ with aba4:
                 valor = df_reset.iloc[row_num - 1, col_num]
                 worksheet.write(row_num, col_num, valor, row_format)
 
-        # Ajuste de colunas
         for i in range(len(headers)):
             worksheet.set_column(i, i, 18)
 
@@ -762,8 +752,4 @@ with aba4:
 # Botão download
 st.download_button(
     label="📥 Baixar Excel com Totais",
-    data=buffer.getvalue(),
-    file_name="faturamento_detalhado.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    key="download_aba3"
-)
+    data=buffer
