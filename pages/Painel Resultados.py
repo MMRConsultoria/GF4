@@ -657,6 +657,8 @@ with aba4:
     st.dataframe(tabela_formatada, use_container_width=True)
 
     buffer = io.BytesIO()
+    # ✅ Detecta se "Total Geral" existe
+    tem_total = "Total Geral" in tabela_final.index
 
     # ✅ Se existir, separa e remove da tabela principal
     if tem_total:
