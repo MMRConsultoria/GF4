@@ -732,7 +732,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 # Botão download
 st.download_button(
-    label="📥 Baixar Excel Igual à Tabela",
+    label="📥 Baixar Excel",
     data=buffer.getvalue(),
     file_name="faturamento_visual.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
