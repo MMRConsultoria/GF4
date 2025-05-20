@@ -658,6 +658,22 @@ with aba4:
 
     buffer = io.BytesIO()
 
+    # Remove a linha Total Geral antes de ordenar
+    tabela_ordenar = tabela_final.drop(index="Total Geral", errors="ignore")
+
+    # Identifica a última coluna antes do "Total"
+    colunas_validas = [col for col in tabela_ordenar.columns if "Total" not in col]
+    ultima_coluna_valor = colunas_validas[-1] if colunas_validas else tabela_ordenar.columns[-1]
+
+    # Ordena do maior para menor com base na última coluna
+    tabela_ordenar = tabela_ordenar.sort_values(by=ultima_coluna_valor, ascending=False)
+
+    # Adiciona a linha Total Geral de volta no final
+    if "Total Geral" in tabela_final.index:
+        total_geral_row = tabela_final.loc[["Total Geral"]]
+        tabela_final = pd.concat([tabela_ordenar, total_geral_row])
+    else:
+        tabela_final = tabela_ordenar
 
 
     
@@ -669,7 +685,7 @@ with aba4:
         workbook = writer.book
         worksheet = writer.sheets["Faturamento"]
 
-        # Cabeçalho azul escuro com letras brancas e borda
+        # Estilo do cabeçalho
         header_format = workbook.add_format({
             'bold': True,
             'bg_color': '#4F81BD',
@@ -679,37 +695,47 @@ with aba4:
             'border': 1
         })
 
-        # Linhas alternadas com borda
+        # Estilos de linhas normais (zebrinha)
         even_row_format = workbook.add_format({
             'bg_color': '#DCE6F1',
             'border': 1,
             'num_format': 'R$ #,##0.00'
         })
-
         odd_row_format = workbook.add_format({
             'bg_color': '#FFFFFF',
             'border': 1,
             'num_format': 'R$ #,##0.00'
         })
 
-        # Cabeçalhos manual (linha 0)
+        # Estilo negrito para o Total Geral
+        bold_row_format = workbook.add_format({
+            'bold': True,
+            'border': 1,
+            'num_format': 'R$ #,##0.00'
+        })
+
+        # Escreve o cabeçalho manualmente na linha 0
         headers = [tabela_final.index.name or ""] + list(tabela_final.columns)
         for col_num, header in enumerate(headers):
             worksheet.write(0, col_num, header, header_format)
 
-        # Aplica formatação por linha
-        for row_num in range(1, len(tabela_final) + 1):
-            row_format = even_row_format if row_num % 2 == 0 else odd_row_format
+        # Escreve os dados com zebrinha e negrito no Total Geral
+        df_reset = tabela_final.reset_index()
+        for row_num in range(1, len(df_reset) + 1):
+            is_total = df_reset.iloc[row_num - 1, 0] == "Total Geral"
+            row_format = bold_row_format if is_total else (even_row_format if row_num % 2 == 0 else odd_row_format)
+
             for col_num in range(len(headers)):
-                valor = tabela_final.reset_index().iloc[row_num - 1, col_num]
+                valor = df_reset.iloc[row_num - 1, col_num]
                 worksheet.write(row_num, col_num, valor, row_format)
 
         # Ajuste da largura das colunas
         for i in range(len(headers)):
             worksheet.set_column(i, i, 18)
 
-        # Remove linhas de grade padrão fora da tabela
+        # Remove linhas de grade fora da tabela
         worksheet.hide_gridlines(option=2)
+
 
 
 
