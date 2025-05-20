@@ -690,8 +690,8 @@ with aba4:
 
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         # ✅ Exporta diretamente como visualizado, sem reset_index()
-        tabela_formatada.to_excel(writer, sheet_name="Faturamento", index=True, startrow=1)
-
+        tabela_formatada.to_excel(writer, sheet_name="Faturamento", index=False, header=False, startrow=1)
+        
         workbook = writer.book
         worksheet = writer.sheets["Faturamento"]
 
@@ -736,9 +736,7 @@ with aba4:
         # Remove linhas de grade fora da tabela
         worksheet.hide_gridlines(option=2)
 
-    # 🔍 Verifique se a tabela tem linhas duplicadas
-    duplicadas = tabela_final[tabela_final.index.duplicated(keep=False)]
-    st.write("🔁 Linhas duplicadas no índice:", duplicadas)
+   
     
     # ✅ Botão download sem recalcular nada
     st.download_button(
