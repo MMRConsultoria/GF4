@@ -386,7 +386,7 @@ with aba4:
     with col1:
         st.markdown(
             """
-            <div style="padding-top: 0.1rem;">
+            <div style="padding-top: -0.7rem;">
                 <label style="display: none;"></label>
             </div>
             """,
