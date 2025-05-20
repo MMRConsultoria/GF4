@@ -386,7 +386,6 @@ with aba4:
     with col1:
         st.markdown("<br>", unsafe_allow_html=True)  # espaço visual
         exibir_total = st.radio(
-            ""📊 Exibir coluna de total?",
             options=[True, False],
             format_func=lambda x: "Total Sim" if x else "Total Não",
             index=0,
