@@ -605,20 +605,15 @@ with aba4:
             tabela = tab_b
         elif tipo_metrica == "Real":
             tabela = tab_r
-        tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
-        tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
-        tabela = pd.concat([tab_b, tab_r], axis=1)
-        colunas_intercaladas = []
-        for col in ordem:
-            colunas_intercaladas.append(f"{col} (Bruto)")
-            colunas_intercaladas.append(f"{col} (Real)")
-        tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
-
-        # ✅ Adiciona Grupo antes da Loja
-        tabela = tabela.reset_index()  # Loja vira coluna
-        tabela = tabela.merge(df_filtrado[["Loja", "Grupo"]].drop_duplicates(), on="Loja", how="left")
-        tabela = tabela[["Grupo", "Loja"] + [col for col in tabela.columns if col not in ["Grupo", "Loja"]]]
-
+        else:
+            tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
+            tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
+            tabela = pd.concat([tab_b, tab_r], axis=1)
+            colunas_intercaladas = []
+            for col in ordem:
+                colunas_intercaladas.append(f"{col} (Bruto)")
+                colunas_intercaladas.append(f"{col} (Real)")
+            tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
     colunas_ordenadas = [col for col in ordem if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns]
     todas_colunas = []
@@ -627,16 +622,8 @@ with aba4:
             if f"{col} (Bruto)" in tabela.columns: todas_colunas.append(f"{col} (Bruto)")
             if f"{col} (Real)" in tabela.columns: todas_colunas.append(f"{col} (Real)")
         else:
-            if col in tabela.columns:
-                todas_colunas.append(col)
-
-    # Adiciona Grupo e Loja (se existirem)
-    colunas_existentes = ["Grupo", "Loja"] + todas_colunas
-    colunas_existentes = [col for col in colunas_existentes if col in tabela.columns]
-
-    # Reorganiza a tabela somente com as colunas válidas
-    tabela = tabela[colunas_existentes]
-
+            todas_colunas.append(col)
+    tabela = tabela[todas_colunas]
     if tipo_metrica == "Ambos":
         cols_bruto = [col for col in tabela.columns if "(Bruto)" in col]
         cols_real = [col for col in tabela.columns if "(Real)" in col]
@@ -704,17 +691,12 @@ buffer = io.BytesIO()
 
 # Cópia limpa da tabela
 tabela_exportar = tabela_final.copy()
-tabela_exportar = tabela_exportar.reset_index(drop=True)
 
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-    tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=False, startrow=1, header=False)
+    tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=True, header=False, startrow=1)
+
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
-    # Escreve cabeçalho manualmente
-    for col_num, header in enumerate(tabela_exportar.columns):
-        worksheet.write(0, col_num, header, header_format)
-
-   
 
     # Estilos
     header_format = workbook.add_format({
@@ -744,13 +726,10 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         worksheet.write(row_num, 0, idx, row_format)  # escreve índice
 
         for col_num, val in enumerate(row, start=1):
-            try:
-                if pd.notnull(val) and isinstance(val, (int, float, np.number)):
-                    worksheet.write_number(row_num, col_num, float(val), row_format)
-                else:
-                    worksheet.write(row_num, col_num, str(val), row_format)
-            except:
-                worksheet.write(row_num, col_num, str(val), row_format)
+            if isinstance(val, (int, float)):
+                worksheet.write_number(row_num, col_num, val, row_format)
+            else:
+                worksheet.write(row_num, col_num, val, row_format)
 
     worksheet.set_column(0, len(headers), 18)
     worksheet.hide_gridlines(option=2)
