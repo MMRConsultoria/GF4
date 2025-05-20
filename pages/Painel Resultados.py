@@ -661,21 +661,24 @@ with aba4:
     # Remove a linha Total Geral antes de ordenar
     tabela_ordenar = tabela_final.drop(index="Total Geral", errors="ignore")
 
-    # Identifica a última coluna antes do "Total"
-    colunas_validas = [col for col in tabela_ordenar.columns if "Total" not in col]
-    ultima_coluna_valor = colunas_validas[-1] if colunas_validas else tabela_ordenar.columns[-1]
+    # Filtra colunas numéricas que representam meses (exclui "Total" ou "Total Bruto/Real")
+    colunas_mes = [col for col in tabela_ordenar.columns if "Total" not in col and "/" in col]
 
-    # Ordena do maior para menor com base na última coluna
-    tabela_ordenar = tabela_ordenar.sort_values(by=ultima_coluna_valor, ascending=False)
+    # Garante que está ordenando pela coluna de data mais recente
+    if colunas_mes:
+        # Converte nomes tipo "01/2024" para datas para identificar o mais recente
+        col_datas = pd.to_datetime([f"01/{col}" for col in colunas_mes], format="%d/%m/%Y", errors="coerce")
+        col_mais_recente = colunas_mes[pd.Series(col_datas).idxmax()]
+    
+        # Ordena do maior para menor
+        tabela_ordenar = tabela_ordenar.sort_values(by=col_mais_recente, ascending=False)
 
-    # Adiciona a linha Total Geral de volta no final
+    # Adiciona a linha Total Geral de volta no fim
     if "Total Geral" in tabela_final.index:
         total_geral_row = tabela_final.loc[["Total Geral"]]
         tabela_final = pd.concat([tabela_ordenar, total_geral_row])
     else:
         tabela_final = tabela_ordenar
-
-
     
    
 
