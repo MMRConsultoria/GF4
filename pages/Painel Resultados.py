@@ -363,7 +363,7 @@ with aba4:
 
     # Campo de data seguro
     data_inicio, data_fim = st.date_input(
-        "📅 Período:",
+        "",
         value=[hoje, hoje],
         min_value=data_minima,
         max_value=data_maxima
