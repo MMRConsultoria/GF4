@@ -264,7 +264,7 @@ with aba3:
 # Aba 4: Analise Lojas
 # ================================
 with aba4:
-
+    from datetime import datetime
     st.markdown("""
     <style>
     /* Zera espaçamentos verticais padrão */
