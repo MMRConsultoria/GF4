@@ -384,9 +384,12 @@ with aba4:
     col1, col2, col3, col4 = st.columns([1.2, 2, 2, 2])  # col1 levemente mais estreita
 
     with col1:
-        st.write("")  # Garante altura igual às outras colunas com título
+        # Adiciona um espaço invisível para alinhar com os títulos das outras colunas
+        st.markdown("<div style='height: 1.7rem'></div>", unsafe_allow_html=True)
+
+        # Botões lado a lado sem título visível
         exibir_total = st.radio(
-            " ", 
+            " ",  # sem texto visível
             options=[True, False],
             format_func=lambda x: "Total Sim" if x else "Total Não",
             index=0,
