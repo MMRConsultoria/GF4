@@ -703,6 +703,10 @@ buffer = io.BytesIO()
 
 # Garante que "Grupo" e "Loja" estão como colunas
 df_reset = tabela_final.copy()
+# Garante que "Grupo" e "Loja" estejam no DataFrame como colunas
+if "Grupo" not in df_reset.columns or "Loja" not in df_reset.columns:
+    df_reset = df_reset.reset_index()
+
 
 # Início do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
