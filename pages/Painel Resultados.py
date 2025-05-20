@@ -658,17 +658,16 @@ with aba4:
 
     buffer = io.BytesIO()
 
-    # ✅ Remove "Total Geral" antes de ordenar
-    tem_total = "Total Geral" in tabela_final.index
-    tabela_ordenar = tabela_final.drop(index="Total Geral", errors="ignore") if tem_total else tabela_final.copy()
+   # ✅ Remove "Total Geral" para ordenar
+    tabela_ordenar = tabela_final.drop(index="Total Geral", errors="ignore")
 
-    # ✅ Filtra colunas com datas (ano, mês ou dia)
+    # ✅ Filtra colunas que contêm datas (ignora totais)
     colunas_validas = [
         col for col in tabela_ordenar.columns
         if "Total" not in col and any(x in col for x in ["/", "20"])
     ]
 
-    # Função para converter coluna em data
+    # ✅ Converte nomes de colunas em datas
     def parse_coluna_data(col):
         try:
             if "/" in col:
@@ -683,21 +682,23 @@ with aba4:
             return pd.NaT
         return pd.NaT
 
-    # ✅ Identifica a coluna de data mais recente
+    # ✅ Identifica a coluna mais recente
     datas_colunas = [(col, parse_coluna_data(col)) for col in colunas_validas]
     datas_colunas_validas = [(col, dt) for col, dt in datas_colunas if pd.notnull(dt)]
 
+    # ✅ Ordena pela mais recente
     if datas_colunas_validas:
         col_mais_recente = max(datas_colunas_validas, key=lambda x: x[1])[0]
         tabela_ordenar = tabela_ordenar.sort_values(by=col_mais_recente, ascending=False)
 
-    # ✅ Junta novamente com a linha Total Geral no TOPO
-    if tem_total:
+      # ✅ Reinsere Total Geral no topo (se existir)
+    if "Total Geral" in tabela_final.index:
         total_row = tabela_final.loc[["Total Geral"]]
         tabela_final = pd.concat([total_row, tabela_ordenar])
     else:
         tabela_final = tabela_ordenar
 
+        df_reset = df_reset.drop_duplicates()
     # ===== EXPORTAÇÃO COM FORMATAÇÃO =====
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         tabela_final.to_excel(writer, sheet_name="Faturamento", startrow=1)
