@@ -725,7 +725,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     # Dados com zebrinha e negrito no Total Geral
     for row_num, row in enumerate(tabela_exportar.itertuples(index=False), start=1):
-        is_total = getattr(row, "Loja") == "Total Geral"
+        is_total = row["Loja"] == "Total Geral"
         row_format = bold_row_format if is_total else (even_row_format if row_num % 2 == 0 else odd_row_format)
 
         for col_num, val in enumerate(row):
