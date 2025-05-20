@@ -384,10 +384,17 @@ with aba4:
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        # Adiciona um espaço invisível (alinha com os outros filtros)
-        st.markdown("<span style='visibility:hidden;'>Título</span>", unsafe_allow_html=True)
-    
-        # Botão Total Sim / Não
+        st.markdown(
+            """
+            <style>
+            div[data-testid="column"]:nth-of-type(1) div[data-baseweb="radio"] {
+                margin-top: 1.8rem;  /* Ajuste fino até alinhar com os outros */
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
         exibir_total = st.radio(
             "", 
             options=[True, False],
