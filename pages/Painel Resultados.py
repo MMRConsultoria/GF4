@@ -704,12 +704,17 @@ buffer = io.BytesIO()
 
 # Cópia limpa da tabela
 tabela_exportar = tabela_final.copy()
+tabela_exportar = tabela_exportar.reset_index(drop=True)
 
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-    tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=True, header=False, startrow=1)
-
+    tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=False, startrow=1, header=False)
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
+    # Escreve cabeçalho manualmente
+    for col_num, header in enumerate(tabela_exportar.columns):
+        worksheet.write(0, col_num, header, header_format)
+
+   
 
     # Estilos
     header_format = workbook.add_format({
