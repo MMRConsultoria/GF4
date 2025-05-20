@@ -657,38 +657,56 @@ with aba4:
     st.dataframe(tabela_formatada, use_container_width=True)
 
     buffer = io.BytesIO()
+
+
+
+    
+   
+
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        tabela_final.to_excel(writer, sheet_name="Faturamento", index=True, startrow=1)
+        tabela_final.to_excel(writer, sheet_name="Faturamento", startrow=1)
 
         workbook = writer.book
         worksheet = writer.sheets["Faturamento"]
 
-        # Formato do cabeçalho
+        # Cabeçalho azul escuro com texto branco
         header_format = workbook.add_format({
             'bold': True,
-            'bg_color': '#D9D9D9',
+            'bg_color': '#4F81BD',
+            'font_color': 'white',
+            'align': 'center',
+            'valign': 'vcenter',
             'border': 1
         })
+
+        # Formatação zebrinha azul claro
+        even_row_format = workbook.add_format({'bg_color': '#DCE6F1'})
+        odd_row_format = workbook.add_format({'bg_color': '#FFFFFF'})
 
         # Formato monetário
         money_format = workbook.add_format({'num_format': 'R$ #,##0.00'})
 
-        # Formato de linha alternada
-        alternate_format = workbook.add_format({'bg_color': '#F7F7F7'})
+        # Cabeçalho manual (linha 0)
+        headers = [tabela_final.index.name or ""] + list(tabela_final.columns)
+        for col_num, header in enumerate(headers):
+            worksheet.write(0, col_num, header, header_format)
 
-        # Aplica cabeçalho manualmente
-        for col_num, value in enumerate(tabela_final.columns.insert(0, tabela_final.index.name or "")):
-            worksheet.write(0, col_num, value, header_format)
+        # Dados com zebrinha e formato R$
+        for row_num in range(1, len(tabela_final) + 1):
+            row_format = even_row_format if row_num % 2 == 0 else odd_row_format
+            for col_num in range(len(headers)):
+                valor = tabela_final.reset_index().iloc[row_num - 1, col_num]
+                is_numeric = isinstance(valor, (float, int, np.number))
+                format_aplicado = workbook.add_format({'num_format': 'R$ #,##0.00'}) if is_numeric else row_format
+                worksheet.write(row_num, col_num, valor, format_aplicado)
 
-        # Ajusta largura + aplica formatação monetária
-        for col_idx, col in enumerate(tabela_final.reset_index().columns):
-            col_letter = chr(65 + col_idx)  # A, B, C...
-            worksheet.set_column(col_idx, col_idx, 18, money_format if "R$" in col or "Total" in col else None)
+        # Ajuste da largura das colunas
+        for i in range(len(headers)):
+            worksheet.set_column(i, i, 18)
 
-        # Aplica zebrinha nas linhas
-        for row in range(1, len(tabela_final) + 1):
-            if row % 2 == 0:
-                worksheet.set_row(row, cell_format=alternate_format)
+        # Remove grade fora da tabela
+        worksheet.hide_gridlines(option=2)
+
 
 
     st.download_button(
