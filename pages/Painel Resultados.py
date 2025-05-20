@@ -605,15 +605,20 @@ with aba4:
             tabela = tab_b
         elif tipo_metrica == "Real":
             tabela = tab_r
-        else:
-            tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
-            tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
-            tabela = pd.concat([tab_b, tab_r], axis=1)
-            colunas_intercaladas = []
-            for col in ordem:
-                colunas_intercaladas.append(f"{col} (Bruto)")
-                colunas_intercaladas.append(f"{col} (Real)")
-            tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
+        tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
+        tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
+        tabela = pd.concat([tab_b, tab_r], axis=1)
+        colunas_intercaladas = []
+        for col in ordem:
+            colunas_intercaladas.append(f"{col} (Bruto)")
+            colunas_intercaladas.append(f"{col} (Real)")
+        tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
+
+        # ✅ Adiciona Grupo antes da Loja
+        tabela = tabela.reset_index()  # Loja vira coluna
+        tabela = tabela.merge(df_filtrado[["Loja", "Grupo"]].drop_duplicates(), on="Loja", how="left")
+        tabela = tabela[["Grupo", "Loja"] + [col for col in tabela.columns if col not in ["Grupo", "Loja"]]]
+
 
     colunas_ordenadas = [col for col in ordem if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns]
     todas_colunas = []
