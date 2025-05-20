@@ -383,20 +383,18 @@ with aba4:
     # Filtros laterais lado a lado
     col1, col2, col3, col4 = st.columns(4)
 
-    with col1:
+   with col1:
         st.markdown(
             """
-            <style>
-            div[data-testid="column"]:nth-of-type(1) div[data-baseweb="radio"] {
-                margin-top: 1.0rem;  /* Ajuste fino até alinhar com os outros */
-            }
-            </style>
+            <div style="padding-top: 1.5rem;">
+                <label style="display: none;"></label>
+            </div>
             """,
             unsafe_allow_html=True
         )
 
         exibir_total = st.radio(
-            "", 
+            " ",  # Espaço em branco para evitar altura automática do label
             options=[True, False],
             format_func=lambda x: "Total Sim" if x else "Total Não",
             index=0,
