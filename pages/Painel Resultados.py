@@ -693,7 +693,7 @@ with aba4:
     ]   
     if datas_colunas_validas:
         col_mais_recente = max(datas_colunas_validas, key=lambda x: x[1])[0]
-        tabela_ordenar = tabela_ordenar.sort_values(by=col_mais_recente, ascending=False)
+        tabela_sem_total = tabela_sem_total.sort_values(by=col_mais_recente, ascending=False)
 
     # ✅ Reinsere Total Geral no topo (somente se existia antes)
     if tem_total:
