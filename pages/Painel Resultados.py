@@ -658,27 +658,43 @@ with aba4:
 
     buffer = io.BytesIO()
 
-    # Remove a linha Total Geral antes de ordenar
+    # Remove a linha Total Geral para ordenar
     tabela_ordenar = tabela_final.drop(index="Total Geral", errors="ignore")
 
-    # Filtra colunas numéricas que representam meses (exclui "Total" ou "Total Bruto/Real")
-    colunas_mes = [col for col in tabela_ordenar.columns if "Total" not in col and "/" in col]
+    # Identifica colunas de data (ano, mês ou dia) excluindo totais
+    colunas_validas = [col for col in tabela_ordenar.columns if "Total" not in col and any(x in col for x in ["/", "20"])]
 
-    # Garante que está ordenando pela coluna de data mais recente
-    if colunas_mes:
-        # Converte nomes tipo "01/2024" para datas para identificar o mais recente
-        col_datas = pd.to_datetime([f"01/{col}" for col in colunas_mes], format="%d/%m/%Y", errors="coerce")
-        col_mais_recente = colunas_mes[pd.Series(col_datas).idxmax()]
-    
-        # Ordena do maior para menor
+    # Função para transformar nome de coluna em data comparável
+    def parse_coluna_data(col):
+        try:
+            if "/" in col:
+                partes = col.split("/")
+                if len(partes[1]) == 4:  # Ex: 03/2024
+                    return pd.to_datetime(f"01/{col}", format="%d/%m/%Y")
+                elif len(partes[0]) == 4:  # Ex: 2024/03
+                    return pd.to_datetime(f"{col}/01", format="%Y/%m/%d")
+            elif col.isdigit() or col.startswith("20"):  # Ex: 2023
+                return pd.to_datetime(f"01/01/{col}", format="%d/%m/%Y")
+        except:
+            return pd.NaT
+        return pd.NaT
+
+    # Aplica parser
+    datas_colunas = [(col, parse_coluna_data(col)) for col in colunas_validas]
+    datas_colunas_validas = [(col, dt) for col, dt in datas_colunas if pd.notnull(dt)]
+
+    # Ordena com base na mais recente
+    if datas_colunas_validas:
+        col_mais_recente = max(datas_colunas_validas, key=lambda x: x[1])[0]
         tabela_ordenar = tabela_ordenar.sort_values(by=col_mais_recente, ascending=False)
 
-    # Adiciona a linha Total Geral de volta no fim
+    # Junta de volta a linha Total Geral no final
     if "Total Geral" in tabela_final.index:
-        total_geral_row = tabela_final.loc[["Total Geral"]]
-        tabela_final = pd.concat([tabela_ordenar, total_geral_row])
+        total_row = tabela_final.loc[["Total Geral"]]
+        tabela_final = pd.concat([tabela_ordenar, total_row])
     else:
         tabela_final = tabela_ordenar
+
     
    
 
