@@ -263,7 +263,7 @@ with aba2:
 # ================================
 # Aba 3: Análise por Ano, Mês e Dia
 # ================================
-        st.info("em desenvolvimento.")
+    st.info("em desenvolvimento.")
 
 # ================================
 # Aba 4: Analise Lojas
