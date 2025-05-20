@@ -658,7 +658,38 @@ with aba4:
 
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        tabela_final.to_excel(writer, sheet_name="Faturamento", index=True)
+        tabela_final.to_excel(writer, sheet_name="Faturamento", index=True, startrow=1)
+
+        workbook = writer.book
+        worksheet = writer.sheets["Faturamento"]
+
+        # Formato do cabeçalho
+        header_format = workbook.add_format({
+            'bold': True,
+            'bg_color': '#D9D9D9',
+            'border': 1
+        })
+
+        # Formato monetário
+        money_format = workbook.add_format({'num_format': 'R$ #,##0.00'})
+
+        # Formato de linha alternada
+        alternate_format = workbook.add_format({'bg_color': '#F7F7F7'})
+
+        # Aplica cabeçalho manualmente
+        for col_num, value in enumerate(tabela_final.columns.insert(0, tabela_final.index.name or "")):
+            worksheet.write(0, col_num, value, header_format)
+
+        # Ajusta largura + aplica formatação monetária
+        for col_idx, col in enumerate(tabela_final.reset_index().columns):
+            col_letter = chr(65 + col_idx)  # A, B, C...
+            worksheet.set_column(col_idx, col_idx, 18, money_format if "R$" in col or "Total" in col else None)
+
+        # Aplica zebrinha nas linhas
+        for row in range(1, len(tabela_final) + 1):
+            if row % 2 == 0:
+                worksheet.set_row(row, cell_format=alternate_format)
+
 
     st.download_button(
         label="📥 Baixar Excel com Totais",
