@@ -536,7 +536,7 @@ with aba4:
 
     with col1:
         st.markdown("<br>", unsafe_allow_html=True)  # espaço visual
-        exibir_total_opcao = st.radio("📊 Coluna Total:", ["Sim", "Não"], index=0, horizontal=True)
+        exibir_total_opcao = st.radio("**Coluna Total:**", ["Sim", "Não"], index=0, horizontal=True)
         exibir_total = exibir_total_opcao == "Sim"
 
     with col2:
