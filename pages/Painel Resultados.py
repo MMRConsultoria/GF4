@@ -739,10 +739,13 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         worksheet.write(row_num, 0, idx, row_format)  # escreve índice
 
         for col_num, val in enumerate(row, start=1):
-            if isinstance(val, (int, float)):
-                worksheet.write_number(row_num, col_num, val, row_format)
-            else:
-                worksheet.write(row_num, col_num, val, row_format)
+            try:
+                if pd.notnull(val) and isinstance(val, (int, float, np.number)):
+                    worksheet.write_number(row_num, col_num, float(val), row_format)
+                else:
+                    worksheet.write(row_num, col_num, str(val), row_format)
+            except:
+                worksheet.write(row_num, col_num, str(val), row_format)
 
     worksheet.set_column(0, len(headers), 18)
     worksheet.hide_gridlines(option=2)
