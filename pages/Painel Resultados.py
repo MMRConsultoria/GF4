@@ -322,20 +322,34 @@ with aba4:
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
 
     # === FILTROS ===
+    #anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
+    #ano_opcao = st.multiselect("📅 Selecione ano/mês(s):", options=anos_disponiveis, default=anos_disponiveis, key="ano_aba3")
     anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
-    ano_opcao = st.multiselect("📅 Selecione ano/mês(s):", options=anos_disponiveis, default=anos_disponiveis, key="ano_aba3")
+    ultimo_ano = anos_disponiveis[0] if anos_disponiveis else datetime.today().year
+    ano_opcao = st.multiselect("📅 Selecione ano/mês(s):", options=anos_disponiveis, default=[ultimo_ano], key="ano_aba3")
+    
+    
     df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
 
     meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
                   7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"}
 
     meses_disponiveis = sorted(df_filtrado["Mês Num"].unique())
+    #meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
+    #meses_selecionados = st.multiselect("", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis, key="meses_aba3")
     meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
-    meses_selecionados = st.multiselect("", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis, key="meses_aba3")
+    mes_atual_nome = meses_dict[datetime.today().month]
+    meses_selecionados = st.multiselect("", options=meses_nomes_disponiveis, default=[mes_atual_nome], key="meses_aba3")
+    
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
     df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
-    data_inicio, data_fim = st.date_input("", value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()])
+    #data_inicio, data_fim = st.date_input("", value=[df_filtrado["Data"].min(), df_filtrado["Data"].max()])
+    hoje = datetime.today().date()
+    data_minima = df_filtrado["Data"].min().date() if not df_filtrado.empty else hoje
+    data_maxima = df_filtrado["Data"].max().date() if not df_filtrado.empty else hoje
+    data_inicio, data_fim = st.date_input("", value=[hoje, hoje], min_value=data_minima, max_value=data_maxima)
+    
     df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
 
 
