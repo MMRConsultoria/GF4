@@ -698,7 +698,8 @@ with aba4:
     else:
         tabela_final = tabela_ordenar
 
-        df_reset = df_reset.drop_duplicates()
+        tabela_final = tabela_final[~((tabela_final.index == "Total Geral") & tabela_final.duplicated(keep='first'))]
+
     # ===== EXPORTAÇÃO COM FORMATAÇÃO =====
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         tabela_final.to_excel(writer, sheet_name="Faturamento", startrow=1)
