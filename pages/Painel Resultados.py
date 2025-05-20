@@ -384,9 +384,12 @@ with aba4:
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.markdown("<br>", unsafe_allow_html=True)  # espaço visual
+        # Adiciona um espaço invisível (alinha com os outros filtros)
+        st.markdown("<span style='visibility:hidden;'>Título</span>", unsafe_allow_html=True)
+    
+        # Botão Total Sim / Não
         exibir_total = st.radio(
-            "",  # 👉 tira o título!
+            "", 
             options=[True, False],
             format_func=lambda x: "Total Sim" if x else "Total Não",
             index=0,
