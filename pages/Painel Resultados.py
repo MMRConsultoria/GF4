@@ -669,7 +669,7 @@ with aba4:
 
     # ✅ Detecta a coluna de data mais recente para ordenação
     colunas_validas = [
-        col for col in tabela_ordenar.columns
+        col for col in tabela_sem_total.columns
         if "Total" not in col and any(x in col for x in ["/", "20"])
     ]
 
