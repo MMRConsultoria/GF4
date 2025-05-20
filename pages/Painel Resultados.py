@@ -723,11 +723,16 @@ with aba4:
             worksheet.write(0, col_num, header, header_format)
 
         # ✅ Escreve os dados como texto, já formatado
-        for row_num, (idx, row) in enumerate(tabela_formatada.iterrows(), start=1):
-            row_format = even_row_format if row_num % 2 == 0 else odd_row_format
+        for row_num, (idx, row) in enumerate(tabela_final.iterrows(), start=1):
+            is_total = idx == "Total Geral"
+            row_format = bold_row_format if is_total else (even_row_format if row_num % 2 == 0 else odd_row_format)
+
             worksheet.write(row_num, 0, idx, row_format)
             for col_num, val in enumerate(row, start=1):
-                worksheet.write(row_num, col_num, val, row_format)
+                if isinstance(val, (int, float)):
+                    worksheet.write_number(row_num, col_num, val, row_format)
+                else:
+                    worksheet.write(row_num, col_num, val, row_format)
 
         # Largura padrão
         for i in range(len(headers)):
