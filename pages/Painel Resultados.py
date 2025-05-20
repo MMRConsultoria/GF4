@@ -651,6 +651,36 @@ with aba4:
     nome = "Grupos" if modo_visao == "Por Grupo" else "Lojas"
     st.markdown(f"**🔢 Total de {nome}: {quantidade}**")
 
+    # Detecta a coluna de data mais recente
+    colunas_validas = [col for col in tabela_final.columns if "/" in col or (col.isdigit() and len(col) == 4)]
+
+    def parse_col(col):
+        try:
+            if "/" in col:
+                return pd.to_datetime(f"01/{col}", dayfirst=True, errors="coerce")
+            elif col.isdigit() and len(col) == 4:
+                return pd.to_datetime(f"01/01/{col}", dayfirst=True)
+        except:
+            return pd.NaT
+        return pd.NaT
+
+    datas_convertidas = [(col, parse_col(col)) for col in colunas_validas if pd.notnull(parse_col(col))]
+
+    if datas_convertidas:
+        col_mais_recente = max(datas_convertidas, key=lambda x: x[1])[0]
+    
+        # Ordena pela coluna mais recente (exceto a linha Total Geral)
+        tem_total = "Total Geral" in tabela_final.index
+        if tem_total:
+            total_row = tabela_final.loc[["Total Geral"]]
+            corpo_ordenado = tabela_final.drop(index="Total Geral").sort_values(by=col_mais_recente, ascending=False)
+            tabela_final = pd.concat([total_row, corpo_ordenado])
+        else:
+            tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
+
+
+
+    
     tabela_formatada = tabela_final.applymap(
         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x
     )
