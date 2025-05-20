@@ -384,14 +384,14 @@ with aba4:
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-    st.markdown("<br>", unsafe_allow_html=True)  # espaço visual
-    exibir_total = st.radio(
-        "📊 Exibir coluna de total?",
-        options=[True, False],
-        format_func=lambda x: "Total Sim" if x else "Total Não",
-        index=0,
-        horizontal=True
-    )
+        st.markdown("<br>", unsafe_allow_html=True)  # espaço visual
+        exibir_total = st.radio(
+            "📊 Exibir coluna de total?",
+            options=[True, False],
+            format_func=lambda x: "Total Sim" if x else "Total Não",
+            index=0,
+            horizontal=True
+        )
     with col2:
         modo_visao = st.radio(" ", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba4")
 
