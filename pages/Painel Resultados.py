@@ -752,4 +752,8 @@ with aba4:
 # Botão download
 st.download_button(
     label="📥 Baixar Excel com Totais",
-    data=buffer
+    data=buffer data=buffer.getvalue(),
+    file_name="faturamento_detalhado.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    key="download_aba3"
+)
