@@ -537,12 +537,12 @@ with aba4:
                 if isinstance(val, (int, float)):
                     worksheet.write_number(row_num, col_num, val, row_format)
                 else:
-                worksheet.write(row_num, col_num, val, row_format)
+                    worksheet.write(row_num, col_num, val, row_format)
 
         worksheet.set_column(0, len(headers), 18)
         worksheet.hide_gridlines(option=2)
 
-        # Botão download
+    # Botão download
     st.download_button(
         label="📥 Baixar Excel",
         data=buffer.getvalue(),
