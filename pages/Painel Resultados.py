@@ -737,7 +737,7 @@ with aba4:
         for col_num, header in enumerate(headers):
             worksheet.write(0, col_num, header, header_format)
 
-        df_reset = tabela_final.reset_index()
+        df_reset = tabela_final.reset_index().drop_duplicates()
         for row_num in range(1, len(df_reset) + 1):
             is_total = df_reset.iloc[row_num - 1, 0] == "Total Geral"
             row_format = bold_row_format if is_total else (even_row_format if row_num % 2 == 0 else odd_row_format)
