@@ -688,42 +688,44 @@ with aba4:
 
     buffer = io.BytesIO()
 
+    # Mostra no Streamlit
+    st.dataframe(tabela_formatada, use_container_width=True)
+
+    # 🟦 Exporta Excel formatado (substitua daqui...)
+    buffer = io.BytesIO()
+
+    # Remove formatação textual da tabela
+    tabela_exportar = tabela_final.copy()
+
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        # ✅ Exporta diretamente como visualizado, sem reset_index()
-        tabela_formatada.to_excel(writer, sheet_name="Faturamento", index=False, header=False, startrow=1)
-        
+        tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=False, header=False, startrow=1)
+
         workbook = writer.book
         worksheet = writer.sheets["Faturamento"]
 
-        # ===== Estilos =====
+        # Estilos
         header_format = workbook.add_format({
-            'bold': True,
-            'bg_color': '#4F81BD',
-            'font_color': 'white',
-            'align': 'center',
-            'valign': 'vcenter',
-            'border': 1
+            'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
+            'align': 'center', 'valign': 'vcenter', 'border': 1
         })
-
         even_row_format = workbook.add_format({
-            'bg_color': '#DCE6F1',
-            'border': 1,
-            'num_format': '@'  # mantém formato como texto (já formatado com R$ na tabela)
+            'bg_color': '#DCE6F1', 'border': 1, 'num_format': 'R$ #,##0.00'
         })
-
         odd_row_format = workbook.add_format({
-            'bg_color': '#FFFFFF',
-            'border': 1,
-            'num_format': '@'
+            'bg_color': '#FFFFFF', 'border': 1, 'num_format': 'R$ #,##0.00'
+        })
+        bold_row_format = workbook.add_format({
+            'bold': True, 'border': 1, 'num_format': 'R$ #,##0.00'
         })
 
-        # ✅ Cabeçalhos (linha 0)
-        headers = [tabela_formatada.index.name or ""] + list(tabela_formatada.columns)
+        # Cabeçalhos
+        headers = [tabela_final.index.name or ""] + list(tabela_final.columns)
         for col_num, header in enumerate(headers):
             worksheet.write(0, col_num, header, header_format)
 
-        # ✅ Escreve os dados como texto, já formatado
-        for row_num, (idx, row) in enumerate(tabela_final.iterrows(), start=1):
+        # Escreve os dados formatados corretamente (com valor real e não texto)
+        df_reset = tabela_final.reset_index()
+        for row_num, (idx, row) in enumerate(df_reset.iterrows(), start=1):
             is_total = idx == "Total Geral"
             row_format = bold_row_format if is_total else (even_row_format if row_num % 2 == 0 else odd_row_format)
 
@@ -734,15 +736,10 @@ with aba4:
                 else:
                     worksheet.write(row_num, col_num, val, row_format)
 
-        # Largura padrão
-        for i in range(len(headers)):
-            worksheet.set_column(i, i, 18)
-
-        # Remove linhas de grade fora da tabela
+        worksheet.set_column(0, len(headers), 18)
         worksheet.hide_gridlines(option=2)
 
-   
-    
+  
     # ✅ Botão download sem recalcular nada
     st.download_button(
         label="📥 Baixar Excel Igual à Tabela",
