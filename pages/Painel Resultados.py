@@ -388,7 +388,7 @@ with aba4:
             """
             <style>
             div[data-testid="column"]:nth-of-type(1) div[data-baseweb="radio"] {
-                margin-top: 1.8rem;  /* Ajuste fino até alinhar com os outros */
+                margin-top: 1.0rem;  /* Ajuste fino até alinhar com os outros */
             }
             </style>
             """,
