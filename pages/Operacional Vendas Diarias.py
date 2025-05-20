@@ -27,12 +27,8 @@ credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
 planilha_empresa = gc.open("Vendas diarias")
-try:
-    planilha_empresa = gc.open("Vendas diarias")
-    df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
-except Exception as e:
-    st.error("❌ Erro ao carregar a planilha 'Vendas diarias' ou aba 'Tabela Empresa'. Verifique se ela existe e está compartilhada com o serviço.")
-    st.stop()
+df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
+
 # ================================
 # 2. Configuração inicial do app
 # ================================
