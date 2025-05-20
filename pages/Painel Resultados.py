@@ -277,7 +277,16 @@ with aba4:
     .stMultiSelect {
         margin-bottom: -0.6rem !important;
     }
-
+    
+    /* Estiliza os chips selecionados nos multiselects */
+    .stMultiSelect [data-baseweb="tag"] {
+        background-color: #cccccc !important;  /* cinza médio */
+        color: black !important;
+        font-weight: 600;
+        border-radius: 6px;
+        padding: 4px 10px;
+    }
+    
     /* Reduz espaço do campo de data com os rádios */
     div[data-testid="stDateInput"] {
         margin-top: -0.4rem !important;
