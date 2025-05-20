@@ -736,6 +736,10 @@ with aba4:
         # Remove linhas de grade fora da tabela
         worksheet.hide_gridlines(option=2)
 
+    # 🔍 Verifique se a tabela tem linhas duplicadas
+    duplicadas = tabela_final[tabela_final.index.duplicated(keep=False)]
+    st.write("🔁 Linhas duplicadas no índice:", duplicadas)
+    
     # ✅ Botão download sem recalcular nada
     st.download_button(
         label="📥 Baixar Excel Igual à Tabela",
