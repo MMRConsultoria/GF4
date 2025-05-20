@@ -628,6 +628,8 @@ with aba4:
             if f"{col} (Real)" in tabela.columns: todas_colunas.append(f"{col} (Real)")
         else:
             todas_colunas.append(col)
+
+    todas_colunas = ["Grupo", "Loja"] + todas_colunas
     tabela = tabela[todas_colunas]
     if tipo_metrica == "Ambos":
         cols_bruto = [col for col in tabela.columns if "(Bruto)" in col]
