@@ -534,12 +534,10 @@ with aba4:
     # Filtros laterais lado a lado
     col1, col2, col3, col4 = st.columns(4)
 
-    with col4:
+    with col1:
         st.markdown("<br>", unsafe_allow_html=True)  # espaço visual
         exibir_total_opcao = st.radio("📊 Coluna Total:", ["Sim", "Não"], index=0, horizontal=True)
         exibir_total = exibir_total_opcao == "Sim"
-
-        agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
 
     with col2:
         modo_visao = st.radio(" ", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba4")
