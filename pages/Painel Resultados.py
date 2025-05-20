@@ -532,7 +532,7 @@ with aba4:
 
 
     # Filtros laterais lado a lado
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
@@ -542,7 +542,11 @@ with aba4:
 
     with col3:
         tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba4")
-
+    
+    with col4:
+    st.markdown("<br>", unsafe_allow_html=True)  # espaço visual
+    exibir_total_opcao = st.radio("📊 Coluna Total:", ["Sim", "Não"], index=0, horizontal=True)
+    exibir_total = exibir_total_opcao == "Sim"
 
     # Filtro para exibir ou não a coluna Total
     exibir_total_opcao = st.radio("📊 Coluna Total:", ["Sim", "Não"], index=0, horizontal=True)
