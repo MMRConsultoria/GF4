@@ -610,21 +610,6 @@ with aba4:
                 colunas_intercaladas.append(f"{col} (Bruto)")
                 colunas_intercaladas.append(f"{col} (Real)")
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
-            
-            # Adiciona colunas separadas de Grupo e Loja
-            tabela = tabela.reset_index()  # "Loja" vira coluna
-            tabela = tabela.merge(df_filtrado[["Loja", "Grupo"]].drop_duplicates(), on="Loja", how="left")
-            #tabela = tabela[["Grupo", "Loja"] + [col for col in tabela.columns if col not in ["Grupo", "Loja"]]]
-
-            outras_colunas = [col for col in tabela.columns if col not in ["Grupo", "Loja"]]
-            tabela = tabela[["Grupo", "Loja"] + outras_colunas]
-            
-               # ✅ Adiciona linha Total Geral com Grupo vazio e Loja = "Total Geral"
-            total_row = pd.DataFrame(tabela.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)).T
-            total_row.insert(0, "Loja", "Total Geral")
-            total_row.insert(0, "Grupo", "")
-            tabela_final = pd.concat([total_row, tabela], ignore_index=True) 
-
 
     colunas_ordenadas = [col for col in ordem if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns]
     todas_colunas = []
@@ -698,19 +683,13 @@ with aba4:
     )
     st.dataframe(tabela_formatada, use_container_width=True)
 
-# Cria buffer
 buffer = io.BytesIO()
 
-# Garante que "Grupo" e "Loja" estão como colunas
-df_reset = tabela_final.copy()
-# Garante que "Grupo" e "Loja" estejam no DataFrame como colunas
-if "Grupo" not in df_reset.columns or "Loja" not in df_reset.columns:
-    df_reset = df_reset.reset_index()
+# Cópia limpa da tabela
+tabela_exportar = tabela_final.copy()
 
-
-# Início do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-    df_reset.to_excel(writer, sheet_name="Faturamento", index=False, startrow=1)
+    tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=True, header=False, startrow=1)
 
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
@@ -730,28 +709,33 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'bold': True, 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
-    # Escreve cabeçalhos
-    for col_num, header in enumerate(df_reset.columns):
+    # ✅ Escreve cabeçalho na linha 0
+    headers = [tabela_exportar.index.name or ""] + list(tabela_exportar.columns)
+    for col_num, header in enumerate(headers):
         worksheet.write(0, col_num, header, header_format)
 
-    # Escreve linhas com zebrinha
-    for row_num, (_, row) in enumerate(df_reset.iterrows(), start=1):
-        is_total = str(row.get("Loja", "")) == "Total Geral"
+    # ✅ Escreve os dados (com índice corretamente na coluna A)
+    for row_num, (idx, row) in enumerate(tabela_exportar.iterrows(), start=1):
+        is_total = idx == "Total Geral"
         row_format = bold_row_format if is_total else (even_row_format if row_num % 2 == 0 else odd_row_format)
 
-        for col_num, val in enumerate(row):
+        worksheet.write(row_num, 0, idx, row_format)  # escreve índice
+
+        for col_num, val in enumerate(row, start=1):
             if isinstance(val, (int, float)):
                 worksheet.write_number(row_num, col_num, val, row_format)
             else:
                 worksheet.write(row_num, col_num, val, row_format)
 
-    worksheet.set_column(0, len(df_reset.columns), 18)
+    worksheet.set_column(0, len(headers), 18)
     worksheet.hide_gridlines(option=2)
 
-# Download
+# Botão download
 st.download_button(
-    label="📥 Baixar Excel com Grupo e Loja",
+    label="📥 Baixar Excel",
     data=buffer.getvalue(),
-    file_name="faturamento_com_grupo.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    file_name="faturamento_visual.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    key="download_excel_visual"
 )
+
