@@ -686,65 +686,61 @@ with aba4:
     )
     st.dataframe(tabela_formatada, use_container_width=True)
 
-    import io
-import pandas as pd
+    buffer = io.BytesIO()
 
-buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+        # ✅ Exporta diretamente como visualizado, sem reset_index()
+        tabela_formatada.to_excel(writer, sheet_name="Faturamento", index=True, startrow=1)
 
-with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-    # Grava os dados formatados como DataFrame plano (sem mexer nos dados)
-    tabela_formatada.to_excel(writer, sheet_name="Faturamento", index=True, startrow=1)
+        workbook = writer.book
+        worksheet = writer.sheets["Faturamento"]
 
-    workbook = writer.book
-    worksheet = writer.sheets["Faturamento"]
+        # ===== Estilos =====
+        header_format = workbook.add_format({
+            'bold': True,
+            'bg_color': '#4F81BD',
+            'font_color': 'white',
+            'align': 'center',
+            'valign': 'vcenter',
+            'border': 1
+        })
 
-    # Estilos
-    header_format = workbook.add_format({
-        'bold': True,
-        'bg_color': '#4F81BD',
-        'font_color': 'white',
-        'align': 'center',
-        'valign': 'vcenter',
-        'border': 1
-    })
+        even_row_format = workbook.add_format({
+            'bg_color': '#DCE6F1',
+            'border': 1,
+            'num_format': '@'  # mantém formato como texto (já formatado com R$ na tabela)
+        })
 
-    even_row_format = workbook.add_format({
-        'bg_color': '#DCE6F1',
-        'border': 1,
-        'num_format': 'R$ #,##0.00'
-    })
+        odd_row_format = workbook.add_format({
+            'bg_color': '#FFFFFF',
+            'border': 1,
+            'num_format': '@'
+        })
 
-    odd_row_format = workbook.add_format({
-        'bg_color': '#FFFFFF',
-        'border': 1,
-        'num_format': 'R$ #,##0.00'
-    })
+        # ✅ Cabeçalhos (linha 0)
+        headers = [tabela_formatada.index.name or ""] + list(tabela_formatada.columns)
+        for col_num, header in enumerate(headers):
+            worksheet.write(0, col_num, header, header_format)
 
-    # Cabeçalhos
-    headers = [tabela_formatada.index.name or ""] + list(tabela_formatada.columns)
-    for col_num, header in enumerate(headers):
-        worksheet.write(0, col_num, header, header_format)
+        # ✅ Escreve os dados como texto, já formatado
+        for row_num, (idx, row) in enumerate(tabela_formatada.iterrows(), start=1):
+            row_format = even_row_format if row_num % 2 == 0 else odd_row_format
+            worksheet.write(row_num, 0, idx, row_format)
+            for col_num, val in enumerate(row, start=1):
+                worksheet.write(row_num, col_num, val, row_format)
 
-    # Linhas com zebrinha
-    df_reset = tabela_formatada.reset_index()
-    for row_num in range(1, len(df_reset) + 1):
-        row_format = even_row_format if row_num % 2 == 0 else odd_row_format
-        for col_num in range(len(headers)):
-            valor = df_reset.iloc[row_num - 1, col_num]
-            worksheet.write(row_num, col_num, valor, row_format)
+        # Largura padrão
+        for i in range(len(headers)):
+            worksheet.set_column(i, i, 18)
 
-    # Ajuste largura
-    for i in range(len(headers)):
-        worksheet.set_column(i, i, 18)
+        # Remove linhas de grade fora da tabela
+        worksheet.hide_gridlines(option=2)
 
-    # Remove grade fora da tabela
-    worksheet.hide_gridlines(option=2)
-
-# Botão de download
-st.download_button(
-    label="📥 Baixar Excel Formatado (Visual)",
-    data=buffer.getvalue(),
-    file_name="faturamento_formatado.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    key="download_formatado"
-)
+    # ✅ Botão download sem recalcular nada
+    st.download_button(
+        label="📥 Baixar Excel Igual à Tabela",
+        data=buffer.getvalue(),
+        file_name="faturamento_visual.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="download_excel_visual"
+    )
