@@ -693,6 +693,8 @@ with aba4:
     if tem_total:
         total_row = tabela_final.loc[["Total Geral"]]
         tabela_final = pd.concat([total_row, tabela_ordenar])
+
+        tabela_final = tabela_final[~((tabela_final.index == "Total Geral") & tabela_final.duplicated(keep="first"))]
     else:
         tabela_final = tabela_ordenar
 
