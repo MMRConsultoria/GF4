@@ -630,12 +630,12 @@ with aba4:
             if col in tabela.columns:
                 todas_colunas.append(col)
 
-        # Adiciona Grupo e Loja (se existirem)
-        colunas_existentes = ["Grupo", "Loja"] + todas_colunas
-        colunas_existentes = [col for col in colunas_existentes if col in tabela.columns]
+# Adiciona Grupo e Loja (se existirem)
+colunas_existentes = ["Grupo", "Loja"] + todas_colunas
+colunas_existentes = [col for col in colunas_existentes if col in tabela.columns]
 
-        # Reorganiza a tabela somente com as colunas válidas
-        tabela = tabela[colunas_existentes]
+# Reorganiza a tabela somente com as colunas válidas
+tabela = tabela[colunas_existentes]
 
     if tipo_metrica == "Ambos":
         cols_bruto = [col for col in tabela.columns if "(Bruto)" in col]
