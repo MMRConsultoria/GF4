@@ -658,16 +658,17 @@ with aba4:
 
     buffer = io.BytesIO()
 
-    # ✅ Remove "Total Geral" para ordenar
-    tabela_ordenar = tabela_final.drop(index="Total Geral", errors="ignore")
+    # ✅ Remove "Total Geral" antes de ordenar
+    tem_total = "Total Geral" in tabela_final.index
+    tabela_ordenar = tabela_final.drop(index="Total Geral", errors="ignore") if tem_total else tabela_final.copy()
 
-    # ✅ Filtra colunas que contêm datas (ignora totais)
+    # ✅ Filtra colunas com datas (ano, mês ou dia)
     colunas_validas = [
         col for col in tabela_ordenar.columns
         if "Total" not in col and any(x in col for x in ["/", "20"])
     ]
 
-    # ✅ Converte nomes de colunas em datas
+    # Função para converter coluna em data
     def parse_coluna_data(col):
         try:
             if "/" in col:
@@ -682,7 +683,7 @@ with aba4:
             return pd.NaT
         return pd.NaT
 
-    # ✅ Identifica a coluna mais recente
+    # ✅ Identifica a coluna de data mais recente
     datas_colunas = [(col, parse_coluna_data(col)) for col in colunas_validas]
     datas_colunas_validas = [(col, dt) for col, dt in datas_colunas if pd.notnull(dt)]
 
@@ -690,25 +691,21 @@ with aba4:
         col_mais_recente = max(datas_colunas_validas, key=lambda x: x[1])[0]
         tabela_ordenar = tabela_ordenar.sort_values(by=col_mais_recente, ascending=False)
 
-    # ✅ Reinsere Total Geral no topo
-    if "Total Geral" in tabela_final.index:
+    # ✅ Junta novamente com a linha Total Geral no TOPO
+    if tem_total:
         total_row = tabela_final.loc[["Total Geral"]]
         tabela_final = pd.concat([total_row, tabela_ordenar])
     else:
         tabela_final = tabela_ordenar
 
-      
-
-    
-   
-
+    # ===== EXPORTAÇÃO COM FORMATAÇÃO =====
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         tabela_final.to_excel(writer, sheet_name="Faturamento", startrow=1)
 
         workbook = writer.book
         worksheet = writer.sheets["Faturamento"]
 
-        # Estilo do cabeçalho
+        # Cabeçalho
         header_format = workbook.add_format({
             'bold': True,
             'bg_color': '#4F81BD',
@@ -718,31 +715,28 @@ with aba4:
             'border': 1
         })
 
-        # Estilos de linhas normais (zebrinha)
         even_row_format = workbook.add_format({
             'bg_color': '#DCE6F1',
             'border': 1,
             'num_format': 'R$ #,##0.00'
         })
+
         odd_row_format = workbook.add_format({
             'bg_color': '#FFFFFF',
             'border': 1,
             'num_format': 'R$ #,##0.00'
         })
 
-        # Estilo negrito para o Total Geral
         bold_row_format = workbook.add_format({
             'bold': True,
             'border': 1,
             'num_format': 'R$ #,##0.00'
         })
 
-        # Escreve o cabeçalho manualmente na linha 0
         headers = [tabela_final.index.name or ""] + list(tabela_final.columns)
         for col_num, header in enumerate(headers):
             worksheet.write(0, col_num, header, header_format)
 
-        # Escreve os dados com zebrinha e negrito no Total Geral
         df_reset = tabela_final.reset_index()
         for row_num in range(1, len(df_reset) + 1):
             is_total = df_reset.iloc[row_num - 1, 0] == "Total Geral"
@@ -752,21 +746,17 @@ with aba4:
                 valor = df_reset.iloc[row_num - 1, col_num]
                 worksheet.write(row_num, col_num, valor, row_format)
 
-        # Ajuste da largura das colunas
+        # Ajuste de colunas
         for i in range(len(headers)):
             worksheet.set_column(i, i, 18)
 
-        # Remove linhas de grade fora da tabela
         worksheet.hide_gridlines(option=2)
 
-
-
-
-
-    st.download_button(
-        label="📥 Baixar Excel com Totais",
-        data=buffer.getvalue(),
-        file_name="faturamento_detalhado.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="download_aba3"
-    )
+# Botão download
+st.download_button(
+    label="📥 Baixar Excel com Totais",
+    data=buffer.getvalue(),
+    file_name="faturamento_detalhado.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    key="download_aba3"
+)
