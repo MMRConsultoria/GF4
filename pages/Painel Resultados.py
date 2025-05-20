@@ -656,7 +656,7 @@ with aba4:
     )
     st.dataframe(tabela_formatada, use_container_width=True)
 
-   buffer = io.BytesIO()
+    buffer = io.BytesIO()
 
     # ✅ Remove "Total Geral" da base original para ordenar
     tem_total = "Total Geral" in tabela_final.index
