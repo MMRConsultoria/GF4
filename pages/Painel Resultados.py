@@ -546,7 +546,7 @@ with aba4:
         # 🔗 Merge com a tabela de empresas para trazer o Grupo
         df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 
-        tabela_exportar = tabela_exportar.reset_index().merge(
+        tabela_exportar = tabela_final.reset_index().merge(
             df_empresa[["Loja", "Grupo"]],
             on="Loja",
             how="left"
