@@ -563,9 +563,7 @@ elif modo_visao == "Por Grupo":
     tabela_exportar = tabela_final.reset_index()
     tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Grupo"})
 
-else:  # ✅ Quando for "Ambos"
-    tabela_exportar = tabela_final.reset_index()
-    # 🔥 Aplica ordenação pela coluna Bruto
+if modo_visao == "Ambos":
     coluna_bruto = [col for col in tabela_exportar.columns if 'Bruto' in col]
     if coluna_bruto:
         tabela_exportar = tabela_exportar.sort_values(by=coluna_bruto[0], ascending=False)
