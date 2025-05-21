@@ -543,33 +543,25 @@ with aba4:
     buffer = io.BytesIO()
 
     if modo_visao == "Por Loja":
-        # 🔗 Merge com a tabela de empresas para trazer o Grupo
-        df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
-
         tabela_exportar = tabela_final.reset_index()
 
-        # ➕ Detecta o nome correto da coluna índice
+        # Detecta nome do índice atual
         nome_index = tabela_exportar.columns[0]
 
-        # 🔗 Faz o merge usando o nome correto da coluna
         tabela_exportar = tabela_exportar.merge(
             df_empresa[["Loja", "Grupo"]],
             left_on=nome_index,
             right_on="Loja",
             how="left"
-        ).set_index(nome_index)
+        ).drop(columns=["Loja"])
 
-        # ✅ Move Grupo para a primeira coluna
-        cols = ["Grupo"] + [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja"]]
-        tabela_exportar = tabela_exportar[cols]
+        # Coloca a coluna índice de volta como 'Loja'
+        tabela_exportar = tabela_exportar.set_index(nome_index)
 
-
-        # ✅ Move a coluna Grupo para a primeira posição
+        # Organiza as colunas: Grupo primeiro
         cols = ["Grupo"] + [col for col in tabela_exportar.columns if col != "Grupo"]
-        tabela_exportar = tabela_exportar[cols] 
-
+        tabela_exportar = tabela_exportar[cols]
     else:
-        # Cópia limpa da tabela
         tabela_exportar = tabela_final.copy()
         
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
