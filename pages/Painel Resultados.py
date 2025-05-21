@@ -568,6 +568,9 @@ else:
     tabela_exportar = tabela_final.reset_index()
     tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Grupo"})
 
+# 🔥 Remove linhas onde Grupo está vazio ou NaN
+tabela_exportar = tabela_exportar.dropna(subset=["Grupo"])
+
 # 🔥 Cria o Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=False, header=True, startrow=0)
@@ -611,7 +614,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         grupos_info.append({
             "grupo": grupo_atual,
             "linhas": grupo_linhas,
-            "subtotal": subtotal_grupo
+            "subtotal": subtotal_grupo,
+            "qtd_lojas": grupo_linhas.shape[0]
         })
 
     # 🔽 Ordena os grupos pelo subtotal (maior para menor)
@@ -641,6 +645,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     for grupo, group_color in zip(grupos_info, itertools.cycle(["#D9EAD3", "#CFE2F3"])):
         grupo_atual = grupo["grupo"]
         grupo_linhas = grupo["linhas"]
+        qtd_lojas = grupo["qtd_lojas"]
 
         group_row_format = workbook.add_format({
             'bg_color': group_color, 'border': 1, 'num_format': 'R$ #,##0.00'
@@ -656,7 +661,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             row_num += 1
 
         # ➕ Subtotal do grupo
-        linha_subtotal = [f"Subtotal {grupo_atual}", ""]
+        linha_subtotal = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
 
         for col in tabela_exportar.columns[2:]:
             soma = grupo_linhas[col].sum()
@@ -682,5 +687,3 @@ st.download_button(
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     key="download_excel_visual_painel"
 )
-
-  
