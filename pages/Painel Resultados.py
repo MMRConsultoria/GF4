@@ -540,26 +540,38 @@ with aba4:
     )
     st.dataframe(tabela_formatada, use_container_width=True)
 
-    buffer = io.BytesIO()
+    import itertools
+
+buffer = io.BytesIO()
 
 if modo_visao == "Por Loja":
     df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 
     tabela_exportar = tabela_final.reset_index()
 
-    # 👉 Renomeia a coluna do índice para 'Loja'
+    # Renomeia a coluna do índice para 'Loja'
     tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Loja"})
 
-    # 🔗 Faz o merge com a tabela de empresas para trazer o Grupo
+    # Faz o merge com a tabela de empresas para trazer o Grupo
     tabela_exportar = tabela_exportar.merge(
         df_empresa[["Loja", "Grupo"]],
         on="Loja",
         how="left"
     )
 
-    # ✅ Organiza a ordem das colunas: Grupo, Loja, resto
+    # Organiza a ordem das colunas: Grupo, Loja, resto
     cols = ["Grupo", "Loja"] + [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja"]]
     tabela_exportar = tabela_exportar[cols]
+
+    # 🔥 Ordena por Grupo (A-Z) e Total (Maior -> Menor)
+    coluna_valor = [col for col in tabela_exportar.columns if "Total" in col or col.isnumeric()]
+    coluna_valor = coluna_valor[0] if coluna_valor else tabela_exportar.columns[2]  # fallback seguro
+
+    tabela_exportar = tabela_exportar.sort_values(
+        by=["Grupo", coluna_valor],
+        ascending=[True, False]
+    )
+
 else:
     tabela_exportar = tabela_final.reset_index()
     tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Grupo"})
@@ -570,17 +582,19 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
 
+    # Paleta de cores
+    cores_grupo = itertools.cycle(["#D9EAD3", "#CFE2F3"])  # verde pastel e azul pastel
+
     # Formatos
     header_format = workbook.add_format({
         'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
         'align': 'center', 'valign': 'vcenter', 'border': 1
     })
-    even_row_format = workbook.add_format({
-        'bg_color': '#DCE6F1', 'border': 1, 'num_format': 'R$ #,##0.00'
+
+    subtotal_format = workbook.add_format({
+        'bold': True, 'bg_color': '#FFE599', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
-    odd_row_format = workbook.add_format({
-        'bg_color': '#FFFFFF', 'border': 1, 'num_format': 'R$ #,##0.00'
-    })
+
     bold_row_format = workbook.add_format({
         'bold': True, 'border': 1, 'num_format': 'R$ #,##0.00'
     })
@@ -589,15 +603,50 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     for col_num, header in enumerate(tabela_exportar.columns):
         worksheet.write(0, col_num, header, header_format)
 
-    # Dados
-    for row_num, row in enumerate(tabela_exportar.values, start=1):
-        row_format = bold_row_format if "Total Geral" in str(row[0]) else (even_row_format if row_num % 2 == 0 else odd_row_format)
+    current_group = None
+    group_color = next(cores_grupo)
+    start_row = 1
+    row_num = 1
 
-        for col_num, val in enumerate(row):
+    while start_row <= len(tabela_exportar):
+        if start_row == len(tabela_exportar):
+            break
+
+        grupo_atual = tabela_exportar.iloc[start_row - 1, 0]
+        grupo_linhas = tabela_exportar[tabela_exportar["Grupo"] == grupo_atual]
+
+        # Formato da cor do grupo atual
+        group_row_format = workbook.add_format({
+            'bg_color': group_color, 'border': 1, 'num_format': 'R$ #,##0.00'
+        })
+
+        for _, row in grupo_linhas.iterrows():
+            for col_num, val in enumerate(row):
+                if isinstance(val, (int, float)) and not pd.isna(val):
+                    worksheet.write_number(row_num, col_num, val, group_row_format)
+                else:
+                    worksheet.write(row_num, col_num, str(val) if not pd.isna(val) else "", group_row_format)
+            row_num += 1
+
+        # Inserir subtotal do grupo
+        linha_subtotal = ["Subtotal " + grupo_atual, ""]  # Preenche coluna Grupo e Loja
+
+        for col in tabela_exportar.columns[2:]:
+            soma = grupo_linhas[col].sum()
+            linha_subtotal.append(soma)
+
+        for col_num, val in enumerate(linha_subtotal):
             if isinstance(val, (int, float)) and not pd.isna(val):
-                worksheet.write_number(row_num, col_num, val, row_format)
+                worksheet.write_number(row_num, col_num, val, subtotal_format)
             else:
-                worksheet.write(row_num, col_num, str(val) if not pd.isna(val) else "", row_format)
+                worksheet.write(row_num, col_num, str(val), subtotal_format)
+
+        row_num += 1
+
+        start_row += len(grupo_linhas)
+
+        # Alterna a cor do próximo grupo
+        group_color = next(cores_grupo)
 
     worksheet.set_column(0, len(tabela_exportar.columns), 18)
     worksheet.hide_gridlines(option=2)
