@@ -545,13 +545,19 @@ with aba4:
     if modo_visao == "Por Loja":
         df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 
-        tabela_exportar = tabela_final.reset_index().merge(
-            df_empresa[["Loja", "Grupo"]],
-            on="Loja",
-            how="left"
-        ).set_index("Loja")
+        tabela_temp = tabela_final.reset_index()
 
-        # Coloca a coluna Grupo como a primeira coluna interna (coluna B no Excel)
+        # Detecta automaticamente o nome da coluna índice (normalmente é 'Loja' ou aparece como 'index')
+        nome_index = tabela_temp.columns[0]
+
+        tabela_exportar = tabela_temp.merge(
+            df_empresa[["Loja", "Grupo"]],
+            left_on=nome_index,
+            right_on="Loja",
+            how="left"
+        ).set_index(nome_index).drop(columns=["Loja"])
+
+        # Coloca a coluna Grupo como a primeira coluna após o índice
         cols = ["Grupo"] + [col for col in tabela_exportar.columns if col != "Grupo"]
         tabela_exportar = tabela_exportar[cols]
     else:
