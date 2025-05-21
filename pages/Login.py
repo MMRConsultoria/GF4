@@ -31,32 +31,32 @@ if not codigo_param or not empresa_param:
     """, unsafe_allow_html=True)
     st.stop()
 
-# 🔍 Descobrir IP externo do usuário
-@st.cache_data(ttl=600)
-def get_ip():
-    try:
-        return requests.get("https://api.ipify.org").text
-    except:
-        return "0.0.0.0"
+## 🔍 Descobrir IP externo do usuário
+#@st.cache_data(ttl=600)
+#def get_ip():
+#    try:
+#        return requests.get("https://api.ipify.org").text
+#    except:
+#        return "0.0.0.0"
 
 # Lista de IPs autorizados
-IPS_AUTORIZADOS = ["35.203.187.165", "201.10.22.33"]  # atualize conforme necessário
+#IPS_AUTORIZADOS = ["35.203.187.165", "201.10.22.33"]  # atualize conforme necessário
 
 # 👉 Captura o IP corretamente
-ip_usuario = get_ip()
+#ip_usuario = get_ip()
 
 # ❌ Bloqueia se IP não estiver na lista
-if ip_usuario not in IPS_AUTORIZADOS:
-    st.markdown("""
-        <style>
-        #MainMenu, header, footer, .stSidebar { display: none; }
-        </style>
-        ## 🔐 IP não autorizado
-        Seu IP detectado: `""" + ip_usuario + """`
+#if ip_usuario not in IPS_AUTORIZADOS:
+#    st.markdown("""
+#        <style>
+#        #MainMenu, header, footer, .stSidebar { display: none; }
+#        </style>
+#        ## 🔐 IP não autorizado
+#        Seu IP detectado: `""" + ip_usuario + """`
 
-        Copie este IP e envie para a equipe da MMR Consultoria para liberar o acesso.
-    """, unsafe_allow_html=True)
-    st.stop()
+#        Copie este IP e envie para a equipe da MMR Consultoria para liberar o acesso.
+#    """, unsafe_allow_html=True)
+#    st.stop()
 
 # ✅ Lista de usuários
 USUARIOS = [
