@@ -541,7 +541,7 @@ with aba4:
     st.dataframe(tabela_formatada, use_container_width=True)
 
 
-import itertools
+    import itertools
     import io
 
     buffer = io.BytesIO()
