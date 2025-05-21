@@ -606,10 +606,10 @@ with aba4:
             worksheet.write(row_num, 0, idx, row_format)  # escreve índice
 
             for col_num, val in enumerate(row, start=1):
-                if isinstance(val, (int, float)):
+                if isinstance(val, (int, float)) and not pd.isna(val):
                     worksheet.write_number(row_num, col_num, val, row_format)
                 else:
-                    worksheet.write(row_num, col_num, val, row_format)
+                    worksheet.write(row_num, col_num, str(val) if not pd.isna(val) else "", row_format)
 
         worksheet.set_column(0, len(headers), 18)
         worksheet.hide_gridlines(option=2)
