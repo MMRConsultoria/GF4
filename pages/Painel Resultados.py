@@ -566,6 +566,13 @@ with aba4:
         cols = ["Grupo", "Loja", "Tipo"] + [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]
         tabela_exportar = tabela_exportar[cols]
 
+        # 🔥 Salva uma cópia com Tipo para calcular os totais
+        tabela_tipo = tabela_exportar.copy()
+
+        # 🔥 Remove a coluna Tipo da tabela principal (ela não vai aparecer no Excel nas linhas das lojas)
+        if "Tipo" in tabela_exportar.columns:
+            tabela_exportar = tabela_exportar.drop(columns=["Tipo"])
+
     else:
         tabela_exportar = tabela_final.reset_index()
         tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Grupo"})
@@ -645,7 +652,7 @@ with aba4:
 
         if "Tipo" in tabela_exportar.columns:
             for tipo_atual in tabela_exportar["Tipo"].dropna().unique():
-                tipo_linhas = tabela_exportar[tabela_exportar["Tipo"] == tipo_atual]
+                tipo_linhas = tabela_tipo[tabela_tipo["Tipo"] == tipo_atual]
 
                 qtd_lojas_tipo = tipo_linhas["Loja"].nunique()
 
