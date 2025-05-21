@@ -539,8 +539,7 @@ with aba4:
         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x
     )
     st.dataframe(tabela_formatada, use_container_width=True)
-
-   import itertools
+import itertools
 import io
 
 buffer = io.BytesIO()
@@ -683,3 +682,5 @@ st.download_button(
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     key="download_excel_visual_painel"
 )
+
+  
