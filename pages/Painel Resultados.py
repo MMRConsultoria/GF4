@@ -570,21 +570,7 @@ else:
     tabela_exportar = tabela_final.reset_index()
     tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Grupo"})
 
-# =============================
-# 🔍 TESTE: Verificar lojas sem grupo
-# =============================
-tabela_exportar["Grupo"] = tabela_exportar["Grupo"].astype(str).str.strip()
 
-sem_grupo = tabela_exportar[
-    (tabela_exportar["Grupo"].isna()) |
-    (tabela_exportar["Grupo"].isin(["", "nan", "NaN", "None"]))
-]
-
-if not sem_grupo.empty:
-    st.warning(f"⚠️ Existem {sem_grupo.shape[0]} lojas sem grupo cadastrado!")
-    st.dataframe(sem_grupo[["Loja"]])
-else:
-    st.success("✅ Nenhuma loja sem grupo encontrada.")
 
 # 🔥 Remove linhas sem grupo
 tabela_exportar = tabela_exportar[~tabela_exportar["Grupo"].isin(["", "nan", "NaN", "None"])]
