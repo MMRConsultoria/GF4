@@ -704,23 +704,29 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     grupos_info = sorted(grupos_info, key=lambda x: x["subtotal"], reverse=True)
 
-    # ✅ Calcula subtotais por Tipo (usando tabela_exportar que tem a coluna Tipo)
+    # ✅ Calcula subtotais por Tipo (corrigido)
     tipos_info = []
     if "Tipo" in tabela_exportar.columns:
+        colunas_soma = [col for col in tabela_exportar_sem_tipo.columns if col not in ["Grupo", "Loja", "Tipo"]]
+
         for tipo_atual in tabela_exportar["Tipo"].dropna().unique():
             tipo_linhas = tabela_exportar[tabela_exportar["Tipo"] == tipo_atual]
             qtd_lojas_tipo = tipo_linhas["Loja"].nunique() if "Loja" in tipo_linhas.columns else 0
 
             soma_colunas = []
-            for col in tabela_exportar_sem_tipo.columns[2:]:
-                soma = tipo_linhas[col].sum()
-                soma_colunas.append(soma)
+            for col in colunas_soma:
+                if col in tipo_linhas.columns:
+                    soma = tipo_linhas[col].sum()
+                    soma_colunas.append(soma)
+                else:
+                    soma_colunas.append(0)
 
             tipos_info.append({
                 "tipo": tipo_atual,
                 "qtd_lojas": qtd_lojas_tipo,
                 "somas": soma_colunas
             })
+
 
     linha = 1
 
