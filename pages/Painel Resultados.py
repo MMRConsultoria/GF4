@@ -539,7 +539,7 @@ with aba4:
         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x
     )
     st.dataframe(tabela_formatada, use_container_width=True)
-import itertools
+    import itertools
 import io
 
 buffer = io.BytesIO()
@@ -568,8 +568,25 @@ else:
     tabela_exportar = tabela_final.reset_index()
     tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Grupo"})
 
-# 🔥 Remove linhas onde Grupo está vazio ou NaN
-tabela_exportar = tabela_exportar.dropna(subset=["Grupo"])
+# =============================
+# 🔍 TESTE: Verificar lojas sem grupo
+# =============================
+tabela_exportar["Grupo"] = tabela_exportar["Grupo"].astype(str).str.strip()
+
+# Detecta lojas com grupo vazio, NaN, None, espaço ou texto 'nan'
+sem_grupo = tabela_exportar[
+    (tabela_exportar["Grupo"].isna()) |
+    (tabela_exportar["Grupo"].isin(["", "nan", "NaN", "None"]))
+]
+
+if not sem_grupo.empty:
+    st.warning(f"⚠️ Existem {sem_grupo.shape[0]} lojas sem grupo cadastrado!")
+    st.dataframe(sem_grupo[["Loja"]])
+else:
+    st.success("✅ Nenhuma loja sem grupo encontrada.")
+
+# 🔥 Remove linhas sem grupo
+tabela_exportar = tabela_exportar[~tabela_exportar["Grupo"].isin(["", "nan", "NaN", "None"])]
 
 # 🔥 Cria o Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
@@ -660,7 +677,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                     worksheet.write(row_num, col_num, str(val) if not pd.isna(val) else "", group_row_format)
             row_num += 1
 
-        # ➕ Subtotal do grupo
+        # ➕ Subtotal do grupo com número de lojas
         linha_subtotal = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
 
         for col in tabela_exportar.columns[2:]:
