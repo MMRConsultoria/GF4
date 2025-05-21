@@ -568,6 +568,9 @@ if modo_visao == "Ambos":
     if coluna_bruto:
         tabela_exportar = tabela_exportar.sort_values(by=coluna_bruto[0], ascending=False)
 
+# 👇 Exibe na tela já ordenado
+st.dataframe(tabela_final)
+
 # 🔥 Limpeza de Grupo (para todos os casos)
 tabela_exportar["Grupo"] = tabela_exportar["Grupo"].astype(str).str.strip()
 tabela_exportar = tabela_exportar[~tabela_exportar["Grupo"].isin(["", "nan", "NaN", "None"])]
