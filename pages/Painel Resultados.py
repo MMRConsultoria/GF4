@@ -541,6 +541,29 @@ with aba4:
     st.dataframe(tabela_formatada, use_container_width=True)
 
 
+    # 🔥 Ordena a tabela da TELA sempre por Bruto ou, se não tiver, por Real
+    coluna_ordenacao = None
+
+    # 🔍 Procura coluna que contém 'Bruto'
+    coluna_bruto = [col for col in tabela_final.columns if 'Bruto' in col]
+    if coluna_bruto:
+        coluna_ordenacao = coluna_bruto[0]
+    else:
+        # 🔍 Se não tem 'Bruto', procura coluna que contém 'Real'
+        coluna_real = [col for col in tabela_final.columns if 'Real' in col]
+        if coluna_real:
+            coluna_ordenacao = coluna_real[0]
+
+    # 🔥 Se encontrou, aplica ordenação descrescente (Total Geral continua no topo se existir)
+    if coluna_ordenacao:
+        tem_total = "Total Geral" in tabela_final.index
+        if tem_total:
+            total_row = tabela_final.loc[["Total Geral"]]
+            corpo_ordenado = tabela_final.drop(index="Total Geral").sort_values(by=coluna_ordenacao, ascending=False)
+            tabela_final = pd.concat([total_row, corpo_ordenado])
+        else:
+            tabela_final = tabela_final.sort_values(by=coluna_ordenacao, ascending=False)
+
 import itertools
 import io
 import pandas as pd
