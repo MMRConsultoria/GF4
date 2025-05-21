@@ -560,12 +560,19 @@ if modo_visao == "Por Loja":
         how="left"
     )
 
-    cols = ["Grupo", "Loja", "Tipo"] + [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]
-    tabela_exportar = tabela_exportar[cols]
-
-else:
+elif modo_visao == "Por Grupo":
     tabela_exportar = tabela_final.reset_index()
     tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Grupo"})
+
+else:  # ✅ Quando for "Ambos"
+    tabela_exportar = tabela_final.reset_index()
+
+    # 🔥 Aplica ordenação pela coluna Bruto
+    coluna_bruto = [col for col in tabela_exportar.columns if 'Bruto' in col]
+    
+    if coluna_bruto:
+        tabela_exportar = tabela_exportar.sort_values(by=coluna_bruto[0], ascending=False)
+
 
 # 🔥 Limpeza de Grupo
 tabela_exportar["Grupo"] = tabela_exportar["Grupo"].astype(str).str.strip()
