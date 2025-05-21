@@ -546,11 +546,23 @@ with aba4:
         # 🔗 Merge com a tabela de empresas para trazer o Grupo
         df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 
-        tabela_exportar = tabela_final.reset_index().merge(
+        tabela_exportar = tabela_final.reset_index()
+
+        # ➕ Detecta o nome correto da coluna índice
+        nome_index = tabela_exportar.columns[0]
+
+        # 🔗 Faz o merge usando o nome correto da coluna
+        tabela_exportar = tabela_exportar.merge(
             df_empresa[["Loja", "Grupo"]],
-            on="Loja",
+            left_on=nome_index,
+            right_on="Loja",
             how="left"
-        ).set_index("Loja")
+        ).set_index(nome_index)
+
+        # ✅ Move Grupo para a primeira coluna
+        cols = ["Grupo"] + [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja"]]
+        tabela_exportar = tabela_exportar[cols]
+
 
         # ✅ Move a coluna Grupo para a primeira posição
         cols = ["Grupo"] + [col for col in tabela_exportar.columns if col != "Grupo"]
