@@ -578,9 +578,14 @@ tabela_exportar = tabela_exportar[~tabela_exportar["Grupo"].isin(["", "nan", "Na
 # =============================
 # 🔥 Criação do Excel
 # =============================
-with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-    tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=False, header=True, startrow=0)
 
+# 🔥 Cria uma cópia só para exportação sem a coluna Tipo
+tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
+
+
+with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+    tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, header=True, startrow=0)
+    
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
 
@@ -599,15 +604,15 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
-    for col_num, header in enumerate(tabela_exportar.columns):
+    for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
         worksheet.write(0, col_num, header, header_format)
 
     grupos_info = []
 
-    for grupo_atual in tabela_exportar["Grupo"].unique():
-        grupo_linhas = tabela_exportar[tabela_exportar["Grupo"] == grupo_atual]
-        coluna_valor = [col for col in tabela_exportar.columns if "Total" in col or col.isnumeric()]
-        coluna_valor = coluna_valor[0] if coluna_valor else tabela_exportar.columns[3]
+    for grupo_atual in tabela_exportar_sem_tipo["Grupo"].unique():
+        grupo_linhas = tabela_exportar_sem_tipo[tabela_exportar_sem_tipo["Grupo"] == grupo_atual]
+        coluna_valor = [col for col in tabela_exportar_sem_tipo.columns if "Total" in col or col.isnumeric()]
+        coluna_valor = coluna_valor[0] if coluna_valor else tabela_exportar_sem_tipo.columns[3]
         subtotal_grupo = grupo_linhas[coluna_valor].sum()
 
         grupos_info.append({
@@ -621,13 +626,13 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     tipos_info = []
 
-    if "Tipo" in tabela_exportar.columns:
-        for tipo_atual in tabela_exportar["Tipo"].dropna().unique():
-            tipo_linhas = tabela_exportar[tabela_exportar["Tipo"] == tipo_atual]
+    if "Tipo" in tabela_exportar_sem_tipo.columns:
+        for tipo_atual in tabela_exportar_sem_tipo["Tipo"].dropna().unique():
+            tipo_linhas = tabela_exportar_sem_tipo[tabela_exportar_sem_tipo["Tipo"] == tipo_atual]
             qtd_lojas_tipo = tipo_linhas["Loja"].nunique() if "Loja" in tipo_linhas.columns else 0
 
             soma_colunas = []
-            for col in tabela_exportar.columns[3:]:
+            for col in tabela_exportar_sem_tipo.columns[3:]:
                 soma = tipo_linhas[col].sum()
                 soma_colunas.append(soma)
 
@@ -653,7 +658,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     linha_totalgeral = ["Total Geral", "", ""]
 
-    for col in tabela_exportar.columns[3:]:
+    for col in tabela_exportar_sem_tipo.columns[2:]:
         soma = sum(g["linhas"][col].sum() for g in grupos_info)
         linha_totalgeral.append(soma)
 
@@ -686,7 +691,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         linha_subtotal = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}", ""]
 
-        for col in tabela_exportar.columns[3:]:
+        for col in tabela_exportar_sem_tipo.columns[3:]:
             soma = grupo_linhas[col].sum()
             linha_subtotal.append(soma)
 
@@ -698,7 +703,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         row_num += 1
 
-    worksheet.set_column(0, len(tabela_exportar.columns), 18)
+    worksheet.set_column(0, len(tabela_exportar_sem_tipo.columns), 18)
     worksheet.hide_gridlines(option=2)
 
 # 🔽 Botão download (fora do with)
