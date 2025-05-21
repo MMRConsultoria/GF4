@@ -539,8 +539,6 @@ with aba4:
         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x
     )
     st.dataframe(tabela_formatada, use_container_width=True)
-
-
 import itertools
 import io
 
@@ -660,9 +658,9 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     for tipo in tipos_info:
         linha_tipo = [f"Tipo: {tipo['tipo']}", f"Lojas: {tipo['qtd_lojas']}", ""]
+
         linha_tipo.extend(tipo["somas"])
 
-        # 🚨 Valida tamanho da linha
         if len(linha_tipo) < len(tabela_exportar.columns):
             linha_tipo += [""] * (len(tabela_exportar.columns) - len(linha_tipo))
 
@@ -675,13 +673,16 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         linha += 1
 
     # =============================
-    # 🔥 Total Geral (baseado nos subtotais)
+    # 🔥 Total Geral
     # =============================
     linha_totalgeral = ["Total Geral", "", ""]
 
     for col in tabela_exportar.columns[3:]:
         soma = sum(g["linhas"][col].sum() for g in grupos_info)
         linha_totalgeral.append(soma)
+
+    if len(linha_totalgeral) < len(tabela_exportar.columns):
+        linha_totalgeral += [""] * (len(tabela_exportar.columns) - len(linha_totalgeral))
 
     for col_num, val in enumerate(linha_totalgeral):
         if isinstance(val, (int, float)) and not pd.isna(val):
