@@ -542,9 +542,25 @@ with aba4:
 
     buffer = io.BytesIO()
 
-    # Cópia limpa da tabela
-    tabela_exportar = tabela_final.copy()
+   
+    if modo_visao == "Por Loja":
+        # 🔗 Merge com a tabela de empresas para trazer o Grupo
+        df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 
+        tabela_exportar = tabela_exportar.reset_index().merge(
+            df_empresa[["Loja", "Grupo"]],
+            on="Loja",
+            how="left"
+        ).set_index("Loja")
+
+        # ✅ Move a coluna Grupo para a primeira posição
+        cols = ["Grupo"] + [col for col in tabela_exportar.columns if col != "Grupo"]
+        tabela_exportar = tabela_exportar[cols] 
+
+    else
+         # Cópia limpa da tabela
+        tabela_exportar = tabela_final.copy()
+        
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=True, header=False, startrow=1)
 
