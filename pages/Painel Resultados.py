@@ -543,22 +543,15 @@ with aba4:
     buffer = io.BytesIO()
 
     if modo_visao == "Por Loja":
-        tabela_exportar = tabela_final.reset_index()
+        df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 
-        # Detecta nome do índice atual
-        nome_index = tabela_exportar.columns[0]
-
-        tabela_exportar = tabela_exportar.merge(
+        tabela_exportar = tabela_final.reset_index().merge(
             df_empresa[["Loja", "Grupo"]],
-            left_on=nome_index,
-            right_on="Loja",
+            on="Loja",
             how="left"
-        ).drop(columns=["Loja"])
+        ).set_index("Loja")
 
-        # Coloca a coluna índice de volta como 'Loja'
-        tabela_exportar = tabela_exportar.set_index(nome_index)
-
-        # Organiza as colunas: Grupo primeiro
+        # Coloca a coluna Grupo como a primeira coluna interna (coluna B no Excel)
         cols = ["Grupo"] + [col for col in tabela_exportar.columns if col != "Grupo"]
         tabela_exportar = tabela_exportar[cols]
     else:
