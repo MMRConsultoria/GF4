@@ -784,7 +784,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 st.download_button(
     label="📥 Baixar Excel",
     data=buffer.getvalue(),
-    file_name="faturamento_visual.xlsx",
+    file_name=f"faturamento_{modo_visao.lower()}.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    key="download_excel_visual"
+    key=f"download_excel_visual_{modo_visao.lower()}"
 )
