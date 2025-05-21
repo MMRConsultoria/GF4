@@ -542,7 +542,6 @@ with aba4:
 
     buffer = io.BytesIO()
 
-   
     if modo_visao == "Por Loja":
         # 🔗 Merge com a tabela de empresas para trazer o Grupo
         df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
@@ -557,8 +556,8 @@ with aba4:
         cols = ["Grupo"] + [col for col in tabela_exportar.columns if col != "Grupo"]
         tabela_exportar = tabela_exportar[cols] 
 
-    else
-         # Cópia limpa da tabela
+    else:
+        # Cópia limpa da tabela
         tabela_exportar = tabela_final.copy()
         
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
