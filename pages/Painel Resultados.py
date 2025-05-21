@@ -542,75 +542,71 @@ with aba4:
 
     buffer = io.BytesIO()
 
-    if modo_visao == "Por Loja":
-        df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
+if modo_visao == "Por Loja":
+    df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 
-        tabela_temp = tabela_final.reset_index()
+    tabela_exportar = tabela_final.reset_index()
 
-        # Detecta automaticamente o nome da coluna índice (normalmente é 'Loja' ou aparece como 'index')
-        nome_index = tabela_temp.columns[0]
+    # 👉 Renomeia a coluna do índice para 'Loja'
+    tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Loja"})
 
-        tabela_exportar = tabela_temp.merge(
-            df_empresa[["Loja", "Grupo"]],
-            left_on=nome_index,
-            right_on="Loja",
-            how="left"
-        ).set_index(nome_index).drop(columns=["Loja"])
-
-        # Coloca a coluna Grupo como a primeira coluna após o índice
-        cols = ["Grupo"] + [col for col in tabela_exportar.columns if col != "Grupo"]
-        tabela_exportar = tabela_exportar[cols]
-    else:
-        tabela_exportar = tabela_final.copy()
-        
-    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-        tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=True, header=False, startrow=1)
-
-        workbook = writer.book
-        worksheet = writer.sheets["Faturamento"]
-
-        # Estilos
-        header_format = workbook.add_format({
-            'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
-            'align': 'center', 'valign': 'vcenter', 'border': 1
-        })
-        even_row_format = workbook.add_format({
-            'bg_color': '#DCE6F1', 'border': 1, 'num_format': 'R$ #,##0.00'
-        })
-        odd_row_format = workbook.add_format({
-            'bg_color': '#FFFFFF', 'border': 1, 'num_format': 'R$ #,##0.00'
-        })
-        bold_row_format = workbook.add_format({
-            'bold': True, 'border': 1, 'num_format': 'R$ #,##0.00'
-        })
-
-        # ✅ Escreve cabeçalho na linha 0
-        headers = [tabela_exportar.index.name or ""] + list(tabela_exportar.columns)
-        for col_num, header in enumerate(headers):
-            worksheet.write(0, col_num, header, header_format)
-
-        # ✅ Escreve os dados (com índice corretamente na coluna A)
-        for row_num, (idx, row) in enumerate(tabela_exportar.iterrows(), start=1):
-            is_total = idx == "Total Geral"
-            row_format = bold_row_format if is_total else (even_row_format if row_num % 2 == 0 else odd_row_format)
-
-            worksheet.write(row_num, 0, idx, row_format)  # escreve índice
-
-            for col_num, val in enumerate(row, start=1):
-                if isinstance(val, (int, float)) and not pd.isna(val):
-                    worksheet.write_number(row_num, col_num, val, row_format)
-                else:
-                    worksheet.write(row_num, col_num, str(val) if not pd.isna(val) else "", row_format)
-
-        worksheet.set_column(0, len(headers), 18)
-        worksheet.hide_gridlines(option=2)
-
-    # Botão download
-    st.download_button(
-        label="📥 Baixar Excel",
-        data=buffer.getvalue(),
-        file_name="faturamento_visual.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="download_excel_visual"
+    # 🔗 Faz o merge com a tabela de empresas para trazer o Grupo
+    tabela_exportar = tabela_exportar.merge(
+        df_empresa[["Loja", "Grupo"]],
+        on="Loja",
+        how="left"
     )
 
+    # ✅ Organiza a ordem das colunas: Grupo, Loja, resto
+    cols = ["Grupo", "Loja"] + [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja"]]
+    tabela_exportar = tabela_exportar[cols]
+else:
+    tabela_exportar = tabela_final.reset_index()
+    tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Grupo"})
+
+with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+    tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=False, header=True, startrow=0)
+
+    workbook = writer.book
+    worksheet = writer.sheets["Faturamento"]
+
+    # Formatos
+    header_format = workbook.add_format({
+        'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
+        'align': 'center', 'valign': 'vcenter', 'border': 1
+    })
+    even_row_format = workbook.add_format({
+        'bg_color': '#DCE6F1', 'border': 1, 'num_format': 'R$ #,##0.00'
+    })
+    odd_row_format = workbook.add_format({
+        'bg_color': '#FFFFFF', 'border': 1, 'num_format': 'R$ #,##0.00'
+    })
+    bold_row_format = workbook.add_format({
+        'bold': True, 'border': 1, 'num_format': 'R$ #,##0.00'
+    })
+
+    # Cabeçalho
+    for col_num, header in enumerate(tabela_exportar.columns):
+        worksheet.write(0, col_num, header, header_format)
+
+    # Dados
+    for row_num, row in enumerate(tabela_exportar.values, start=1):
+        row_format = bold_row_format if "Total Geral" in str(row[0]) else (even_row_format if row_num % 2 == 0 else odd_row_format)
+
+        for col_num, val in enumerate(row):
+            if isinstance(val, (int, float)) and not pd.isna(val):
+                worksheet.write_number(row_num, col_num, val, row_format)
+            else:
+                worksheet.write(row_num, col_num, str(val) if not pd.isna(val) else "", row_format)
+
+    worksheet.set_column(0, len(tabela_exportar.columns), 18)
+    worksheet.hide_gridlines(option=2)
+
+# Botão download
+st.download_button(
+    label="📥 Baixar Excel",
+    data=buffer.getvalue(),
+    file_name="faturamento_visual.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    key="download_excel_visual"
+)
