@@ -555,7 +555,7 @@ if modo_visao == "Por Loja":
     # Renomeia o índice para 'Loja'
     tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Loja"})
 
-    # Faz merge com o Grupo
+    # Faz merge com o Grupo e Tipo
     tabela_exportar = tabela_exportar.merge(
         df_empresa[["Loja", "Grupo", "Tipo"]],
         on="Loja",
@@ -570,10 +570,27 @@ else:
     tabela_exportar = tabela_final.reset_index()
     tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Grupo"})
 
+# =============================
+# 🔍 TESTE: Verificar lojas sem grupo
+# =============================
+tabela_exportar["Grupo"] = tabela_exportar["Grupo"].astype(str).str.strip()
 
+sem_grupo = tabela_exportar[
+    (tabela_exportar["Grupo"].isna()) |
+    (tabela_exportar["Grupo"].isin(["", "nan", "NaN", "None"]))
+]
+
+if not sem_grupo.empty:
+    st.warning(f"⚠️ Existem {sem_grupo.shape[0]} lojas sem grupo cadastrado!")
+    st.dataframe(sem_grupo[["Loja"]])
+else:
+    st.success("✅ Nenhuma loja sem grupo encontrada.")
 
 # 🔥 Remove linhas sem grupo
 tabela_exportar = tabela_exportar[~tabela_exportar["Grupo"].isin(["", "nan", "NaN", "None"])]
+
+# 🔥 Cria dataframe seguro apenas com dados de lojas
+dados_lojas = tabela_exportar.copy()
 
 # 🔥 Cria o Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
@@ -608,11 +625,11 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     # =============================
     grupos_info = []
 
-    for grupo_atual in tabela_exportar["Grupo"].unique():
-        grupo_linhas = tabela_exportar[tabela_exportar["Grupo"] == grupo_atual]
+    for grupo_atual in dados_lojas["Grupo"].unique():
+        grupo_linhas = dados_lojas[dados_lojas["Grupo"] == grupo_atual]
 
-        coluna_valor = [col for col in tabela_exportar.columns if "Total" in col or col.isnumeric()]
-        coluna_valor = coluna_valor[0] if coluna_valor else tabela_exportar.columns[3]
+        coluna_valor = [col for col in dados_lojas.columns if "Total" in col or col.isnumeric()]
+        coluna_valor = coluna_valor[0] if coluna_valor else dados_lojas.columns[3]
         subtotal_grupo = grupo_linhas[coluna_valor].sum()
 
         grupos_info.append({
@@ -629,14 +646,14 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     # =============================
     tipos_info = []
 
-    if "Tipo" in tabela_exportar.columns:
-        for tipo_atual in tabela_exportar["Tipo"].dropna().unique():
-            tipo_linhas = tabela_exportar[tabela_exportar["Tipo"] == tipo_atual]
+    if "Tipo" in dados_lojas.columns:
+        for tipo_atual in dados_lojas["Tipo"].dropna().unique():
+            tipo_linhas = dados_lojas[dados_lojas["Tipo"] == tipo_atual]
 
             qtd_lojas_tipo = tipo_linhas["Loja"].nunique()
 
             soma_colunas = []
-            for col in tabela_exportar.columns[3:]:
+            for col in dados_lojas.columns[3:]:
                 soma = tipo_linhas[col].sum()
                 soma_colunas.append(soma)
 
@@ -666,8 +683,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     # =============================
     linha_totalgeral = ["Total Geral", "", ""]
 
-    for col in tabela_exportar.columns[3:]:
-        soma = sum(g["linhas"][col].sum() for g in grupos_info)
+    for col in dados_lojas.columns[3:]:
+        soma = dados_lojas[col].sum()
         linha_totalgeral.append(soma)
 
     for col_num, val in enumerate(linha_totalgeral):
@@ -704,7 +721,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         # ➕ Subtotal do grupo
         linha_subtotal = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}", ""]
 
-        for col in tabela_exportar.columns[3:]:
+        for col in dados_lojas.columns[3:]:
             soma = grupo_linhas[col].sum()
             linha_subtotal.append(soma)
 
