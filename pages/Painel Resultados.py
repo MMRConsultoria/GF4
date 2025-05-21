@@ -543,6 +543,39 @@ with aba4:
 
 import itertools
 import io
+# 🔗 Prepara o dataframe para exportação
+if modo_visao == "Por Loja":
+    df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
+
+    tabela_exportar = tabela_final.reset_index()
+    tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Loja"})
+
+    tabela_exportar = tabela_exportar.merge(
+        df_empresa[["Loja", "Grupo", "Tipo"]],
+        on="Loja",
+        how="left"
+    )
+
+    cols = ["Grupo", "Loja", "Tipo"] + [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]
+    tabela_exportar = tabela_exportar[cols]
+
+elif modo_visao == "Por Grupo":
+    tabela_exportar = tabela_final.reset_index()
+    tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Grupo"})
+
+else:  # ✅ Quando for "Ambos"
+    tabela_exportar = tabela_final.reset_index()
+    # 🔥 Aplica ordenação pela coluna Bruto
+    coluna_bruto = [col for col in tabela_exportar.columns if 'Bruto' in col]
+    if coluna_bruto:
+        tabela_exportar = tabela_exportar.sort_values(by=coluna_bruto[0], ascending=False)
+
+# 🔥 Limpeza de Grupo (para todos os casos)
+tabela_exportar["Grupo"] = tabela_exportar["Grupo"].astype(str).str.strip()
+tabela_exportar = tabela_exportar[~tabela_exportar["Grupo"].isin(["", "nan", "NaN", "None"])]
+
+# 🔥 Cria uma cópia só para exportação sem a coluna Tipo
+tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
 
 buffer = io.BytesIO()
 
