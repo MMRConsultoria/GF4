@@ -730,9 +730,9 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         row_num += 1
 
-    # 🔧 Ajusta tamanho das colunas e remove gridlines
-    worksheet.set_column(0, len(tabela_exportar.columns), 18)
-    worksheet.hide_gridlines(option=2)
+        # 🔧 Ajusta tamanho das colunas e remove gridlines
+        worksheet.set_column(0, len(tabela_exportar.columns), 18)
+        worksheet.hide_gridlines(option=2)
 
     # 🔽 Botão download
     st.download_button(
