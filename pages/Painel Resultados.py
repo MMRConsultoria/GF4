@@ -540,28 +540,42 @@ with aba4:
     )
     st.dataframe(tabela_formatada, use_container_width=True)
 
-    # 🔥 Ordenação da tabela na tela: prioridade '(Bruto)' > '(Real)'
+    # 🔥 Ordenação da tabela na TELA: pela coluna (Bruto) mais recente, se não tiver, pela (Real)
+colunas_bruto = [col for col in tabela_final.columns if '(Bruto)' in col]
+colunas_real = [col for col in tabela_final.columns if '(Real)' in col]
+
+# 📅 Ordena as colunas com base na data do nome
+def extrair_data(col):
+    try:
+        parte = col.split(' ')[0]
+        if '/' in parte:
+            return pd.to_datetime(f"01/{parte}", dayfirst=True)
+        elif parte.isdigit() and len(parte) == 4:
+            return pd.to_datetime(f"01/01/{parte}")
+    except:
+        return pd.NaT
+    return pd.NaT
+
+# 🔍 Busca a coluna (Bruto) mais recente
+if colunas_bruto:
+    colunas_bruto_ordenadas = sorted(colunas_bruto, key=extrair_data, reverse=True)
+    coluna_ordenacao = colunas_bruto_ordenadas[0]
+elif colunas_real:
+    colunas_real_ordenadas = sorted(colunas_real, key=extrair_data, reverse=True)
+    coluna_ordenacao = colunas_real_ordenadas[0]
+else:
     coluna_ordenacao = None
 
-    # 🔍 Procura coluna que contém '(Bruto)'
-    coluna_bruto = [col for col in tabela_final.columns if '(Bruto)' in col]
-    if coluna_bruto:
-        coluna_ordenacao = coluna_bruto[0]
+# 🔥 Faz a ordenação, mantendo "Total Geral" no topo
+if coluna_ordenacao:
+    tem_total = "Total Geral" in tabela_final.index
+    if tem_total:
+        total_row = tabela_final.loc[["Total Geral"]]
+        corpo_ordenado = tabela_final.drop(index="Total Geral").sort_values(by=coluna_ordenacao, ascending=False)
+        tabela_final = pd.concat([total_row, corpo_ordenado])
     else:
-        # 🔍 Se não tem '(Bruto)', procura '(Real)'
-        coluna_real = [col for col in tabela_final.columns if '(Real)' in col]
-        if coluna_real:
-            coluna_ordenacao = coluna_real[0]
+        tabela_final = tabela_final.sort_values(by=coluna_ordenacao, ascending=False)
 
-    # 🔥 Se encontrou, aplica ordenação descrescente
-    if coluna_ordenacao:
-        tem_total = "Total Geral" in tabela_final.index
-        if tem_total:
-            total_row = tabela_final.loc[["Total Geral"]]
-            corpo_ordenado = tabela_final.drop(index="Total Geral").sort_values(by=coluna_ordenacao, ascending=False)
-            tabela_final = pd.concat([total_row, corpo_ordenado])
-        else:
-            tabela_final = tabela_final.sort_values(by=coluna_ordenacao, ascending=False)
 
    
 
