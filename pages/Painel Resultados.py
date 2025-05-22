@@ -667,37 +667,7 @@ if agrupamento == "Dia":
     except Exception as e:
         st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
 
-# 👉 Cria coluna do acumulado antes do bloco de tipos
-if agrupamento == "Dia":
-    try:
-        # ✅ Acumulado Geral no mês
-        data_maxima = pd.to_datetime(data_fim)
-        ano = data_maxima.year
-        mes = data_maxima.month
-        dia = data_maxima.day
 
-        df_acumulado = df_anos[
-            (df_anos["Data"].dt.year == ano) &
-            (df_anos["Data"].dt.month == mes) &
-            (df_anos["Data"].dt.day <= dia)
-        ].copy()
-
-        if modo_visao == "Por Loja":
-            df_agrupado = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index()
-            df_agrupado.rename(columns={"Fat.Real": "Acumulado no Mês"}, inplace=True)
-            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(df_agrupado, on="Loja", how="left")
-
-        elif modo_visao == "Por Grupo":
-            df_agrupado = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index()
-            df_agrupado.rename(columns={"Fat.Real": "Acumulado no Mês"}, inplace=True)
-            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(df_agrupado, on="Grupo", how="left")
-
-        # 🔥 Joga a coluna do acumulado pro final
-        cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col != "Acumulado no Mês"]
-        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês"]]
-
-    except Exception as e:
-        st.warning(f"⚠️ Erro no acumulado: {e}")
 
 # 🔥 Criação do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
