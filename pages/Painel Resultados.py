@@ -625,40 +625,46 @@ tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
 
 
 
-# 🔥 Adiciona coluna de Acumulado no Mês SOMENTE quando agrupamento for "Dia"
+# 🔥 Cálculo do Acumulado no Mês SOMENTE quando agrupamento for "Dia"
 if agrupamento == "Dia":
     try:
-        # ✅ Pega a data máxima do filtro aplicado na tela
-        data_maxima_filtro = pd.to_datetime(data_fim)
+        # ✅ Pega a data máxima do filtro
+        data_maxima = pd.to_datetime(data_fim)
+        ano = data_maxima.year
+        mes = data_maxima.month
+        dia = data_maxima.day
 
-        ano = data_maxima_filtro.year
-        mes = data_maxima_filtro.month
-        dia = data_maxima_filtro.day
-
-        # ✅ Cria dataframe acumulado do mês ATÉ a data máxima do filtro
+        # ✅ Cria um dataframe acumulado: do dia 01 até o dia do filtro
         df_acumulado = df_filtrado[
             (df_filtrado["Data"].dt.year == ano) &
             (df_filtrado["Data"].dt.month == mes) &
             (df_filtrado["Data"].dt.day <= dia)
-        ]
+        ].copy()
 
-        # ✅ Faz agrupamento conforme o modo selecionado
+        # 🔥 Faz o agrupamento para gerar o acumulado
         if modo_visao == "Por Loja":
             df_agrupado = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index()
             df_agrupado.rename(columns={"Fat.Real": "Acumulado no Mês"}, inplace=True)
-            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(df_agrupado, on="Loja", how="left")
-        else:  # Por Grupo
+
+            # 🔗 Faz merge no dataframe de exportação
+            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
+                df_agrupado, on="Loja", how="left"
+            )
+
+        elif modo_visao == "Por Grupo":
             df_agrupado = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index()
             df_agrupado.rename(columns={"Fat.Real": "Acumulado no Mês"}, inplace=True)
-            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(df_agrupado, on="Grupo", how="left")
 
-        # ✅ Joga a coluna Acumulado no Mês para o final
+            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
+                df_agrupado, on="Grupo", how="left"
+            )
+
+        # 🔥 Joga a coluna "Acumulado no Mês" para o final
         cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col != "Acumulado no Mês"]
         tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês"]]
 
     except Exception as e:
-        st.warning(f"⚠️ Erro ao calcular acumulado do mês: {e}")
-
+        st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
 
 
 
