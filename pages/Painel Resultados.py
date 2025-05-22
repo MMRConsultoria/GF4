@@ -583,11 +583,11 @@ import itertools
 
 buffer = io.BytesIO()
 
-# 🔥 Padroniza nomes das lojas
+# 🔥 Padroniza nomes
 df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 
-# 🔗 Prepara tabela para exportação
+# 🔗 Prepara a tabela
 if modo_visao == "Por Loja":
     tabela_exportar = tabela_final.reset_index().rename(columns={tabela_final.index.name: "Loja"})
     tabela_exportar = tabela_exportar.merge(
@@ -595,10 +595,18 @@ if modo_visao == "Por Loja":
         on="Loja", how="left"
     )
     tabela_exportar = tabela_exportar[["Grupo", "Loja", "Tipo"] + [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]]
-else:
-    tabela_exportar = tabela_final.reset_index().rename(columns={tabela_final.index.name: "Grupo"})
 
-# 🔥 Calcula Acumulado no Mês
+elif modo_visao == "Por Grupo":
+    tabela_exportar = tabela_final.reset_index().rename(columns={tabela_final.index.name: "Grupo"})
+    tabela_exportar = tabela_exportar.merge(
+        df_empresa[["Grupo", "Tipo"]].drop_duplicates(),
+        on="Grupo", how="left"
+    )
+
+# ✅ Debug para verificar as colunas disponíveis
+st.write("Colunas atuais da tabela_exportar:", tabela_exportar.columns.tolist())
+
+# 🔥 Cálculo Acumulado no Mês (somente se agrupamento for Dia)
 if agrupamento == "Dia":
     data_max = pd.to_datetime(data_fim)
     df_acumulado = df_anos[
@@ -614,9 +622,10 @@ if agrupamento == "Dia":
     acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês Grupo"})
     acumulado_por_loja = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 
-    if modo_visao == "Por Loja":
+    if modo_visao == "Por Loja" and "Loja" in tabela_exportar.columns:
         tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left")
-    else:
+
+    if modo_visao == "Por Grupo" and "Grupo" in tabela_exportar.columns:
         tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
 
     if "Tipo" in tabela_exportar.columns:
@@ -649,20 +658,21 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     # 🔢 Subtotais por Tipo
     linha = 1
-    for tipo_atual in tabela_exportar["Tipo"].dropna().unique():
-        linhas_tipo = tabela_exportar[tabela_exportar["Tipo"] == tipo_atual]
-        qtd_lojas = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
-        soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
+    if "Tipo" in tabela_exportar.columns:
+        for tipo_atual in tabela_exportar["Tipo"].dropna().unique():
+            linhas_tipo = tabela_exportar[tabela_exportar["Tipo"] == tipo_atual]
+            qtd_lojas = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
+            soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
-        linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas}"]
-        linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar.columns[2:]]
+            linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas}"]
+            linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar.columns[2:]]
 
-        for col_num, val in enumerate(linha_tipo):
-            if isinstance(val, (int, float)) and not pd.isna(val):
-                worksheet.write_number(linha, col_num, val, subtotal_format)
-            else:
-                worksheet.write(linha, col_num, str(val), subtotal_format)
-        linha += 1
+            for col_num, val in enumerate(linha_tipo):
+                if isinstance(val, (int, float)) and not pd.isna(val):
+                    worksheet.write_number(linha, col_num, val, subtotal_format)
+                else:
+                    worksheet.write(linha, col_num, str(val), subtotal_format)
+            linha += 1
 
     # 🔝 Total Geral
     soma_total = tabela_exportar.select_dtypes(include='number').sum()
