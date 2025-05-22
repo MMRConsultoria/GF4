@@ -762,9 +762,19 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     linha = 1
 
-    for tipo in tipos_info:
-        linha_tipo = [f"Tipo: {tipo['tipo']}", f"Lojas: {tipo['qtd_lojas']}"]
-        linha_tipo.extend(tipo["somas"])
+    # 🔥 Prepara a linha do Tipo com alinhamento correto
+    linha_tipo = []
+    for idx, col in enumerate(tabela_exportar_sem_tipo.columns):
+        if idx == 0:
+            linha_tipo.append(f"Tipo: {tipo['tipo']}")
+        elif idx == 1:
+            linha_tipo.append(f"Lojas: {tipo['qtd_lojas']}")
+        else:
+            pos = idx - 2
+            if pos < len(tipo["somas"]):
+                linha_tipo.append(tipo["somas"][pos])
+            else:
+                linha_tipo.append("")
 
         for col_num, val in enumerate(linha_tipo):
             if isinstance(val, (int, float)) and not pd.isna(val):
