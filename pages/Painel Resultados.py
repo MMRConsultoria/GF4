@@ -736,6 +736,28 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 else:
                     soma_colunas.append(0)
 
+            # 🎯 Aqui adiciona o Acumulado no Mês Tipo no subtotal
+            acumulado_tipo = 0
+            if "Acumulado no Mês Tipo" in tabela_exportar_sem_tipo.columns:
+                valor = df_acumulado_tipo[df_acumulado_tipo["Tipo"] == tipo_atual]["Acumulado no Mês Tipo"]
+                if not valor.empty:
+                    acumulado_tipo = valor.values[0]
+
+            soma_colunas.append(acumulado_tipo)
+
+            tipos_info.append({
+                "tipo": tipo_atual,
+                "qtd_lojas": qtd_lojas_tipo,
+                "somas": soma_colunas
+            })
+
+
+
+
+
+
+
+            
             if agrupamento == "Dia":
                 data_maxima = pd.to_datetime(data_fim)
                 ano = data_maxima.year
@@ -767,26 +789,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 "somas": soma_colunas
             })
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
+   
     linha = 1
 
     for tipo in tipos_info:
