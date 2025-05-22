@@ -587,7 +587,7 @@ import io
 import itertools
 
 buffer = io.BytesIO()
-
+df_acumulado_tipo = pd.DataFrame(columns=["Tipo", "Acumulado no Mês Tipo"])
 # 🔥 Padroniza nomes
 df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
