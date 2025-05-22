@@ -761,7 +761,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 
     linha = 1
-
+    for tipo in tipos_info:
     # 🔥 Prepara a linha do Tipo com alinhamento correto
     linha_tipo = []
     for idx, col in enumerate(tabela_exportar_sem_tipo.columns):
