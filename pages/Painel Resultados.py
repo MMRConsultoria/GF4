@@ -680,9 +680,13 @@ if agrupamento == "Dia":
 
         
 
-        # 🔥 Move a coluna do acumulado pro final
-        cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col != "Acumulado no Mês"]
-        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês"]]
+        # 🔥 Move a coluna do acumulado pro final, incluindo também o Acumulado no Mês Tipo se existir
+        cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col not in ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
+        colunas_finais = cols_atuais + ["Acumulado no Mês"]
+        if "Acumulado no Mês Tipo" in tabela_exportar_sem_tipo.columns:
+            colunas_finais.append("Acumulado no Mês Tipo")
+
+        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[colunas_finais]
 
     except Exception as e:
         st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
@@ -749,27 +753,9 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 else:
                     soma_colunas.append(0)
 
-            if agrupamento == "Dia":
-                data_maxima = pd.to_datetime(data_fim)
-                ano = data_maxima.year
-                mes = data_maxima.month
-                dia = data_maxima.day
-
-                df_acumulado_tipo = df_anos.merge(
-                    df_empresa[["Loja", "Grupo", "Tipo"]],
-                    on="Loja",
-                    how="left"
-                )
-
-                df_acumulado_tipo = df_acumulado_tipo[
-                    (df_acumulado_tipo["Data"].dt.year == ano) &
-                    (df_acumulado_tipo["Data"].dt.month == mes) &
-                    (df_acumulado_tipo["Data"].dt.day <= dia) &
-                    (df_acumulado_tipo["Tipo"] == tipo_atual)
-                ]
-
-                acumulado_tipo = df_acumulado_tipo["Fat.Real"].sum()
-
+            # 🔥 ENTRA AQUI ESTE BLOCO:
+            if "Acumulado no Mês Tipo" in tabela_exportar_sem_tipo.columns:
+                acumulado_tipo = df_acumulado_tipo[df_acumulado_tipo["Tipo"] == tipo_atual]["Acumulado no Mês Tipo"].sum()
                 soma_colunas.append(acumulado_tipo)
 
 
