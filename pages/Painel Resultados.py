@@ -662,12 +662,12 @@ if agrupamento == "Dia":
 
         # 🔥 Acumulado por Tipo usando a própria tabela (não depende da aba Empresa)
         if "Tipo" in tabela_exportar.columns:
-            df_acumulado_tipo = tabela_exportar[["Tipo"]].drop_duplicates().copy()
-            df_acumulado_tipo["Acumulado no Mês Tipo"] = df_acumulado.groupby("Loja")["Fat.Real"].sum().values
-
-            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
-                df_acumulado_tipo, on="Tipo", how="left"
-            )
+              df_acumulado_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index()
+                df_acumulado_tipo.rename(columns={"Fat.Real": "Acumulado no Mês Tipo"}, inplace=True)
+            
+                tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
+                    df_acumulado_tipo, on="Tipo", how="left"
+                )
 
         # 🔥 Organiza as colunas
         cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col not in ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
