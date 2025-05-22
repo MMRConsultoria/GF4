@@ -728,6 +728,31 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 else:
                     soma_colunas.append(0)
 
+            if agrupamento == "Dia":
+                data_maxima = pd.to_datetime(data_fim)
+                ano = data_maxima.year
+                mes = data_maxima.month
+                dia = data_maxima.day
+
+                df_acumulado_tipo = df_anos.merge(
+                    df_empresa[["Loja", "Grupo", "Tipo"]],
+                    on="Loja",
+                    how="left"
+                )
+
+                df_acumulado_tipo = df_acumulado_tipo[
+                    (df_acumulado_tipo["Data"].dt.year == ano) &
+                    (df_acumulado_tipo["Data"].dt.month == mes) &
+                    (df_acumulado_tipo["Data"].dt.day <= dia) &
+                    (df_acumulado_tipo["Tipo"] == tipo_atual)
+                ]
+
+                acumulado_tipo = df_acumulado_tipo["Fat.Real"].sum()
+
+                soma_colunas.append(acumulado_tipo)
+
+
+       
             tipos_info.append({
                 "tipo": tipo_atual,
                 "qtd_lojas": qtd_lojas_tipo,
