@@ -627,10 +627,7 @@ tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
 
 
 
-# 🔥 Remove coluna Tipo
-tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
-
-# 🔥 Adiciona coluna de Acumulado no Mês na TABELA PRINCIPAL (Somente se agrupamento for "Dia")
+# 🔥 Adiciona coluna de Acumulado no Mês SOMENTE quando agrupamento for "Dia"
 if agrupamento == "Dia":
     try:
         # ✅ Pega a data máxima do filtro
@@ -668,50 +665,7 @@ if agrupamento == "Dia":
         tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês"]]
 
     except Exception as e:
-        st.warning(f⚠️ Erro no cálculo do acumulado do mês: {e}")
-
-# 🔥 Calcula subtotais por Tipo (incluindo acumulado do mês se for agrupamento "Dia")
-tipos_info = []
-if "Tipo" in tabela_exportar.columns:
-    colunas_soma = [col for col in tabela_exportar_sem_tipo.columns if col not in ["Grupo", "Loja", "Tipo"]]
-
-    for tipo_atual in tabela_exportar["Tipo"].dropna().unique():
-        tipo_linhas = tabela_exportar[tabela_exportar["Tipo"] == tipo_atual]
-        qtd_lojas_tipo = tipo_linhas["Loja"].nunique() if "Loja" in tipo_linhas.columns else 0
-
-        soma_colunas = []
-        for col in colunas_soma:
-            if col in tipo_linhas.columns:
-                soma = tipo_linhas[col].sum()
-                soma_colunas.append(soma)
-            else:
-                soma_colunas.append(0)
-
-        # 🔥 Se agrupamento for "Dia", calcula também o Acumulado no mês do Tipo
-        if agrupamento == "Dia":
-            data_maxima = pd.to_datetime(data_fim)
-            ano = data_maxima.year
-            mes = data_maxima.month
-            dia = data_maxima.day
-
-            df_acumulado_tipo = df_anos[
-                (df_anos["Data"].dt.year == ano) &
-                (df_anos["Data"].dt.month == mes) &
-                (df_anos["Data"].dt.day <= dia) &
-                (df_anos["Tipo"] == tipo_atual)
-            ]
-
-            acumulado_tipo = df_acumulado_tipo["Fat.Real"].sum()
-
-            # 🔥 Adiciona o acumulado do tipo no final da linha de soma
-            soma_colunas.append(acumulado_tipo)
-
-        tipos_info.append({
-            "tipo": tipo_atual,
-            "qtd_lojas": qtd_lojas_tipo,
-            "somas": soma_colunas
-        })
-
+        st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
 
 
 
