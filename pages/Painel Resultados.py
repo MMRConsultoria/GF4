@@ -615,12 +615,21 @@ tabela_exportar = tabela_exportar[~tabela_exportar["Grupo"].isin(["", "nan", "Na
 # 🔥 Cria uma cópia só para exportação sem a coluna Tipo
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
 
-# 🔥 Se estiver agrupado por Dia, cria coluna de Acumulado no mês
+
+
+
+
+
+
+
+
+
+
+# 🔥 Adiciona coluna de Acumulado no Mês se for agrupado por Dia
 if agrupamento == "Dia":
     try:
-        # Extrai datas dos agrupadores
-        datas = tabela_exportar_sem_tipo.columns[2:]
-        datas_validas = [col for col in datas if "/" in col or (col.isdigit() and len(col) == 4)]
+        # Extrai datas dos agrupadores (colunas que representam dias)
+        datas = tabela_exportar_sem_tipo.columns[3:]  # Ignora Grupo, Loja, Tipo (se houver)
 
         def extrair_data(col):
             try:
@@ -633,33 +642,26 @@ if agrupamento == "Dia":
                 return pd.NaT
             return pd.NaT
 
-        datas_convertidas = [(col, extrair_data(col)) for col in datas_validas if pd.notnull(extrair_data(col))]
+        datas_convertidas = [(col, extrair_data(col)) for col in datas if pd.notnull(extrair_data(col))]
 
         if datas_convertidas:
-            # Pega o mês e ano da primeira data (assume que todas são do mesmo mês, pois é por Dia)
+            # Usa a primeira data como referência do mês
             primeira_data = datas_convertidas[0][1]
             ano = primeira_data.year
             mes = primeira_data.month
 
-            # Filtra todas as colunas daquele mês
+            # Filtra as colunas que são do mesmo mês
             colunas_mes = [col for col, data in datas_convertidas if data.year == ano and data.month == mes]
 
-            # Faz a soma acumulada
+            # Cria a coluna de acumulado no mês
             tabela_exportar_sem_tipo["Acumulado no Mês"] = tabela_exportar_sem_tipo[colunas_mes].sum(axis=1)
 
-            # Adiciona a coluna no começo (depois de Grupo e Loja)
-            cols_fixas = ["Grupo"]
-            if "Loja" in tabela_exportar_sem_tipo.columns:
-                cols_fixas.append("Loja")
-            if "Tipo" in tabela_exportar_sem_tipo.columns:
-                cols_fixas.append("Tipo")
-
-            outras_colunas = [col for col in tabela_exportar_sem_tipo.columns if col not in cols_fixas + ["Acumulado no Mês"]]
-            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_fixas + ["Acumulado no Mês"] + outras_colunas]
+            # 🔥 Organiza: mantem ordem atual e joga "Acumulado no Mês" para o final
+            cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col != "Acumulado no Mês"]
+            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês"]]
 
     except Exception as e:
-        st.warning(f"Erro ao calcular acumulado do mês: {e}")
-
+        st.warning(f"⚠️ Erro ao calcular acumulado do mês: {e}")
 
 
 # 🔥 Criação do Excel
