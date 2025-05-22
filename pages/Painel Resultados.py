@@ -672,6 +672,9 @@ if agrupamento == "Dia":
         df_acumulado_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index()
         df_acumulado_tipo.rename(columns={"Fat.Real": "Acumulado no Mês Tipo"}, inplace=True)    
 
+        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
+            df_acumulado_tipo, on="Tipo", how="left"
+        )    
 
          # 🔥 Move a coluna do acumulado pro final
         cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col != "Acumulado no Mês"]
