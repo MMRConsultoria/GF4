@@ -587,7 +587,9 @@ buffer = io.BytesIO()
 df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 
-# 🔗 Prepara a tabela
+# ===========================================
+# 🔗 Montagem da tabela_exportar
+# ===========================================
 if modo_visao == "Por Loja":
     tabela_exportar = tabela_final.reset_index().rename(columns={tabela_final.index.name: "Loja"})
     tabela_exportar = tabela_exportar.merge(
@@ -603,11 +605,15 @@ elif modo_visao == "Por Grupo":
         on="Grupo", how="left"
     )
 
-# ✅ Debug para verificar as colunas disponíveis
-st.write("Colunas atuais da tabela_exportar:", tabela_exportar.columns.tolist())
+# ✅ Debug: Checa colunas no dataframe montado
+st.write("🧠 Colunas atuais da tabela_exportar:", tabela_exportar.columns.tolist())
 
-# 🔥 Cálculo Acumulado no Mês (somente se agrupamento for Dia)
+# ===========================================
+# 🔥 Cálculo do Acumulado no Mês (se Dia)
+# ===========================================
 if agrupamento == "Dia":
+    st.write("🚀 Iniciando cálculo de acumulado no mês...")
+
     data_max = pd.to_datetime(data_fim)
     df_acumulado = df_anos[
         (df_anos["Data"].dt.year == data_max.year) &
@@ -622,16 +628,34 @@ if agrupamento == "Dia":
     acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês Grupo"})
     acumulado_por_loja = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 
-    if modo_visao == "Por Loja" and "Loja" in tabela_exportar.columns:
-        tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left")
+    st.write("✅ Acumulado por Tipo:", acumulado_por_tipo)
+    st.write("✅ Acumulado por Grupo:", acumulado_por_grupo)
+    st.write("✅ Acumulado por Loja:", acumulado_por_loja)
 
-    if modo_visao == "Por Grupo" and "Grupo" in tabela_exportar.columns:
-        tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
+    # 🔗 Merge com segurança total
+    if modo_visao == "Por Loja":
+        if "Loja" in tabela_exportar.columns:
+            tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left")
+            st.write("🔗 Merge realizado com acumulado por Loja.")
+        else:
+            st.warning("⚠️ Coluna 'Loja' não encontrada para merge de acumulado por loja.")
+
+    if modo_visao == "Por Grupo":
+        if "Grupo" in tabela_exportar.columns:
+            tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
+            st.write("🔗 Merge realizado com acumulado por Grupo.")
+        else:
+            st.warning("⚠️ Coluna 'Grupo' não encontrada para merge de acumulado por grupo.")
 
     if "Tipo" in tabela_exportar.columns:
         tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
+        st.write("🔗 Merge realizado com acumulado por Tipo.")
+    else:
+        st.warning("⚠️ Coluna 'Tipo' não encontrada para merge de acumulado por tipo.")
 
-# ================= EXCEL ==================
+# ===========================================
+# 🔥 Geração do arquivo Excel
+# ===========================================
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
 
@@ -640,7 +664,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     cores_grupo = itertools.cycle(["#D9EAD3", "#CFE2F3"])
 
-    # 🎨 Formatações
+    # 🎨 Formatação
     header_format = workbook.add_format({
         'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
         'align': 'center', 'valign': 'vcenter', 'border': 1
