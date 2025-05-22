@@ -623,7 +623,10 @@ buffer = io.BytesIO()
 
 
 
-# 🔥 Acumulado no mês SOMENTE quando agrupamento for "Dia"
+
+# 🔥 Cria relação segura Loja → Grupo → Tipo
+relacao_loja = df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates()
+
 # 🔥 Acumulado no mês SOMENTE quando agrupamento for "Dia"
 if agrupamento == "Dia":
     try:
@@ -642,11 +645,8 @@ if agrupamento == "Dia":
 
         df_acumulado["Loja"] = df_acumulado["Loja"].astype(str).str.strip().str.lower().str.title()
 
-        # 🔥 Cria relação Loja → Grupo → Tipo
-        relacao = tabela_exportar[["Loja", "Grupo", "Tipo"]].drop_duplicates()
-
-        # 🔥 Faz merge no acumulado para trazer Grupo e Tipo
-        df_acumulado = df_acumulado.merge(relacao, on="Loja", how="left")
+        # 🔥 Faz merge para trazer Grupo e Tipo no acumulado
+        df_acumulado = df_acumulado.merge(relacao_loja, on="Loja", how="left")
 
         # 🔥 Acumulado por Loja
         if modo_visao == "Por Loja":
@@ -666,14 +666,13 @@ if agrupamento == "Dia":
                 df_agrupado, on="Grupo", how="left"
             )
 
-        # 🔥 Acumulado por Tipo — aqui AGORA está certo ✅
-        if "Tipo" in tabela_exportar.columns:
-            df_acumulado_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index()
-            df_acumulado_tipo.rename(columns={"Fat.Real": "Acumulado no Mês Tipo"}, inplace=True)
+        # 🔥 Acumulado por Tipo
+        df_acumulado_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index()
+        df_acumulado_tipo.rename(columns={"Fat.Real": "Acumulado no Mês Tipo"}, inplace=True)
 
-            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
-                df_acumulado_tipo, on="Tipo", how="left"
-            )
+        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
+            df_acumulado_tipo, on="Tipo", how="left"
+        )
 
         # 🔥 Organiza as colunas
         cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col not in ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
@@ -681,6 +680,7 @@ if agrupamento == "Dia":
 
     except Exception as e:
         st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
+
 
 
 
