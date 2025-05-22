@@ -614,6 +614,12 @@ tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
 
 
 # 🔥 Acumulado no mês quando agrupamento for "Dia"
+import io
+import itertools
+
+buffer = io.BytesIO()
+
+# 🔥 Cria acumulado no mês a partir da própria tabela filtrada
 if agrupamento == "Dia":
     try:
         data_maxima = pd.to_datetime(data_fim)
@@ -621,14 +627,12 @@ if agrupamento == "Dia":
         mes = data_maxima.month
         dia = data_maxima.day
 
-        # 🔥 Filtra os dados do dataframe já pronto (df_anos)
         df_acumulado = df_anos[
             (df_anos["Data"].dt.year == ano) &
             (df_anos["Data"].dt.month == mes) &
             (df_anos["Data"].dt.day <= dia)
         ].copy()
 
-        # 🔥 Padroniza nome da loja pra garantir merge certo
         df_acumulado["Loja"] = df_acumulado["Loja"].astype(str).str.strip().str.lower().str.title()
 
         # 🔥 Acumulado por Loja ou Grupo
@@ -648,22 +652,23 @@ if agrupamento == "Dia":
                 df_agrupado, on="Grupo", how="left"
             )
 
-        # 🔥 Agora acumulado por Tipo SEM depender de Empresa
-        df_agrupado_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index()
-        df_agrupado_tipo.rename(columns={"Fat.Real": "Acumulado no Mês Tipo"}, inplace=True)
-
-        # 🔥 Merge só se a coluna Tipo existir na tabela_exportar (ou seja, se modo_visao == 'Por Loja')
+        # 🔥 Agora faz acumulado por Tipo usando a própria tabela que já tem Tipo
         if "Tipo" in tabela_exportar.columns:
+            df_agrupado_tipo = tabela_exportar.groupby("Tipo").sum(numeric_only=True).reset_index()
+            df_agrupado_tipo = df_agrupado_tipo[["Tipo"]]
+            df_agrupado_tipo["Acumulado no Mês Tipo"] = df_acumulado.groupby("Tipo")["Fat.Real"].sum().values
+
             tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
                 df_agrupado_tipo, on="Tipo", how="left"
             )
 
-        # 🔥 Organiza colunas
+        # 🔥 Organiza as colunas
         cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col not in ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
         tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
 
     except Exception as e:
         st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
+
 
 
 
