@@ -583,36 +583,55 @@ import itertools
 
 buffer = io.BytesIO()
 
-# 🔥 Padroniza nomes
+# 🔧 Padronização dos nomes
 df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 
 # ===========================================
-# 🔗 Montagem da tabela_exportar
+# 🚦 Criação da tabela_exportar
 # ===========================================
+
 if modo_visao == "Por Loja":
-    tabela_exportar = tabela_final.reset_index().rename(columns={tabela_final.index.name: "Loja"})
+    tabela_final.index.name = "Loja"  # 🔥 Força o nome do índice
+    tabela_exportar = tabela_final.reset_index()
+
+    st.write("📄 Check inicial - Colunas após reset_index (Por Loja):", tabela_exportar.columns.tolist())
+
     tabela_exportar = tabela_exportar.merge(
         df_empresa[["Loja", "Grupo", "Tipo"]],
         on="Loja", how="left"
     )
-    tabela_exportar = tabela_exportar[["Grupo", "Loja", "Tipo"] + [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]]
+
+    tabela_exportar = tabela_exportar[["Grupo", "Loja", "Tipo"] + 
+                                      [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]]
 
 elif modo_visao == "Por Grupo":
-    tabela_exportar = tabela_final.reset_index().rename(columns={tabela_final.index.name: "Grupo"})
+    tabela_final.index.name = "Grupo"  # 🔥 Força o nome do índice
+    tabela_exportar = tabela_final.reset_index()
+
+    st.write("📄 Check inicial - Colunas após reset_index (Por Grupo):", tabela_exportar.columns.tolist())
+
     tabela_exportar = tabela_exportar.merge(
         df_empresa[["Grupo", "Tipo"]].drop_duplicates(),
         on="Grupo", how="left"
     )
 
-# ✅ Debug: Checa colunas no dataframe montado
-st.write("🧠 Colunas atuais da tabela_exportar:", tabela_exportar.columns.tolist())
+# ✅ Debug: Checa colunas na tabela_exportar
+st.subheader("🧠 Verificação de colunas antes dos merges")
+st.write("📄 Colunas atuais na tabela_exportar:", tabela_exportar.columns.tolist())
+
+# 🔍 Verificação se colunas-chave estão presentes
+colunas_necessarias = ["Loja", "Grupo", "Tipo"]
+faltando = [col for col in colunas_necessarias if col not in tabela_exportar.columns]
+if faltando:
+    st.warning(f"⚠️ As colunas {faltando} estão faltando na tabela_exportar. Verifique a montagem anterior.")
 
 # ===========================================
-# 🔥 Cálculo do Acumulado no Mês (se Dia)
+# 🔥 Cálculo do Acumulado no Mês (quando agrupamento = Dia)
 # ===========================================
+
 if agrupamento == "Dia":
-    st.write("🚀 Iniciando cálculo de acumulado no mês...")
+    st.subheader("🚀 Cálculo do Acumulado no Mês")
 
     data_max = pd.to_datetime(data_fim)
     df_acumulado = df_anos[
@@ -632,30 +651,31 @@ if agrupamento == "Dia":
     st.write("✅ Acumulado por Grupo:", acumulado_por_grupo)
     st.write("✅ Acumulado por Loja:", acumulado_por_loja)
 
-    # 🔗 Merge com segurança total
+    # 🔗 Merge blindado
     if modo_visao == "Por Loja":
         if "Loja" in tabela_exportar.columns:
             tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left")
-            st.write("🔗 Merge realizado com acumulado por Loja.")
+            st.success("🔗 Merge feito com acumulado por Loja.")
         else:
-            st.warning("⚠️ Coluna 'Loja' não encontrada para merge de acumulado por loja.")
+            st.warning("⚠️ Coluna 'Loja' não encontrada no dataframe.")
 
     if modo_visao == "Por Grupo":
         if "Grupo" in tabela_exportar.columns:
             tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
-            st.write("🔗 Merge realizado com acumulado por Grupo.")
+            st.success("🔗 Merge feito com acumulado por Grupo.")
         else:
-            st.warning("⚠️ Coluna 'Grupo' não encontrada para merge de acumulado por grupo.")
+            st.warning("⚠️ Coluna 'Grupo' não encontrada no dataframe.")
 
     if "Tipo" in tabela_exportar.columns:
         tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
-        st.write("🔗 Merge realizado com acumulado por Tipo.")
+        st.success("🔗 Merge feito com acumulado por Tipo.")
     else:
-        st.warning("⚠️ Coluna 'Tipo' não encontrada para merge de acumulado por tipo.")
+        st.warning("⚠️ Coluna 'Tipo' não encontrada no dataframe.")
 
 # ===========================================
 # 🔥 Geração do arquivo Excel
 # ===========================================
+
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
 
@@ -664,7 +684,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     cores_grupo = itertools.cycle(["#D9EAD3", "#CFE2F3"])
 
-    # 🎨 Formatação
+    # 🎨 Formatações
     header_format = workbook.add_format({
         'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
         'align': 'center', 'valign': 'vcenter', 'border': 1
