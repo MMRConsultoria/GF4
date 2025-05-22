@@ -661,11 +661,11 @@ if agrupamento == "Dia":
             )
 
         # 🔥 Joga a coluna "Acumulado no Mês" para o final
-        cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col != "Acumulado no Mês"]
-        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês"]]
+        "cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col != "Acumulado no Mês"]
+        "tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês"]]
 
-    except Exception as e:
-        st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
+    #except Exception as e:
+     #   st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
 
 
 
@@ -695,11 +695,11 @@ if agrupamento == "Dia":
             tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(df_agrupado, on="Grupo", how="left")
 
         # 🔥 Joga a coluna do acumulado pro final
-       # cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col != "Acumulado no Mês"]
-        #tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês"]]
+        cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col != "Acumulado no Mês"]
+        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês"]]
 
     #except Exception as e:
-     #   st.warning(f"⚠️ Erro no acumulado: {e}")
+        st.warning(f"⚠️ Erro no acumulado: {e}")
 
 
 
