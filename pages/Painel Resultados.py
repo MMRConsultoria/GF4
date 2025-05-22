@@ -619,6 +619,10 @@ import itertools
 
 buffer = io.BytesIO()
 
+
+# 🔥 Cria uma variável vazia para evitar erro de variável inexistente
+df_acumulado_tipo = pd.DataFrame(columns=["Tipo", "Acumulado no Mês Tipo"])
+
 # 🔥 Cria acumulado no mês a partir da própria tabela filtrada
 if agrupamento == "Dia":
     try:
