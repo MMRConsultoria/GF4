@@ -583,10 +583,12 @@ import pandas as pd
 
 buffer = io.BytesIO()
 
+# 🔥 Padroniza nomes das lojas para garantir merges corretos
+df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
+df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
+
 # 🔗 Prepara o dataframe para exportação
 if modo_visao == "Por Loja":
-    df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
-
     tabela_exportar = tabela_final.reset_index()
     tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Loja"})
 
@@ -607,7 +609,7 @@ else:
 tabela_exportar["Grupo"] = tabela_exportar["Grupo"].astype(str).str.strip()
 tabela_exportar = tabela_exportar[~tabela_exportar["Grupo"].isin(["", "nan", "NaN", "None"])]
 
-# 🔥 Cria uma cópia para exportação sem a coluna Tipo
+# 🔥 Cópia sem a coluna Tipo
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
 
 
@@ -630,6 +632,11 @@ if agrupamento == "Dia":
             on="Loja",
             how="left"
         )
+
+        # 🔍 Verificação de lojas não localizadas
+        lojas_nao_encontradas = df_acumulado[df_acumulado["Tipo"].isna()]["Loja"].unique()
+        if len(lojas_nao_encontradas) > 0:
+            st.warning(f"⚠️ Lojas não localizadas na aba Empresa: {lojas_nao_encontradas}")
 
         if modo_visao == "Por Loja":
             df_agrupado = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index()
@@ -823,4 +830,3 @@ st.download_button(
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     key="download_excel_visual_painel"
 )
-
