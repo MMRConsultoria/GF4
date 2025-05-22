@@ -723,3 +723,13 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     worksheet.set_column(0, len(tabela_exportar_sem_tipo.columns), 18)
     worksheet.hide_gridlines(option=2)
+
+# 🔽 Botão download
+st.download_button(
+    label="📥 Baixar Excel",
+    data=buffer.getvalue(),
+    file_name="faturamento_visual.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    key="download_excel_visual_painel"
+)
+
