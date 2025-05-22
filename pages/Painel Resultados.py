@@ -625,8 +625,7 @@ tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
 
 
 
-# 🔥 Remove coluna Tipo
-tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
+
 
 # 🔥 Adiciona coluna de Acumulado no Mês SOMENTE quando agrupamento for "Dia"
 if agrupamento == "Dia":
@@ -668,8 +667,6 @@ if agrupamento == "Dia":
     except Exception as e:
         st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
 
-# 🔥 Criação do Excel
-with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 
 
