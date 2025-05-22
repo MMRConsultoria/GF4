@@ -662,6 +662,11 @@ if agrupamento == "Dia":
 
         # 🔥 🔥 🔥 Acumulado por Tipo — CORRETO 🔥 🔥 🔥
         if "Tipo" in tabela_exportar.columns:
+
+            df_temp = tabela_exportar[["Tipo", "Loja"]].drop_duplicates()
+
+            df_acumulado_tipo = df_acumulado.merge(df_temp, on="Loja", how="left")
+            
             df_acumulado_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index()
             df_acumulado_tipo.rename(columns={"Fat.Real": "Acumulado no Mês Tipo"}, inplace=True)
 
