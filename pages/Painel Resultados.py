@@ -620,7 +620,6 @@ tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
 # 🔥 Cria relação Loja → Grupo → Tipo
 relacao_loja = df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
-
 if agrupamento == "Dia":
     try:
         data_maxima = pd.to_datetime(data_fim)
@@ -628,6 +627,7 @@ if agrupamento == "Dia":
         mes = data_maxima.month
         dia = data_maxima.day
 
+        # 🔥 Filtra até o dia selecionado
         df_acumulado = df_anos[
             (df_anos["Data"].dt.year == ano) &
             (df_anos["Data"].dt.month == mes) &
@@ -636,7 +636,10 @@ if agrupamento == "Dia":
 
         df_acumulado["Loja"] = df_acumulado["Loja"].astype(str).str.strip().str.lower().str.title()
 
+        # 🔥 Faz o merge correto para garantir que Tipo, Grupo estejam no df_acumulado
         df_acumulado = df_acumulado.merge(relacao_loja, on="Loja", how="left")
+
+        # 🔥 Remove qualquer linha onde não tem Tipo (só segurança extra)
         df_acumulado = df_acumulado[~df_acumulado["Tipo"].isna()]
 
         # 🔥 Acumulado por Loja
@@ -655,11 +658,17 @@ if agrupamento == "Dia":
                 df_agrupado, on="Grupo", how="left"
             )
 
-        # 🔥 Acumulado por Tipo (🚩 GARANTIDO AQUI 🚩)
+        # 🔥 Acumulado por Tipo
         df_acumulado_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index()
         df_acumulado_tipo.rename(columns={"Fat.Real": "Acumulado no Mês Tipo"}, inplace=True)
 
 
+        # 🚨 Debug para verificar as colunas e dados de df_acumulado_tipo
+        st.write("df_acumulado_tipo colunas ->", df_acumulado_tipo.columns.tolist())
+        st.dataframe(df_acumulado_tipo)
+
+
+        # 🔥 🔗 Faz merge com a tabela final
         if "Tipo" in tabela_exportar.columns:
             tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
                 df_acumulado_tipo, on="Tipo", how="left"
@@ -671,6 +680,7 @@ if agrupamento == "Dia":
 
     except Exception as e:
         st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
+
 
 
 
