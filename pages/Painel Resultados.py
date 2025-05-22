@@ -648,6 +648,9 @@ if agrupamento == "Dia":
         # 🔥 Faz merge para trazer Grupo e Tipo no acumulado
         df_acumulado = df_acumulado.merge(relacao_loja, on="Loja", how="left")
 
+        # 🔥 ⚠️ Remove linhas onde 'Tipo' ficou vazio após o merge
+        df_acumulado = df_acumulado[~df_acumulado["Tipo"].isna()]
+
         # 🔥 Acumulado por Loja
         if modo_visao == "Por Loja":
             df_agrupado = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index()
