@@ -624,6 +624,10 @@ buffer = io.BytesIO()
 df_acumulado_tipo = pd.DataFrame(columns=["Tipo", "Acumulado no Mês Tipo"])
 
 # 🔥 Cria acumulado no mês a partir da própria tabela filtrada
+# 🔥 Cria dataframe vazio para garantir que não quebre se não houver agrupamento por dia
+df_acumulado_tipo = pd.DataFrame(columns=["Tipo", "Acumulado no Mês Tipo"])
+
+# 🔥 Acumulado no mês SOMENTE quando agrupamento for "Dia"
 if agrupamento == "Dia":
     try:
         data_maxima = pd.to_datetime(data_fim)
@@ -656,14 +660,13 @@ if agrupamento == "Dia":
                 df_agrupado, on="Grupo", how="left"
             )
 
-        # 🔥 Agora faz acumulado por Tipo usando a própria tabela que já tem Tipo
+        # 🔥 Acumulado por Tipo usando a própria tabela (não depende da aba Empresa)
         if "Tipo" in tabela_exportar.columns:
-            df_agrupado_tipo = tabela_exportar.groupby("Tipo").sum(numeric_only=True).reset_index()
-            df_agrupado_tipo = df_agrupado_tipo[["Tipo"]]
-            df_agrupado_tipo["Acumulado no Mês Tipo"] = df_acumulado.groupby("Tipo")["Fat.Real"].sum().values
+            df_acumulado_tipo = tabela_exportar[["Tipo"]].drop_duplicates().copy()
+            df_acumulado_tipo["Acumulado no Mês Tipo"] = df_acumulado.groupby("Loja")["Fat.Real"].sum().values
 
             tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
-                df_agrupado_tipo, on="Tipo", how="left"
+                df_acumulado_tipo, on="Tipo", how="left"
             )
 
         # 🔥 Organiza as colunas
