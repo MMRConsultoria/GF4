@@ -628,22 +628,29 @@ df_acumulado_tipo = pd.DataFrame(columns=["Tipo", "Acumulado no Mês Tipo"])
 df_acumulado_tipo = pd.DataFrame(columns=["Tipo", "Acumulado no Mês Tipo"])
 
 # 🔥 Acumulado no mês SOMENTE quando agrupamento for "Dia"
+# 🔥 Cria dataframe vazio para segurança
+df_acumulado_tipo = pd.DataFrame(columns=["Tipo", "Acumulado no Mês Tipo"])
+
+# 🔥 Acumulado no mês SOMENTE quando agrupamento for "Dia"
 if agrupamento == "Dia":
     try:
+        # ✅ Pega data máxima
         data_maxima = pd.to_datetime(data_fim)
         ano = data_maxima.year
         mes = data_maxima.month
         dia = data_maxima.day
 
+        # ✅ Filtra dados até o dia atual
         df_acumulado = df_anos[
             (df_anos["Data"].dt.year == ano) &
             (df_anos["Data"].dt.month == mes) &
             (df_anos["Data"].dt.day <= dia)
         ].copy()
 
+        # ✅ Padroniza nome das lojas
         df_acumulado["Loja"] = df_acumulado["Loja"].astype(str).str.strip().str.lower().str.title()
 
-        # 🔥 Acumulado por Loja ou Grupo
+        # 🔥 Acumulado por Loja
         if modo_visao == "Por Loja":
             df_agrupado = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index()
             df_agrupado.rename(columns={"Fat.Real": "Acumulado no Mês"}, inplace=True)
@@ -652,6 +659,7 @@ if agrupamento == "Dia":
                 df_agrupado, on="Loja", how="left"
             )
 
+        # 🔥 Acumulado por Grupo
         elif modo_visao == "Por Grupo":
             df_agrupado = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index()
             df_agrupado.rename(columns={"Fat.Real": "Acumulado no Mês"}, inplace=True)
@@ -660,16 +668,19 @@ if agrupamento == "Dia":
                 df_agrupado, on="Grupo", how="left"
             )
 
-        # 🔥 🔥 🔥 Acumulado por Tipo — CORRETO 🔥 🔥 🔥
+        # 🔥 Acumulado por Tipo — FUNCIONANDO 🔥
         if "Tipo" in tabela_exportar.columns:
+            # 🚩 Cria relação Loja -> Tipo
+            relacao_tipo = tabela_exportar[["Loja", "Tipo"]].drop_duplicates()
 
-            df_temp = tabela_exportar[["Tipo", "Loja"]].drop_duplicates()
+            # 🚩 Faz merge no acumulado para trazer o Tipo correto
+            df_acumulado_tipo = df_acumulado.merge(relacao_tipo, on="Loja", how="left")
 
-            df_acumulado_tipo = df_acumulado.merge(df_temp, on="Loja", how="left")
-            
-            df_acumulado_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index()
+            # 🚩 Faz o agrupamento por Tipo
+            df_acumulado_tipo = df_acumulado_tipo.groupby("Tipo")["Fat.Real"].sum().reset_index()
             df_acumulado_tipo.rename(columns={"Fat.Real": "Acumulado no Mês Tipo"}, inplace=True)
 
+            # 🚩 Adiciona na tabela final
             tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
                 df_acumulado_tipo, on="Tipo", how="left"
             )
@@ -680,7 +691,6 @@ if agrupamento == "Dia":
 
     except Exception as e:
         st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
-
 
 
 
