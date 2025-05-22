@@ -625,7 +625,10 @@ tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
 
 
 
-# 🔥 Cálculo do Acumulado no Mês SOMENTE quando agrupamento for "Dia"
+# 🔥 Remove coluna Tipo
+tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
+
+# 🔥 Adiciona coluna de Acumulado no Mês SOMENTE quando agrupamento for "Dia"
 if agrupamento == "Dia":
     try:
         # ✅ Pega a data máxima do filtro
@@ -634,11 +637,11 @@ if agrupamento == "Dia":
         mes = data_maxima.month
         dia = data_maxima.day
 
-        # ✅ Cria um dataframe acumulado: do dia 01 até o dia do filtro
-        df_acumulado = df_filtrado[
-            (df_filtrado["Data"].dt.year == ano) &
-            (df_filtrado["Data"].dt.month == mes) &
-            (df_filtrado["Data"].dt.day <= dia)
+        # ✅ Cria dataframe acumulado: do dia 01 até o dia do filtro
+        df_acumulado = df_anos[
+            (df_anos["Data"].dt.year == ano) &
+            (df_anos["Data"].dt.month == mes) &
+            (df_anos["Data"].dt.day <= dia)
         ].copy()
 
         # 🔥 Faz o agrupamento para gerar o acumulado
@@ -646,7 +649,6 @@ if agrupamento == "Dia":
             df_agrupado = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index()
             df_agrupado.rename(columns={"Fat.Real": "Acumulado no Mês"}, inplace=True)
 
-            # 🔗 Faz merge no dataframe de exportação
             tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
                 df_agrupado, on="Loja", how="left"
             )
@@ -666,7 +668,8 @@ if agrupamento == "Dia":
     except Exception as e:
         st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
 
-
+# 🔥 Criação do Excel
+with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 
 
