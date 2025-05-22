@@ -620,8 +620,6 @@ tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
 # 🔥 Cria relação Loja → Grupo → Tipo
 relacao_loja = df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
-# 🔥 Cria dataframe acumulado SOMENTE quando agrupamento for Dia
-#df_acumulado_tipo = pd.DataFrame()
 
 if agrupamento == "Dia":
     try:
@@ -663,9 +661,9 @@ if agrupamento == "Dia":
 
 
         if "Tipo" in tabela_exportar.columns:
-        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
-            df_acumulado_tipo, on="Tipo", how="left"
-        )
+            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
+                df_acumulado_tipo, on="Tipo", how="left"
+            )
 
         # 🔥 Organiza as colunas
         cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col not in ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
