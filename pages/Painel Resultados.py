@@ -580,244 +580,138 @@ with aba4:
     
 import io
 import itertools
-import pandas as pd
 
 buffer = io.BytesIO()
 
-# 🔥 Padroniza nomes das lojas para garantir merges corretos
+# 🔥 Padroniza nomes das lojas
 df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 
-# 🔗 Prepara o dataframe para exportação
+# 🔗 Prepara tabela para exportação
 if modo_visao == "Por Loja":
-    tabela_exportar = tabela_final.reset_index()
-    tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Loja"})
-
+    tabela_exportar = tabela_final.reset_index().rename(columns={tabela_final.index.name: "Loja"})
     tabela_exportar = tabela_exportar.merge(
         df_empresa[["Loja", "Grupo", "Tipo"]],
-        on="Loja",
-        how="left"
+        on="Loja", how="left"
     )
-
-    cols = ["Grupo", "Loja", "Tipo"] + [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]
-    tabela_exportar = tabela_exportar[cols]
-
+    tabela_exportar = tabela_exportar[["Grupo", "Loja", "Tipo"] + [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]]
 else:
-    tabela_exportar = tabela_final.reset_index()
-    tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Grupo"})
+    tabela_exportar = tabela_final.reset_index().rename(columns={tabela_final.index.name: "Grupo"})
 
-# 🔥 Limpeza de Grupo para evitar entradas vazias
-tabela_exportar["Grupo"] = tabela_exportar["Grupo"].astype(str).str.strip()
-tabela_exportar = tabela_exportar[~tabela_exportar["Grupo"].isin(["", "nan", "NaN", "None"])]
-
-# 🔥 Cópia sem a coluna Tipo para evitar conflitos no merge
-tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
-
-# 🔥 Relação segura Loja → Grupo → Tipo
-relacao_loja = df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates()
-
-# 🔥 Data para filtro do acumulado
+# 🔥 Calcula Acumulado no Mês
 if agrupamento == "Dia":
-    try:
-        data_maxima = pd.to_datetime(data_fim)
-        ano = data_maxima.year
-        mes = data_maxima.month
-        dia = data_maxima.day
+    data_max = pd.to_datetime(data_fim)
+    df_acumulado = df_anos[
+        (df_anos["Data"].dt.year == data_max.year) &
+        (df_anos["Data"].dt.month == data_max.month) &
+        (df_anos["Data"].dt.day <= data_max.day)
+    ].copy()
 
-        # 🔥 Filtra df_anos até o dia selecionado
-        df_acumulado = df_anos[
-            (df_anos["Data"].dt.year == ano) &
-            (df_anos["Data"].dt.month == mes) &
-            (df_anos["Data"].dt.day <= dia)
-        ].copy()
+    df_acumulado["Loja"] = df_acumulado["Loja"].astype(str).str.strip().str.lower().str.title()
+    df_acumulado = df_acumulado.merge(df_empresa[["Loja", "Grupo", "Tipo"]], on="Loja", how="left")
 
-        df_acumulado["Loja"] = df_acumulado["Loja"].astype(str).str.strip().str.lower().str.title()
+    acumulado_por_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês Tipo"})
+    acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês Grupo"})
+    acumulado_por_loja = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 
-        # 🔥 Faz merge para garantir Grupo e Tipo no df_acumulado
-        df_acumulado = df_acumulado.merge(relacao_loja, on="Loja", how="left")
+    if modo_visao == "Por Loja":
+        tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left")
+    else:
+        tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
 
-        # 🔥 Remove linhas sem Tipo (só segurança extra)
-        df_acumulado = df_acumulado[~df_acumulado["Tipo"].isna()]
+    if "Tipo" in tabela_exportar.columns:
+        tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
 
-        # 🔥 Acumulado por Loja ou Grupo conforme modo_visao
-        if modo_visao == "Por Loja":
-            df_agrupado = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index()
-            df_agrupado.rename(columns={"Fat.Real": "Acumulado no Mês"}, inplace=True)
-            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
-                df_agrupado, on="Loja", how="left"
-            )
-        else:
-            df_agrupado = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index()
-            df_agrupado.rename(columns={"Fat.Real": "Acumulado no Mês"}, inplace=True)
-            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
-                df_agrupado, on="Grupo", how="left"
-            )
-
-        # 🔥 Acumulado por Tipo
-        df_acumulado_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index()
-        df_acumulado_tipo.rename(columns={"Fat.Real": "Acumulado no Mês Tipo"}, inplace=True)
-
-        # 🔥 Merge com a tabela final para adicionar coluna do acumulado por Tipo
-        if "Tipo" in tabela_exportar.columns:
-            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
-                df_acumulado_tipo, on="Tipo", how="left"
-            )
-
-        # 🔥 Organiza as colunas para deixar acumulados por último
-        cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col not in ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
-        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
-
-    except Exception as e:
-        st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
-
-# 🔥 Geração do arquivo Excel
+# ================= EXCEL ==================
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-    tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, header=True, startrow=0)
+    tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
 
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
 
     cores_grupo = itertools.cycle(["#D9EAD3", "#CFE2F3"])
 
+    # 🎨 Formatações
     header_format = workbook.add_format({
         'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
         'align': 'center', 'valign': 'vcenter', 'border': 1
     })
-
     subtotal_format = workbook.add_format({
         'bold': True, 'bg_color': '#FFE599', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
-
     totalgeral_format = workbook.add_format({
         'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
-    # Cabeçalho
-    for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
+    # 🔝 Cabeçalho
+    for col_num, header in enumerate(tabela_exportar.columns):
         worksheet.write(0, col_num, header, header_format)
 
-    # Subtotais por Grupo
-    grupos_info = []
-    for grupo_atual in tabela_exportar_sem_tipo["Grupo"].unique():
-        grupo_linhas = tabela_exportar_sem_tipo[tabela_exportar_sem_tipo["Grupo"] == grupo_atual]
-        coluna_valor = [col for col in tabela_exportar_sem_tipo.columns if "Total" in col or col.isnumeric()]
-        coluna_valor = coluna_valor[0] if coluna_valor else tabela_exportar_sem_tipo.columns[2]
-        subtotal_grupo = grupo_linhas[coluna_valor].sum()
-
-        grupos_info.append({
-            "grupo": grupo_atual,
-            "linhas": grupo_linhas,
-            "subtotal": subtotal_grupo,
-            "qtd_lojas": grupo_linhas["Loja"].nunique() if "Loja" in grupo_linhas.columns else 0
-        })
-    grupos_info = sorted(grupos_info, key=lambda x: x["subtotal"], reverse=True)
-
-    # Subtotais por Tipo
-    tipos_info = []
-    if "Tipo" in tabela_exportar.columns:
-        colunas_soma = [col for col in tabela_exportar_sem_tipo.columns if col not in ["Grupo", "Loja", "Tipo"]]
-
-        for tipo_atual in tabela_exportar["Tipo"].dropna().unique():
-            tipo_linhas = tabela_exportar[tabela_exportar["Tipo"] == tipo_atual]
-            qtd_lojas_tipo = tipo_linhas["Loja"].nunique() if "Loja" in tipo_linhas.columns else 0
-
-            soma_colunas = []
-            for col in colunas_soma:
-                soma = tipo_linhas[col].sum() if col in tipo_linhas.columns else 0
-                soma_colunas.append(soma)
-
-            acumulado_tipo = 0
-            if "Tipo" in df_acumulado_tipo.columns:
-                val = df_acumulado_tipo[df_acumulado_tipo["Tipo"] == tipo_atual]["Acumulado no Mês Tipo"]
-                acumulado_tipo = val.values[0] if not val.empty else 0
-
-            soma_colunas.append(acumulado_tipo)
-
-            tipos_info.append({
-                "tipo": tipo_atual,
-                "qtd_lojas": qtd_lojas_tipo,
-                "somas": soma_colunas
-            })
-
-    # Escreve os subtotais por tipo no Excel
+    # 🔢 Subtotais por Tipo
     linha = 1
-    for tipo in tipos_info:
-        linha_tipo = []
-        for idx, col in enumerate(tabela_exportar_sem_tipo.columns):
-            if idx == 0:
-                linha_tipo.append(f"Tipo: {tipo['tipo']}")
-            elif idx == 1:
-                linha_tipo.append(f"Lojas: {tipo['qtd_lojas']}")
-            else:
-                pos = idx - 2
-                if pos < len(tipo["somas"]):
-                    linha_tipo.append(tipo["somas"][pos])
-                else:
-                    linha_tipo.append("")
+    for tipo_atual in tabela_exportar["Tipo"].dropna().unique():
+        linhas_tipo = tabela_exportar[tabela_exportar["Tipo"] == tipo_atual]
+        qtd_lojas = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
+        soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
+
+        linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas}"]
+        linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar.columns[2:]]
 
         for col_num, val in enumerate(linha_tipo):
             if isinstance(val, (int, float)) and not pd.isna(val):
                 worksheet.write_number(linha, col_num, val, subtotal_format)
             else:
                 worksheet.write(linha, col_num, str(val), subtotal_format)
-
         linha += 1
 
-    # Total geral
-    linha_totalgeral = ["Total Geral", ""]
-    for col in tabela_exportar_sem_tipo.columns[2:]:
-        soma = sum(g["linhas"][col].sum() for g in grupos_info)
-        linha_totalgeral.append(soma)
+    # 🔝 Total Geral
+    soma_total = tabela_exportar.select_dtypes(include='number').sum()
+    linha_total = ["Total Geral", ""]
+    linha_total += [soma_total.get(col, "") for col in tabela_exportar.columns[2:]]
 
-    for col_num, val in enumerate(linha_totalgeral):
+    for col_num, val in enumerate(linha_total):
         if isinstance(val, (int, float)) and not pd.isna(val):
             worksheet.write_number(linha, col_num, val, totalgeral_format)
         else:
             worksheet.write(linha, col_num, str(val), totalgeral_format)
-
     linha += 1
 
-    # Escreve os dados dos grupos
-    row_num = linha
-    for grupo, group_color in zip(grupos_info, cores_grupo):
-        grupo_atual = grupo["grupo"]
-        grupo_linhas = grupo["linhas"]
-        qtd_lojas = grupo["qtd_lojas"]
+    # 🏢 Grupos e Lojas
+    for grupo_atual, cor in zip(tabela_exportar["Grupo"].dropna().unique(), cores_grupo):
+        linhas_grupo = tabela_exportar[tabela_exportar["Grupo"] == grupo_atual]
+        qtd_lojas = linhas_grupo["Loja"].nunique() if "Loja" in linhas_grupo.columns else ""
 
-        group_row_format = workbook.add_format({
-            'bg_color': group_color, 'border': 1, 'num_format': 'R$ #,##0.00'
+        grupo_format = workbook.add_format({
+            'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
         })
 
-        for _, row in grupo_linhas.iterrows():
+        for _, row in linhas_grupo.iterrows():
             for col_num, val in enumerate(row):
                 if isinstance(val, (int, float)) and not pd.isna(val):
-                    worksheet.write_number(row_num, col_num, val, group_row_format)
+                    worksheet.write_number(linha, col_num, val, grupo_format)
                 else:
-                    worksheet.write(row_num, col_num, str(val) if not pd.isna(val) else "", group_row_format)
-            row_num += 1
+                    worksheet.write(linha, col_num, str(val), grupo_format)
+            linha += 1
 
-        # Subtotal por grupo
-        linha_subtotal = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
-        for col in tabela_exportar_sem_tipo.columns[2:]:
-            soma = grupo_linhas[col].sum()
-            linha_subtotal.append(soma)
+        # 🔢 Subtotal por Grupo
+        soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
+        linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
+        linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar.columns[2:]]
 
-        for col_num, val in enumerate(linha_subtotal):
+        for col_num, val in enumerate(linha_grupo):
             if isinstance(val, (int, float)) and not pd.isna(val):
-                worksheet.write_number(row_num, col_num, val, subtotal_format)
+                worksheet.write_number(linha, col_num, val, subtotal_format)
             else:
-                worksheet.write(row_num, col_num, str(val), subtotal_format)
+                worksheet.write(linha, col_num, str(val), subtotal_format)
+        linha += 1
 
-        row_num += 1
-
-    worksheet.set_column(0, len(tabela_exportar_sem_tipo.columns), 18)
+    worksheet.set_column(0, len(tabela_exportar.columns) - 1, 18)
     worksheet.hide_gridlines(option=2)
 
-# 🔽 Botão download
+# 🔽 Botão Download
 st.download_button(
     label="📥 Baixar Excel",
     data=buffer.getvalue(),
     file_name="faturamento_visual.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    key="download_excel_visual_painel"
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
