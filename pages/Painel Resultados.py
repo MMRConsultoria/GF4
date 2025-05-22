@@ -661,8 +661,8 @@ if agrupamento == "Dia":
             )
 
         # 🔥 Joga a coluna "Acumulado no Mês" para o final
-        "cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col != "Acumulado no Mês"]
-        "tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês"]]
+        #cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col != "Acumulado no Mês"]
+        #tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês"]]
 
     #except Exception as e:
      #   st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
