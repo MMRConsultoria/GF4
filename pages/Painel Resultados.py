@@ -620,16 +620,8 @@ import itertools
 buffer = io.BytesIO()
 
 
-# 🔥 Cria uma variável vazia para evitar erro de variável inexistente
-df_acumulado_tipo = pd.DataFrame(columns=["Tipo", "Acumulado no Mês Tipo"])
 
-# 🔥 Cria acumulado no mês a partir da própria tabela filtrada
-# 🔥 Cria dataframe vazio para garantir que não quebre se não houver agrupamento por dia
-df_acumulado_tipo = pd.DataFrame(columns=["Tipo", "Acumulado no Mês Tipo"])
 
-# 🔥 Acumulado no mês SOMENTE quando agrupamento for "Dia"
-# 🔥 Cria dataframe vazio para segurança
-df_acumulado_tipo = pd.DataFrame(columns=["Tipo", "Acumulado no Mês Tipo"])
 
 # 🔥 Acumulado no mês SOMENTE quando agrupamento for "Dia"
 # 🔥 Acumulado no mês SOMENTE quando agrupamento for "Dia"
@@ -653,7 +645,7 @@ if agrupamento == "Dia":
         # 🔥 Cria relação Loja → Grupo → Tipo
         relacao = tabela_exportar[["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
-        # 🔥 Faz merge para trazer Grupo e Tipo no acumulado
+        # 🔥 Faz merge no acumulado para trazer Grupo e Tipo
         df_acumulado = df_acumulado.merge(relacao, on="Loja", how="left")
 
         # 🔥 Acumulado por Loja
@@ -674,7 +666,7 @@ if agrupamento == "Dia":
                 df_agrupado, on="Grupo", how="left"
             )
 
-        # 🔥 Acumulado por Tipo (🔗 novo bloco funcionando!)
+        # 🔥 Acumulado por Tipo — aqui AGORA está certo ✅
         if "Tipo" in tabela_exportar.columns:
             df_acumulado_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index()
             df_acumulado_tipo.rename(columns={"Fat.Real": "Acumulado no Mês Tipo"}, inplace=True)
@@ -683,12 +675,13 @@ if agrupamento == "Dia":
                 df_acumulado_tipo, on="Tipo", how="left"
             )
 
-        # 🔥 Organiza colunas
+        # 🔥 Organiza as colunas
         cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col not in ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
         tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
 
     except Exception as e:
         st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
+
 
 
 
