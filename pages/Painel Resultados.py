@@ -582,53 +582,35 @@ import pandas as pd
 
 buffer = io.BytesIO()
 
-# 🔥 Padroniza nomes das lojas para garantir merges corretos
+# 🔧 Padroniza nome das lojas para evitar erros de merge
 df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 
-# 🔥 Cria relação segura Loja → Grupo → Tipo
-relacao_loja = df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates()
-
-# 🔗 Prepara o dataframe para exportação
-# 🔥 Prepara dataframe base para exportação
+# 🔗 Prepara a tabela de exportação
 if modo_visao == "Por Loja":
-    tabela_exportar = tabela_final.reset_index()
-    tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Loja"})
-
+    tabela_exportar = tabela_final.reset_index().rename(columns={tabela_final.index.name: "Loja"})
     tabela_exportar = tabela_exportar.merge(
-        df_empresa[["Loja", "Grupo", "Tipo"]],
+        df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
         on="Loja",
         how="left"
     )
-
     cols = ["Grupo", "Loja", "Tipo"] + [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]
     tabela_exportar = tabela_exportar[cols]
+else:
+    tabela_exportar = tabela_final.reset_index().rename(columns={tabela_final.index.name: "Grupo"})
 
-elif modo_visao == "Por Grupo":
-    tabela_exportar = tabela_final.reset_index()
-    tabela_exportar = tabela_exportar.rename(columns={tabela_exportar.columns[0]: "Grupo"})
-
-    tabela_exportar = tabela_exportar.merge(
-        df_empresa[["Grupo"]].drop_duplicates(),
-        on="Grupo",
-        how="left"
-    )
-
-# 🔥 Remove grupo vazio
+# 🔥 Remove linhas com Grupo vazio
 tabela_exportar["Grupo"] = tabela_exportar["Grupo"].astype(str).str.strip()
 tabela_exportar = tabela_exportar[~tabela_exportar["Grupo"].isin(["", "nan", "NaN", "None"])]
 
-# 🔥 Remove coluna Tipo se ela não existir
+# 🔧 Cria tabela sem coluna Tipo (para não quebrar em Por Grupo)
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
 
-# 🔥 Faz acumulado do mês se for agrupamento por "Dia"
-# 🔥 Acumulado no mês SOMENTE quando agrupamento for "Dia"
-if agrupamento == "Dia" and modo_visao == "Por Loja":
+# 🔥 Acumulado no mês se agrupamento for Dia
+if agrupamento == "Dia":
     try:
-        data_maxima = pd.to_datetime(data_fim)
-        ano = data_maxima.year
-        mes = data_maxima.month
-        dia = data_maxima.day
+        data_max = pd.to_datetime(data_fim)
+        ano, mes, dia = data_max.year, data_max.month, data_max.day
 
         df_acumulado = df_anos[
             (df_anos["Data"].dt.year == ano) &
@@ -645,54 +627,41 @@ if agrupamento == "Dia" and modo_visao == "Por Loja":
         )
 
         # 🔥 Acumulado por Loja
-        df_agrupado = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index()
-        df_agrupado.rename(columns={"Fat.Real": "Acumulado no Mês"}, inplace=True)
+        if modo_visao == "Por Loja":
+            df_agrup_loja = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index()
+            df_agrup_loja.rename(columns={"Fat.Real": "Acumulado no Mês"}, inplace=True)
 
-        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
-            df_agrupado, on="Loja", how="left"
-        )
+            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
+                df_agrup_loja, on="Loja", how="left"
+            )
 
-        # 🔥 Acumulado por Tipo
-        df_acumulado_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index()
-        df_acumulado_tipo.rename(columns={"Fat.Real": "Acumulado no Mês Tipo"}, inplace=True)
+            # 🔥 Acumulado por Tipo
+            df_acumulado_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index()
+            df_acumulado_tipo.rename(columns={"Fat.Real": "Acumulado no Mês Tipo"}, inplace=True)
 
-        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
-            df_acumulado_tipo, on="Tipo", how="left"
-        )
+            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
+                df_acumulado_tipo, on="Tipo", how="left"
+            )
 
-        # 🔥 Organiza colunas
-        cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col not in ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
-        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
+        # 🔥 Acumulado por Grupo
+        elif modo_visao == "Por Grupo":
+            df_agrup_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index()
+            df_agrup_grupo.rename(columns={"Fat.Real": "Acumulado no Mês"}, inplace=True)
 
-    except Exception as e:
-        st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
+            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
+                df_agrup_grupo, on="Grupo", how="left"
+            )
 
-# 🔥 Se for "Por Grupo", faz só o acumulado do Grupo (sem Tipo)
-elif agrupamento == "Dia" and modo_visao == "Por Grupo":
-    try:
-        data_maxima = pd.to_datetime(data_fim)
-        ano = data_maxima.year
-        mes = data_maxima.month
-        dia = data_maxima.day
-
-        df_acumulado = df_anos[
-            (df_anos["Data"].dt.year == ano) &
-            (df_anos["Data"].dt.month == mes) &
-            (df_anos["Data"].dt.day <= dia)
-        ].copy()
-
-        df_agrupado = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index()
-        df_agrupado.rename(columns={"Fat.Real": "Acumulado no Mês"}, inplace=True)
-
-        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
-            df_agrupado, on="Grupo", how="left"
-        )
-
-        cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col != "Acumulado no Mês"]
-        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês"]]
+        # 🔥 Organiza colunas finais
+        cols_final = [col for col in tabela_exportar_sem_tipo.columns if col not in ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
+        if modo_visao == "Por Loja":
+            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_final + ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
+        else:
+            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_final + ["Acumulado no Mês"]]
 
     except Exception as e:
         st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
+
 
 
 
