@@ -577,7 +577,6 @@ with aba4:
     )
     st.dataframe(tabela_formatada, use_container_width=True)
 
-
 import itertools
 import io
 import pandas as pd
@@ -608,19 +607,18 @@ else:
 tabela_exportar["Grupo"] = tabela_exportar["Grupo"].astype(str).str.strip()
 tabela_exportar = tabela_exportar[~tabela_exportar["Grupo"].isin(["", "nan", "NaN", "None"])]
 
-# 🔥 Cria uma cópia só para exportação sem a coluna Tipo
+# 🔥 Cria uma cópia para exportação sem a coluna Tipo
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns="Tipo", errors="ignore")
 
-# 🔥 Adiciona coluna de Acumulado no Mês SOMENTE quando agrupamento for "Dia"
+
+# 🔥 Acumulado no mês quando agrupamento for "Dia"
 if agrupamento == "Dia":
     try:
-        # ✅ Pega a data máxima do filtro
         data_maxima = pd.to_datetime(data_fim)
         ano = data_maxima.year
         mes = data_maxima.month
         dia = data_maxima.day
 
-        # ✅ Cria dataframe acumulado: do dia 01 até o dia do filtro
         df_acumulado = df_anos[
             (df_anos["Data"].dt.year == ano) &
             (df_anos["Data"].dt.month == mes) &
@@ -649,25 +647,19 @@ if agrupamento == "Dia":
                 df_agrupado, on="Grupo", how="left"
             )
 
-        # 🔥 Acumulado por Tipo
         df_acumulado_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index()
         df_acumulado_tipo.rename(columns={"Fat.Real": "Acumulado no Mês Tipo"}, inplace=True)
 
-        if "Tipo" in tabela_exportar_sem_tipo.columns:
-            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
-                df_acumulado_tipo, on="Tipo", how="left"
-            )
+        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
+            df_acumulado_tipo, on="Tipo", how="left"
+        )
 
-        # 🔥 Organiza as colunas
         cols_atuais = [col for col in tabela_exportar_sem_tipo.columns if col not in ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
-        colunas_finais = cols_atuais + ["Acumulado no Mês"]
-        if "Acumulado no Mês Tipo" in tabela_exportar_sem_tipo.columns:
-            colunas_finais.append("Acumulado no Mês Tipo")
-
-        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[colunas_finais]
+        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_atuais + ["Acumulado no Mês", "Acumulado no Mês Tipo"]]
 
     except Exception as e:
         st.warning(f"⚠️ Erro no cálculo do acumulado do mês: {e}")
+
 
 # 🔥 Criação do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
@@ -711,7 +703,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     grupos_info = sorted(grupos_info, key=lambda x: x["subtotal"], reverse=True)
 
-    # ✅ Calcula subtotais por Tipo
+
+    # 🔥 Subtotais por Tipo
     tipos_info = []
     if "Tipo" in tabela_exportar.columns:
         colunas_soma = [col for col in tabela_exportar_sem_tipo.columns if col not in ["Grupo", "Loja", "Tipo"]]
@@ -728,7 +721,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 else:
                     soma_colunas.append(0)
 
-            # 🔥 Pega acumulado do mês tipo, se existir
             acumulado_tipo = 0
             if "Acumulado no Mês Tipo" in df_acumulado_tipo.columns:
                 valor = df_acumulado_tipo[df_acumulado_tipo["Tipo"] == tipo_atual]["Acumulado no Mês Tipo"]
@@ -742,6 +734,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 "qtd_lojas": qtd_lojas_tipo,
                 "somas": soma_colunas
             })
+
 
     linha = 1
 
@@ -767,6 +760,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         linha += 1
 
+
     # 🔥 Total Geral
     linha_totalgeral = ["Total Geral", ""]
 
@@ -782,6 +776,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     linha += 1
 
+
+    # 🔥 Escreve os dados dos grupos
     row_num = linha
 
     for grupo, group_color in zip(grupos_info, cores_grupo):
@@ -818,6 +814,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     worksheet.set_column(0, len(tabela_exportar_sem_tipo.columns), 18)
     worksheet.hide_gridlines(option=2)
 
+
 # 🔽 Botão download
 st.download_button(
     label="📥 Baixar Excel",
@@ -826,9 +823,4 @@ st.download_button(
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     key="download_excel_visual_painel"
 )
-
-    
-
-
-   
 
