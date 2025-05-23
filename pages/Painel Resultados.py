@@ -622,6 +622,8 @@ df_acumulado = df_acumulado.merge(
     on="Loja",
     how="left"
 )
+# 🔧 Remove sufixos indesejados das colunas
+df_acumulado = df_acumulado.rename(columns=lambda x: x.replace('_y', '').replace('_x', ''))
 
 # 🚨 Verifica problemas no merge
 st.write("🧠 Colunas após merge em df_acumulado:", df_acumulado.columns.tolist())
