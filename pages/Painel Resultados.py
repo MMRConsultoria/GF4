@@ -612,8 +612,17 @@ df_acumulado = df_anos.copy()
 
 df_acumulado = df_acumulado.merge(
     df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
-    on="Loja", how="left"
+    on="Loja",
+    how="left"
 )
+
+# ✅ Validação robusta
+colunas_esperadas = ["Grupo", "Tipo"]
+colunas_faltando = [col for col in colunas_esperadas if col not in df_acumulado.columns]
+
+if colunas_faltando:
+    st.error(f"🚨 Erro crítico: As colunas {colunas_faltando} estão ausentes no df_acumulado. Verifique se o merge foi feito corretamente.")
+    st.stop()
 
 # 🔍 Verifica se merge foi bem-sucedido
 faltando = df_acumulado[df_acumulado["Grupo"].isna() | df_acumulado["Tipo"].isna()]
