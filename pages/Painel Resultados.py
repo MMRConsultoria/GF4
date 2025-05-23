@@ -580,7 +580,6 @@ with aba4:
 import io
 import itertools
 import pandas as pd
-import streamlit as st
 
 buffer = io.BytesIO()
 
@@ -668,10 +667,17 @@ else:
         tabela_exportar["Acumulado no Mês"] = None
     tabela_exportar["Acumulado no Mês Tipo"] = None
 
+# 🔧 Garante que a coluna Grupo esteja presente
+if "Grupo" not in tabela_exportar.columns:
+    tabela_exportar = tabela_exportar.merge(
+        df_empresa[["Loja", "Grupo"]].drop_duplicates(),
+        on="Loja", how="left"
+    )
+
 # 🔥 Remove a coluna "Acumulado no Mês Tipo" do corpo
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo", "Tipo"], errors="ignore")
 
-# 🔥 Se o agrupamento for Dia E for dentro do mês corrente, traz lojas ativas mesmo sem movimento
+# 🔥 Se o agrupamento for Dia e mês corrente, traz lojas ativas mesmo sem movimento
 if mostrar_acumulado:
     lojas_ativas = df_empresa[
         df_empresa["Ativa"].fillna("").astype(str).str.upper() == "SIM"
@@ -710,9 +716,10 @@ tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta'))
 
-# 🔥 Mostra na tela
+# 🔎 Visualização
 st.markdown("### 🔎 Visualização dos Dados")
 st.dataframe(tabela_exportar_sem_tipo)
+
 
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
