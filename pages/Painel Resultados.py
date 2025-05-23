@@ -690,9 +690,16 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
         linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
-        if agrupamento == "Dia":
-            linha_tipo.append(acumulado_valor)
+       # if agrupamento == "Dia":
+       #     linha_tipo.append(acumulado_valor)
 
+
+
+        # 🏗️ Preenche até o final da linha para não quebrar
+        while len(linha_tipo) < num_colunas:
+            linha_tipo.append("")
+
+    
         for col_num, val in enumerate(linha_tipo):
             if isinstance(val, (int, float)) and not pd.isna(val):
                 worksheet.write_number(linha, col_num, val, subtotal_format)
