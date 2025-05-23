@@ -609,29 +609,30 @@ else:
 
 # 🔥 Cálculo dos acumulados
 df_acumulado = df_anos.copy()
-# 🔥 Merge e validação do df_acumulado
+# 🔥 Realiza o merge trazendo 'Grupo' e 'Tipo'
 df_acumulado = df_acumulado.merge(
     df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
     on="Loja",
     how="left"
 )
 
-# 🚩 Verificação se faltam dados
+# 🚩 Checagem imediata
+st.write("Colunas no df_acumulado:", df_acumulado.columns.tolist())
+
+if "Grupo" not in df_acumulado.columns or "Tipo" not in df_acumulado.columns:
+    st.error("🚨 Erro crítico: As colunas 'Grupo' e/ou 'Tipo' não estão no dataframe df_acumulado.")
+    st.stop()
+
+# 🚦 Verifica se existem valores nulos nas colunas após o merge
 faltando = df_acumulado[df_acumulado["Grupo"].isna() | df_acumulado["Tipo"].isna()]
 
 if not faltando.empty:
-    st.error(f"🚨 Erro: Existem {faltando.shape[0]} lojas sem Grupo ou Tipo na Tabela Empresa. Confira!")
+    st.error(f"🚨 Existem {faltando.shape[0]} lojas sem Grupo ou Tipo.")
     st.dataframe(faltando)
     st.stop()
 else:
     st.success("✅ Todas as lojas estão corretamente cadastradas na Tabela Empresa.")
-# 🔍 Verifica se merge foi bem-sucedido
-faltando = df_acumulado[df_acumulado["Grupo"].isna() | df_acumulado["Tipo"].isna()]
-if not faltando.empty:
-    lojas_faltando = faltando["Loja"].unique()
-    st.warning(f"⚠️ Atenção! Algumas lojas não estão na Tabela Empresa: {lojas_faltando}")
-else:
-    st.success("✅ Todas as lojas estão corretamente cadastradas.")
+
 
 # 🔢 Agrupamentos
 acumulado_por_tipo = df_acumulado.groupby("Tipo", dropna=False)["Fat.Real"].sum().reset_index().rename(
