@@ -673,8 +673,6 @@ else:
 
 
 
-# 🔍 Ordenação pela data mais recente
-colunas_data = [col for col in tabela_exportar_sem_tipo.columns if "/" in col]
 
 def extrair_data(col):
     try:
@@ -717,6 +715,10 @@ if agrupamento == "Dia" and (
 
 # 🔥 Remove a coluna "Acumulado no Mês Tipo" do corpo
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo","Tipo"], errors="ignore")
+
+# 🔍 Ordenação pela data mais recente
+colunas_data = [col for col in tabela_exportar_sem_tipo.columns if "/" in col]
+
 
 st.markdown("### 🔎 Visualização dos Dados")
 st.dataframe(tabela_exportar_sem_tipo)
