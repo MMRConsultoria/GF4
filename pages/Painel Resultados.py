@@ -756,8 +756,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         linha += 1
 
     # 🔝 Total Geral
-    linhas_validas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Total|Subtotal", case=False, na=False)
-
+    #linhas_validas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Total|Subtotal", case=False, na=False)
+    linhas_validas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.match(r'^(Total|Subtotal|Tipo:)', case=False)
     df_para_total = tabela_exportar_sem_tipo[linhas_validas]
 
     soma_total = df_para_total.select_dtypes(include='number').sum()
