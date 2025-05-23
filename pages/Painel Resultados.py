@@ -590,7 +590,7 @@ df_empresa = df_empresa[df_empresa["Loja"].notna() & (df_empresa["Loja"].astype(
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 
-# 🔥 Cálculo do Acumulado no mês até data_fim
+# 🔥 Cálculo do Acumulado do mês até data_fim
 primeiro_dia_mes = pd.to_datetime(data_fim).replace(day=1)
 
 df_acumulado = df_anos[
@@ -598,13 +598,14 @@ df_acumulado = df_anos[
     (df_anos["Data"] <= pd.to_datetime(data_fim))
 ].copy()
 
+# 🔗 Merge com Grupo e Tipo antes dos groupby (blinda erro de KeyError)
 df_acumulado = df_acumulado.merge(
     df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
     on="Loja",
     how="left"
 )
 
-# 🔥 Calcula acumulados
+# 🔢 Calcula acumulados
 acumulado_por_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês Tipo"})
 acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 acumulado_por_loja = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
@@ -621,7 +622,6 @@ if modo_visao == "Por Loja":
     )
 
     todas_lojas = df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates()
-
     tabela_exportar = todas_lojas.merge(
         tabela_exportar, on="Loja", how="left"
     )
@@ -637,7 +637,6 @@ if modo_visao == "Por Grupo":
     )
 
     todas_grupos = df_empresa[["Grupo", "Tipo"]].drop_duplicates()
-
     tabela_exportar = todas_grupos.merge(
         tabela_exportar, on="Grupo", how="left"
     )
