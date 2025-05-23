@@ -642,6 +642,11 @@ if agrupamento == "Dia":
 # 🚫 Remove a coluna 'Acumulado no Mês Tipo' do corpo da planilha (mas mantém no cabeçalho)
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo"], errors="ignore")
 
+# 🚫 Remove a coluna 'Acumulado no Mês Tipo' definitivamente
+if "Acumulado no Mês Tipo" in tabela_exportar.columns:
+    tabela_exportar = tabela_exportar.drop(columns=["Acumulado no Mês Tipo"])
+
+
 # 🔥 Geração do arquivo Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
