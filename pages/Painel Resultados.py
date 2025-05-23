@@ -583,14 +583,21 @@ import pandas as pd
 
 buffer = io.BytesIO()
 
-# 🔥 Limpeza da Tabela Empresa
+# 🔥 Limpeza e padronização da tabela empresa
 df_empresa = df_empresa.dropna(how='all')
 df_empresa = df_empresa[df_empresa["Loja"].notna() & (df_empresa["Loja"].astype(str).str.strip() != "")]
 
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 
-# 🔥 Criação da tabela_exportar
+# 🔗 Merge do df_anos com empresa para garantir Grupo e Tipo corretos
+df_anos = df_anos.merge(
+    df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
+    on="Loja",
+    how="left"
+)
+
+# 🔥 Criação da tabela exportar
 if modo_visao == "Por Loja":
     tabela_final.index.name = "Loja"
     tabela_exportar = tabela_final.reset_index()
@@ -612,28 +619,21 @@ elif modo_visao == "Por Grupo":
         on="Grupo", how="left"
     )
 
-# 🔥 Cálculo do Acumulado no Mês
+# 🔥 Cálculo do Acumulado no Mês até a data do filtro
 data_max = pd.to_datetime(data_fim)
+
 df_acumulado = df_anos[
     (df_anos["Data"].dt.year == data_max.year) &
     (df_anos["Data"].dt.month == data_max.month) &
     (df_anos["Data"].dt.day <= data_max.day)
 ].copy()
 
-df_acumulado = df_acumulado.merge(
-    df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
-    on="Loja",
-    how="left",
-    suffixes=('', '_drop')
-)
-
-df_acumulado = df_acumulado.loc[:, ~df_acumulado.columns.str.endswith('_drop')]
-
+# 🔥 Gera os acumulados
 acumulado_por_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês Tipo"})
 acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 acumulado_por_loja = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 
-# 🔥 Merge dos acumulados SEM gerar colunas duplicadas
+# 🔥 Merge dos acumulados
 if modo_visao == "Por Loja":
     tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left", suffixes=('', '_drop'))
 
@@ -642,13 +642,18 @@ if modo_visao == "Por Grupo":
 
 tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left", suffixes=('', '_drop'))
 
-# 🔥 Remove qualquer coluna com '_drop'
+# 🔥 Remove colunas duplicadas
 tabela_exportar = tabela_exportar.loc[:, ~tabela_exportar.columns.str.endswith('_drop')]
 
-# 🚫 Remove a coluna "Acumulado no Mês Tipo" do corpo
-tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo","Tipo"], errors="ignore")
+# 🚫 Remove coluna "Acumulado no Mês Tipo" e "Tipo" do corpo final
+tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo", "Tipo"], errors="ignore")
 
-# 🔍 Ordenação pela data mais recente
+# 🔠 Renomeia colunas Bruto/Real para (Com Gorjeta) e (Sem Gorjeta)
+tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(
+    columns=lambda x: x.replace('Bruto', 'Bruto (Com Gorjeta)').replace('Real', 'Real (Sem Gorjeta)')
+)
+
+# 🔍 Ordena pela data mais recente
 colunas_data = [col for col in tabela_exportar_sem_tipo.columns if "/" in col]
 
 def extrair_data(col):
@@ -664,12 +669,8 @@ coluna_mais_recente = max(colunas_validas, key=lambda x: extrair_data(x)) if col
 if coluna_mais_recente:
     tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.sort_values(by=coluna_mais_recente, ascending=False)
 
-# 🔥 Remove colunas 100% vazias
+# 🔥 Remove colunas totalmente vazias
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
-
-tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta'))
-
-
 
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
@@ -728,7 +729,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     # 🔝 Total Geral
     linhas_validas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Total|Subtotal", case=False, na=False)
-
     df_para_total = tabela_exportar_sem_tipo[linhas_validas]
 
     soma_total = df_para_total.select_dtypes(include='number').sum()
