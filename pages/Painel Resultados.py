@@ -644,25 +644,22 @@ acumulado_por_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index(
 acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 acumulado_por_loja = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 
-# 🔍 Teste específico para Maio de 2025
-maio_2025 = df_anos[
-    (df_anos["Data"].dt.year == 2025) &
-    (df_anos["Data"].dt.month == 5)
-]
-
-st.subheader("🗓️ Checagem de Maio/2025")
-
-st.write("📅 Datas no df_anos de Maio/2025:", maio_2025["Data"].min(), "até", maio_2025["Data"].max())
-
-st.write("💰 Total Fat.Real no df_anos para Maio/2025:", maio_2025["Fat.Real"].sum())
-
-st.write("🔍 Visualização dos dados de Maio/2025")
-st.dataframe(maio_2025)
-
-st.write("🚨 Linhas de Maio sem Grupo ou Tipo (problema no merge):")
-st.dataframe(df_acumulado[df_acumulado["Grupo"].isna() | df_acumulado["Tipo"].isna()])
 
 
+
+if modo_visao == "Por Loja":
+    todas_lojas = df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates()
+
+    tabela_exportar = todas_lojas.merge(
+        tabela_exportar, on="Loja", how="left"
+    )
+
+if modo_visao == "Por Grupo":
+    todas_grupos = df_empresa[["Grupo", "Tipo"]].drop_duplicates()
+
+    tabela_exportar = todas_grupos.merge(
+        tabela_exportar, on="Grupo", how="left"
+    )
 
 
 
