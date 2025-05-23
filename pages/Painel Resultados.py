@@ -625,9 +625,6 @@ df_acumulado = df_acumulado.merge(
 )
 
 
-# 🚫 Remove a coluna 'Acumulado no Mês Tipo' do corpo da tabela
-if "Acumulado no Mês Tipo" in tabela_exportar.columns:
-    tabela_exportar = tabela_exportar.drop(columns=["Acumulado no Mês Tipo"])
 
 
 # ✅ Verificação de colunas
