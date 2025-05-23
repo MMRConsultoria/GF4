@@ -582,7 +582,7 @@ import itertools
 
 buffer = io.BytesIO()
 
-# 🔥 Limpeza da Tabela Empresa
+# 🔥 Limpeza dos dados
 df_empresa = df_empresa.dropna(how='all')
 df_empresa = df_empresa[df_empresa["Loja"].notna() & (df_empresa["Loja"].astype(str).str.strip() != "")]
 
@@ -611,7 +611,7 @@ elif modo_visao == "Por Grupo":
         on="Grupo", how="left"
     )
 
-# 🔥 Cálculo do Acumulado no Mês
+# 🔥 Cálculo do acumulado no mês
 if agrupamento == "Dia":
     data_max = pd.to_datetime(data_fim)
     df_acumulado = df_anos[
@@ -639,44 +639,50 @@ if agrupamento == "Dia":
         tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
     tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
 
-# 🔥 Remove a coluna "Tipo" e "Acumulado no Mês Tipo" do corpo do Excel
+# 🔥 Remove colunas que não serão exibidas
 colunas_para_remover = ["Tipo", "Acumulado no Mês Tipo"]
-
 for coluna in colunas_para_remover:
     if coluna in tabela_exportar.columns:
         tabela_exportar = tabela_exportar.drop(columns=[coluna])
 
-# 🔥 Remove colunas 100% vazias, se houver
 tabela_exportar = tabela_exportar.dropna(axis=1, how='all')
 
-# 🔍 Detecta coluna mais recente e ordena
-colunas_data = [col for col in tabela_exportar.columns if ("/" in col or col.isdigit())]
+# 🔥 Detecta coluna mais recente de forma robusta
+colunas_possiveis = [col.split(" (")[0] for col in tabela_exportar.columns]
+colunas_data_unicas = list(set([c for c in colunas_possiveis if ("/" in c or c.isdigit())]))
 
 def converter_data(col):
     try:
-        if "/" in col and len(col) == 7:  # Mês ex: 05/2025
+        if "/" in col and len(col) == 7:  # Mês
             return pd.to_datetime("01/" + col, dayfirst=True)
-        elif "/" in col and len(col) == 10:  # Dia ex: 21/05/2025
+        elif "/" in col and len(col) == 10:  # Dia
             return pd.to_datetime(col, dayfirst=True)
-        elif col.isdigit() and len(col) == 4:  # Ano ex: 2025
+        elif col.isdigit() and len(col) == 4:  # Ano
             return pd.to_datetime("01/01/" + col, dayfirst=True)
     except:
         return pd.NaT
 
-coluna_mais_recente = max(colunas_data, key=lambda x: converter_data(x)) if colunas_data else None
+coluna_mais_recente = max(
+    colunas_data_unicas, key=lambda x: converter_data(x)
+) if colunas_data_unicas else None
 
+# 🔥 Ordenação pela data mais recente
 if coluna_mais_recente:
-    tabela_exportar = tabela_exportar.sort_values(by=coluna_mais_recente, ascending=False)
+    col_ref = (
+        f"{coluna_mais_recente} (Bruto)"
+        if f"{coluna_mais_recente} (Bruto)" in tabela_exportar.columns
+        else coluna_mais_recente
+    )
 
-# 🔥 Ordena os grupos pelo subtotal na data mais recente
-if coluna_mais_recente:
-    subtotal_grupos = tabela_exportar.groupby("Grupo")[coluna_mais_recente].sum().reset_index()
-    subtotal_grupos = subtotal_grupos.sort_values(by=coluna_mais_recente, ascending=False)
+    tabela_exportar = tabela_exportar.sort_values(by=col_ref, ascending=False)
+
+    subtotal_grupos = tabela_exportar.groupby("Grupo")[col_ref].sum().reset_index()
+    subtotal_grupos = subtotal_grupos.sort_values(by=col_ref, ascending=False)
     lista_grupos_ordenada = subtotal_grupos["Grupo"].tolist()
 else:
     lista_grupos_ordenada = tabela_exportar["Grupo"].dropna().unique().tolist()
 
-# 🔥 Geração do arquivo Excel
+# 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
 
@@ -696,20 +702,16 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
-    # 🔝 Cabeçalho
     for col_num, header in enumerate(tabela_exportar.columns):
         worksheet.write(0, col_num, header, header_format)
 
     linha = 1
-
     num_colunas = len(tabela_exportar.columns)
 
-    # 🔢 Subtotal por Grupo e Lojas
     for grupo_atual, cor in zip(lista_grupos_ordenada, cores_grupo):
         linhas_grupo = tabela_exportar[
             (tabela_exportar["Grupo"] == grupo_atual) &
-            ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal", case=False, na=False) &
-            ~tabela_exportar["Loja"].astype(str).str.contains("Total", case=False, na=False)
+            ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
 
         qtd_lojas = linhas_grupo["Loja"].nunique() if "Loja" in linhas_grupo.columns else ""
@@ -740,10 +742,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 worksheet.write(linha, col_num, str(val), subtotal_format)
         linha += 1
 
-    # 🔝 Total Geral
-    linhas_validas = ~tabela_exportar["Loja"].astype(str).str.contains("Total", case=False, na=False) & \
-                     ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal", case=False, na=False)
-
+    linhas_validas = ~tabela_exportar["Loja"].astype(str).str.contains("Total|Subtotal", case=False, na=False)
     df_para_total = tabela_exportar[linhas_validas]
 
     soma_total = df_para_total.select_dtypes(include='number').sum()
