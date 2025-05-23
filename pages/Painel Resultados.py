@@ -644,6 +644,9 @@ acumulado_por_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index(
 acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 acumulado_por_loja = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 
+st.write("Datas no df_anos:", df_anos["Data"].min(), "até", df_anos["Data"].max())
+st.write("Total Fat.Real no df_anos:", df_anos["Fat.Real"].sum())
+
 # 🔥 Merge dos acumulados SEM gerar colunas duplicadas
 if modo_visao == "Por Loja":
     tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left", suffixes=('', '_drop'))
