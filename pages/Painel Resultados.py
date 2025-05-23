@@ -629,6 +629,11 @@ if agrupamento == "Dia":
         )
     elif modo_visao == "Por Grupo":
         df_acumulado = df_acumulado.merge(
+            df_empresa[["Loja", "Grupo"]].drop_duplicates(),
+            on="Loja",
+            how="left"
+        )
+        df_acumulado = df_acumulado.merge(
             df_empresa[["Grupo", "Tipo"]].drop_duplicates(),
             on="Grupo",
             how="left"
