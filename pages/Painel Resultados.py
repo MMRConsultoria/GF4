@@ -583,6 +583,9 @@ import pandas as pd
 
 buffer = io.BytesIO()
 
+# 🔥 Garante que df_anos esteja completo (sem filtro por data)
+df_anos_full = df_anos.copy()
+
 # 🔥 Limpeza da Tabela Empresa
 df_empresa = df_empresa.dropna(how='all')
 df_empresa = df_empresa[df_empresa["Loja"].notna() & (df_empresa["Loja"].astype(str).str.strip() != "")]
@@ -623,12 +626,10 @@ elif modo_visao == "Por Grupo":
 # 🔥 Cálculo do acumulado do mês até data_fim (ignora data_inicio)
 primeiro_dia_mes = pd.to_datetime(data_fim).replace(day=1)
 
-df_acumulado = df_anos[
-    (df_anos["Data"] >= primeiro_dia_mes) &
-    (df_anos["Data"] <= pd.to_datetime(data_fim))
+df_acumulado = df_anos_full[
+    (df_anos_full["Data"] >= primeiro_dia_mes) &
+    (df_anos_full["Data"] <= pd.to_datetime(data_fim))
 ].copy()
-
-
 
 df_acumulado = df_acumulado.merge(
     df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
