@@ -594,15 +594,19 @@ df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title(
 if modo_visao == "Por Loja":
     tabela_final.index.name = "Loja"
     tabela_exportar = tabela_final.reset_index()
+
     tabela_exportar = tabela_exportar.merge(
         df_empresa[["Loja", "Grupo", "Tipo"]],
         on="Loja", how="left"
     )
+
     tabela_exportar = tabela_exportar[["Grupo", "Loja", "Tipo"] + 
                                       [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]]
+
 elif modo_visao == "Por Grupo":
     tabela_final.index.name = "Grupo"
     tabela_exportar = tabela_final.reset_index()
+
     tabela_exportar = tabela_exportar.merge(
         df_empresa[["Grupo", "Tipo"]].drop_duplicates(),
         on="Grupo", how="left"
@@ -610,22 +614,30 @@ elif modo_visao == "Por Grupo":
 
 # 🔥 Cálculo do Acumulado no Mês SEMPRE
 data_max = pd.to_datetime(data_fim)
+
 df_acumulado = df_anos[
     (df_anos["Data"].dt.year == data_max.year) &
     (df_anos["Data"].dt.month == data_max.month) &
     (df_anos["Data"].dt.day <= data_max.day)
 ].copy()
 
-# 🔥 Merge SEMPRE com Loja para trazer Grupo e Tipo
+# 🔗 Faz merge SEMPRE pela Loja para trazer Grupo e Tipo
 df_acumulado = df_acumulado.merge(
     df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
     on="Loja",
     how="left"
 )
 
-acumulado_por_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado Mês Real"})
-acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado Mês Real"})
-acumulado_por_loja = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado Mês Real"})
+# 🔥 Calcula os acumulados
+acumulado_por_tipo = df_acumulado.groupby("Tipo", dropna=False)["Fat.Real"].sum().reset_index().rename(
+    columns={"Fat.Real": "Acumulado Mês Real"}
+)
+acumulado_por_grupo = df_acumulado.groupby("Grupo", dropna=False)["Fat.Real"].sum().reset_index().rename(
+    columns={"Fat.Real": "Acumulado Mês Real"}
+)
+acumulado_por_loja = df_acumulado.groupby("Loja", dropna=False)["Fat.Real"].sum().reset_index().rename(
+    columns={"Fat.Real": "Acumulado Mês Real"}
+)
 
 # 🔥 Merge dos acumulados
 if modo_visao == "Por Loja":
@@ -634,13 +646,18 @@ if modo_visao == "Por Grupo":
     tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
 tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
 
-# 🔍 Ordenação pela data mais recente
-colunas_data = [col for col in tabela_exportar.columns if "/" in col]
+# 🔥 Ordenação pela data mais recente de forma robusta
+colunas_data = [col for col in tabela_exportar.columns if ("/" in str(col)) or (str(col).isdigit())]
 
 def extrair_data(col):
     try:
-        col_limpo = col.split(" ")[0].strip()
-        return pd.to_datetime(col_limpo, format="%d/%m/%Y", dayfirst=True, errors="coerce")
+        parte = str(col).split(" ")[0]
+        if "/" in parte and len(parte) == 7:  # Formato Mês ex: 05/2025
+            return pd.to_datetime("01/" + parte, dayfirst=True)
+        elif "/" in parte and len(parte) == 10:  # Formato Dia ex: 21/05/2025
+            return pd.to_datetime(parte, dayfirst=True)
+        elif parte.isdigit() and len(parte) == 4:  # Formato Ano ex: 2025
+            return pd.to_datetime("01/01/" + parte, dayfirst=True)
     except:
         return pd.NaT
 
@@ -650,8 +667,9 @@ coluna_mais_recente = max(colunas_validas, key=lambda x: extrair_data(x)) if col
 if coluna_mais_recente:
     tabela_exportar = tabela_exportar.sort_values(by=coluna_mais_recente, ascending=False)
 
-# 🔥 Remove colunas totalmente vazias
-tabela_exportar = tabela_exportar.dropna(axis=1, how="all")
+# 🔥 Remove coluna final (se necessário) — opcional
+if "Acumulado no Mês Tipo" in tabela_exportar.columns:
+    tabela_exportar = tabela_exportar.drop(columns=["Acumulado no Mês Tipo"])
 
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
