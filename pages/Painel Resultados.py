@@ -672,6 +672,29 @@ else:
     tabela_exportar["Acumulado no Mês Tipo"] = None
 
 
+# 🔥 Remove a coluna "Acumulado no Mês Tipo" do corpo
+tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo","Tipo"], errors="ignore")
+
+# 🔥 Se o agrupamento for Dia E for dentro do mês corrente, traz lojas ativas mesmo sem movimento
+if mostrar_acumulado:
+    lojas_ativas = df_empresa[
+        df_empresa["Ativa"].fillna("").astype(str).str.upper() == "SIM"
+    ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
+
+    if modo_visao == "Por Loja":
+        tabela_exportar_sem_tipo = lojas_ativas.merge(
+            tabela_exportar_sem_tipo, on="Loja", how="left"
+        ).fillna(0)
+
+    if modo_visao == "Por Grupo":
+        grupos_ativos = lojas_ativas[["Grupo"]].drop_duplicates()
+
+        tabela_exportar_sem_tipo = grupos_ativos.merge(
+            tabela_exportar_sem_tipo, on="Grupo", how="left"
+        ).fillna(0)
+
+# 🔍 Ordenação pela data mais recente
+colunas_data = [col for col in tabela_exportar_sem_tipo.columns if "/" in col]
 
 
 def extrair_data(col):
@@ -691,33 +714,6 @@ if coluna_mais_recente:
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta'))
-
-# 🔥 Se o agrupamento for Dia E for dentro do mês corrente
-if agrupamento == "Dia" and (
-    data_max.year == hoje.year and data_max.month == hoje.month and
-    data_inicio.year == hoje.year and data_inicio.month == hoje.month
-):
-    lojas_ativas = df_empresa[
-        df_empresa["Ativa"].fillna("").astype(str).str.upper() == "SIM"
-    ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
-
-    if modo_visao == "Por Loja":
-        tabela_exportar_sem_tipo = lojas_ativas.merge(
-            tabela_exportar_sem_tipo, on="Loja", how="left"
-        ).fillna(0)
-
-    if modo_visao == "Por Grupo":
-        grupos_ativos = lojas_ativas[["Grupo"]].drop_duplicates()
-
-        tabela_exportar_sem_tipo = grupos_ativos.merge(
-            tabela_exportar_sem_tipo, on="Grupo", how="left"
-        ).fillna(0)
-
-# 🔥 Remove a coluna "Acumulado no Mês Tipo" do corpo
-tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo","Tipo"], errors="ignore")
-
-# 🔍 Ordenação pela data mais recente
-colunas_data = [col for col in tabela_exportar_sem_tipo.columns if "/" in col]
 
 
 st.markdown("### 🔎 Visualização dos Dados")
