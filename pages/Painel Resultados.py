@@ -633,6 +633,55 @@ acumulado_por_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index(
 acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 acumulado_por_loja = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 
+# 🔥 Filtra as lojas ativas
+lojas_ativas = df_empresa[
+    df_empresa["Ativa"].fillna("").astype(str).str.upper() == "SIM"
+][["Loja", "Grupo", "Tipo"]].drop_duplicates()
+
+# 🔥 Garante que todas as lojas ativas estejam no acumulado, mesmo zeradas
+acumulado_por_loja = lojas_ativas[["Loja"]].drop_duplicates().merge(
+    acumulado_por_loja, on="Loja", how="left"
+).fillna(0)
+
+# 🔥 Garante que todos os grupos das lojas ativas estejam no acumulado
+acumulado_por_grupo = lojas_ativas[["Grupo"]].drop_duplicates().merge(
+    acumulado_por_grupo, on="Grupo", how="left"
+).fillna(0)
+
+# 🔥 Garante que todos os tipos das lojas ativas estejam no acumulado
+acumulado_por_tipo = lojas_ativas[["Tipo"]].drop_duplicates().merge(
+    acumulado_por_tipo, on="Tipo", how="left"
+).fillna(0)
+
+# 🔥 Merge da tabela_exportar com as lojas ativas
+if modo_visao == "Por Loja":
+    tabela_exportar = lojas_ativas.merge(
+        tabela_exportar, on="Loja", how="left"
+    ).fillna(0)
+
+if modo_visao == "Por Grupo":
+    grupos_ativos = lojas_ativas[["Grupo"]].drop_duplicates()
+
+    tabela_exportar = grupos_ativos.merge(
+        tabela_exportar, on="Grupo", how="left"
+    ).fillna(0)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # 🔥 Merge dos acumulados SEM gerar colunas duplicadas
 if modo_visao == "Por Loja":
     tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left", suffixes=('', '_drop'))
@@ -646,7 +695,7 @@ tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left
 tabela_exportar = tabela_exportar.loc[:, ~tabela_exportar.columns.str.endswith('_drop')]
 
 # 🚫 Remove a coluna "Acumulado no Mês Tipo" do corpo
-tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo","Tipo"], errors="ignore")
+tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo"], errors="ignore")
 
 # 🔍 Ordenação pela data mais recente
 colunas_data = [col for col in tabela_exportar_sem_tipo.columns if "/" in col]
