@@ -633,6 +633,31 @@ acumulado_por_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index(
 acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 acumulado_por_loja = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 
+# 🔥 Filtra apenas lojas ativas
+lojas_ativas = df_empresa[df_empresa["Ativa"].str.upper() == "SIM"][["Loja", "Grupo", "Tipo"]].drop_duplicates()
+
+# 🔥 Merge para garantir que todas as lojas ativas estejam no acumulado
+acumulado_por_loja = lojas_ativas.merge(
+    acumulado_por_loja, on="Loja", how="left"
+).fillna(0)
+
+grupos_ativos = lojas_ativas[["Grupo", "Tipo"]].drop_duplicates()
+
+acumulado_por_grupo = grupos_ativos.merge(
+    acumulado_por_grupo, on="Grupo", how="left"
+).fillna(0)
+
+tipos_ativos = lojas_ativas[["Tipo"]].drop_duplicates()
+
+acumulado_por_tipo = tipos_ativos.merge(
+    acumulado_por_tipo, on="Tipo", how="left"
+).fillna(0)
+
+
+
+
+
+
 # 🔥 Merge dos acumulados SEM gerar colunas duplicadas
 if modo_visao == "Por Loja":
     tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left", suffixes=('', '_drop'))
