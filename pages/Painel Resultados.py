@@ -639,15 +639,9 @@ if agrupamento == "Dia":
         tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
     tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
 
-# 🔥 Remoção das colunas não desejadas no Excel
-colunas_para_remover = ["Tipo", "Acumulado no Mês Tipo"]
-
-for coluna in colunas_para_remover:
-    if coluna in tabela_exportar.columns:
-        tabela_exportar = tabela_exportar.drop(columns=[coluna])
-
-# 🔥 Remove colunas 100% vazias, caso exista alguma perdida
-tabela_exportar = tabela_exportar.dropna(axis=1, how='all')
+# 🚫 Remove a coluna 'Tipo' do Excel
+if "Tipo" in tabela_exportar.columns:
+    tabela_exportar = tabela_exportar.drop(columns=["Tipo"])
 
 # 🔥 Geração do arquivo Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
@@ -675,8 +669,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     linha = 1
 
-    # 🔥 Subtotal por Tipo
-    if "Acumulado no Mês Grupo" in tabela_exportar.columns and "Grupo" in tabela_exportar.columns:
+    # 🔥 Subtotal por Tipo (✔️ CORRIGIDO)
+    if "Acumulado no Mês Tipo" in tabela_exportar.columns and "Grupo" in tabela_exportar.columns:
         for tipo_atual in acumulado_por_tipo["Tipo"].dropna().unique():
             linhas_tipo = tabela_exportar[
                 (tabela_exportar["Grupo"].isin(
