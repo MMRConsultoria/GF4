@@ -640,8 +640,15 @@ if agrupamento == "Dia":
     tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
 
 # 🚫 Remove a coluna 'Tipo' do Excel
-if "Tipo" in tabela_exportar.columns:
-    tabela_exportar = tabela_exportar.drop(columns=["Tipo"])
+#if "Tipo" in tabela_exportar.columns:
+#    tabela_exportar = tabela_exportar.drop(columns=["Tipo"])
+
+# 🚫 Remove apenas a coluna 'Acumulado no Mês Tipo' do corpo da planilha
+colunas_para_remover = ["Acumulado no Mês Tipo"]
+
+for coluna in colunas_para_remover:
+    if coluna in tabela_exportar.columns:
+        tabela_exportar = tabela_exportar.drop(columns=coluna)
 
 # 🔥 Geração do arquivo Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
