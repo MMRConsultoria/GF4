@@ -639,12 +639,8 @@ if agrupamento == "Dia":
         tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
     tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
 
-# 🚫 Remove a coluna 'Acumulado no Mês Tipo' do corpo da planilha (mas mantém no cabeçalho)
+# 🚫 Cria versão sem a coluna "Acumulado no Mês Tipo" para o corpo da planilha
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo"], errors="ignore")
-
-# 🚫 Remove a coluna 'Acumulado no Mês Tipo' definitivamente
-if "Acumulado no Mês Tipo" in tabela_exportar.columns:
-    tabela_exportar = tabela_exportar.drop(columns=["Acumulado no Mês Tipo"])
 
 
 # 🔥 Geração do arquivo Excel
@@ -675,7 +671,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     num_colunas = len(tabela_exportar_sem_tipo.columns)
 
-    # 🔥 Subtotal por Tipo
+    # 🔥 Subtotal por Tipo (Cabeçalho)
     for tipo_atual in acumulado_por_tipo["Tipo"].dropna().unique():
         linhas_tipo = tabela_exportar[
             (tabela_exportar["Grupo"].isin(
@@ -755,7 +751,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 worksheet.write(linha, col_num, str(val), subtotal_format)
         linha += 1
 
-    worksheet.set_column(0, len(tabela_exportar_sem_tipo.columns) - 1, 18)
+    worksheet.set_column(0, num_colunas - 1, 18)
     worksheet.hide_gridlines(option=2)
 
 # 🔽 Botão Download
