@@ -598,7 +598,7 @@ df_acumulado = df_anos[
     (df_anos["Data"] <= pd.to_datetime(data_fim))
 ].copy()
 
-# 🔗 Merge com Grupo e Tipo antes dos groupby (blinda erro de KeyError)
+# 🔗 🔥 Merge obrigatório para garantir 'Grupo' e 'Tipo'
 df_acumulado = df_acumulado.merge(
     df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
     on="Loja",
