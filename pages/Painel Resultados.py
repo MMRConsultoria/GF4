@@ -624,12 +624,6 @@ elif modo_visao == "Por Grupo":
 st.subheader("🧠 Verificação de colunas antes dos merges")
 st.write("📄 Colunas atuais na tabela_exportar:", tabela_exportar.columns.tolist())
 
-# 🔍 Verificação se colunas-chave estão presentes
-colunas_necessarias = ["Loja", "Grupo", "Tipo"]
-faltando = [col for col in colunas_necessarias if col not in tabela_exportar.columns]
-if faltando:
-    st.warning(f"⚠️ As colunas {faltando} estão faltando na tabela_exportar. Verifique a montagem anterior.")
-
 # ===========================================
 # 🔥 Cálculo do Acumulado no Mês (quando agrupamento = Dia)
 # ===========================================
@@ -643,7 +637,6 @@ if agrupamento == "Dia":
         (df_anos["Data"].dt.day <= data_max.day)
     ].copy()
 
-    # 🔥 Merge seguro com proteção contra colunas duplicadas
     df_acumulado = df_acumulado.merge(
         df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
         on="Loja",
@@ -651,7 +644,6 @@ if agrupamento == "Dia":
         suffixes=('', '_drop')
     )
 
-    # 🔥 Remove colunas duplicadas (_drop)
     df_acumulado = df_acumulado.loc[:, ~df_acumulado.columns.str.endswith('_drop')]
 
     st.write("🔍 Colunas no df_acumulado após merge:", df_acumulado.columns.tolist())
@@ -670,7 +662,6 @@ if agrupamento == "Dia":
     st.write("✅ Acumulado por Grupo:", acumulado_por_grupo)
     st.write("✅ Acumulado por Loja:", acumulado_por_loja)
 
-    # 🔗 Merge blindado
     if modo_visao == "Por Loja":
         if "Loja" in tabela_exportar.columns:
             tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left")
@@ -684,6 +675,12 @@ if agrupamento == "Dia":
     if "Tipo" in tabela_exportar.columns:
         tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
         st.success("🔗 Merge feito com acumulado por Tipo.")
+
+# ===========================================
+# 🚫 REMOVE A COLUNA 'TIPO' DO EXCEL
+# ===========================================
+if "Tipo" in tabela_exportar.columns:
+    tabela_exportar = tabela_exportar.drop(columns=["Tipo"])
 
 # ===========================================
 # 🔥 Geração do arquivo Excel
@@ -711,16 +708,14 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     for col_num, header in enumerate(tabela_exportar.columns):
         worksheet.write(0, col_num, header, header_format)
 
-    # 🔢 Subtotais por Tipo
+    # 🔢 Subtotais por Tipo (mantém no cálculo interno, mas não aparece no Excel)
     linha = 1
-    if "Tipo" in tabela_exportar.columns:
-        for tipo_atual in tabela_exportar["Tipo"].dropna().unique():
-            linhas_tipo = tabela_exportar[tabela_exportar["Tipo"] == tipo_atual]
-            qtd_lojas = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
+    if "Acumulado no Mês Tipo" in tabela_exportar.columns:
+        for tipo_atual in acumulado_por_tipo["Tipo"].dropna().unique():
+            linhas_tipo = tabela_exportar[tabela_exportar["Grupo"].notna()]  # Aqui agrupamos de forma geral, só referência
             soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
-            linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas}"]
-            linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar.columns[3:]]
+            linha_tipo = [f"Tipo: {tipo_atual}", ""] + [soma_colunas.get(col, "") for col in tabela_exportar.columns[2:]]
 
             for col_num, val in enumerate(linha_tipo):
                 if isinstance(val, (int, float)) and not pd.isna(val):
@@ -760,7 +755,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
         linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
-        linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar.columns[3:]]
+        linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar.columns[2:]]
 
         for col_num, val in enumerate(linha_grupo):
             if isinstance(val, (int, float)) and not pd.isna(val):
