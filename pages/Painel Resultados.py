@@ -720,34 +720,34 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
+    # 🔢 Subtotal por tipo
+    for _, linha_tipo in acumulado_por_tipo.iterrows():
+        tipo_atual = linha_tipo["Tipo"]
+        acumulado_valor = linha_tipo["Acumulado no Mês Tipo"]
 
-   for _, linha_tipo in acumulado_por_tipo.iterrows():
-    tipo_atual = linha_tipo["Tipo"]
-    acumulado_valor = linha_tipo["Acumulado no Mês Tipo"]
+        linhas_tipo = tabela_exportar_sem_tipo[
+            (tabela_exportar_sem_tipo["Grupo"].isin(
+                df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
+            )) &
+            ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+        ]
 
-    linhas_tipo = tabela_exportar_sem_tipo[
-        (tabela_exportar_sem_tipo["Grupo"].isin(
-            df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
-        )) &
-        ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
-    ]
+        qtd_lojas_tipo = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
+        soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
-    qtd_lojas_tipo = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
-    soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
+        linha_excel = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
+        linha_excel += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
-    linha_excel = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
-    linha_excel += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+        if agrupamento == "Dia":
+            linha_excel.append(acumulado_valor)
 
-    if agrupamento == "Dia":
-        linha_excel.append(acumulado_valor)
+        for col_num, val in enumerate(linha_excel):
+            if isinstance(val, (int, float)) and not pd.isna(val):
+                worksheet.write_number(linha, col_num, val, subtotal_format)
+            else:
+                worksheet.write(linha, col_num, str(val), subtotal_format)
 
-    for col_num, val in enumerate(linha_excel):
-        if isinstance(val, (int, float)) and not pd.isna(val):
-            worksheet.write_number(linha, col_num, val, subtotal_format)
-        else:
-            worksheet.write(linha, col_num, str(val), subtotal_format)
-
-    linha += 1
+        linha += 1
     # 🔝 Total Geral
     linhas_validas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Total|Subtotal", case=False, na=False)
 
