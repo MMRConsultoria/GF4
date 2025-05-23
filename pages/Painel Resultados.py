@@ -616,19 +616,12 @@ df_acumulado = df_anos[
     (df_anos["Data"].dt.day <= data_max.day)
 ].copy()
 
-# 🔥 Merge seguro
-if modo_visao == "Por Loja":
-    df_acumulado = df_acumulado.merge(
-        df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
-        on="Loja",
-        how="left"
-    )
-elif modo_visao == "Por Grupo":
-    df_acumulado = df_acumulado.merge(
-        df_empresa[["Grupo", "Tipo"]].drop_duplicates(),
-        on="Grupo",
-        how="left"
-    )
+# 🔥 Merge SEMPRE com Loja para trazer Grupo e Tipo
+df_acumulado = df_acumulado.merge(
+    df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
+    on="Loja",
+    how="left"
+)
 
 acumulado_por_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado Mês Real"})
 acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado Mês Real"})
