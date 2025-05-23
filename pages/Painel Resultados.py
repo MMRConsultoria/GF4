@@ -634,7 +634,23 @@ acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_inde
 acumulado_por_loja = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 
 
+# 🔥 ✔️ Faz merge com todas as lojas ativas para garantir que nenhuma fique de fora
+lojas_ativas = df_empresa[df_empresa["Ativo"].fillna("").astype(str).str.upper() == "SIM"][["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
+# ✔️ Acumulado por loja (mesmo quem não teve movimento no mês)
+acumulado_por_loja = lojas_ativas.merge(
+    acumulado_por_loja, on="Loja", how="left"
+).fillna(0)
+
+# ✔️ Acumulado por grupo
+acumulado_por_grupo = lojas_ativas[["Grupo"]].drop_duplicates().merge(
+    acumulado_por_grupo, on="Grupo", how="left"
+).fillna(0)
+
+# ✔️ Acumulado por tipo
+acumulado_por_tipo = lojas_ativas[["Tipo"]].drop_duplicates().merge(
+    acumulado_por_tipo, on="Tipo", how="left"
+).fillna(0)
 
 
 
