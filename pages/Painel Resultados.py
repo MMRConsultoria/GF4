@@ -662,6 +662,23 @@ st.dataframe(maio_2025)
 st.write("🚨 Linhas de Maio sem Grupo ou Tipo (problema no merge):")
 st.dataframe(df_acumulado[df_acumulado["Grupo"].isna() | df_acumulado["Tipo"].isna()])
 
+
+
+st.subheader("✅ Verificação antes do Excel")
+
+st.write("Total Fat.Real no acumulado:", df_acumulado["Fat.Real"].sum())
+
+st.write("Soma de Acumulado no Mês na tabela que vai pro Excel:",
+         tabela_exportar_sem_tipo["Acumulado no Mês"].sum())
+
+st.write("Diferença:",
+         df_acumulado["Fat.Real"].sum() - tabela_exportar_sem_tipo["Acumulado no Mês"].sum())
+
+st.write("Qtd linhas no df_acumulado:", len(df_acumulado))
+st.write("Qtd linhas na tabela_exportar_sem_tipo:", len(tabela_exportar_sem_tipo))
+
+st.dataframe(tabela_exportar_sem_tipo)
+
 # 🔥 Merge dos acumulados SEM gerar colunas duplicadas
 if modo_visao == "Por Loja":
     tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left", suffixes=('', '_drop'))
