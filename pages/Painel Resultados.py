@@ -629,7 +629,7 @@ elif modo_visao == "Por Grupo":
         on="Grupo", how="left"
     )
 
-# 🔥 Cálculo do Acumulado (apenas se mostrar_acumulado = True)
+# 🔥 Cálculo do Acumulado
 if mostrar_acumulado:
     primeiro_dia_mes = data_max.replace(day=1)
     df_acumulado = df_anos[
@@ -667,15 +667,21 @@ else:
         tabela_exportar["Acumulado no Mês"] = None
     tabela_exportar["Acumulado no Mês Tipo"] = None
 
-# 🔧 Garante que a coluna Grupo esteja presente
-if "Grupo" not in tabela_exportar.columns and modo_visao == "Por Loja":
-    tabela_exportar = tabela_exportar.merge(
+# 🔥 Remove a coluna "Acumulado no Mês Tipo" do corpo
+tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo", "Tipo"], errors="ignore")
+
+# 🔧 Garante que as colunas 'Grupo' e 'Tipo' estejam presentes
+if "Grupo" not in tabela_exportar_sem_tipo.columns and "Loja" in tabela_exportar_sem_tipo.columns:
+    tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
         df_empresa[["Loja", "Grupo"]].drop_duplicates(),
         on="Loja", how="left"
     )
 
-# 🔥 Remove a coluna "Acumulado no Mês Tipo" do corpo
-tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo", "Tipo"], errors="ignore")
+if "Tipo" not in tabela_exportar_sem_tipo.columns and "Loja" in tabela_exportar_sem_tipo.columns:
+    tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
+        df_empresa[["Loja", "Tipo"]].drop_duplicates(),
+        on="Loja", how="left"
+    )
 
 # 🔥 Se o agrupamento for Dia E for dentro do mês corrente, traz lojas ativas mesmo sem movimento
 if mostrar_acumulado:
@@ -714,11 +720,9 @@ if coluna_mais_recente:
 # 🔥 Remove colunas 100% vazias
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 
-tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(
-    columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta')
-)
+tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta'))
 
-# ✅ Mostra na tela
+# 🔎 Visualização
 st.markdown("### 🔎 Visualização dos Dados")
 st.dataframe(tabela_exportar_sem_tipo)
 
