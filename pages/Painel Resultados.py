@@ -577,7 +577,7 @@ with aba4:
     )
     st.dataframe(tabela_formatada, use_container_width=True)
 
-    import io
+import io
 import itertools
 
 buffer = io.BytesIO()
@@ -669,11 +669,13 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     linha = 1
 
-    # 🔥 SUBTOTAL POR TIPO
+    # 🔥 Subtotal por Tipo (✔️ CORRIGIDO)
     if "Acumulado no Mês Tipo" in tabela_exportar.columns and "Grupo" in tabela_exportar.columns:
         for tipo_atual in acumulado_por_tipo["Tipo"].dropna().unique():
             linhas_tipo = tabela_exportar[
-                (tabela_exportar["Grupo"].notna()) &
+                (tabela_exportar["Grupo"].isin(
+                    df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
+                )) &
                 ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal", case=False, na=False) &
                 ~tabela_exportar["Loja"].astype(str).str.contains("Total", case=False, na=False)
             ]
@@ -698,7 +700,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
             linha += 1
 
-    # 🔝 TOTAL GERAL
+    # 🔝 Total Geral
     linhas_validas = ~tabela_exportar["Loja"].astype(str).str.contains("Total", case=False, na=False) & \
                      ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal", case=False, na=False)
 
@@ -715,7 +717,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             worksheet.write(linha, col_num, str(val), totalgeral_format)
     linha += 1
 
-    # 🔢 SUBTOTAL POR GRUPO E LOJAS
+    # 🔢 Subtotal por Grupo e Lojas
     for grupo_atual, cor in zip(tabela_exportar["Grupo"].dropna().unique(), cores_grupo):
         linhas_grupo = tabela_exportar[
             (tabela_exportar["Grupo"] == grupo_atual) &
@@ -758,4 +760,3 @@ st.download_button(
     file_name="faturamento_visual.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
-
