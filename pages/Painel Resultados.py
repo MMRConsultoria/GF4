@@ -667,7 +667,7 @@ if coluna_mais_recente:
     tabela_exportar = tabela_exportar.sort_values(by=coluna_mais_recente, ascending=False)
 
 # ✅ Verificação opcional
-st.write(f"➡️ Coluna mais recente detectada para ordenação: {coluna_mais_recente}")
+#st.write(f"➡️ Coluna mais recente detectada para ordenação: {coluna_mais_recente}")
 
 
 # 🔥 Geração do arquivo Excel
