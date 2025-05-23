@@ -668,14 +668,6 @@ coluna_mais_recente = max(colunas_data, key=lambda x: converter_data(x)) if colu
 if coluna_mais_recente:
     tabela_exportar = tabela_exportar.sort_values(by=coluna_mais_recente, ascending=False)
 
-# 🔥 Ordena os grupos pelo subtotal na data mais recente
-if coluna_mais_recente:
-    subtotal_grupos = tabela_exportar.groupby("Grupo")[coluna_mais_recente].sum().reset_index()
-    subtotal_grupos = subtotal_grupos.sort_values(by=coluna_mais_recente, ascending=False)
-    lista_grupos_ordenada = subtotal_grupos["Grupo"].tolist()
-else:
-    lista_grupos_ordenada = tabela_exportar["Grupo"].dropna().unique().tolist()
-
 # 🔥 Geração do arquivo Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
@@ -704,8 +696,68 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     num_colunas = len(tabela_exportar.columns)
 
+    # 🔥 Subtotal por Tipo
+    for tipo_atual in acumulado_por_tipo["Tipo"].dropna().unique():
+        grupos_do_tipo = df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].dropna().unique()
+
+        linhas_tipo = tabela_exportar[
+            (tabela_exportar["Grupo"].isin(grupos_do_tipo)) &
+            ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal", case=False, na=False) &
+            ~tabela_exportar["Loja"].astype(str).str.contains("Total", case=False, na=False)
+        ]
+
+        qtd_lojas_tipo = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
+        soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
+
+        acumulado_valor = acumulado_por_tipo.loc[
+            acumulado_por_tipo["Tipo"] == tipo_atual, "Acumulado no Mês Tipo"
+        ].values
+        acumulado_valor = acumulado_valor[0] if len(acumulado_valor) > 0 else 0
+
+        linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
+        linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar.columns[2:]]
+
+        if agrupamento == "Dia":
+            if len(linha_tipo) < num_colunas:
+                while len(linha_tipo) < num_colunas - 1:
+                    linha_tipo.append("")
+                linha_tipo.append(acumulado_valor)
+            else:
+                linha_tipo = linha_tipo[:num_colunas - 1] + [acumulado_valor]
+        else:
+            while len(linha_tipo) < num_colunas:
+                linha_tipo.append("")
+
+        for col_num, val in enumerate(linha_tipo):
+            if isinstance(val, (int, float)) and not pd.isna(val):
+                worksheet.write_number(linha, col_num, val, subtotal_format)
+            else:
+                worksheet.write(linha, col_num, str(val), subtotal_format)
+
+        linha += 1
+
+    # 🔝 Total Geral
+    linhas_validas = ~tabela_exportar["Loja"].astype(str).str.contains("Total", case=False, na=False) & \
+                     ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal", case=False, na=False)
+
+    df_para_total = tabela_exportar[linhas_validas]
+
+    soma_total = df_para_total.select_dtypes(include='number').sum()
+    linha_total = ["Total Geral", ""]
+    linha_total += [soma_total.get(col, "") for col in tabela_exportar.columns[2:]]
+
+    while len(linha_total) < num_colunas:
+        linha_total.append("")
+
+    for col_num, val in enumerate(linha_total):
+        if isinstance(val, (int, float)) and not pd.isna(val):
+            worksheet.write_number(linha, col_num, val, totalgeral_format)
+        else:
+            worksheet.write(linha, col_num, str(val), totalgeral_format)
+    linha += 1
+
     # 🔢 Subtotal por Grupo e Lojas
-    for grupo_atual, cor in zip(lista_grupos_ordenada, cores_grupo):
+    for grupo_atual, cor in zip(tabela_exportar["Grupo"].dropna().unique(), cores_grupo):
         linhas_grupo = tabela_exportar[
             (tabela_exportar["Grupo"] == grupo_atual) &
             ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal", case=False, na=False) &
@@ -739,26 +791,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             else:
                 worksheet.write(linha, col_num, str(val), subtotal_format)
         linha += 1
-
-    # 🔝 Total Geral
-    linhas_validas = ~tabela_exportar["Loja"].astype(str).str.contains("Total", case=False, na=False) & \
-                     ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal", case=False, na=False)
-
-    df_para_total = tabela_exportar[linhas_validas]
-
-    soma_total = df_para_total.select_dtypes(include='number').sum()
-    linha_total = ["Total Geral", ""]
-    linha_total += [soma_total.get(col, "") for col in tabela_exportar.columns[2:]]
-
-    while len(linha_total) < num_colunas:
-        linha_total.append("")
-
-    for col_num, val in enumerate(linha_total):
-        if isinstance(val, (int, float)) and not pd.isna(val):
-            worksheet.write_number(linha, col_num, val, totalgeral_format)
-        else:
-            worksheet.write(linha, col_num, str(val), totalgeral_format)
-    linha += 1
 
     worksheet.set_column(0, num_colunas - 1, 18)
     worksheet.hide_gridlines(option=2)
