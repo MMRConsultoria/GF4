@@ -599,7 +599,7 @@ if modo_visao == "Por Loja":
         on="Loja", how="left"
     )
 
-    tabela_exportar = tabela_exportar[["Grupo", "Loja", "Tipo"] + 
+    tabela_exportar = tabela_exportar[["Grupo", "Loja"] + 
                                       [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]]
 
 elif modo_visao == "Por Grupo":
@@ -620,6 +620,7 @@ if agrupamento == "Dia":
         (df_anos["Data"].dt.day <= data_max.day)
     ].copy()
 
+    # 🔗 Merge obrigatório para garantir Grupo e Tipo
     df_acumulado = df_acumulado.merge(
         df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
         on="Loja",
@@ -635,7 +636,7 @@ if agrupamento == "Dia":
     if modo_visao == "Por Grupo":
         tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
 
-# 🔥 Remove colunas
+# 🔥 Remove colunas desnecessárias
 tabela_exportar = tabela_exportar.drop(columns=["Tipo"], errors='ignore')
 tabela_exportar = tabela_exportar.dropna(axis=1, how='all')
 
@@ -658,7 +659,7 @@ coluna_mais_recente = max(
     colunas_data_unicas, key=lambda x: converter_data(x)
 ) if colunas_data_unicas else None
 
-# 🔥 Ordenação
+# 🔥 Ordenação por subtotal mais recente
 if coluna_mais_recente:
     col_ref = (
         f"{coluna_mais_recente} (Bruto)"
@@ -795,7 +796,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     worksheet.set_column(0, num_colunas - 1, 18)
     worksheet.hide_gridlines(option=2)
 
-# 🔽 Botão Download
+# 🔽 Download
 st.download_button(
     label="📥 Baixar Excel",
     data=buffer.getvalue(),
