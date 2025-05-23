@@ -664,16 +664,7 @@ if coluna_mais_recente:
 tabela_exportar = tabela_exportar.dropna(axis=1, how="all")
 
 
-# 🔥 Merge dos acumulados
-if modo_visao == "Por Loja":
-    tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left")
-if modo_visao == "Por Grupo":
-    tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
-tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
 
-# ✅ Remove a coluna 'Acumulado no Mês Tipo'
-if "Acumulado no Mês Tipo" in tabela_exportar.columns:
-    tabela_exportar = tabela_exportar.drop(columns=["Acumulado no Mês Tipo"])
 
 
 
