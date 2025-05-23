@@ -639,14 +639,14 @@ if agrupamento == "Dia":
         tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
     tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
 
-# 🔥 Remoção das colunas não desejadas no Excel
+# 🔥 Remove a coluna "Tipo" e "Acumulado no Mês Tipo" do corpo do Excel
 colunas_para_remover = ["Tipo", "Acumulado no Mês Tipo"]
 
 for coluna in colunas_para_remover:
     if coluna in tabela_exportar.columns:
         tabela_exportar = tabela_exportar.drop(columns=[coluna])
 
-# 🔥 Remove colunas 100% vazias, caso exista alguma perdida
+# 🔥 Remove colunas 100% vazias, se houver
 tabela_exportar = tabela_exportar.dropna(axis=1, how='all')
 
 # 🔥 Geração do arquivo Excel
@@ -675,36 +675,38 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     linha = 1
 
-    # 🔥 Subtotal por Tipo
-    if "Acumulado no Mês Grupo" in tabela_exportar.columns and "Grupo" in tabela_exportar.columns:
-        for tipo_atual in acumulado_por_tipo["Tipo"].dropna().unique():
-            linhas_tipo = tabela_exportar[
-                (tabela_exportar["Grupo"].isin(
-                    df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
-                )) &
-                ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal", case=False, na=False) &
-                ~tabela_exportar["Loja"].astype(str).str.contains("Total", case=False, na=False)
-            ]
+    # 🔥 Subtotal por Tipo (✔️ correto e com acumulado no mês na última coluna)
+    for tipo_atual in acumulado_por_tipo["Tipo"].dropna().unique():
+        grupos_do_tipo = df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].dropna().unique()
 
-            qtd_lojas_tipo = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
-            soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
+        linhas_tipo = tabela_exportar[
+            (tabela_exportar["Grupo"].isin(grupos_do_tipo)) &
+            ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal", case=False, na=False) &
+            ~tabela_exportar["Loja"].astype(str).str.contains("Total", case=False, na=False)
+        ]
 
-            acumulado_tipo = acumulado_por_tipo.loc[acumulado_por_tipo["Tipo"] == tipo_atual, "Acumulado no Mês Tipo"].values
-            acumulado_valor = acumulado_tipo[0] if len(acumulado_tipo) > 0 else 0
+        qtd_lojas_tipo = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
+        soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
-            linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
-            linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar.columns[2:]]
+        acumulado_valor = acumulado_por_tipo.loc[
+            acumulado_por_tipo["Tipo"] == tipo_atual, "Acumulado no Mês Tipo"
+        ].values
+        acumulado_valor = acumulado_valor[0] if len(acumulado_valor) > 0 else 0
 
-            if agrupamento == "Dia":
-                linha_tipo.append(acumulado_valor)
+        linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
+        linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar.columns[2:]]
 
-            for col_num, val in enumerate(linha_tipo):
-                if isinstance(val, (int, float)) and not pd.isna(val):
-                    worksheet.write_number(linha, col_num, val, subtotal_format)
-                else:
-                    worksheet.write(linha, col_num, str(val), subtotal_format)
+        # ✅ Adiciona Acumulado no Mês na última coluna (se agrupamento == Dia)
+        if agrupamento == "Dia":
+            linha_tipo.append(acumulado_valor)
 
-            linha += 1
+        for col_num, val in enumerate(linha_tipo):
+            if isinstance(val, (int, float)) and not pd.isna(val):
+                worksheet.write_number(linha, col_num, val, subtotal_format)
+            else:
+                worksheet.write(linha, col_num, str(val), subtotal_format)
+
+        linha += 1
 
     # 🔝 Total Geral
     linhas_validas = ~tabela_exportar["Loja"].astype(str).str.contains("Total", case=False, na=False) & \
