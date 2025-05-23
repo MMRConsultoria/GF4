@@ -624,6 +624,12 @@ df_acumulado = df_acumulado.merge(
     suffixes=('', '_empresa')
 )
 
+
+# 🚫 Remove a coluna 'Acumulado no Mês Tipo' do corpo da tabela
+if "Acumulado no Mês Tipo" in tabela_exportar.columns:
+    tabela_exportar = tabela_exportar.drop(columns=["Acumulado no Mês Tipo"])
+
+
 # ✅ Verificação de colunas
 if "Grupo" not in df_acumulado.columns or "Tipo" not in df_acumulado.columns:
     st.error("🚨 As colunas 'Grupo' e/ou 'Tipo' não estão no df_acumulado. Verifique o merge.")
@@ -659,6 +665,21 @@ if coluna_mais_recente:
 
 # 🔥 Remove colunas totalmente vazias
 tabela_exportar = tabela_exportar.dropna(axis=1, how="all")
+
+
+# 🔥 Merge dos acumulados
+if modo_visao == "Por Loja":
+    tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left")
+if modo_visao == "Por Grupo":
+    tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
+tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
+
+# ✅ Remove a coluna 'Acumulado no Mês Tipo'
+if "Acumulado no Mês Tipo" in tabela_exportar.columns:
+    tabela_exportar = tabela_exportar.drop(columns=["Acumulado no Mês Tipo"])
+
+
+
 
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
