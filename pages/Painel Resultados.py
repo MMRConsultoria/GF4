@@ -620,12 +620,13 @@ if agrupamento == "Dia":
         (df_anos["Data"].dt.day <= data_max.day)
     ].copy()
 
-    # 🔗 Merge obrigatório para garantir Grupo e Tipo
-    df_acumulado = df_acumulado.merge(
-        df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
-        on="Loja",
-        how="left"
-    )
+    # 🔗 Verifica se tem Grupo e Tipo, se não faz merge
+    if "Grupo" not in df_acumulado.columns or "Tipo" not in df_acumulado.columns:
+        df_acumulado = df_acumulado.merge(
+            df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
+            on="Loja",
+            how="left"
+        )
 
     acumulado_por_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado Mês Real"})
     acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado Mês Real"})
