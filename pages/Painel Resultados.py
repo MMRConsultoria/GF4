@@ -609,7 +609,8 @@ else:
 
 # 🔥 Cálculo dos acumulados
 df_acumulado = df_anos.copy()
-
+st.write("➡️ Colunas atuais em df_empresa:", df_empresa.columns.tolist())
+st.write("➡️ Primeiras linhas df_empresa:", df_empresa.head())
 df_acumulado = df_acumulado.merge(
     df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
     on="Loja",
