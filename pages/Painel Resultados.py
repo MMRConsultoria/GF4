@@ -583,55 +583,31 @@ import pandas as pd
 
 buffer = io.BytesIO()
 
-# 🔧 Função de padronização
-def padronizar_loja(nome):
-    if pd.isna(nome):
-        return ""
-    return (str(nome)
-            .strip()
-            .lower()
-            .replace("-", "")
-            .replace("_", "")
-            .replace("  ", " ")
-            .title())
-
-# 🔥 Padronização das lojas
-df_empresa["Loja"] = df_empresa["Loja"].apply(padronizar_loja)
-df_anos["Loja"] = df_anos["Loja"].apply(padronizar_loja)
-
-# 🔍 Verificação de lojas não encontradas
-lojas_df_anos = set(df_anos["Loja"].unique())
-lojas_empresa = set(df_empresa["Loja"].unique())
-lojas_nao_encontradas = lojas_df_anos - lojas_empresa
-
-if lojas_nao_encontradas:
-    st.warning(f"🚨 Lojas não encontradas na Tabela Empresa: {lojas_nao_encontradas}")
-else:
-    st.success("✅ Todas as lojas estão corretamente cadastradas.")
+# 🔥 Limpeza da Tabela Empresa
+df_empresa = df_empresa.dropna(how='all')
+df_empresa = df_empresa[df_empresa["Loja"].notna() & (df_empresa["Loja"].astype(str).str.strip() != "")]
+df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
+df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 
 # 🔥 Criação da tabela_exportar
 if modo_visao == "Por Loja":
     tabela_final.index.name = "Loja"
     tabela_exportar = tabela_final.reset_index()
-
     tabela_exportar = tabela_exportar.merge(
         df_empresa[["Loja", "Grupo", "Tipo"]],
         on="Loja", how="left"
     )
-
-    tabela_exportar = tabela_exportar[["Grupo", "Loja", "Tipo"] + 
+    tabela_exportar = tabela_exportar[["Grupo", "Loja", "Tipo"] +
                                       [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]]
-
 elif modo_visao == "Por Grupo":
     tabela_final.index.name = "Grupo"
     tabela_exportar = tabela_final.reset_index()
-
     tabela_exportar = tabela_exportar.merge(
         df_empresa[["Grupo", "Tipo"]].drop_duplicates(),
         on="Grupo", how="left"
     )
 
-# 🔥 Cálculo do Acumulado no Mês (sempre)
+# 🔥 Cálculo do Acumulado no Mês
 data_max = pd.to_datetime(data_fim)
 df_acumulado = df_anos[
     (df_anos["Data"].dt.year == data_max.year) &
@@ -639,17 +615,19 @@ df_acumulado = df_anos[
     (df_anos["Data"].dt.day <= data_max.day)
 ].copy()
 
+# 🔧 Merge obrigatório para garantir 'Grupo' e 'Tipo' no df_acumulado
 df_acumulado = df_acumulado.merge(
     df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
     on="Loja",
     how="left"
 )
 
+# 🔥 Cria os acumulados
 acumulado_por_tipo = df_acumulado.groupby("Tipo", dropna=False)["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado Mês Real"})
 acumulado_por_grupo = df_acumulado.groupby("Grupo", dropna=False)["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado Mês Real"})
 acumulado_por_loja = df_acumulado.groupby("Loja", dropna=False)["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado Mês Real"})
 
-# 🔗 Merge dos acumulados
+# 🔥 Merge dos acumulados
 if modo_visao == "Por Loja":
     tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left")
 if modo_visao == "Por Grupo":
@@ -661,8 +639,7 @@ colunas_data = [col for col in tabela_exportar.columns if "/" in col]
 
 def extrair_data(col):
     try:
-        col_limpo = col.split(" ")[0].strip()
-        return pd.to_datetime(col_limpo, format="%d/%m/%Y", dayfirst=True, errors="coerce")
+        return pd.to_datetime(col.split(" ")[0], format="%d/%m/%Y", dayfirst=True, errors="coerce")
     except:
         return pd.NaT
 
@@ -672,7 +649,7 @@ coluna_mais_recente = max(colunas_validas, key=lambda x: extrair_data(x)) if col
 if coluna_mais_recente:
     tabela_exportar = tabela_exportar.sort_values(by=coluna_mais_recente, ascending=False)
 
-# 🔥 Remove colunas 100% vazias
+# 🔥 Remove colunas totalmente vazias
 tabela_exportar = tabela_exportar.dropna(axis=1, how="all")
 
 # 🔥 Geração do Excel
@@ -695,7 +672,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
-    # Cabeçalho
+    # 🔝 Cabeçalho
     for col_num, header in enumerate(tabela_exportar.columns):
         worksheet.write(0, col_num, header, header_format)
 
