@@ -583,13 +583,13 @@ import pandas as pd
 
 buffer = io.BytesIO()
 
-# 🔥 Limpeza da Tabela Empresa
-df_empresa = df_empresa.dropna(how='all')
+# 🔥 Limpeza dos dados
+df_empresa = df_empresa.dropna(how="all")
 df_empresa = df_empresa[df_empresa["Loja"].notna() & (df_empresa["Loja"].astype(str).str.strip() != "")]
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 
-# 🔥 Criação da tabela_exportar
+# 🔗 Merge base
 if modo_visao == "Por Loja":
     tabela_final.index.name = "Loja"
     tabela_exportar = tabela_final.reset_index()
@@ -599,7 +599,7 @@ if modo_visao == "Por Loja":
     )
     tabela_exportar = tabela_exportar[["Grupo", "Loja", "Tipo"] +
                                       [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]]
-elif modo_visao == "Por Grupo":
+else:
     tabela_final.index.name = "Grupo"
     tabela_exportar = tabela_final.reset_index()
     tabela_exportar = tabela_exportar.merge(
@@ -607,49 +607,56 @@ elif modo_visao == "Por Grupo":
         on="Grupo", how="left"
     )
 
-# 🔥 Cálculo do Acumulado no Mês
-data_max = pd.to_datetime(data_fim)
-df_acumulado = df_anos[
-    (df_anos["Data"].dt.year == data_max.year) &
-    (df_anos["Data"].dt.month == data_max.month) &
-    (df_anos["Data"].dt.day <= data_max.day)
-].copy()
+# 🔥 Cálculo dos acumulados
+df_acumulado = df_anos.copy()
 
-# 🔧 Merge obrigatório para garantir 'Grupo' e 'Tipo' no df_acumulado
 df_acumulado = df_acumulado.merge(
     df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
-    on="Loja",
-    how="left"
+    on="Loja", how="left"
 )
 
-# 🔥 Cria os acumulados
-acumulado_por_tipo = df_acumulado.groupby("Tipo", dropna=False)["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado Mês Real"})
-acumulado_por_grupo = df_acumulado.groupby("Grupo", dropna=False)["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado Mês Real"})
-acumulado_por_loja = df_acumulado.groupby("Loja", dropna=False)["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado Mês Real"})
+# 🔍 Verifica se merge foi bem-sucedido
+faltando = df_acumulado[df_acumulado["Grupo"].isna() | df_acumulado["Tipo"].isna()]
+if not faltando.empty:
+    lojas_faltando = faltando["Loja"].unique()
+    st.warning(f"⚠️ Atenção! Algumas lojas não estão na Tabela Empresa: {lojas_faltando}")
+else:
+    st.success("✅ Todas as lojas estão corretamente cadastradas.")
 
-# 🔥 Merge dos acumulados
+# 🔢 Agrupamentos
+acumulado_por_tipo = df_acumulado.groupby("Tipo", dropna=False)["Fat.Real"].sum().reset_index().rename(
+    columns={"Fat.Real": "Acumulado Mês Real"}
+)
+acumulado_por_grupo = df_acumulado.groupby("Grupo", dropna=False)["Fat.Real"].sum().reset_index().rename(
+    columns={"Fat.Real": "Acumulado Mês Real"}
+)
+acumulado_por_loja = df_acumulado.groupby("Loja", dropna=False)["Fat.Real"].sum().reset_index().rename(
+    columns={"Fat.Real": "Acumulado Mês Real"}
+)
+
+# 🔗 Merge dos acumulados
 if modo_visao == "Por Loja":
     tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left")
-if modo_visao == "Por Grupo":
+else:
     tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
 tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
 
-# 🔍 Ordenação pela data mais recente
+# 🔍 Ordenação pela coluna de data mais recente
 colunas_data = [col for col in tabela_exportar.columns if "/" in col]
 
 def extrair_data(col):
     try:
-        return pd.to_datetime(col.split(" ")[0], format="%d/%m/%Y", dayfirst=True, errors="coerce")
+        return pd.to_datetime(col.split(" ")[0], dayfirst=True)
     except:
         return pd.NaT
 
-colunas_validas = [col for col in colunas_data if not pd.isna(extrair_data(col))]
-coluna_mais_recente = max(colunas_validas, key=lambda x: extrair_data(x)) if colunas_validas else None
+col_validas = [col for col in colunas_data if not pd.isna(extrair_data(col))]
+coluna_mais_recente = max(col_validas, key=lambda x: extrair_data(x)) if col_validas else None
 
 if coluna_mais_recente:
     tabela_exportar = tabela_exportar.sort_values(by=coluna_mais_recente, ascending=False)
 
-# 🔥 Remove colunas totalmente vazias
+# 🔥 Remove colunas 100% vazias
 tabela_exportar = tabela_exportar.dropna(axis=1, how="all")
 
 # 🔥 Geração do Excel
@@ -658,8 +665,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
-
-    cores_grupo = itertools.cycle(["#D9EAD3", "#CFE2F3"])
 
     header_format = workbook.add_format({
         'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
@@ -672,7 +677,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
-    # 🔝 Cabeçalho
+    # Cabeçalho
     for col_num, header in enumerate(tabela_exportar.columns):
         worksheet.write(0, col_num, header, header_format)
 
@@ -687,7 +692,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             )) &
             ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
-
         qtd_lojas_tipo = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
         soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
@@ -718,16 +722,17 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     linha += 1
 
     # 🔢 Subtotal por Grupo
-    for grupo_atual, cor in zip(tabela_exportar["Grupo"].dropna().unique(), cores_grupo):
+    for grupo_atual in tabela_exportar["Grupo"].dropna().unique():
         linhas_grupo = tabela_exportar[
             (tabela_exportar["Grupo"] == grupo_atual) &
             ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
 
         qtd_lojas = linhas_grupo["Loja"].nunique() if "Loja" in linhas_grupo.columns else ""
+        soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
 
         grupo_format = workbook.add_format({
-            'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
+            'bg_color': next(cores_grupo), 'border': 1, 'num_format': 'R$ #,##0.00'
         })
 
         for _, row in linhas_grupo.iterrows():
@@ -738,11 +743,10 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                     worksheet.write(linha, col_num, str(val), grupo_format)
             linha += 1
 
-        soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
-        linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
-        linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar.columns[2:]]
+        linha_subtotal = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
+        linha_subtotal += [soma_grupo.get(col, "") for col in tabela_exportar.columns[2:]]
 
-        for col_num, val in enumerate(linha_grupo):
+        for col_num, val in enumerate(linha_subtotal):
             if isinstance(val, (int, float)) and not pd.isna(val):
                 worksheet.write_number(linha, col_num, val, subtotal_format)
             else:
@@ -752,7 +756,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     worksheet.set_column(0, num_colunas - 1, 18)
     worksheet.hide_gridlines(option=2)
 
-# 🔽 Botão Download
+# 🔽 Download
 st.download_button(
     label="📥 Baixar Excel",
     data=buffer.getvalue(),
