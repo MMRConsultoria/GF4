@@ -590,7 +590,7 @@ df_empresa = df_empresa[df_empresa["Loja"].notna() & (df_empresa["Loja"].astype(
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 
-# 🔗 Merge do df_anos com empresa para garantir Grupo e Tipo corretos
+# 🔗 Garante que df_anos tenha Loja, Grupo e Tipo
 df_anos = df_anos.merge(
     df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
     on="Loja",
@@ -619,7 +619,7 @@ elif modo_visao == "Por Grupo":
         on="Grupo", how="left"
     )
 
-# 🔥 Cálculo do Acumulado no Mês até a data do filtro
+# 🔥 Cálculo do Acumulado até a data do filtro
 data_max = pd.to_datetime(data_fim)
 
 df_acumulado = df_anos[
@@ -627,6 +627,14 @@ df_acumulado = df_anos[
     (df_anos["Data"].dt.month == data_max.month) &
     (df_anos["Data"].dt.day <= data_max.day)
 ].copy()
+
+# 🔥 Garante que df_acumulado tenha Grupo e Tipo
+if "Grupo" not in df_acumulado.columns or "Tipo" not in df_acumulado.columns:
+    df_acumulado = df_acumulado.merge(
+        df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
+        on="Loja",
+        how="left"
+    )
 
 # 🔥 Gera os acumulados
 acumulado_por_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês Tipo"})
