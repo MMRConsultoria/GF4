@@ -675,6 +675,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     linha = 1
 
+    num_colunas = len(tabela_exportar.columns)
+
     # 🔥 Subtotal por Tipo
     for tipo_atual in acumulado_por_tipo["Tipo"].dropna().unique():
         grupos_do_tipo = df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].dropna().unique()
@@ -697,11 +699,15 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar.columns[2:]]
 
         if agrupamento == "Dia":
-            linha_tipo.append(acumulado_valor)
-
-        # 🔥 Garante que a linha tenha o mesmo tamanho da tabela
-        while len(linha_tipo) < len(tabela_exportar.columns):
-            linha_tipo.append("")
+            if len(linha_tipo) < num_colunas:
+                while len(linha_tipo) < num_colunas - 1:
+                    linha_tipo.append("")
+                linha_tipo.append(acumulado_valor)
+            else:
+                linha_tipo = linha_tipo[:num_colunas - 1] + [acumulado_valor]
+        else:
+            while len(linha_tipo) < num_colunas:
+                linha_tipo.append("")
 
         for col_num, val in enumerate(linha_tipo):
             if isinstance(val, (int, float)) and not pd.isna(val):
@@ -721,7 +727,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     linha_total = ["Total Geral", ""]
     linha_total += [soma_total.get(col, "") for col in tabela_exportar.columns[2:]]
 
-    while len(linha_total) < len(tabela_exportar.columns):
+    while len(linha_total) < num_colunas:
         linha_total.append("")
 
     for col_num, val in enumerate(linha_total):
@@ -757,7 +763,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
         linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar.columns[2:]]
 
-        while len(linha_grupo) < len(tabela_exportar.columns):
+        while len(linha_grupo) < num_colunas:
             linha_grupo.append("")
 
         for col_num, val in enumerate(linha_grupo):
@@ -767,7 +773,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 worksheet.write(linha, col_num, str(val), subtotal_format)
         linha += 1
 
-    worksheet.set_column(0, len(tabela_exportar.columns) - 1, 18)
+    worksheet.set_column(0, num_colunas - 1, 18)
     worksheet.hide_gridlines(option=2)
 
 # 🔽 Botão Download
