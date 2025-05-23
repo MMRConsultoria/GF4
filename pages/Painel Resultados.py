@@ -659,6 +659,9 @@ st.write("💰 Total Fat.Real no df_anos para Maio/2025:", maio_2025["Fat.Real"]
 st.write("🔍 Visualização dos dados de Maio/2025")
 st.dataframe(maio_2025)
 
+st.write("🚨 Linhas de Maio sem Grupo ou Tipo (problema no merge):")
+st.dataframe(df_acumulado[df_acumulado["Grupo"].isna() | df_acumulado["Tipo"].isna()])
+
 # 🔥 Merge dos acumulados SEM gerar colunas duplicadas
 if modo_visao == "Por Loja":
     tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left", suffixes=('', '_drop'))
