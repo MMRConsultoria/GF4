@@ -667,6 +667,10 @@ if coluna_mais_recente:
 # 🔥 Remove colunas 100% vazias
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 
+tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto (Com Gorjeta)').replace('Real', 'Real (Sem Gorjeta)'))
+
+
+
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
