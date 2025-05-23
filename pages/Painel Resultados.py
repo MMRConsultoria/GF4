@@ -611,6 +611,16 @@ elif modo_visao == "Por Grupo":
         df_empresa[["Grupo", "Tipo"]].drop_duplicates(),
         on="Grupo", how="left"
     )
+hoje = pd.Timestamp.now().normalize()
+data_max = pd.to_datetime(data_fim)
+
+mostrar_acumulado = (
+    agrupamento == "Dia" and
+    data_max.year == hoje.year and
+    data_max.month == hoje.month
+)
+
+
 
 # 🔥 Cálculo do Acumulado no Mês
 data_max = pd.to_datetime(data_fim)
@@ -620,30 +630,42 @@ df_acumulado = df_anos[
     (df_anos["Data"].dt.day <= data_max.day)
 ].copy()
 
-df_acumulado = df_acumulado.merge(
-    df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
-    on="Loja",
-    how="left",
-    suffixes=('', '_drop')
-)
+if mostrar_acumulado:
+    primeiro_dia_mes = data_max.replace(day=1)
 
-df_acumulado = df_acumulado.loc[:, ~df_acumulado.columns.str.endswith('_drop')]
+    df_acumulado = df_anos[
+        (df_anos["Data"] >= primeiro_dia_mes) &
+        (df_anos["Data"] <= data_max)
+    ].copy()
 
-acumulado_por_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês Tipo"})
-acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
-acumulado_por_loja = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
+    df_acumulado = df_acumulado.merge(
+        df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
+        on="Loja",
+        how="left"
+    )
 
-# 🔥 Merge dos acumulados SEM gerar colunas duplicadas
-if modo_visao == "Por Loja":
-    tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left", suffixes=('', '_drop'))
+    acumulado_por_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês Tipo"})
+    acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
+    acumulado_por_loja = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index().rename(columns={"Fat.Real": "Acumulado no Mês"})
 
-if modo_visao == "Por Grupo":
-    tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left", suffixes=('', '_drop'))
+    lojas_ativas = df_empresa[df_empresa["Ativa"].str.upper() == "SIM"][["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
-tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left", suffixes=('', '_drop'))
+    acumulado_por_loja = lojas_ativas[["Loja"]].drop_duplicates().merge(acumulado_por_loja, on="Loja", how="left").fillna(0)
+    acumulado_por_grupo = lojas_ativas[["Grupo"]].drop_duplicates().merge(acumulado_por_grupo, on="Grupo", how="left").fillna(0)
+    acumulado_por_tipo = lojas_ativas[["Tipo"]].drop_duplicates().merge(acumulado_por_tipo, on="Tipo", how="left").fillna(0)
 
-# 🔥 Remove qualquer coluna com '_drop'
-tabela_exportar = tabela_exportar.loc[:, ~tabela_exportar.columns.str.endswith('_drop')]
+    if modo_visao == "Por Loja":
+        tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left", suffixes=('', '_drop'))
+
+    if modo_visao == "Por Grupo":
+        tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left", suffixes=('', '_drop'))
+
+    tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left", suffixes=('', '_drop'))
+
+    tabela_exportar = tabela_exportar.loc[:, ~tabela_exportar.columns.str.endswith('_drop')]
+
+else:
+    tabela_exportar = tabela_exportar.drop(columns=["Acumulado no Mês", "Acumulado no Mês Tipo"], errors="ignore")
 
 # 🚫 Remove a coluna "Acumulado no Mês Tipo" do corpo
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo","Tipo"], errors="ignore")
