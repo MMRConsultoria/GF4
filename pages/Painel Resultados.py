@@ -659,14 +659,15 @@ if modo_visao == "Por Loja":
         tabela_exportar, on="Loja", how="left"
     ).fillna(0)
 
+    tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left", suffixes=('', '_drop'))
+    tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left", suffixes=('', '_drop'))
+
 if modo_visao == "Por Grupo":
     grupos_ativos = lojas_ativas[["Grupo"]].drop_duplicates()
 
     tabela_exportar = grupos_ativos.merge(
         tabela_exportar, on="Grupo", how="left"
     ).fillna(0)
-
-
 
 
 
@@ -690,7 +691,7 @@ if modo_visao == "Por Loja":
 if modo_visao == "Por Grupo":
     tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left", suffixes=('', '_drop'))
     
-#tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left", suffixes=('', '_drop'))
+
 
 # 🔥 Remove qualquer coluna com '_drop'
 tabela_exportar = tabela_exportar.loc[:, ~tabela_exportar.columns.str.endswith('_drop')]
