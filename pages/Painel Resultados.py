@@ -646,7 +646,7 @@ tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left
 tabela_exportar = tabela_exportar.loc[:, ~tabela_exportar.columns.str.endswith('_drop')]
 
 # 🚫 Remove a coluna "Acumulado no Mês Tipo" do corpo
-tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo"], errors="ignore")
+tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo","Tipo"], errors="ignore")
 
 # 🔍 Ordenação pela data mais recente
 colunas_data = [col for col in tabela_exportar_sem_tipo.columns if "/" in col]
