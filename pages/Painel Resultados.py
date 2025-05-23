@@ -642,25 +642,30 @@ if agrupamento == "Dia":
 # 🚫 Cria versão sem a coluna "Acumulado no Mês Tipo" para o corpo da planilha
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo"], errors="ignore")
 
-# 🔍 Detecta a coluna de data mais recente para ordenação
-colunas_data = [col for col in tabela_exportar.columns if "/" in col or "Bruto" in col or "Real" in col]
+# 🔍 Detecta as colunas que são datas
+colunas_data = [col for col in tabela_exportar.columns if any(x in col for x in ["/", "(Bruto)", "(Real)"])]
 
-def converter_data(col):
+def extrair_data(col):
     try:
-        return pd.to_datetime(col.replace("(Bruto)", "").replace("(Real)", "").strip(), dayfirst=True, errors='coerce')
+        # Remove sufixos como (Bruto) ou (Real)
+        col_limpo = col.replace("(Bruto)", "").replace("(Real)", "").strip()
+        return pd.to_datetime(col_limpo, dayfirst=True, errors='coerce')
     except:
         return pd.NaT
 
+# Filtra apenas colunas que são datas válidas
+colunas_validas = [col for col in colunas_data if not pd.isna(extrair_data(col))]
+
+# Pega a coluna mais recente
 coluna_mais_recente = max(
-    [col for col in colunas_data if converter_data(col) is not pd.NaT],
-    key=lambda x: converter_data(x),
+    colunas_validas,
+    key=lambda x: extrair_data(x),
     default=None
 )
 
-# 🔥 Ordena pela coluna mais recente (decrescente), se existir
+# 🔥 Faz a ordenação decrescente pela coluna mais recente
 if coluna_mais_recente:
     tabela_exportar = tabela_exportar.sort_values(by=coluna_mais_recente, ascending=False)
-
 
 
 # 🔥 Geração do arquivo Excel
