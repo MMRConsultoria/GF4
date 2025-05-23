@@ -613,12 +613,22 @@ elif modo_visao == "Por Grupo":
     )
 
 # 🔥 Cálculo do Acumulado no Mês
-data_max = pd.to_datetime(data_fim)
+#data_max = pd.to_datetime(data_fim)
+#df_acumulado = df_anos[
+ #   (df_anos["Data"].dt.year == data_max.year) &
+  #  (df_anos["Data"].dt.month == data_max.month) &
+   # (df_anos["Data"].dt.day <= data_max.day)
+#].copy()
+
+# 🔥 Cálculo do acumulado do mês até data_fim (ignora data_inicio)
+primeiro_dia_mes = pd.to_datetime(data_fim).replace(day=1)
+
 df_acumulado = df_anos[
-    (df_anos["Data"].dt.year == data_max.year) &
-    (df_anos["Data"].dt.month == data_max.month) &
-    (df_anos["Data"].dt.day <= data_max.day)
+    (df_anos["Data"] >= primeiro_dia_mes) &
+    (df_anos["Data"] <= pd.to_datetime(data_fim))
 ].copy()
+
+
 
 df_acumulado = df_acumulado.merge(
     df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
