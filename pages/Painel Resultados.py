@@ -675,7 +675,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     linha = 1
 
-    # 🔥 Subtotal por Tipo (✔️ correto e com acumulado no mês na última coluna)
+    # 🔥 Subtotal por Tipo
     for tipo_atual in acumulado_por_tipo["Tipo"].dropna().unique():
         grupos_do_tipo = df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].dropna().unique()
 
@@ -696,9 +696,12 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
         linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar.columns[2:]]
 
-        # ✅ Adiciona Acumulado no Mês na última coluna (se agrupamento == Dia)
         if agrupamento == "Dia":
             linha_tipo.append(acumulado_valor)
+
+        # 🔥 Garante que a linha tenha o mesmo tamanho da tabela
+        while len(linha_tipo) < len(tabela_exportar.columns):
+            linha_tipo.append("")
 
         for col_num, val in enumerate(linha_tipo):
             if isinstance(val, (int, float)) and not pd.isna(val):
@@ -717,6 +720,9 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     soma_total = df_para_total.select_dtypes(include='number').sum()
     linha_total = ["Total Geral", ""]
     linha_total += [soma_total.get(col, "") for col in tabela_exportar.columns[2:]]
+
+    while len(linha_total) < len(tabela_exportar.columns):
+        linha_total.append("")
 
     for col_num, val in enumerate(linha_total):
         if isinstance(val, (int, float)) and not pd.isna(val):
@@ -750,6 +756,9 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
         linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
         linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar.columns[2:]]
+
+        while len(linha_grupo) < len(tabela_exportar.columns):
+            linha_grupo.append("")
 
         for col_num, val in enumerate(linha_grupo):
             if isinstance(val, (int, float)) and not pd.isna(val):
