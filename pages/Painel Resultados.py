@@ -667,7 +667,7 @@ if coluna_mais_recente:
 # 🔥 Remove colunas 100% vazias
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 
-tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto (Com Gorjeta)').replace('Real', 'Real (Sem Gorjeta)'))
+tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta'))
 
 
 
