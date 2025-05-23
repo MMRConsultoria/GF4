@@ -642,6 +642,26 @@ if agrupamento == "Dia":
 # 🚫 Cria versão sem a coluna "Acumulado no Mês Tipo" para o corpo da planilha
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo"], errors="ignore")
 
+# 🔍 Detecta a coluna de data mais recente para ordenação
+colunas_data = [col for col in tabela_exportar.columns if "/" in col or "Bruto" in col or "Real" in col]
+
+def converter_data(col):
+    try:
+        return pd.to_datetime(col.replace("(Bruto)", "").replace("(Real)", "").strip(), dayfirst=True, errors='coerce')
+    except:
+        return pd.NaT
+
+coluna_mais_recente = max(
+    [col for col in colunas_data if converter_data(col) is not pd.NaT],
+    key=lambda x: converter_data(x),
+    default=None
+)
+
+# 🔥 Ordena pela coluna mais recente (decrescente), se existir
+if coluna_mais_recente:
+    tabela_exportar = tabela_exportar.sort_values(by=coluna_mais_recente, ascending=False)
+
+
 
 # 🔥 Geração do arquivo Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
