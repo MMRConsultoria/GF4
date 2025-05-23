@@ -577,7 +577,6 @@ with aba4:
     )
     st.dataframe(tabela_formatada, use_container_width=True)
 
-    
 import io
 import itertools
 
@@ -587,7 +586,7 @@ buffer = io.BytesIO()
 # 🔥 Limpeza da Tabela Empresa
 # ===========================================
 df_empresa = df_empresa.dropna(how='all')  # Remove linhas totalmente vazias
-df_empresa = df_empresa[df_empresa["Loja"].notna() & (df_empresa["Loja"].astype(str).str.strip() != "")]  # Remove linhas com loja vazia
+df_empresa = df_empresa[df_empresa["Loja"].notna() & (df_empresa["Loja"].astype(str).str.strip() != "")]  # Remove linhas onde loja está vazia
 
 # 🔧 Padronização dos nomes
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
@@ -644,10 +643,16 @@ if agrupamento == "Dia":
         (df_anos["Data"].dt.day <= data_max.day)
     ].copy()
 
+    # 🔥 Merge seguro com proteção contra colunas duplicadas
     df_acumulado = df_acumulado.merge(
         df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
-        on="Loja", how="left"
+        on="Loja",
+        how="left",
+        suffixes=('', '_drop')
     )
+
+    # 🔥 Remove colunas duplicadas (_drop)
+    df_acumulado = df_acumulado.loc[:, ~df_acumulado.columns.str.endswith('_drop')]
 
     st.write("🔍 Colunas no df_acumulado após merge:", df_acumulado.columns.tolist())
 
