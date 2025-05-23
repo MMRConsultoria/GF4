@@ -578,8 +578,9 @@ with aba4:
     st.dataframe(tabela_formatada, use_container_width=True)
 
 import io
-import pandas as pd
 import itertools
+import pandas as pd
+import streamlit as st
 
 buffer = io.BytesIO()
 
@@ -629,7 +630,7 @@ elif modo_visao == "Por Grupo":
         on="Grupo", how="left"
     )
 
-# 🔥 Cálculo do Acumulado (Se for Dia e mês atual)
+# 🔥 Cálculo do Acumulado
 if mostrar_acumulado:
     primeiro_dia_mes = data_max.replace(day=1)
     df_acumulado = df_anos[
@@ -661,7 +662,10 @@ if mostrar_acumulado:
         tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
     tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
 else:
-    tabela_exportar["Acumulado no Mês"] = None
+    if modo_visao == "Por Loja":
+        tabela_exportar["Acumulado no Mês"] = None
+    if modo_visao == "Por Grupo":
+        tabela_exportar["Acumulado no Mês"] = None
     tabela_exportar["Acumulado no Mês Tipo"] = None
 
 # 🔥 Remove a coluna "Acumulado no Mês Tipo" do corpo
@@ -704,15 +708,11 @@ if coluna_mais_recente:
 # 🔥 Remove colunas 100% vazias
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 
-# 🔥 Ajuste nome das colunas
-tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(
-    columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta')
-)
+tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta'))
 
-# 🔎 Mostra na tela
+# 🔥 Mostra na tela
 st.markdown("### 🔎 Visualização dos Dados")
 st.dataframe(tabela_exportar_sem_tipo)
-
 
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
