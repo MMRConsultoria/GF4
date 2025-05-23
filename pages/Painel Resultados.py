@@ -620,11 +620,17 @@ if agrupamento == "Dia":
         (df_anos["Data"].dt.day <= data_max.day)
     ].copy()
 
-    # 🔗 Verifica se tem Grupo e Tipo, se não faz merge
-    if "Grupo" not in df_acumulado.columns or "Tipo" not in df_acumulado.columns:
+    # 🔗 Merge inteligente conforme modo_visao
+    if modo_visao == "Por Loja":
         df_acumulado = df_acumulado.merge(
             df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
             on="Loja",
+            how="left"
+        )
+    elif modo_visao == "Por Grupo":
+        df_acumulado = df_acumulado.merge(
+            df_empresa[["Grupo", "Tipo"]].drop_duplicates(),
+            on="Grupo",
             how="left"
         )
 
@@ -711,7 +717,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
 
-        qtd_lojas_tipo = linhas_tipo["Loja"].nunique()
+        qtd_lojas_tipo = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
         soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
         acumulado_valor = acumulado_por_tipo.loc[
@@ -748,7 +754,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
 
-        qtd_lojas = linhas_grupo["Loja"].nunique()
+        qtd_lojas = linhas_grupo["Loja"].nunique() if "Loja" in linhas_grupo.columns else ""
 
         grupo_format = workbook.add_format({
             'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
