@@ -720,6 +720,40 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
 
+
+    if mostrar_acumulado:
+        for tipo_atual in acumulado_por_tipo["Tipo"].dropna().unique():
+            linhas_tipo = tabela_exportar_sem_tipo[
+                (tabela_exportar_sem_tipo["Grupo"].isin(
+                    df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
+                )) &
+                ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+            ]
+    
+            qtd_lojas_tipo = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
+            soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
+
+            acumulado_valor = acumulado_por_tipo.loc[acumulado_por_tipo["Tipo"] == tipo_atual, "Acumulado no Mês Tipo"].values
+            acumulado_valor = acumulado_valor[0] if len(acumulado_valor) > 0 else 0
+
+            linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
+            linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+
+            if agrupamento == "Dia":
+                linha_tipo.append(acumulado_valor)
+
+            for col_num, val in enumerate(linha_tipo):
+                if isinstance(val, (int, float)) and not pd.isna(val):
+                    worksheet.write_number(linha, col_num, val, subtotal_format)
+                else:
+                    worksheet.write(linha, col_num, str(val), subtotal_format)
+            linha += 1
+
+
+
+
+
+    
     # 🔥 Subtotal por Tipo
     for tipo_atual in acumulado_por_tipo["Tipo"].dropna().unique():
         linhas_tipo = tabela_exportar_sem_tipo[
