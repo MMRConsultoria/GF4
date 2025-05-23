@@ -685,11 +685,12 @@ if modo_visao == "Por Grupo":
 # 🔥 Merge dos acumulados SEM gerar colunas duplicadas
 if modo_visao == "Por Loja":
     tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left", suffixes=('', '_drop'))
+    tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left", suffixes=('', '_drop'))
 
 if modo_visao == "Por Grupo":
     tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left", suffixes=('', '_drop'))
-
-tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left", suffixes=('', '_drop'))
+    
+#tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left", suffixes=('', '_drop'))
 
 # 🔥 Remove qualquer coluna com '_drop'
 tabela_exportar = tabela_exportar.loc[:, ~tabela_exportar.columns.str.endswith('_drop')]
