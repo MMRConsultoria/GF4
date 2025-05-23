@@ -669,7 +669,36 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     linha = 1
 
-    # 🔝 Total Geral
+    # 🔥 SUBTOTAL POR TIPO
+    if "Acumulado no Mês Tipo" in tabela_exportar.columns and "Grupo" in tabela_exportar.columns:
+        for tipo_atual in acumulado_por_tipo["Tipo"].dropna().unique():
+            linhas_tipo = tabela_exportar[
+                (tabela_exportar["Grupo"].notna()) &
+                ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal", case=False, na=False) &
+                ~tabela_exportar["Loja"].astype(str).str.contains("Total", case=False, na=False)
+            ]
+
+            qtd_lojas_tipo = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
+            soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
+
+            acumulado_tipo = acumulado_por_tipo.loc[acumulado_por_tipo["Tipo"] == tipo_atual, "Acumulado no Mês Tipo"].values
+            acumulado_valor = acumulado_tipo[0] if len(acumulado_tipo) > 0 else 0
+
+            linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
+            linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar.columns[2:]]
+
+            if agrupamento == "Dia":
+                linha_tipo.append(acumulado_valor)
+
+            for col_num, val in enumerate(linha_tipo):
+                if isinstance(val, (int, float)) and not pd.isna(val):
+                    worksheet.write_number(linha, col_num, val, subtotal_format)
+                else:
+                    worksheet.write(linha, col_num, str(val), subtotal_format)
+
+            linha += 1
+
+    # 🔝 TOTAL GERAL
     linhas_validas = ~tabela_exportar["Loja"].astype(str).str.contains("Total", case=False, na=False) & \
                      ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal", case=False, na=False)
 
@@ -686,7 +715,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             worksheet.write(linha, col_num, str(val), totalgeral_format)
     linha += 1
 
-    # 🏢 Grupos e Lojas
+    # 🔢 SUBTOTAL POR GRUPO E LOJAS
     for grupo_atual, cor in zip(tabela_exportar["Grupo"].dropna().unique(), cores_grupo):
         linhas_grupo = tabela_exportar[
             (tabela_exportar["Grupo"] == grupo_atual) &
