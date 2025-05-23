@@ -643,29 +643,31 @@ if agrupamento == "Dia":
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo"], errors="ignore")
 
 # 🔍 Detecta as colunas que são datas
-colunas_data = [col for col in tabela_exportar.columns if any(x in col for x in ["/", "(Bruto)", "(Real)"])]
+colunas_data = [col for col in tabela_exportar.columns if "/" in col]
 
+# Função para transformar o nome da coluna em data
 def extrair_data(col):
     try:
-        # Remove sufixos como (Bruto) ou (Real)
+        # Remove sufixos como (Bruto) ou (Real) e espaços extras
         col_limpo = col.replace("(Bruto)", "").replace("(Real)", "").strip()
-        return pd.to_datetime(col_limpo, dayfirst=True, errors='coerce')
+        return pd.to_datetime(col_limpo, format="%d/%m/%Y", dayfirst=True, errors="coerce")
     except:
         return pd.NaT
 
-# Filtra apenas colunas que são datas válidas
+# Lista de colunas com datas válidas
 colunas_validas = [col for col in colunas_data if not pd.isna(extrair_data(col))]
 
-# Pega a coluna mais recente
-coluna_mais_recente = max(
-    colunas_validas,
-    key=lambda x: extrair_data(x),
-    default=None
-)
+# Detecta a coluna mais recente
+coluna_mais_recente = None
+if colunas_validas:
+    coluna_mais_recente = max(colunas_validas, key=lambda x: extrair_data(x))
 
 # 🔥 Faz a ordenação decrescente pela coluna mais recente
 if coluna_mais_recente:
     tabela_exportar = tabela_exportar.sort_values(by=coluna_mais_recente, ascending=False)
+
+# ✅ Verificação opcional
+st.write(f"➡️ Coluna mais recente detectada para ordenação: {coluna_mais_recente}")
 
 
 # 🔥 Geração do arquivo Excel
