@@ -649,24 +649,24 @@ for coluna in colunas_para_remover:
 # 🔥 Remove colunas 100% vazias, se houver
 tabela_exportar = tabela_exportar.dropna(axis=1, how='all')
 
-# 🔍 Detecta coluna de data mais recente
-colunas_data = [col for col in tabela_exportar.columns if "/" in col]
+# 🔍 Detecta coluna mais recente e ordena
+colunas_data = [col for col in tabela_exportar.columns if ("/" in col or col.isdigit())]
 
 def converter_data(col):
     try:
-        return pd.to_datetime(col, format="%d/%m/%Y", dayfirst=True)
+        if "/" in col and len(col) == 7:  # Mês ex: 05/2025
+            return pd.to_datetime("01/" + col, dayfirst=True)
+        elif "/" in col and len(col) == 10:  # Dia ex: 21/05/2025
+            return pd.to_datetime(col, dayfirst=True)
+        elif col.isdigit() and len(col) == 4:  # Ano ex: 2025
+            return pd.to_datetime("01/01/" + col, dayfirst=True)
     except:
         return pd.NaT
 
 coluna_mais_recente = max(colunas_data, key=lambda x: converter_data(x)) if colunas_data else None
 
-# 🔥 Ordena pela coluna mais recente (decrescente)
 if coluna_mais_recente:
     tabela_exportar = tabela_exportar.sort_values(by=coluna_mais_recente, ascending=False)
-
-
-
-
 
 # 🔥 Geração do arquivo Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
