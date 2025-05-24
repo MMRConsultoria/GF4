@@ -723,9 +723,7 @@ tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(
     columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta')
 )
 
-# 🔥 Visualização final
-st.markdown("### 🔎 Visualização dos Dados")
-st.dataframe(tabela_exportar_sem_tipo)
+
 
 
 # 🔽 Botão Download
