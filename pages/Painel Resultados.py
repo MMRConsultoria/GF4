@@ -723,6 +723,113 @@ tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(
     columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta')
 )
 
+# 🔥 Geração do Excel
+with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+    tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
+
+    workbook = writer.book
+    worksheet = writer.sheets["Faturamento"]
+
+    cores_grupo = itertools.cycle(["#D9EAD3", "#CFE2F3"])
+
+    header_format = workbook.add_format({
+        'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
+        'align': 'center', 'valign': 'vcenter', 'border': 1
+    })
+    subtotal_format = workbook.add_format({
+        'bold': True, 'bg_color': '#FFE599', 'border': 1, 'num_format': 'R$ #,##0.00'
+    })
+    totalgeral_format = workbook.add_format({
+        'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
+    })
+
+    # Cabeçalho
+    for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
+        worksheet.write(0, col_num, header, header_format)
+
+    linha = 1
+    num_colunas = len(tabela_exportar_sem_tipo.columns)
+
+    # 🔥 Subtotal por Tipo (Sempre aparece)
+    for tipo_atual in tabela_exportar["Tipo"].dropna().unique():
+        linhas_tipo = tabela_exportar_sem_tipo[
+            (tabela_exportar_sem_tipo["Grupo"].isin(
+                df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
+            )) &
+            ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+        ]
+
+        qtd_lojas_tipo = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
+        soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
+
+        linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
+        linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+
+        for col_num, val in enumerate(linha_tipo):
+            if isinstance(val, (int, float)) and not pd.isna(val):
+                worksheet.write_number(linha, col_num, val, subtotal_format)
+            else:
+                worksheet.write(linha, col_num, str(val), subtotal_format)
+        linha += 1
+
+    # 🔝 Total Geral
+    linhas_validas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Total|Subtotal", case=False, na=False)
+
+    df_para_total = tabela_exportar_sem_tipo[linhas_validas]
+
+    soma_total = df_para_total.select_dtypes(include='number').sum()
+    linha_total = ["Total Geral", ""]
+    linha_total += [soma_total.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+
+    for col_num, val in enumerate(linha_total):
+        if isinstance(val, (int, float)) and not pd.isna(val):
+            worksheet.write_number(linha, col_num, val, totalgeral_format)
+        else:
+            worksheet.write(linha, col_num, str(val), totalgeral_format)
+    linha += 1
+
+    # 🔢 Subtotal por Grupo
+    for grupo_atual, cor in zip(tabela_exportar_sem_tipo["Grupo"].dropna().unique(), cores_grupo):
+        linhas_grupo = tabela_exportar_sem_tipo[
+            (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
+            ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+        ]
+
+        qtd_lojas = linhas_grupo["Loja"].nunique() if "Loja" in linhas_grupo.columns else ""
+
+        grupo_format = workbook.add_format({
+            'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
+        })
+
+        for _, row in linhas_grupo.iterrows():
+            for col_num, val in enumerate(row):
+                if isinstance(val, (int, float)) and not pd.isna(val):
+                    worksheet.write_number(linha, col_num, val, grupo_format)
+                else:
+                    worksheet.write(linha, col_num, str(val), grupo_format)
+            linha += 1
+
+        soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
+        linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
+        linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+
+        for col_num, val in enumerate(linha_grupo):
+            if isinstance(val, (int, float)) and not pd.isna(val):
+                worksheet.write_number(linha, col_num, val, subtotal_format)
+            else:
+                worksheet.write(linha, col_num, str(val), subtotal_format)
+        linha += 1
+
+    worksheet.set_column(0, num_colunas - 1, 18)
+    worksheet.hide_gridlines(option=2)
+
+# 🔽 Botão Download
+st.download_button(
+    label="📥 Baixar Excel",
+    data=buffer.getvalue(),
+    file_name="faturamento_visual.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
 
 
 
