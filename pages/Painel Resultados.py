@@ -666,7 +666,7 @@ else:
     tabela_exportar["Acumulado no Mês Tipo"] = None
 
 # 🔥 Subtotal por Tipo (IMPORTANTE: ANTES de remover 'Tipo')
-st.markdown("### 🔎 Subtotais por Tipo")
+#st.markdown("### 🔎 Subtotais por Tipo")
 for tipo_atual in tabela_exportar["Tipo"].dropna().unique():
     linhas_tipo = tabela_exportar[
         (tabela_exportar["Grupo"].isin(
@@ -823,13 +823,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     worksheet.set_column(0, num_colunas - 1, 18)
     worksheet.hide_gridlines(option=2)
 
-# 🔽 Botão Download
-st.download_button(
-    label="📥 Baixar Excel",
-    data=buffer.getvalue(),
-    file_name="faturamento_visual.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
+
 
 
 
