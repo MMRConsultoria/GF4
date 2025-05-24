@@ -615,8 +615,7 @@ if modo_visao == "Por Loja":
         on="Loja", how="left"
     )
 
-    tabela_exportar = tabela_exportar[["Grupo", "Loja", "Tipo"] + 
-                                      [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]]
+    index_cols = ["Grupo", "Loja", "Tipo"]
 
 elif modo_visao == "Por Grupo":
     tabela_final.index.name = "Grupo"
@@ -626,6 +625,10 @@ elif modo_visao == "Por Grupo":
         df_empresa[["Grupo", "Tipo"]].drop_duplicates(),
         on="Grupo", how="left"
     )
+
+    index_cols = ["Grupo", "Tipo"]
+
+tabela_exportar = tabela_exportar[index_cols + [col for col in tabela_exportar.columns if col not in index_cols]]
 
 # 🔥 Cálculo do Acumulado (só se mostrar_acumulado for True)
 if mostrar_acumulado:
@@ -665,20 +668,7 @@ else:
         tabela_exportar["Acumulado no Mês"] = None
     tabela_exportar["Acumulado no Mês Tipo"] = None
 
-# 🔥 Subtotal por Tipo (IMPORTANTE: ANTES de remover 'Tipo')
-#st.markdown("### 🔎 Subtotais por Tipo")
-for tipo_atual in tabela_exportar["Tipo"].dropna().unique():
-    linhas_tipo = tabela_exportar[
-        (tabela_exportar["Grupo"].isin(
-            df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
-        )) &
-        ~tabela_exportar["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
-    ]
-
-    st.write(f"➡️ Tipo: {tipo_atual}")
-    st.dataframe(linhas_tipo)
-
-# 🔥 Remove a coluna "Acumulado no Mês Tipo" do corpo
+# 🔥 Remove coluna "Acumulado no Mês Tipo" para visual
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo", "Tipo"], errors="ignore")
 
 # 🔥 Se for 'Dia' no mês atual, inclui lojas ativas mesmo sem movimento
@@ -718,10 +708,30 @@ if coluna_mais_recente:
 # 🔥 Remove colunas 100% vazias
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 
-# 🔥 Renomeia colunas
+# 🔥 Renomeia colunas para deixar mais claro
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(
     columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta')
 )
+
+# 🔎 Visualização
+st.markdown("### 🔎 Visualização dos Dados")
+st.dataframe(tabela_exportar_sem_tipo)
+
+# 🔽 Download Excel
+with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+    tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
+    workbook = writer.book
+    worksheet = writer.sheets["Faturamento"]
+    worksheet.set_column(0, len(tabela_exportar_sem_tipo.columns) - 1, 18)
+    worksheet.hide_gridlines(option=2)
+
+st.download_button(
+    label="📥 Baixar Excel",
+    data=buffer.getvalue(),
+    file_name="faturamento_visual.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
+
 
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
