@@ -576,6 +576,7 @@ with aba4:
         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x
     )
     st.dataframe(tabela_formatada, use_container_width=True)
+
 import io
 import itertools
 import pandas as pd
@@ -585,6 +586,7 @@ buffer = io.BytesIO()
 # 🔥 Limpeza da Tabela Empresa
 df_empresa = df_empresa.dropna(how='all')
 df_empresa = df_empresa[df_empresa["Loja"].notna() & (df_empresa["Loja"].astype(str).str.strip() != "")]
+
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 
@@ -600,37 +602,46 @@ mostrar_acumulado = (
     data_inicio.month == hoje.month
 )
 
+# 🔥 Inicializa acumulados vazios
+acumulado_por_tipo = pd.DataFrame(columns=["Tipo", "Acumulado no Mês Tipo"])
+acumulado_por_grupo = pd.DataFrame(columns=["Grupo", "Acumulado no Mês"])
+acumulado_por_loja = pd.DataFrame(columns=["Loja", "Acumulado no Mês"])
+
 # 🔥 Criação da tabela_exportar
 if modo_visao == "Por Loja":
     tabela_final.index.name = "Loja"
     tabela_exportar = tabela_final.reset_index()
+
     tabela_exportar = tabela_exportar.merge(
         df_empresa[["Loja", "Grupo", "Tipo"]],
         on="Loja", how="left"
     )
-    tabela_exportar = tabela_exportar[["Grupo", "Loja", "Tipo"]] + [
-        col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]
-    ]
+
+    tabela_exportar = tabela_exportar[["Grupo", "Loja", "Tipo"] + 
+                                      [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]]
 
 elif modo_visao == "Por Grupo":
     tabela_final.index.name = "Grupo"
     tabela_exportar = tabela_final.reset_index()
+
     tabela_exportar = tabela_exportar.merge(
         df_empresa[["Grupo", "Tipo"]].drop_duplicates(),
         on="Grupo", how="left"
     )
 
-# 🔥 Acumulado (se aplicável)
+# 🔥 Cálculo do Acumulado
 if mostrar_acumulado:
     primeiro_dia_mes = data_max.replace(day=1)
     df_acumulado = df_anos[
-        (df_anos["Data"] >= primeiro_dia_mes) & (df_anos["Data"] <= data_max)
+        (df_anos["Data"] >= primeiro_dia_mes) &
+        (df_anos["Data"] <= data_max)
     ].copy()
 
     df_acumulado = df_acumulado.merge(
         df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
-        on="Loja", how="left"
+        on="Loja", how="left", suffixes=('', '_drop')
     )
+    df_acumulado = df_acumulado.loc[:, ~df_acumulado.columns.str.endswith('_drop')]
 
     acumulado_por_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index().rename(
         columns={"Fat.Real": "Acumulado no Mês Tipo"}
@@ -642,31 +653,22 @@ if mostrar_acumulado:
         columns={"Fat.Real": "Acumulado no Mês"}
     )
 
+# 🔥 Merge dos acumulados
+if mostrar_acumulado:
     if modo_visao == "Por Loja":
         tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left")
     if modo_visao == "Por Grupo":
         tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
-
     tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
 else:
-    tabela_exportar["Acumulado no Mês"] = None
+    if modo_visao == "Por Loja":
+        tabela_exportar["Acumulado no Mês"] = None
+    if modo_visao == "Por Grupo":
+        tabela_exportar["Acumulado no Mês"] = None
     tabela_exportar["Acumulado no Mês Tipo"] = None
 
-# 🔥 Se for Dia no mês atual, garante lojas ativas mesmo sem movimento
-if mostrar_acumulado:
-    lojas_ativas = df_empresa[
-        df_empresa["Ativa"].fillna("").astype(str).str.upper() == "SIM"
-    ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
-
-    if modo_visao == "Por Loja":
-        tabela_exportar = lojas_ativas.merge(tabela_exportar, on="Loja", how="left").fillna(0)
-
-    if modo_visao == "Por Grupo":
-        grupos_ativos = lojas_ativas[["Grupo"]].drop_duplicates()
-        tabela_exportar = grupos_ativos.merge(tabela_exportar, on="Grupo", how="left").fillna(0)
-
-# 🔥 Gera dataframe final sem Tipo (apenas para exibição/download, nunca para cálculo!)
-tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo", "Tipo"], errors="ignore")
+# 🔥 Remove a coluna "Acumulado no Mês Tipo" do corpo
+tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo","Tipo"], errors="ignore")
 
 # 🔍 Ordenação pela data mais recente
 colunas_data = [col for col in tabela_exportar_sem_tipo.columns if "/" in col]
@@ -687,31 +689,7 @@ if coluna_mais_recente:
 # 🔥 Remove colunas 100% vazias
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 
-# 🔥 Renomeia colunas
-tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(
-    columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta')
-)
-
-# 🔍 Mostra na tela
-st.markdown("### 🔎 Visualização dos Dados")
-st.dataframe(tabela_exportar_sem_tipo)
-
-
-# 🔽 Download Excel
-with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-    tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
-    workbook = writer.book
-    worksheet = writer.sheets["Faturamento"]
-    worksheet.set_column(0, len(tabela_exportar_sem_tipo.columns) - 1, 18)
-    worksheet.hide_gridlines(option=2)
-
-st.download_button(
-    label="📥 Baixar Excel",
-    data=buffer.getvalue(),
-    file_name="faturamento_visual.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
-
+tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta'))
 
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
@@ -812,10 +790,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     worksheet.set_column(0, num_colunas - 1, 18)
     worksheet.hide_gridlines(option=2)
-
-
-
-
 
 # 🔽 Botão Download
 st.download_button(
