@@ -322,6 +322,7 @@ with aba4:
 
     # Normaliza dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
+    df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
     df_anos["Ano"] = df_anos["Data"].dt.year
