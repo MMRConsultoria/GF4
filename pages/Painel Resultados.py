@@ -592,7 +592,7 @@ df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title(
 
 # 🔗 Pega a lista de lojas ativas
 todas_lojas = df_empresa[
-    df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
+    df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "Ativa"
 ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
 
