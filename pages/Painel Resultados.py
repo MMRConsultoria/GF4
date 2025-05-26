@@ -525,7 +525,7 @@ if modo_visao == "Por Loja":
                 colunas_intercaladas.append(f"{col} (Real)")
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
-
+tabela = tabela[[col for col in tabela.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]]
 
 if modo_visao == "Por Loja":
     lojas_ativas = todas_lojas["Loja"].tolist()
