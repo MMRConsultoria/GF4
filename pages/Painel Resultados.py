@@ -806,7 +806,9 @@ if coluna_mais_recente:
 
 # 🔥 Remove colunas 100% vazias
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
-
+# ✅ Aqui faz a substituição de NaN na coluna Acumulado no Mês
+if "Acumulado no Mês" in tabela_exportar_sem_tipo.columns:
+    tabela_exportar_sem_tipo["Acumulado no Mês"] = tabela_exportar_sem_tipo["Acumulado no Mês"].fillna(0)
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta'))
 
 
