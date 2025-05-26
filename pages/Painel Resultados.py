@@ -790,7 +790,9 @@ if coluna_mais_recente:
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta'))
-tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.fillna(0)
+# 🔥 Substitui NaN somente nas colunas numéricas
+colunas_numericas = tabela_exportar_sem_tipo.select_dtypes(include='number').columns
+tabela_exportar_sem_tipo[colunas_numericas] = tabela_exportar_sem_tipo[colunas_numericas].fillna(0)
 
 if modo_visao == "Por Loja":
     lojas_existentes = tabela_final.index.tolist()
