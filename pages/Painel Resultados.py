@@ -804,7 +804,10 @@ if modo_visao == "Por Loja":
 
 
 
-
+# ✅ 🔥 REMOVE coluna None
+tabela_final.columns.name = None  # Remove nome do eixo das colunas
+tabela_final = tabela_final.loc[:, ~tabela_final.columns.isnull()]
+tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 
 
