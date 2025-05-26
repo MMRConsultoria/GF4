@@ -469,7 +469,7 @@ with aba4:
 
         # 🔥 Filtra apenas as lojas ativas
         todas_lojas = df_empresa[
-            df_empresa["Lojas Ativas"].str.lower().str.strip() == "sim"
+            df_empresa["Lojas Ativas"].str.lower().str.strip() == "Ativa"
         ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
         
         # Merge do Bruto
