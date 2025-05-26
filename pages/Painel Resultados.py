@@ -493,7 +493,7 @@ with aba4:
                 colunas_intercaladas.append(f"{col} (Bruto)")
                 colunas_intercaladas.append(f"{col} (Real)")
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
-
+    
     colunas_ordenadas = [col for col in ordem if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns]
     todas_colunas = []
     for col in colunas_ordenadas:
@@ -771,6 +771,9 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     df_para_total = tabela_exportar_sem_tipo[linhas_validas]
 
+    st.write("🛑 Colunas atuais na tabela_exportar_sem_tipo:", tabela_exportar_sem_tipo.columns.tolist())
+
+    
     soma_total = df_para_total.select_dtypes(include='number').sum()
     linha_total = ["Total Geral", ""]
     linha_total += [soma_total.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
