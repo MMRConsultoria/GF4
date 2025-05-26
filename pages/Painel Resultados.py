@@ -341,27 +341,27 @@ with aba4:
     df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
 
     if modo_visao == "Por Loja":
-    lojas_com_venda = df_filtrado["Loja"].unique()
-    lojas_sem_venda = todas_lojas[~todas_lojas["Loja"].isin(lojas_com_venda)]
+        lojas_com_venda = df_filtrado["Loja"].unique()
+        lojas_sem_venda = todas_lojas[~todas_lojas["Loja"].isin(lojas_com_venda)]
 
-    if not lojas_sem_venda.empty:
-        df_sem_venda = pd.DataFrame({
-            "Loja": lojas_sem_venda["Loja"],
-            "Grupo": lojas_sem_venda["Grupo"],
-            "Tipo": lojas_sem_venda["Tipo"],
-            "Fat.Total": 0,
-            "Fat.Real": 0,
-            "Data": pd.NaT,
-            "Ano": None,
-            "Mês Num": None,
-            "Mês Nome": None,
-            "Mês": None,
-            "Dia": None,
-            "Agrupador": None,
-            "Ordem": None
-        })
+        if not lojas_sem_venda.empty:
+            df_sem_venda = pd.DataFrame({
+                "Loja": lojas_sem_venda["Loja"],
+                "Grupo": lojas_sem_venda["Grupo"],
+                "Tipo": lojas_sem_venda["Tipo"],
+                "Fat.Total": 0,
+                "Fat.Real": 0,
+                "Data": pd.NaT,
+                "Ano": None,
+                "Mês Num": None,
+                "Mês Nome": None,
+                "Mês": None,
+                "Dia": None,
+                "Agrupador": None,
+                "Ordem": None
+            })
 
-        df_filtrado = pd.concat([df_filtrado, df_sem_venda], ignore_index=True)
+            df_filtrado = pd.concat([df_filtrado, df_sem_venda], ignore_index=True)
 
 
 
