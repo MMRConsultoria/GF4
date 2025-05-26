@@ -799,6 +799,8 @@ if modo_visao == "Por Loja":
     tabela_final = tabela_final.sort_index()
 
 
+tabela_final = tabela_final.loc[:, tabela_final.columns.notna()]
+tabela_final = tabela_final.drop(columns=[None], errors="ignore")
 
 
 
