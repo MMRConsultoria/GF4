@@ -570,6 +570,12 @@ if modo_visao == "Por Loja":
             if f"{col} (Real)" in tabela.columns: todas_colunas.append(f"{col} (Real)")
         else:
             todas_colunas.append(col)
+
+
+    # 🔥 Limpeza definitiva de colunas inválidas
+    tabela = tabela[todas_colunas]
+    tabela = tabela.loc[:, ~tabela.columns.isnull()]  # Remove colunas None (NaN real)
+    tabela = tabela.drop(columns=[None, 'None', 'nan', ''], errors='ignore')  # Remove explicitamente nomes indesejados
     tabela = tabela[todas_colunas]
     if tipo_metrica == "Ambos":
         cols_bruto = [col for col in tabela.columns if "(Bruto)" in col]
@@ -581,7 +587,6 @@ if modo_visao == "Por Loja":
             colunas_finais = ["Total Bruto", "Total Real"] + [col for col in tabela.columns if col not in ["Total Bruto", "Total Real"]]
             tabela = tabela[colunas_finais]
 
-    
         total_row = pd.DataFrame(tabela.sum(numeric_only=True)).T
         total_row.index = ["Total Geral"]
         tabela_final = pd.concat([total_row, tabela])
