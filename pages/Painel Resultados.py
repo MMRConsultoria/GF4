@@ -626,17 +626,17 @@ if modo_visao == "Por Loja":
             total_row = tabela_final.loc[["Total Geral"]]
             corpo_ordenado = tabela_final.drop(index="Total Geral")
 
+            # ✅ Verifica se a coluna de ordenação existe
             if col_mais_recente in corpo_ordenado.columns:
                 corpo_ordenado = corpo_ordenado.sort_values(
                     by=col_mais_recente, ascending=False
                 )
-
-            tabela_final = pd.concat([total_row, corpo_ordenado])
+                tabela_final = pd.concat([total_row, corpo_ordenado])
+            else:
+                tabela_final = pd.concat([total_row, corpo_ordenado])
         else:
             if col_mais_recente in tabela_final.columns:
                 tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
-    
-
 
     
     # 🔥 Ordenação da tabela na TELA: pela coluna (Bruto) mais recente, se não tiver, pela (Real)
