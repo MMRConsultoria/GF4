@@ -436,6 +436,18 @@ with aba4:
             Real=("Fat.Real", "sum")
         ).reset_index()
 
+
+        # 🔥 Garante que todos os grupos apareçam, mesmo sem vendas
+        todos_grupos = df_empresa[["Grupo"]].drop_duplicates()
+
+        # Pivot
+        tab_b = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
+        tab_r = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
+
+        # Merge
+        tab_b = todos_grupos.merge(tab_b, on="Grupo", how="left").set_index("Grupo").fillna(0)
+        tab_r = todos_grupos.merge(tab_r, on="Grupo", how="left").set_index("Grupo").fillna(0)
+
         if tipo_metrica == "Bruto":
             tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
         elif tipo_metrica == "Real":
@@ -454,6 +466,18 @@ with aba4:
     else:
         tab_b = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
         tab_r = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
+
+        # 🔥 Garante que todas as lojas apareçam, mesmo sem vendas
+        todas_lojas = df_empresa[["Loja"]].drop_duplicates()
+
+        # Merge do Bruto
+        tab_b = todas_lojas.merge(tab_b, on="Loja", how="left").set_index("Loja").fillna(0)
+
+        # Merge do Real
+        tab_r = todas_lojas.merge(tab_r, on="Loja", how="left").set_index("Loja").fillna(0)
+
+
+        
         if tipo_metrica == "Bruto":
             tabela = tab_b
         elif tipo_metrica == "Real":
