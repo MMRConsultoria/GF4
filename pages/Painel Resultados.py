@@ -519,6 +519,14 @@ if modo_visao == "Por Loja":
             tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
             tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
             tabela = pd.concat([tab_b, tab_r], axis=1)
+            tabela.columns = [
+                col if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""] else "Excluir"
+                for col in tabela.columns
+            ]
+            tabela = tabela.loc[:, tabela.columns != "Excluir"]
+
+
+            
             colunas_intercaladas = []
             for col in ordem:
                 colunas_intercaladas.append(f"{col} (Bruto)")
