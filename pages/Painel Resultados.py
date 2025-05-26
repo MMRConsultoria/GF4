@@ -657,6 +657,10 @@ if modo_visao == "Por Loja":
     tabela_formatada = tabela_final.applymap(
         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x
     )
+
+   
+
+    
     st.dataframe(tabela_formatada, use_container_width=True)
 
 import io
@@ -798,9 +802,11 @@ if modo_visao == "Por Loja":
 
     tabela_final = tabela_final.sort_index()
 
+ ✅ 🔥 REMOVE coluna None
+tabela_final.columns.name = None  # Remove nome do eixo das colunas
+tabela_final = tabela_final.loc[:, ~tabela_final.columns.isnull()]
+tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
-tabela_final = tabela_final.loc[:, tabela_final.columns.notna()]
-tabela_final = tabela_final.drop(columns=[None], errors="ignore")
 
 
 
