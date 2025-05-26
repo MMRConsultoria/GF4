@@ -418,26 +418,7 @@ with aba4:
     with col4:
          agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
 
-    # =========================
-    # 🏗️ Agrupador
-    # =========================
-    if agrupamento == "Ano":
-        df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
-        df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
 
-    elif agrupamento == "Mês":
-        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime('%m/%Y')
-        df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
-
-    elif agrupamento == "Dia":
-        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime('%d/%m/%Y')
-        df_filtrado["Ordem"] = df_filtrado["Data"]
-
-    ordem = (
-        df_filtrado[["Agrupador", "Ordem"]]
-        .drop_duplicates()
-        .sort_values("Ordem", ascending=False)
-    )["Agrupador"].tolist()
 
 # 🔥 Garante que todas as lojas ativas apareçam na TELA quando modo é "Por Loja"
 if modo_visao == "Por Loja":
@@ -471,7 +452,26 @@ if modo_visao == "Por Loja":
         df_filtrado = pd.concat([df_filtrado, df_sem_venda], ignore_index=True)
 
 
+    # =========================
+    # 🏗️ Agrupador
+    # =========================
+    if agrupamento == "Ano":
+        df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
+        df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
 
+    elif agrupamento == "Mês":
+        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime('%m/%Y')
+        df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
+
+    elif agrupamento == "Dia":
+        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime('%d/%m/%Y')
+        df_filtrado["Ordem"] = df_filtrado["Data"]
+
+    ordem = (
+        df_filtrado[["Agrupador", "Ordem"]]
+        .drop_duplicates()
+        .sort_values("Ordem", ascending=False)
+    )["Agrupador"].tolist()
 
 
 
