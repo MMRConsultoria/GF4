@@ -940,8 +940,59 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 worksheet.write(linha, col_num, str(val), subtotal_format)
         linha += 1
 
-    worksheet.set_column(0, num_colunas - 1, 18)
-    worksheet.hide_gridlines(option=2)
+
+
+
+
+worksheet.write(0, num_colunas, "% Participação")
+
+# 🔥 Calcula o total geral para usar na porcentagem
+valor_total_geral = df_para_total.select_dtypes(include='number').sum().sum()
+
+# 🔥 Loop para inserir linhas
+for grupo_atual, cor in zip(tabela_exportar_sem_tipo["Grupo"].dropna().unique(), cores_grupo):
+    linhas_grupo = tabela_exportar_sem_tipo[
+        (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
+        ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+    ]
+
+    qtd_lojas = linhas_grupo["Loja"].nunique() if "Loja" in linhas_grupo.columns else ""
+
+    grupo_format = workbook.add_format({
+        'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
+    })
+
+    soma_grupo = linhas_grupo.select_dtypes(include='number').sum().sum()
+
+    for _, row in linhas_grupo.iterrows():
+        percentual_loja = (row.select_dtypes(include='number').sum() / soma_grupo) if soma_grupo != 0 else 0
+        for col_num, val in enumerate(row):
+            if isinstance(val, (int, float)) and not pd.isna(val):
+                worksheet.write_number(linha, col_num, val, grupo_format)
+            else:
+                worksheet.write(linha, col_num, str(val), grupo_format)
+        worksheet.write(linha, num_colunas, percentual_loja, workbook.add_format({'num_format': '0.00%'}))
+        linha += 1
+
+    # 🔥 Subtotal do grupo
+    percentual_grupo = (soma_grupo / valor_total_geral) if valor_total_geral != 0 else 0
+    linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
+    linha_grupo += [soma_grupo for _ in tabela_exportar_sem_tipo.columns[2:]]
+
+    for col_num, val in enumerate(linha_grupo):
+        if isinstance(val, (int, float)) and not pd.isna(val):
+            worksheet.write_number(linha, col_num, val, subtotal_format)
+        else:
+            worksheet.write(linha, col_num, str(val), subtotal_format)
+    worksheet.write(linha, num_colunas, percentual_grupo, workbook.add_format({'num_format': '0.00%'}))
+    linha += 1
+
+# 🔝 Total Geral - 100%
+worksheet.write(linha, num_colunas, 1, workbook.add_format({'num_format': '0.00%'}))  # 100%
+
+# 🔧 Ajustes visuais finais
+worksheet.set_column(0, num_colunas, 18)
+worksheet.hide_gridlines(option=2)
 
 # 🔽 Botão Download
 st.download_button(
