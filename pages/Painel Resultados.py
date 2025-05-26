@@ -322,7 +322,6 @@ with aba4:
 
     # Normaliza dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
-    df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
     df_anos["Ano"] = df_anos["Data"].dt.year
@@ -539,23 +538,10 @@ if modo_visao == "Por Loja":
 
         tabela = tabela.sort_index()
 
-    tab_b = df_filtrado.pivot_table(
-        index="Loja",
-        columns="Agrupador",
-        values="Fat.Total",
-        aggfunc="sum",
-        fill_value=0
-    )
 
-    tab_r = df_filtrado.pivot_table(
-        index="Loja",
-        columns="Agrupador",
-        values="Fat.Real",
-        aggfunc="sum",
-        fill_value=0
-    )
 
-  
+    tab_b = df_filtrado.pivot_table(...)
+
 
 
 
@@ -686,7 +672,10 @@ df_empresa = df_empresa[df_empresa["Loja"].notna() & (df_empresa["Loja"].astype(
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 
-
+# 🔗 Pega a lista de lojas ativas
+todas_lojas = df_empresa[
+    df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "Ativa"
+][["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
 
 
