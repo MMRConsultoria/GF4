@@ -809,8 +809,8 @@ if modo_visao == "Por Loja":
 
     tabela_final = tabela_final.sort_index()
    
-        colunas_numericas = tabela_exportar_sem_tipo.select_dtypes(include='number').columns
-        tabela_exportar_sem_tipo[colunas_numericas] = tabela_exportar_sem_tipo[colunas_numericas].fillna(0)
+    colunas_numericas = tabela_exportar_sem_tipo.select_dtypes(include='number').columns
+    tabela_exportar_sem_tipo[colunas_numericas] = tabela_exportar_sem_tipo[colunas_numericas].fillna(0)
 
 
 
