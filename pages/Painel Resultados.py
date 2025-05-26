@@ -766,6 +766,9 @@ else:
     if modo_visao == "Por Grupo":
         tabela_exportar["Acumulado no Mês"] = None
     tabela_exportar["Acumulado no Mês Tipo"] = None
+colunas_numericas = tabela_exportar_sem_tipo.select_dtypes(include='number').columns
+tabela_exportar_sem_tipo[colunas_numericas] = tabela_exportar_sem_tipo[colunas_numericas].fillna(0)
+
 
 # 🔥 Remove a coluna "Acumulado no Mês Tipo" do corpo
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo","Tipo"], errors="ignore")
@@ -809,10 +812,7 @@ if modo_visao == "Por Loja":
 
     tabela_final = tabela_final.sort_index()
    
-    colunas_numericas = tabela_exportar_sem_tipo.select_dtypes(include='number').columns
-    tabela_exportar_sem_tipo[colunas_numericas] = tabela_exportar_sem_tipo[colunas_numericas].fillna(0)
-
-
+    
 
 
 
