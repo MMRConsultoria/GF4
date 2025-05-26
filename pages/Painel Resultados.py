@@ -629,17 +629,17 @@ if modo_visao == "Por Loja":
         else:
             tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
 
-if col_mais_recente and col_mais_recente in tabela_final.columns:
-    tem_total = "Total Geral" in tabela_final.index
+    if col_mais_recente and col_mais_recente in tabela_final.columns:
+        tem_total = "Total Geral" in tabela_final.index
 
-    if tem_total:
-        total_row = tabela_final.loc[["Total Geral"]]
-        corpo_ordenado = tabela_final.drop(index="Total Geral").sort_values(
-            by=col_mais_recente, ascending=False
-        )
-        tabela_final = pd.concat([total_row, corpo_ordenado])
-    else:
-        tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
+        if tem_total:
+            total_row = tabela_final.loc[["Total Geral"]]
+            corpo_ordenado = tabela_final.drop(index="Total Geral").sort_values(
+                by=col_mais_recente, ascending=False
+            )
+            tabela_final = pd.concat([total_row, corpo_ordenado])
+        else:
+            tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
 
     
 
