@@ -263,8 +263,6 @@ with aba3:
 # ================================
 # Aba 4: Analise Lojas
 # ================================
-
-
 with aba4:
     from datetime import datetime, date
     st.markdown("""
@@ -320,7 +318,7 @@ with aba4:
     }
     </style>
     """, unsafe_allow_html=True)
-
+  
 
     # Normaliza dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
@@ -332,13 +330,12 @@ with aba4:
     df_anos["Mês Nome"] = df_anos["Data"].dt.strftime('%B')
     df_anos["Mês"] = df_anos["Data"].dt.strftime('%m/%Y')
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
-
+    
     # 🔗 Lojas ativas (logo após normalizar os dados)
     todas_lojas = df_empresa[
         df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
     ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
  
-
 
     
     # === FILTROS ===
@@ -351,6 +348,25 @@ with aba4:
     
     df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
 
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
     meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
                   7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"}
 
@@ -411,6 +427,8 @@ with aba4:
     
     with col4:
          agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
+
+
 if modo_visao == "Por Loja":
     lojas_com_venda = df_filtrado["Loja"].unique()
     lojas_sem_venda = todas_lojas[~todas_lojas["Loja"].isin(lojas_com_venda)]
@@ -434,6 +452,12 @@ if modo_visao == "Por Loja":
 
         df_filtrado = pd.concat([df_filtrado, df_sem_venda], ignore_index=True)
 
+
+
+
+
+
+    
     # Filtro para exibir ou não a coluna Total
     #exibir_total_opcao = st.radio("📊 Coluna Total:", ["Sim", "Não"], index=0, horizontal=True)
     #exibir_total = exibir_total_opcao == "Sim"
@@ -502,6 +526,7 @@ if modo_visao == "Por Loja":
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
 
+
 if modo_visao == "Por Loja":
     lojas_ativas = todas_lojas["Loja"].tolist()
     lojas_existentes = tabela.index.tolist()
@@ -529,6 +554,15 @@ if modo_visao == "Por Loja":
         aggfunc="sum",
         fill_value=0
     )
+
+  
+
+
+
+
+
+
+
     
     colunas_ordenadas = [col for col in ordem if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns]
     todas_colunas = []
@@ -652,6 +686,10 @@ df_empresa = df_empresa[df_empresa["Loja"].notna() & (df_empresa["Loja"].astype(
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 
+
+
+
+
 # 🔥 Verifica se deve calcular acumulado
 data_max = pd.to_datetime(data_fim)
 hoje = pd.to_datetime(pd.Timestamp.now()).tz_localize(None)
@@ -770,11 +808,6 @@ if modo_visao == "Por Loja":
         tabela_final = pd.concat([tabela_final, df_sem_venda])
 
     tabela_final = tabela_final.sort_index()
-
-
-
-
-
 
 
 
