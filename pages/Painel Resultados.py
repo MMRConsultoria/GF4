@@ -944,7 +944,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 
 
-worksheet.write(0, num_colunas, "% Participação")
+
 
 # 🔥 Calcula o total geral para usar na porcentagem
 valor_total_geral = df_para_total.select_dtypes(include='number').sum().sum()
