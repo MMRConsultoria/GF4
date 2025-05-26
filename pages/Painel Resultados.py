@@ -590,6 +590,13 @@ df_empresa = df_empresa[df_empresa["Loja"].notna() & (df_empresa["Loja"].astype(
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 
+# 🔗 Pega a lista de lojas ativas
+todas_lojas = df_empresa[
+    df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
+][["Loja", "Grupo", "Tipo"]].drop_duplicates()
+
+
+
 # 🔥 Verifica se deve calcular acumulado
 data_max = pd.to_datetime(data_fim)
 hoje = pd.to_datetime(pd.Timestamp.now()).tz_localize(None)
