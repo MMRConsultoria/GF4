@@ -318,11 +318,7 @@ with aba4:
     }
     </style>
     """, unsafe_allow_html=True)
-    # 🔗 Lojas ativas (logo após normalizar os dados)
-    todas_lojas = df_empresa[
-        df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
-    ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
-
+  
 
     # Normaliza dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
@@ -333,7 +329,14 @@ with aba4:
     df_anos["Mês Nome"] = df_anos["Data"].dt.strftime('%B')
     df_anos["Mês"] = df_anos["Data"].dt.strftime('%m/%Y')
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
+    
+    # 🔗 Lojas ativas (logo após normalizar os dados)
+    todas_lojas = df_empresa[
+        df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
+    ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
+ 
 
+    
     # === FILTROS ===
     #anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
     #ano_opcao = st.multiselect("📅 Selecione ano/mês(s):", options=anos_disponiveis, default=anos_disponiveis, key="ano_aba3")
@@ -521,6 +524,32 @@ if modo_visao == "Por Loja":
                 colunas_intercaladas.append(f"{col} (Real)")
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
+
+
+if modo_visao == "Por Loja":
+    lojas_ativas = todas_lojas["Loja"].tolist()
+    lojas_existentes = tabela.index.tolist()
+
+    lojas_faltando = list(set(lojas_ativas) - set(lojas_existentes))
+
+    if lojas_faltando:
+        df_sem_venda = pd.DataFrame(0, index=lojas_faltando, columns=tabela.columns)
+        tabela = pd.concat([tabela, df_sem_venda])
+
+        tabela = tabela.sort_index()
+
+
+
+    tab_b = df_filtrado.pivot_table(...)
+
+
+
+
+
+
+
+
+    
     colunas_ordenadas = [col for col in ordem if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns]
     todas_colunas = []
     for col in colunas_ordenadas:
