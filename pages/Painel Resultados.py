@@ -658,7 +658,10 @@ if modo_visao == "Por Loja":
         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x
     )
 
-   
+   # ✅ Remoção de coluna None, NaN, vazio
+    tabela_final.columns.name = None
+    colunas_validas = [col for col in tabela_final.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]
+    tabela_final = tabela_final[colunas_validas]
 
     
     st.dataframe(tabela_formatada, use_container_width=True)
