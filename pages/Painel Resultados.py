@@ -475,6 +475,11 @@ if modo_visao == "Por Loja":
         df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
         df_filtrado["Ordem"] = df_filtrado["Data"]
 
+    # 🔥 Remove agrupadores inválidos (None, nan, vazio)
+    df_filtrado = df_filtrado[~df_filtrado["Agrupador"].isin([None, "None", "nan", "NaN", ""])]
+
+
+    
     # Garante a ordem correta
     ordem = (
         df_filtrado[["Agrupador", "Ordem"]]
