@@ -330,6 +330,12 @@ with aba4:
     df_anos["Mês"] = df_anos["Data"].dt.strftime('%m/%Y')
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
 
+    # 🔗 Lojas ativas
+    todas_lojas = df_empresa[
+        df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
+    ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
+
+    
     # === FILTROS ===
     #anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
     #ano_opcao = st.multiselect("📅 Selecione ano/mês(s):", options=anos_disponiveis, default=anos_disponiveis, key="ano_aba3")
@@ -401,12 +407,26 @@ with aba4:
     with col4:
          agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
 
+    # =========================
+    # 🏗️ Agrupador
+    # =========================
+    if agrupamento == "Ano":
+        df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
+        df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
 
-    # 🔥 Garante que traz apenas lojas ativas
-todas_lojas = df_empresa[
-    df_empresa["Lojas Ativas"].str.lower().str.strip() == "ativa"
-][["Loja", "Grupo", "Tipo"]].drop_duplicates()
+    elif agrupamento == "Mês":
+        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime('%m/%Y')
+        df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
 
+    elif agrupamento == "Dia":
+        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime('%d/%m/%Y')
+        df_filtrado["Ordem"] = df_filtrado["Data"]
+
+    ordem = (
+        df_filtrado[["Agrupador", "Ordem"]]
+        .drop_duplicates()
+        .sort_values("Ordem", ascending=False)
+    )["Agrupador"].tolist()
 # ==============================
 # 🔗 Geração da tabela dinâmica
 # ==============================
