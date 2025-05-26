@@ -766,9 +766,6 @@ else:
     if modo_visao == "Por Grupo":
         tabela_exportar["Acumulado no Mês"] = None
     tabela_exportar["Acumulado no Mês Tipo"] = None
-#colunas_numericas = tabela_exportar_sem_tipo.select_dtypes(include='number').columns
-#tabela_exportar_sem_tipo[colunas_numericas] = tabela_exportar_sem_tipo[colunas_numericas].fillna(0)
-
 
 # 🔥 Remove a coluna "Acumulado no Mês Tipo" do corpo
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo","Tipo"], errors="ignore")
@@ -794,6 +791,8 @@ tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta'))
 # 🔥 Substitui NaN somente nas colunas numéricas
+colunas_numericas = tabela_exportar_sem_tipo.select_dtypes(include='number').columns
+tabela_exportar_sem_tipo[colunas_numericas] = tabela_exportar_sem_tipo[colunas_numericas].fillna(0)
 
 if modo_visao == "Por Loja":
     lojas_existentes = tabela_final.index.tolist()
@@ -811,8 +810,9 @@ if modo_visao == "Por Loja":
         tabela_final = pd.concat([tabela_final, df_sem_venda])
 
     tabela_final = tabela_final.sort_index()
-   
-    
+    # 🔥 Aqui aplica o ajuste dos NaN
+  
+
 
 
 
