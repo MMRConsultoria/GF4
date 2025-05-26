@@ -538,7 +538,21 @@ if modo_visao == "Por Loja":
 
         tabela = tabela.sort_index()
 
+    tab_b = df_filtrado.pivot_table(
+        index="Loja",
+        columns="Agrupador",
+        values="Fat.Total",
+        aggfunc="sum",
+        fill_value=0
+    )
 
+    tab_r = df_filtrado.pivot_table(
+        index="Loja",
+        columns="Agrupador",
+        values="Fat.Real",
+        aggfunc="sum",
+        fill_value=0
+    )
 
   
 
