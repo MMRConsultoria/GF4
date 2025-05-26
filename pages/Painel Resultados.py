@@ -483,7 +483,7 @@ if modo_visao == "Por Loja":
         .sort_values("Ordem", ascending=False)
     )["Agrupador"].tolist()
    
-
+    ordem = [c for c in ordem if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
 
     ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
 
@@ -575,7 +575,7 @@ if modo_visao == "Por Loja":
     # 🔥 Limpeza definitiva de colunas inválidas
     tabela = tabela[todas_colunas]
     tabela = tabela.loc[:, ~tabela.columns.isnull()]  # Remove colunas None (NaN real)
-    tabela = tabela.drop(columns=[None, 'None', 'nan', ''], errors='ignore')  # Remove explicitamente nomes indesejados
+  
     tabela = tabela[todas_colunas]
     if tipo_metrica == "Ambos":
         cols_bruto = [col for col in tabela.columns if "(Bruto)" in col]
