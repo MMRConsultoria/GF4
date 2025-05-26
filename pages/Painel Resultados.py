@@ -436,18 +436,6 @@ with aba4:
             Real=("Fat.Real", "sum")
         ).reset_index()
 
-
-        # 🔥 Garante que todos os grupos apareçam, mesmo sem vendas
-        todos_grupos = df_empresa[["Grupo"]].drop_duplicates()
-
-        # Pivot
-        tab_b = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
-        tab_r = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
-
-        # Merge
-        tab_b = todos_grupos.merge(tab_b, on="Grupo", how="left").set_index("Grupo").fillna(0)
-        tab_r = todos_grupos.merge(tab_r, on="Grupo", how="left").set_index("Grupo").fillna(0)
-
         if tipo_metrica == "Bruto":
             tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
         elif tipo_metrica == "Real":
@@ -466,23 +454,6 @@ with aba4:
     else:
         tab_b = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
         tab_r = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
-
-        todas_lojas = df_empresa[["Loja"]].drop_duplicates() 
-
-        
-        # 🔥 Filtra apenas as lojas ativas
-        #todas_lojas = df_empresa[
-        #    df_empresa["Lojas Ativas"].str.lower().str.strip() == "Ativa"
-        #][["Loja", "Grupo", "Tipo"]].drop_duplicates()
-        
-        # Merge do Bruto
-        tab_b = todas_lojas.merge(tab_b, on="Loja", how="left").set_index("Loja").fillna(0)
-
-        # Merge do Real
-        tab_r = todas_lojas.merge(tab_r, on="Loja", how="left").set_index("Loja").fillna(0)
-
-
-        
         if tipo_metrica == "Bruto":
             tabela = tab_b
         elif tipo_metrica == "Real":
@@ -496,7 +467,7 @@ with aba4:
                 colunas_intercaladas.append(f"{col} (Bruto)")
                 colunas_intercaladas.append(f"{col} (Real)")
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
-    
+
     colunas_ordenadas = [col for col in ordem if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns]
     todas_colunas = []
     for col in colunas_ordenadas:
@@ -774,9 +745,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     df_para_total = tabela_exportar_sem_tipo[linhas_validas]
 
-    st.write("🛑 Colunas atuais na tabela_exportar_sem_tipo:", tabela_exportar_sem_tipo.columns.tolist())
-
-    
     soma_total = df_para_total.select_dtypes(include='number').sum()
     linha_total = ["Total Geral", ""]
     linha_total += [soma_total.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
