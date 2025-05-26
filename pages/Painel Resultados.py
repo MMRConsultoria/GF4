@@ -318,6 +318,10 @@ with aba4:
     }
     </style>
     """, unsafe_allow_html=True)
+    # 🔗 Lojas ativas (logo após normalizar os dados)
+    todas_lojas = df_empresa[
+        df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
+    ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
 
     # Normaliza dados
