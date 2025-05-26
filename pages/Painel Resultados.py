@@ -577,6 +577,47 @@ with aba4:
     )
     st.dataframe(tabela_formatada, use_container_width=True)
 
+    # 🔥 Garante que traz apenas lojas ativas
+    todas_lojas = df_empresa[
+        df_empresa["Lojas Ativas"].str.lower().str.strip() == "sim"
+    ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
+
+    # 🔗 Faz o pivot dos dados
+    tab_b = df_filtrado.pivot_table(
+        index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0
+    )
+    tab_r = df_filtrado.pivot_table(
+        index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0
+    )
+
+    # 🔗 Merge com lojas ativas para garantir que todas aparecem
+    tab_b = todas_lojas.merge(tab_b, on="Loja", how="left").set_index("Loja").fillna(0)
+    tab_r = todas_lojas.merge(tab_r, on="Loja", how="left").set_index("Loja").fillna(0)
+
+    # 🔥 Seleção de métrica
+    if tipo_metrica == "Bruto":
+        tabela = tab_b.drop(columns=["Grupo", "Tipo"], errors="ignore")
+    elif tipo_metrica == "Real":
+        tabela = tab_r.drop(columns=["Grupo", "Tipo"], errors="ignore")
+    else:
+        tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
+        tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
+        tabela = pd.concat([tab_b, tab_r], axis=1).drop(columns=["Grupo", "Tipo"], errors="ignore")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import io
 import itertools
 import pandas as pd
