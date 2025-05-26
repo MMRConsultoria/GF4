@@ -965,19 +965,24 @@ for grupo_atual, cor in zip(tabela_exportar_sem_tipo["Grupo"].dropna().unique(),
     soma_grupo = linhas_grupo.select_dtypes(include='number').sum().sum()
 
     for _, row in linhas_grupo.iterrows():
-      
-        valores_numericos = [v for v in row.values if isinstance(v, (int, float))]
+        # 🔥 Soma dos valores numéricos da linha para % participação
+        valores_numericos = [
+            v for v in row.values
+            if isinstance(v, (int, float)) and not pd.isna(v)
+        ]
         percentual_loja = (sum(valores_numericos) / soma_grupo) if soma_grupo != 0 else 0
 
-
-
-        
         for col_num, val in enumerate(row):
             if isinstance(val, (int, float)) and not pd.isna(val):
                 worksheet.write_number(linha, col_num, val, grupo_format)
             else:
                 worksheet.write(linha, col_num, str(val), grupo_format)
-        worksheet.write(linha, num_colunas, percentual_loja, workbook.add_format({'num_format': '0.00%'}))
+
+        # 🔥 Escreve a % da loja no grupo
+        worksheet.write(
+            linha, num_colunas, percentual_loja,
+            workbook.add_format({'num_format': '0.00%'})
+        )
         linha += 1
 
     # 🔥 Subtotal do grupo
@@ -990,11 +995,19 @@ for grupo_atual, cor in zip(tabela_exportar_sem_tipo["Grupo"].dropna().unique(),
             worksheet.write_number(linha, col_num, val, subtotal_format)
         else:
             worksheet.write(linha, col_num, str(val), subtotal_format)
-    worksheet.write(linha, num_colunas, percentual_grupo, workbook.add_format({'num_format': '0.00%'}))
+
+    # 🔥 Escreve % do subtotal do grupo sobre o total geral
+    worksheet.write(
+        linha, num_colunas, percentual_grupo,
+        workbook.add_format({'num_format': '0.00%'})
+    )
     linha += 1
 
 # 🔝 Total Geral - 100%
-worksheet.write(linha, num_colunas, 1, workbook.add_format({'num_format': '0.00%'}))  # 100%
+worksheet.write(
+    linha, num_colunas, 1,
+    workbook.add_format({'num_format': '0.00%'})
+)  # Sempre 100%
 
 # 🔧 Ajustes visuais finais
 worksheet.set_column(0, num_colunas, 18)
