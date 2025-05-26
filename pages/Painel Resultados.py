@@ -322,7 +322,6 @@ with aba4:
 
     # Normaliza dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
-    df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
     df_anos["Ano"] = df_anos["Data"].dt.year
@@ -686,7 +685,10 @@ df_empresa = df_empresa[df_empresa["Loja"].notna() & (df_empresa["Loja"].astype(
 df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
 df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
 
-
+# 🔗 Pega a lista de lojas ativas
+todas_lojas = df_empresa[
+    df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "Ativa"
+][["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
 
 
@@ -790,9 +792,7 @@ if coluna_mais_recente:
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta'))
-# 🔥 Substitui NaN somente nas colunas numéricas
-colunas_numericas = tabela_exportar_sem_tipo.select_dtypes(include='number').columns
-tabela_exportar_sem_tipo[colunas_numericas] = tabela_exportar_sem_tipo[colunas_numericas].fillna(0)
+
 
 if modo_visao == "Por Loja":
     lojas_existentes = tabela_final.index.tolist()
@@ -810,8 +810,7 @@ if modo_visao == "Por Loja":
         tabela_final = pd.concat([tabela_final, df_sem_venda])
 
     tabela_final = tabela_final.sort_index()
-    # 🔥 Aqui aplica o ajuste dos NaN
-  
+
 
 
 
