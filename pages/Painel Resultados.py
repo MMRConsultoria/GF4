@@ -808,7 +808,8 @@ if modo_visao == "Por Loja":
         tabela_final = pd.concat([tabela_final, df_sem_venda])
 
     tabela_final = tabela_final.sort_index()
-
+    # 🔥 Aqui aplica o ajuste dos NaN
+    tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.fillna(0)
 
 
 
