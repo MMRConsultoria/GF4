@@ -434,6 +434,17 @@ if modo_visao == "Por Loja":
     lojas_sem_venda = todas_lojas[~todas_lojas["Loja"].isin(lojas_com_venda)]
 
     if not lojas_sem_venda.empty:
+        agrupador_valor = (
+            str(ano_opcao[0]) if agrupamento == "Ano" else
+            data_maxima.strftime("%m/%Y") if agrupamento == "Mês" else
+            data_maxima.strftime("%d/%m/%Y")
+        )
+        ordem_valor = (
+            data_maxima.year if agrupamento == "Ano" else
+            data_maxima.to_period("M").to_timestamp() if agrupamento == "Mês" else
+            data_maxima
+        )
+
         df_sem_venda = pd.DataFrame({
             "Loja": lojas_sem_venda["Loja"],
             "Grupo": lojas_sem_venda["Grupo"],
@@ -441,14 +452,15 @@ if modo_visao == "Por Loja":
             "Fat.Total": 0,
             "Fat.Real": 0,
             "Data": pd.NaT,
-            "Ano": None,
-            "Mês Num": None,
-            "Mês Nome": None,
-            "Mês": None,
-            "Dia": None,
-            "Agrupador": None,
-            "Ordem": None
+            "Ano": data_maxima.year,
+            "Mês Num": data_maxima.month,
+            "Mês Nome": data_maxima.strftime("%B"),
+            "Mês": data_maxima.strftime("%m/%Y"),
+            "Dia": data_maxima.strftime("%d/%m/%Y"),
+            "Agrupador": agrupador_valor,
+            "Ordem": ordem_valor
         })
+
 
         df_filtrado = pd.concat([df_filtrado, df_sem_venda], ignore_index=True)
 
