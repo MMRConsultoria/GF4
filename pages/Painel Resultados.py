@@ -434,17 +434,6 @@ if modo_visao == "Por Loja":
     lojas_sem_venda = todas_lojas[~todas_lojas["Loja"].isin(lojas_com_venda)]
 
     if not lojas_sem_venda.empty:
-        agrupador_valor = (
-            str(ano_opcao[0]) if agrupamento == "Ano" else
-            data_maxima.strftime("%m/%Y") if agrupamento == "Mês" else
-            data_maxima.strftime("%d/%m/%Y")
-        )
-        ordem_valor = (
-            data_maxima.year if agrupamento == "Ano" else
-            data_maxima.to_period("M").to_timestamp() if agrupamento == "Mês" else
-            data_maxima
-        )
-
         df_sem_venda = pd.DataFrame({
             "Loja": lojas_sem_venda["Loja"],
             "Grupo": lojas_sem_venda["Grupo"],
@@ -452,17 +441,16 @@ if modo_visao == "Por Loja":
             "Fat.Total": 0,
             "Fat.Real": 0,
             "Data": pd.NaT,
-            "Ano": data_maxima.year,
-            "Mês Num": data_maxima.month,
-            "Mês Nome": data_maxima.strftime("%B"),
-            "Mês": data_maxima.strftime("%m/%Y"),
-            "Dia": data_maxima.strftime("%d/%m/%Y"),
-            "Agrupador": agrupador_valor,
-            "Ordem": ordem_valor
+            "Ano": None,
+            "Mês Num": None,
+            "Mês Nome": None,
+            "Mês": None,
+            "Dia": None,
+            "Agrupador": None,
+            "Ordem": None
         })
 
         df_filtrado = pd.concat([df_filtrado, df_sem_venda], ignore_index=True)
-    
 
 
 
@@ -602,64 +590,33 @@ if modo_visao == "Por Loja":
     nome = "Grupos" if modo_visao == "Por Grupo" else "Lojas"
     st.markdown(f"**🔢 Total de {nome}: {quantidade}**")
 
-# 🔍 Detecta a coluna de data mais recente válida
-colunas_validas = [
-    col for col in tabela_final.columns 
-    if ("/" in str(col)) or (str(col).isdigit() and len(str(col)) == 4)
-]
+    # Detecta a coluna de data mais recente
+    colunas_validas = [col for col in tabela_final.columns if "/" in col or (col.isdigit() and len(col) == 4)]
 
-def parse_col(col):
-    try:
-        col = str(col)
-        if "/" in col:
-            return pd.to_datetime(f"01/{col}", dayfirst=True, errors="coerce")
-        elif col.isdigit() and len(col) == 4:
-            return pd.to_datetime(f"01/01/{col}", dayfirst=True)
-    except:
+    def parse_col(col):
+        try:
+            if "/" in col:
+                return pd.to_datetime(f"01/{col}", dayfirst=True, errors="coerce")
+            elif col.isdigit() and len(col) == 4:
+                return pd.to_datetime(f"01/01/{col}", dayfirst=True)
+        except:
+            return pd.NaT
         return pd.NaT
-    return pd.NaT
 
-datas_convertidas = [
-    (col, parse_col(col)) for col in colunas_validas if pd.notnull(parse_col(col))
-]
+    datas_convertidas = [(col, parse_col(col)) for col in colunas_validas if pd.notnull(parse_col(col))]
 
-col_mais_recente = (
-    max(datas_convertidas, key=lambda x: x[1])[0] if datas_convertidas else None
-)
-
-# 🔥 Remove coluna 'None' ou NaN do cabeçalho se existir
-tabela_final.columns = [str(c) if pd.notna(c) else "" for c in tabela_final.columns]
-if "None" in tabela_final.columns:
-    tabela_final = tabela_final.drop(columns="None")
-if "" in tabela_final.columns:
-    tabela_final = tabela_final.drop(columns="")
-
-# 🔥 Ordenação segura pela coluna mais recente
-if col_mais_recente and col_mais_recente in tabela_final.columns:
-    try:
+    if datas_convertidas:
+        col_mais_recente = max(datas_convertidas, key=lambda x: x[1])[0]
+    
+        # Ordena pela coluna mais recente (exceto a linha Total Geral)
         tem_total = "Total Geral" in tabela_final.index
-
         if tem_total:
             total_row = tabela_final.loc[["Total Geral"]]
-            corpo_ordenado = tabela_final.drop(index="Total Geral")
-
-            # ✅ Verifica se a coluna ainda está no corpo antes de ordenar
-            if col_mais_recente in corpo_ordenado.columns:
-                corpo_ordenado = corpo_ordenado.sort_values(
-                    by=col_mais_recente, ascending=False
-                )
+            corpo_ordenado = tabela_final.drop(index="Total Geral").sort_values(by=col_mais_recente, ascending=False)
             tabela_final = pd.concat([total_row, corpo_ordenado])
         else:
-            tabela_final = tabela_final.sort_values(
-                by=col_mais_recente, ascending=False
-            )
-    except Exception as e:
-        st.warning(f"⚠️ Não foi possível ordenar pela coluna {col_mais_recente}. Erro: {e}")
-else:
-    st.info("ℹ️ Não foi possível identificar uma coluna de data válida para ordenação.")
+            tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
 
-
-    
     # 🔥 Ordenação da tabela na TELA: pela coluna (Bruto) mais recente, se não tiver, pela (Real)
     colunas_bruto = [col for col in tabela_final.columns if '(Bruto)' in col]
     colunas_real = [col for col in tabela_final.columns if '(Real)' in col]
