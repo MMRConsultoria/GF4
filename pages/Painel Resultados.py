@@ -523,7 +523,11 @@ if modo_visao == "Por Loja":
             for col in ordem:
                 colunas_intercaladas.append(f"{col} (Bruto)")
                 colunas_intercaladas.append(f"{col} (Real)")
+           
+            # 🔥 Aqui já remove qualquer None no processo de montar a lista
+            colunas_intercaladas = [c for c in colunas_intercaladas if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
+
 
 tabela = tabela[[col for col in tabela.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]]
 
