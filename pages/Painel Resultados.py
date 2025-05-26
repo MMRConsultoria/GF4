@@ -602,45 +602,62 @@ if modo_visao == "Por Loja":
     nome = "Grupos" if modo_visao == "Por Grupo" else "Lojas"
     st.markdown(f"**🔢 Total de {nome}: {quantidade}**")
 
-    # Detecta a coluna de data mais recente
-    colunas_validas = [col for col in tabela_final.columns if "/" in col or (col.isdigit() and len(col) == 4)]
+# 🔍 Detecta a coluna de data mais recente válida
+colunas_validas = [
+    col for col in tabela_final.columns 
+    if ("/" in str(col)) or (str(col).isdigit() and len(str(col)) == 4)
+]
 
-    def parse_col(col):
-        try:
-            if "/" in col:
-                return pd.to_datetime(f"01/{col}", dayfirst=True, errors="coerce")
-            elif col.isdigit() and len(col) == 4:
-                return pd.to_datetime(f"01/01/{col}", dayfirst=True)
-        except:
-            return pd.NaT
+def parse_col(col):
+    try:
+        col = str(col)
+        if "/" in col:
+            return pd.to_datetime(f"01/{col}", dayfirst=True, errors="coerce")
+        elif col.isdigit() and len(col) == 4:
+            return pd.to_datetime(f"01/01/{col}", dayfirst=True)
+    except:
         return pd.NaT
+    return pd.NaT
 
-    datas_convertidas = [(col, parse_col(col)) for col in colunas_validas if pd.notnull(parse_col(col))]
+datas_convertidas = [
+    (col, parse_col(col)) for col in colunas_validas if pd.notnull(parse_col(col))
+]
 
-    col_mais_recente = max(datas_convertidas, key=lambda x: x[1])[0] if datas_convertidas else None
+col_mais_recente = (
+    max(datas_convertidas, key=lambda x: x[1])[0] if datas_convertidas else None
+)
 
-    # 🔥 Remove colunas 'None' se existirem
-    if "None" in tabela_final.columns:
-        tabela_final = tabela_final.drop(columns="None")
-    
-    if col_mais_recente and col_mais_recente in tabela_final.columns:
+# 🔥 Remove coluna 'None' ou NaN do cabeçalho se existir
+tabela_final.columns = [str(c) if pd.notna(c) else "" for c in tabela_final.columns]
+if "None" in tabela_final.columns:
+    tabela_final = tabela_final.drop(columns="None")
+if "" in tabela_final.columns:
+    tabela_final = tabela_final.drop(columns="")
+
+# 🔥 Ordenação segura pela coluna mais recente
+if col_mais_recente and col_mais_recente in tabela_final.columns:
+    try:
         tem_total = "Total Geral" in tabela_final.index
 
         if tem_total:
             total_row = tabela_final.loc[["Total Geral"]]
             corpo_ordenado = tabela_final.drop(index="Total Geral")
 
-            # ✅ Verifica se a coluna de ordenação existe
+            # ✅ Verifica se a coluna ainda está no corpo antes de ordenar
             if col_mais_recente in corpo_ordenado.columns:
                 corpo_ordenado = corpo_ordenado.sort_values(
                     by=col_mais_recente, ascending=False
                 )
-                tabela_final = pd.concat([total_row, corpo_ordenado])
-            else:
-                tabela_final = pd.concat([total_row, corpo_ordenado])
+            tabela_final = pd.concat([total_row, corpo_ordenado])
         else:
-            if col_mais_recente in tabela_final.columns:
-                tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
+            tabela_final = tabela_final.sort_values(
+                by=col_mais_recente, ascending=False
+            )
+    except Exception as e:
+        st.warning(f"⚠️ Não foi possível ordenar pela coluna {col_mais_recente}. Erro: {e}")
+else:
+    st.info("ℹ️ Não foi possível identificar uma coluna de data válida para ordenação.")
+
 
     
     # 🔥 Ordenação da tabela na TELA: pela coluna (Bruto) mais recente, se não tiver, pela (Real)
