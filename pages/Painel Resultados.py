@@ -838,36 +838,7 @@ tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 
 
-# 🔥 Gera o mapeamento Data → Dia da Semana
-dias_semana = {
-    'Monday': 'Segunda',
-    'Tuesday': 'Terça',
-    'Wednesday': 'Quarta',
-    'Thursday': 'Quinta',
-    'Friday': 'Sexta',
-    'Saturday': 'Sábado',
-    'Sunday': 'Domingo'
-}
 
-novo_header = []
-for col in tabela_exportar_sem_tipo.columns:
-    if re.match(r'\d{2}/\d{2}/\d{4}', str(col)):
-        try:
-            data_col = pd.to_datetime(col, dayfirst=True, errors='coerce')
-            if pd.notnull(data_col):
-                dia_semana = data_col.strftime('%A')
-                dia_semana_pt = dias_semana.get(dia_semana, dia_semana)
-                novo_col = f"{col}\n({dia_semana_pt})"
-                novo_header.append(novo_col)
-            else:
-                novo_header.append(col)
-        except:
-            novo_header.append(col)
-    else:
-        novo_header.append(col)
-
-# 🔄 Atualiza os nomes das colunas
-tabela_exportar_sem_tipo.columns = novo_header
 
 
 
