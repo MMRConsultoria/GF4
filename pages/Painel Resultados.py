@@ -619,6 +619,10 @@ if modo_visao == "Por Loja":
 
     col_mais_recente = max(datas_convertidas, key=lambda x: x[1])[0] if datas_convertidas else None
 
+    # 🔥 Remove colunas 'None' se existirem
+    if "None" in tabela_final.columns:
+        tabela_final = tabela_final.drop(columns="None")
+    
     if col_mais_recente and col_mais_recente in tabela_final.columns:
         tem_total = "Total Geral" in tabela_final.index
 
