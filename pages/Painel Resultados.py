@@ -330,23 +330,6 @@ with aba4:
     df_anos["Mês"] = df_anos["Data"].dt.strftime('%m/%Y')
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
 
-    # 🔗 Lojas ativas
-    todas_lojas = df_empresa[
-        df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
-    ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
-
-
-
-
-
-
-
-
-
-
-
-
-    
     # === FILTROS ===
     #anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
     #ano_opcao = st.multiselect("📅 Selecione ano/mês(s):", options=anos_disponiveis, default=anos_disponiveis, key="ano_aba3")
@@ -397,9 +380,9 @@ with aba4:
     df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
 
 
-      
     # Filtros laterais lado a lado
     col1, col2, col3, col4 = st.columns([1.2, 2, 2, 2])  # col1 levemente mais estreita
+
     with col1:
         st.write("")  # Garante altura igual às outras colunas com título
         exibir_total = st.radio(
@@ -418,131 +401,6 @@ with aba4:
     with col4:
          agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
 
-
-
-# 🔥 Garante que todas as lojas ativas apareçam na TELA quando modo é "Por Loja"
-if modo_visao == "Por Loja":
-    lojas_sem_venda = todas_lojas[~todas_lojas["Loja"].isin(df_filtrado["Loja"].unique())]
-    
-    if not lojas_sem_venda.empty:
-        # Cria dataframe vazio com mesmas colunas do df_filtrado
-        df_sem_venda = pd.DataFrame(columns=df_filtrado.columns)
-
-        # Preenche dados obrigatórios (Loja, Grupo, Tipo)
-        df_sem_venda["Loja"] = lojas_sem_venda["Loja"]
-        df_sem_venda["Grupo"] = lojas_sem_venda["Grupo"]
-        df_sem_venda["Tipo"] = lojas_sem_venda["Tipo"]
-
-        # Preenche colunas obrigatórias com 0 ou NaN
-        df_sem_venda["Fat.Total"] = 0
-        df_sem_venda["Fat.Real"] = 0
-        df_sem_venda["Data"] = pd.NaT
-        df_sem_venda["Ano"] = ano_opcao[0] if len(ano_opcao) == 1 else None
-        df_sem_venda["Mês Num"] = None
-        df_sem_venda["Mês Nome"] = None
-        df_sem_venda["Mês"] = None
-        df_sem_venda["Dia"] = None
-
-
-        # Adiciona agrupador e ordem
-        df_sem_venda["Agrupador"] = None
-        df_sem_venda["Ordem"] = None
-        
-        # 🔗 Junta ao dataframe original
-        df_filtrado = pd.concat([df_filtrado, df_sem_venda], ignore_index=True)
-
-
-    # =========================
-    # 🏗️ Agrupador
-    # =========================
-    if agrupamento == "Ano":
-        df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
-        df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
-
-    elif agrupamento == "Mês":
-        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime('%m/%Y')
-        df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
-
-    elif agrupamento == "Dia":
-        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime('%d/%m/%Y')
-        df_filtrado["Ordem"] = df_filtrado["Data"]
-
-    ordem = (
-        df_filtrado[["Agrupador", "Ordem"]]
-        .drop_duplicates()
-        .sort_values("Ordem", ascending=False)
-    )["Agrupador"].tolist()
-
-
-
-
-# ==============================
-# 🔗 Geração da tabela dinâmica
-# ==============================
-if modo_visao == "Por Grupo":
-    df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
-        Bruto=("Fat.Total", "sum"),
-        Real=("Fat.Real", "sum")
-    ).reset_index()
-
-    if tipo_metrica == "Bruto":
-        tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
-
-    elif tipo_metrica == "Real":
-        tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
-
-    else:  # Ambos
-        tab_b = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
-        tab_r = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
-        tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
-        tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
-        tabela = pd.concat([tab_b, tab_r], axis=1)
-
-        colunas_intercaladas = []
-        for col in ordem:
-            colunas_intercaladas.append(f"{col} (Bruto)")
-            colunas_intercaladas.append(f"{col} (Real)")
-
-        tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
-
-# ===========================================
-# 🔥 Modo Por Loja — inclui lojas sem venda
-# ===========================================
-elif modo_visao == "Por Loja":
-    tab_b = df_filtrado.pivot_table(
-        index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0
-    )
-    tab_r = df_filtrado.pivot_table(
-        index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0
-    )
-
-    # 🔗 Merge com todas as lojas ativas (para garantir que traga 0 nas que não tem venda)
-    tab_b = todas_lojas.merge(tab_b, on="Loja", how="left").set_index("Loja").fillna(0)
-    tab_r = todas_lojas.merge(tab_r, on="Loja", how="left").set_index("Loja").fillna(0)
-
-    if tipo_metrica == "Bruto":
-        tabela = tab_b.drop(columns=["Grupo", "Tipo"], errors="ignore")
-
-    elif tipo_metrica == "Real":
-        tabela = tab_r.drop(columns=["Grupo", "Tipo"], errors="ignore")
-
-    else:  # Ambos
-        tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
-        tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
-        tabela = pd.concat([tab_b, tab_r], axis=1).drop(columns=["Grupo", "Tipo"], errors="ignore")
-
-        colunas_intercaladas = []
-        for col in ordem:
-            colunas_intercaladas.append(f"{col} (Bruto)")
-            colunas_intercaladas.append(f"{col} (Real)")
-
-        tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
-
-
-
-
-
-    
     # Filtro para exibir ou não a coluna Total
     #exibir_total_opcao = st.radio("📊 Coluna Total:", ["Sim", "Não"], index=0, horizontal=True)
     #exibir_total = exibir_total_opcao == "Sim"
@@ -832,6 +690,34 @@ if coluna_mais_recente:
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta'))
+
+
+if modo_visao == "Por Loja":
+    lojas_existentes = tabela_final.index.tolist()
+    lojas_ativas = todas_lojas["Loja"].tolist()
+
+    lojas_faltando = list(set(lojas_ativas) - set(lojas_existentes))
+
+    if lojas_faltando:
+        # 🔥 Cria dataframe das lojas sem venda
+        df_sem_venda = pd.DataFrame(index=lojas_faltando)
+
+        for col in tabela_final.columns:
+            df_sem_venda[col] = 0
+
+        tabela_final = pd.concat([tabela_final, df_sem_venda])
+
+    tabela_final = tabela_final.sort_index()
+
+
+
+
+
+
+
+
+
+
 
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
