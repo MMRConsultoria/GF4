@@ -965,7 +965,13 @@ for grupo_atual, cor in zip(tabela_exportar_sem_tipo["Grupo"].dropna().unique(),
     soma_grupo = linhas_grupo.select_dtypes(include='number').sum().sum()
 
     for _, row in linhas_grupo.iterrows():
-        percentual_loja = (row.select_dtypes(include='number').sum() / soma_grupo) if soma_grupo != 0 else 0
+      
+        valores_numericos = [v for v in row.values if isinstance(v, (int, float))]
+        percentual_loja = (sum(valores_numericos) / soma_grupo) if soma_grupo != 0 else 0
+
+
+
+        
         for col_num, val in enumerate(row):
             if isinstance(val, (int, float)) and not pd.isna(val):
                 worksheet.write_number(linha, col_num, val, grupo_format)
