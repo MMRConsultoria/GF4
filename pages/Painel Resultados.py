@@ -540,8 +540,7 @@ if modo_visao == "Por Loja":
 
 
 
-    tab_b = df_filtrado.pivot_table(...)
-
+  
 
 
 
