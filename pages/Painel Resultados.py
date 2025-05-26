@@ -335,6 +335,17 @@ with aba4:
         df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
     ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
+
+
+
+
+
+
+
+
+
+
+
     
     # === FILTROS ===
     #anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
@@ -427,6 +438,44 @@ with aba4:
         .drop_duplicates()
         .sort_values("Ordem", ascending=False)
     )["Agrupador"].tolist()
+
+# 🔥 Garante que todas as lojas ativas apareçam na TELA quando modo é "Por Loja"
+if modo_visao == "Por Loja":
+    lojas_sem_venda = todas_lojas[~todas_lojas["Loja"].isin(df_filtrado["Loja"].unique())]
+    
+    if not lojas_sem_venda.empty:
+        # Cria dataframe vazio com mesmas colunas do df_filtrado
+        df_sem_venda = pd.DataFrame(columns=df_filtrado.columns)
+
+        # Preenche dados obrigatórios (Loja, Grupo, Tipo)
+        df_sem_venda["Loja"] = lojas_sem_venda["Loja"]
+        df_sem_venda["Grupo"] = lojas_sem_venda["Grupo"]
+        df_sem_venda["Tipo"] = lojas_sem_venda["Tipo"]
+
+        # Preenche colunas obrigatórias com 0 ou NaN
+        df_sem_venda["Fat.Total"] = 0
+        df_sem_venda["Fat.Real"] = 0
+        df_sem_venda["Data"] = pd.NaT
+        df_sem_venda["Ano"] = ano_opcao[0] if len(ano_opcao) == 1 else None
+        df_sem_venda["Mês Num"] = None
+        df_sem_venda["Mês Nome"] = None
+        df_sem_venda["Mês"] = None
+        df_sem_venda["Dia"] = None
+
+
+        # Adiciona agrupador e ordem
+        df_sem_venda["Agrupador"] = None
+        df_sem_venda["Ordem"] = None
+        
+        # 🔗 Junta ao dataframe original
+        df_filtrado = pd.concat([df_filtrado, df_sem_venda], ignore_index=True)
+
+
+
+
+
+
+
 # ==============================
 # 🔗 Geração da tabela dinâmica
 # ==============================
