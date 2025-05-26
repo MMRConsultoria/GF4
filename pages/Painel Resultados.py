@@ -322,6 +322,7 @@ with aba4:
 
     # Normaliza dados
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
+    df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
     df_anos["Fat.Real"] = pd.to_numeric(df_anos["Fat.Real"], errors="coerce")
     df_anos["Ano"] = df_anos["Data"].dt.year
@@ -330,6 +331,14 @@ with aba4:
     df_anos["Mês"] = df_anos["Data"].dt.strftime('%m/%Y')
     df_anos["Dia"] = df_anos["Data"].dt.strftime('%d/%m/%Y')
 
+    # 🔗 Lojas ativas (logo após normalizar os dados)
+    todas_lojas = df_empresa[
+        df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
+    ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
+ 
+
+
+    
     # === FILTROS ===
     #anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
     #ano_opcao = st.multiselect("📅 Selecione ano/mês(s):", options=anos_disponiveis, default=anos_disponiveis, key="ano_aba3")
@@ -400,6 +409,28 @@ with aba4:
     
     with col4:
          agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
+if modo_visao == "Por Loja":
+    lojas_com_venda = df_filtrado["Loja"].unique()
+    lojas_sem_venda = todas_lojas[~todas_lojas["Loja"].isin(lojas_com_venda)]
+
+    if not lojas_sem_venda.empty:
+        df_sem_venda = pd.DataFrame({
+            "Loja": lojas_sem_venda["Loja"],
+            "Grupo": lojas_sem_venda["Grupo"],
+            "Tipo": lojas_sem_venda["Tipo"],
+            "Fat.Total": 0,
+            "Fat.Real": 0,
+            "Data": pd.NaT,
+            "Ano": None,
+            "Mês Num": None,
+            "Mês Nome": None,
+            "Mês": None,
+            "Dia": None,
+            "Agrupador": None,
+            "Ordem": None
+        })
+
+        df_filtrado = pd.concat([df_filtrado, df_sem_venda], ignore_index=True)
 
     # Filtro para exibir ou não a coluna Total
     #exibir_total_opcao = st.radio("📊 Coluna Total:", ["Sim", "Não"], index=0, horizontal=True)
@@ -468,6 +499,35 @@ with aba4:
                 colunas_intercaladas.append(f"{col} (Real)")
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
+
+if modo_visao == "Por Loja":
+    lojas_ativas = todas_lojas["Loja"].tolist()
+    lojas_existentes = tabela.index.tolist()
+
+    lojas_faltando = list(set(lojas_ativas) - set(lojas_existentes))
+
+    if lojas_faltando:
+        df_sem_venda = pd.DataFrame(0, index=lojas_faltando, columns=tabela.columns)
+        tabela = pd.concat([tabela, df_sem_venda])
+
+        tabela = tabela.sort_index()
+
+    tab_b = df_filtrado.pivot_table(
+        index="Loja",
+        columns="Agrupador",
+        values="Fat.Total",
+        aggfunc="sum",
+        fill_value=0
+    )
+
+    tab_r = df_filtrado.pivot_table(
+        index="Loja",
+        columns="Agrupador",
+        values="Fat.Real",
+        aggfunc="sum",
+        fill_value=0
+    )
+    
     colunas_ordenadas = [col for col in ordem if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns]
     todas_colunas = []
     for col in colunas_ordenadas:
@@ -690,6 +750,39 @@ if coluna_mais_recente:
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta'))
+
+
+if modo_visao == "Por Loja":
+    lojas_existentes = tabela_final.index.tolist()
+    lojas_ativas = todas_lojas["Loja"].tolist()
+
+    lojas_faltando = list(set(lojas_ativas) - set(lojas_existentes))
+
+    if lojas_faltando:
+        # 🔥 Cria dataframe das lojas sem venda
+        df_sem_venda = pd.DataFrame(index=lojas_faltando)
+
+        for col in tabela_final.columns:
+            df_sem_venda[col] = 0
+
+        tabela_final = pd.concat([tabela_final, df_sem_venda])
+
+    tabela_final = tabela_final.sort_index()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
