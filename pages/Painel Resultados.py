@@ -579,7 +579,7 @@ with aba4:
 
     # 🔥 Garante que traz apenas lojas ativas
     todas_lojas = df_empresa[
-        df_empresa["Lojas Ativas"].str.lower().str.strip() == "Ativa"
+        df_empresa["Lojas Ativas"].str.lower().str.strip() == "ativa"
     ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
     # 🔗 Faz o pivot dos dados
