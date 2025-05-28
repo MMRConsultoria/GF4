@@ -521,7 +521,7 @@ if modo_visao == "Por Loja":
 
             if not colunas_intercaladas:
                st.warning("🚨 Não há colunas válidas para exibir no modo 'Por Grupo'.")
-              st.stop()
+               st.stop()
 
             tabela = tabela[colunas_intercaladas]
 
