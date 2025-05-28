@@ -384,12 +384,12 @@ with aba4:
         data_maxima = hoje
 
     # Campo de data seguro
-   #data_inicio, data_fim = st.date_input(
-    #    "",
-     #   value=[hoje, hoje],
-     #   min_value=data_minima,
-     #   max_value=data_maxima
-    #)
+    data_inicio, data_fim = st.date_input(
+        "",
+        value=[hoje, hoje],
+        min_value=data_minima,
+        max_value=data_maxima
+    )
     
     
     #df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
