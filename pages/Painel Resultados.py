@@ -427,7 +427,23 @@ with aba4:
     
     with col4:
          agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
+ 
+    
+    # Criação do agrupador e ordem com base na escolha
+    if agrupamento == "Ano":
+        df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
+        df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
 
+    elif agrupamento == "Mês":
+        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%m/%Y")
+        df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
+
+    elif agrupamento == "Dia":
+        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
+        df_filtrado["Ordem"] = df_filtrado["Data"]
+
+    # 🔥 Remove agrupadores inválidos (None, nan, vazio)
+    df_filtrado = df_filtrado[~df_filtrado["Agrupador"].isin([None, "None", "nan", "NaN", ""])]
 
 if modo_visao == "Por Loja":
     lojas_com_venda = df_filtrado["Loja"].unique()
@@ -462,21 +478,7 @@ if modo_visao == "Por Loja":
     #exibir_total_opcao = st.radio("📊 Coluna Total:", ["Sim", "Não"], index=0, horizontal=True)
     #exibir_total = exibir_total_opcao == "Sim"
 
-    # Criação do agrupador e ordem com base na escolha
-    if agrupamento == "Ano":
-        df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
-        df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
-
-    elif agrupamento == "Mês":
-        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%m/%Y")
-        df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
-
-    elif agrupamento == "Dia":
-        df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
-        df_filtrado["Ordem"] = df_filtrado["Data"]
-
-    # 🔥 Remove agrupadores inválidos (None, nan, vazio)
-    df_filtrado = df_filtrado[~df_filtrado["Agrupador"].isin([None, "None", "nan", "NaN", ""])]
+   
 
 
     
