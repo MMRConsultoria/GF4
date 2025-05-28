@@ -549,7 +549,7 @@ with aba4:
 
         colunas_ordenadas = [col for col in ordem if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns]
         todas_colunas = []
-            for col in colunas_ordenadas:
+        for col in colunas_ordenadas:
             if tipo_metrica == "Ambos":
                 if f"{col} (Bruto)" in tabela.columns: todas_colunas.append(f"{col} (Bruto)")
                 if f"{col} (Real)" in tabela.columns: todas_colunas.append(f"{col} (Real)")
