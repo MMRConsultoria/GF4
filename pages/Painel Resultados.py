@@ -883,6 +883,13 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
 
+
+
+
+    # 🔥 Determina a coluna de identificação (Loja ou Grupo)
+    coluna_id = "Loja" if "Loja" in tabela_exportar_sem_tipo.columns else "Grupo"
+
+    
     # 🔥 Subtotal por Tipo (Sempre aparece)
     for tipo_atual in sorted(tabela_exportar["Tipo"].dropna().unique()):
         linhas_tipo = tabela_exportar_sem_tipo[
