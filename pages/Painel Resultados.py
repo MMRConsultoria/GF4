@@ -530,9 +530,9 @@ with aba4:
         tabela_final = tabela.copy()
         tabela_final.index.name = "Loja"
 
-
     st.write("🚧 Debug Grupo", tabela_exportar)
     st.write("📄 df_empresa", df_empresa)
+  
     # ✅ 🔥 Limpeza imediata e universal após criar tabela_final
     tabela_final.columns.name = None  # Remove nome do eixo das colunas
     tabela_final = tabela_final.loc[:, ~tabela_final.columns.isnull()]  # Remove colunas None (NaN real)
