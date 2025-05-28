@@ -524,7 +524,8 @@ if modo_visao == "Por Loja":
                st.stop()
 
             tabela = tabela[colunas_intercaladas]
-
+        # 🔥 Limpeza das colunas inválidas (None, nan, vazio)
+        tabela = tabela[[col for col in tabela.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]]
 
     else:
         tab_b = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
