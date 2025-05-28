@@ -530,11 +530,10 @@ elif modo_visao == "Por Loja":
     tabela_final = tabela.copy()
     tabela_final.index.name = "Loja"
              
- # ✅ Remoção de coluna None, NaN, vazio
-    tabela_final.columns.name = None
-    colunas_validas = [col for col in tabela_final.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]
-    tabela_final = tabela_final[colunas_validas]
-
+# ✅ 🔥 Limpeza imediata e universal após criar tabela_final
+tabela_final.columns.name = None  # Remove nome do eixo das colunas
+tabela_final = tabela_final.loc[:, ~tabela_final.columns.isnull()]  # Remove colunas None (NaN real)
+tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 if modo_visao == "Por Loja":
     lojas_ativas = todas_lojas["Loja"].tolist()
