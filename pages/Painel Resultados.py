@@ -493,13 +493,14 @@ if modo_visao == "Por Loja":
     ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
 
 
-# 🔗 Faz o merge com df_empresa para adicionar 'Grupo' e 'Tipo'
-df_filtrado = df_filtrado.merge(
-    df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
-    on="Loja", how="left"
-)
 
 if modo_visao == "Por Grupo":
+    # 🔗 Garante que 'Grupo' e 'Tipo' estão presentes
+    if "Grupo" not in df_filtrado.columns:
+        df_filtrado = df_filtrado.merge(
+            df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
+            on="Loja", how="left"
+        )
     df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
         Bruto=("Fat.Total", "sum"),
         Real=("Fat.Real", "sum")
