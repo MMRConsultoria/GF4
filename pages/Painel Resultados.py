@@ -384,17 +384,37 @@ with aba4:
         data_maxima = hoje
 
     # Campo de data seguro
-    data_inicio, data_fim = st.date_input(
-        "",
-        value=[hoje, hoje],
-        min_value=data_minima,
-        max_value=data_maxima
-    )
+   #data_inicio, data_fim = st.date_input(
+    #    "",
+     #   value=[hoje, hoje],
+     #   min_value=data_minima,
+     #   max_value=data_maxima
+    #)
     
     
     #df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
 
-    
+    # ✅ Aplica o filtro de datas corretamente conforme o agrupamento
+    if agrupamento == "Dia":
+        df_filtrado = df_filtrado[
+            (df_filtrado["Data"] >= pd.to_datetime(data_inicio)) &
+            (df_filtrado["Data"] <= pd.to_datetime(data_fim))
+        ]
+    elif agrupamento == "Mês":
+        periodo_inicio = pd.to_datetime(data_inicio).to_period("M")
+        periodo_fim = pd.to_datetime(data_fim).to_period("M")
+        df_filtrado = df_filtrado[
+            (df_filtrado["Data"].dt.to_period("M") >= periodo_inicio) &
+            (df_filtrado["Data"].dt.to_period("M") <= periodo_fim)
+        ]
+    elif agrupamento == "Ano":
+        ano_inicio = pd.to_datetime(data_inicio).year
+        ano_fim = pd.to_datetime(data_fim).year
+        df_filtrado = df_filtrado[
+            (df_filtrado["Data"].dt.year >= ano_inicio) &
+            (df_filtrado["Data"].dt.year <= ano_fim)
+        ]
+
 
 
 
