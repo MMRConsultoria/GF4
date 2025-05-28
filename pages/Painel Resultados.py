@@ -408,7 +408,12 @@ with aba4:
     
     with col4:
          agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
-   
+    # 📌 Converte a coluna 'Data' do df_anos, com segurança
+    df_anos["Data"] = pd.to_datetime(df_anos["Data"], errors="coerce")
+
+    # 🧠 Extrai a data mínima e máxima dos dados válidos
+    data_minima = df_anos["Data"].min().date()
+    data_maxima = df_anos["Data"].max().date()
     
     # 🔄 Define o valor padrão conforme o agrupamento
     if agrupamento == "Ano":
