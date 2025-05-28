@@ -746,6 +746,9 @@ elif modo_visao == "Por Grupo":
         df_empresa[["Grupo", "Tipo"]].drop_duplicates(),
         on="Grupo", how="left"
     )
+# 🔥 Define a coluna que será usada no Acumulado
+coluna_acumulado = "Fat.Total"  # 🔥 Bruto (com gorjeta)
+# 👉 Se quiser voltar para Real, troque por: coluna_acumulado = "Fat.Real"
 
 # 🔥 Cálculo do Acumulado
 if mostrar_acumulado:
