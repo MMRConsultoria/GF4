@@ -747,11 +747,15 @@ elif modo_visao == "Por Grupo":
         on="Grupo", how="left"
     )
 
+# 🔥 Define a coluna que será usada no Acumulado
+coluna_acumulado = "Fat.Total"  # 🔥 Bruto (com gorjeta)
+# 👉 Se quiser voltar para Real, troque por: coluna_acumulado = "Fat.Real"
+
 # 🔥 Cálculo do Acumulado
 if mostrar_acumulado:
     primeiro_dia_mes = data_max.replace(day=1)
     df_acumulado = df_anos[
-        (df_anos["Data"] >= primeiro_dia_mes) &
+        (df_anos["Data"] >= primeiro_dia_mes) & 
         (df_anos["Data"] <= data_max)
     ].copy()
 
@@ -761,16 +765,17 @@ if mostrar_acumulado:
     )
     df_acumulado = df_acumulado.loc[:, ~df_acumulado.columns.str.endswith('_drop')]
 
-    acumulado_por_tipo = df_acumulado.groupby("Tipo")["Fat.Real"].sum().reset_index().rename(
-        columns={"Fat.Real": "Acumulado no Mês Tipo"}
+    acumulado_por_tipo = df_acumulado.groupby("Tipo")[coluna_acumulado].sum().reset_index().rename(
+        columns={coluna_acumulado: "Acumulado no Mês Tipo"}
     )
-    acumulado_por_grupo = df_acumulado.groupby("Grupo")["Fat.Real"].sum().reset_index().rename(
-        columns={"Fat.Real": "Acumulado no Mês"}
+    acumulado_por_grupo = df_acumulado.groupby("Grupo")[coluna_acumulado].sum().reset_index().rename(
+        columns={coluna_acumulado: "Acumulado no Mês"}
     )
-    acumulado_por_loja = df_acumulado.groupby("Loja")["Fat.Real"].sum().reset_index().rename(
-        columns={"Fat.Real": "Acumulado no Mês"}
+    acumulado_por_loja = df_acumulado.groupby("Loja")[coluna_acumulado].sum().reset_index().rename(
+        columns={coluna_acumulado: "Acumulado no Mês"}
     )
 
+    
 # 🔥 Merge dos acumulados
 if mostrar_acumulado:
     if modo_visao == "Por Loja":
