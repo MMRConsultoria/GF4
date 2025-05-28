@@ -704,11 +704,11 @@ with aba4:
   
     
     
-   # if 'tabela_formatada' in locals():
-   #     st.subheader("📊 Resultado da Análise")
-   #     st.dataframe(tabela_formatada, use_container_width=True)
-   # else:
-   #     st.warning("⚠️ Não há dados para exibir com os filtros atuais.")
+    if 'tabela_formatada' in locals():
+        st.subheader("")
+        st.dataframe(tabela_formatada, use_container_width=True)
+    else:
+        st.warning("")
    
 
 import io
