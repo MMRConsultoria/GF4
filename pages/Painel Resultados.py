@@ -563,6 +563,13 @@ with aba4:
                 col_mais_recente = colunas_numericas[1]
             tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
 
+        tabela_formatada = tabela_final.applymap(
+            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            if isinstance(x, (float, int)) else x
+        )
+
+
+    
   
     # ✅ 🔥 Limpeza imediata e universal após criar tabela_final
     tabela_final.columns.name = None  # Remove nome do eixo das colunas
