@@ -662,9 +662,9 @@ with aba4:
 
   
     
+    
+    st.subheader("📊 Resultado da Análise")
     st.dataframe(tabela_formatada, use_container_width=True)
-st.subheader("📊 Resultado da Análise")
-st.dataframe(tabela_formatada, use_container_width=True)
 
 
 import io
