@@ -521,6 +521,11 @@ if modo_visao == "Por Grupo":
             colunas_intercaladas.append(f"{col} (Bruto)")
             colunas_intercaladas.append(f"{col} (Real)")
         
+        colunas_intercaladas = [
+            c for c in colunas_intercaladas
+            if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]
+        ]
+
         tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
 
@@ -555,7 +560,7 @@ colunas_intercaladas = [
 ]
 tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
-else modo_visao == "Por Loja":
+elif modo_visao == "Por Loja":
     lojas_ativas = todas_lojas["Loja"].tolist()
     lojas_existentes = tabela.index.tolist()
 
