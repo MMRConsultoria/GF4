@@ -15,6 +15,7 @@ import plotly.express as px
 import io
 from st_aggrid import AgGrid, GridOptionsBuilder
 from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 #st.set_page_config(page_title="Painel Agrupado", layout="wide")
 #st.set_page_config(page_title="Vendas Diarias", layout="wide")
