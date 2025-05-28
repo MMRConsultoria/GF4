@@ -497,6 +497,11 @@ if modo_visao == "Por Loja":
             Bruto=("Fat.Total", "sum"),
             Real=("Fat.Real", "sum")
         ).reset_index()
+        if df_grouped.empty:
+            st.warning("🚨 Não há dados para os filtros selecionados no modo 'Por Grupo'.")
+            st.stop()
+
+
 
         if tipo_metrica == "Bruto":
             tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
@@ -512,7 +517,15 @@ if modo_visao == "Por Loja":
             for col in ordem:
                 colunas_intercaladas.append(f"{col} (Bruto)")
                 colunas_intercaladas.append(f"{col} (Real)")
-            tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
+            colunas_intercaladas = [c for c in colunas_intercaladas if c in tabela.columns]
+
+            if not colunas_intercaladas:
+               st.warning("🚨 Não há colunas válidas para exibir no modo 'Por Grupo'.")
+              st.stop()
+
+            tabela = tabela[colunas_intercaladas]
+
+
     else:
         tab_b = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
         tab_r = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
