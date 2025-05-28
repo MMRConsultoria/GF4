@@ -461,6 +461,7 @@ with aba4:
 
 
 
+
 if modo_visao == "Por Loja":
     lojas_com_venda = df_filtrado["Loja"].unique()
     lojas_sem_venda = todas_lojas[~todas_lojas["Loja"].isin(lojas_com_venda)]
@@ -530,13 +531,24 @@ else:
         for col in ordem:
             colunas_intercaladas.append(f"{col} (Bruto)")
             colunas_intercaladas.append(f"{col} (Real)")
-           
-        # 🔥 Aqui já remove qualquer None no processo de montar a lista
+
+     # 🔥 Aqui já remove qualquer None no processo de montar a lista
         colunas_intercaladas = [c for c in colunas_intercaladas if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
         tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
+     
+
 
 tabela = tabela[[col for col in tabela.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]]
+
+if modo_visao == "Por Grupo":
+    tabela_final = tabela.copy()
+    tabela_final.index.name = "Grupo"
+elif modo_visao == "Por Loja":
+    tabela_final = tabela.copy()
+    tabela_final.index.name = "Loja"
+             
+
 
 if modo_visao == "Por Loja":
     lojas_ativas = todas_lojas["Loja"].tolist()
