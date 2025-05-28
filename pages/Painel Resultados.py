@@ -527,12 +527,34 @@ with aba4:
 
     tabela = tabela[[col for col in tabela.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]]
 
-    if modo_visao == "Por Grupo":
-        tabela_final = tabela.copy()
-        tabela_final.index.name = "Grupo"
-    elif modo_visao == "Por Loja":
-        tabela_final = tabela.copy()
-        tabela_final.index.name = "Loja"
+    if modo_visao == "Por Loja":
+        tabela = tabela.fillna(0)
+        tabela.index.name = "Loja"
+
+        if exibir_total:
+            tabela["Total"] = tabela.sum(axis=1)
+            colunas_finais = ["Total"] + [col for col in tabela.columns if col != "Total"]
+            tabela = tabela[colunas_finais]
+
+        total_geral = pd.DataFrame(tabela.sum(numeric_only=True)).T
+        total_geral.index = ["Total Geral"]
+
+        tabela_final = pd.concat([total_geral, tabela])
+
+    elif modo_visao == "Por Grupo":
+        tabela = tabela.fillna(0)
+        tabela.index.name = "Grupo"
+
+        if exibir_total:
+            tabela["Total"] = tabela.sum(axis=1)
+            colunas_finais = ["Total"] + [col for col in tabela.columns if col != "Total"]
+            tabela = tabela[colunas_finais]
+
+        total_geral = pd.DataFrame(tabela.sum(numeric_only=True)).T
+        total_geral.index = ["Total Geral"]
+
+        tabela_final = pd.concat([total_geral, tabela])
+
 
 
   
