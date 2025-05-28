@@ -878,7 +878,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     num_colunas = len(tabela_exportar_sem_tipo.columns)
 
     # 🔥 Subtotal por Tipo (Sempre aparece)
-    for tipo_atual in tabela_exportar["Tipo"].dropna().unique():
+    for tipo_atual in sorted(tabela_exportar["Tipo"].dropna().unique()):
         linhas_tipo = tabela_exportar_sem_tipo[
             (tabela_exportar_sem_tipo["Grupo"].isin(
                 df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
