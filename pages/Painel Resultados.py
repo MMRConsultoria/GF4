@@ -394,22 +394,7 @@ with aba4:
     
     #df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
 
-    # ✅ Aplica o filtro de datas corretamente conforme o agrupamento
-    if agrupamento == "Dia" and data_inicio and data_fim:
-        df_filtrado = df_filtrado[
-            (df_filtrado["Data"] >= pd.to_datetime(data_inicio)) &
-            (df_filtrado["Data"] <= pd.to_datetime(data_fim))
-        ]
-    elif agrupamento == "Mês" and data_inicio and data_fim:
-        df_filtrado = df_filtrado[
-            (df_filtrado["Data"].dt.to_period("M") >= pd.to_datetime(data_inicio).to_period("M")) &
-            (df_filtrado["Data"].dt.to_period("M") <= pd.to_datetime(data_fim).to_period("M"))
-        ]
-    elif agrupamento == "Ano" and data_inicio and data_fim:
-        df_filtrado = df_filtrado[
-            (df_filtrado["Data"].dt.year >= pd.to_datetime(data_inicio).year) &
-            (df_filtrado["Data"].dt.year <= pd.to_datetime(data_fim).year)
-        ]
+    
 
 
 
