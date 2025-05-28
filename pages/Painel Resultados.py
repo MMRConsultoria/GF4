@@ -896,9 +896,9 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             (tabela_exportar_sem_tipo["Grupo"].isin(
                 df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
             )) &
-            ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+      # ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+             ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
-
         qtd_lojas_tipo = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
         soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
