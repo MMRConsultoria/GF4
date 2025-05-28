@@ -492,41 +492,39 @@ if modo_visao == "Por Loja":
 
     ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
 
-    if modo_visao == "Por Grupo":
-        df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
-            Bruto=("Fat.Total", "sum"),
-            Real=("Fat.Real", "sum")
-        ).reset_index()
-        if df_grouped.empty:
-            st.warning("🚨 Não há dados para os filtros selecionados no modo 'Por Grupo'.")
-            st.stop()
+elif modo_visao == "Por Grupo":
+    df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
+        Bruto=("Fat.Total", "sum"),
+        Real=("Fat.Real", "sum")
+    ).reset_index()
+    if df_grouped.empty:
+        st.warning("🚨 Não há dados para os filtros selecionados no modo 'Por Grupo'.")
+        st.stop()
 
 
 
-        if tipo_metrica == "Bruto":
-            tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
-        elif tipo_metrica == "Real":
-            tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
-        else:
-            tab_b = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
-            tab_r = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
-            tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
-            tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
-            tabela = pd.concat([tab_b, tab_r], axis=1)
-            colunas_intercaladas = []
-            for col in ordem:
-                colunas_intercaladas.append(f"{col} (Bruto)")
-                colunas_intercaladas.append(f"{col} (Real)")
+    if tipo_metrica == "Bruto":
+        tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
+    elif tipo_metrica == "Real":
+        tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
+    else:
+        tab_b = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
+        tab_r = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
+        tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
+        tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
+        tabela = pd.concat([tab_b, tab_r], axis=1)
+        colunas_intercaladas = []
+        for col in ordem:
+            colunas_intercaladas.append(f"{col} (Bruto)")
+            colunas_intercaladas.append(f"{col} (Real)")
             colunas_intercaladas = [c for c in colunas_intercaladas if c in tabela.columns]
 
-            if not colunas_intercaladas:
-               st.warning("🚨 Não há colunas válidas para exibir no modo 'Por Grupo'.")
-               st.stop()
+        if not colunas_intercaladas:
+        st.warning("🚨 Não há colunas válidas para exibir no modo 'Por Grupo'.")
+        st.stop()
 
-            tabela = tabela[colunas_intercaladas]
-        # 🔥 Limpeza das colunas inválidas (None, nan, vazio)
-        tabela = tabela[[col for col in tabela.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]]
-
+        tabela = tabela[colunas_intercaladas]
+       
     else:
         tab_b = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
         tab_r = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
