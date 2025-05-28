@@ -896,7 +896,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             (tabela_exportar_sem_tipo["Grupo"].isin(
                 df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
             )) &
-      # ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+      # ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
              ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
         qtd_lojas_tipo = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
@@ -933,7 +933,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     for grupo_atual, cor in zip(tabela_exportar_sem_tipo["Grupo"].dropna().unique(), cores_grupo):
         linhas_grupo = tabela_exportar_sem_tipo[
             (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
-            ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+            ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
 
         qtd_lojas = linhas_grupo["Loja"].nunique() if "Loja" in linhas_grupo.columns else ""
@@ -974,7 +974,7 @@ valor_total_geral = df_para_total.select_dtypes(include='number').sum().sum()
 for grupo_atual, cor in zip(tabela_exportar_sem_tipo["Grupo"].dropna().unique(), cores_grupo):
     linhas_grupo = tabela_exportar_sem_tipo[
         (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
-        ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+        ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
     ]
 
     qtd_lojas = linhas_grupo["Loja"].nunique() if "Loja" in linhas_grupo.columns else ""
