@@ -444,225 +444,225 @@ with aba4:
 
 
 
-if modo_visao == "Por Loja":
-    lojas_com_venda = df_filtrado["Loja"].unique()
-    lojas_sem_venda = todas_lojas[~todas_lojas["Loja"].isin(lojas_com_venda)]
+    if modo_visao == "Por Loja":
+        lojas_com_venda = df_filtrado["Loja"].unique()
+        lojas_sem_venda = todas_lojas[~todas_lojas["Loja"].isin(lojas_com_venda)]
 
-    if not lojas_sem_venda.empty:
-        df_sem_venda = pd.DataFrame({
-            "Loja": lojas_sem_venda["Loja"],
-            "Grupo": lojas_sem_venda["Grupo"],
-            "Tipo": lojas_sem_venda["Tipo"],
-            "Fat.Total": 0,
-            "Fat.Real": 0,
-            "Data": pd.NaT,
-            "Ano": None,
-            "Mês Num": None,
-            "Mês Nome": None,
-            "Mês": None,
-            "Dia": None,
-            "Agrupador": None,
-            "Ordem": None
-        })
+        if not lojas_sem_venda.empty:
+            df_sem_venda = pd.DataFrame({
+                "Loja": lojas_sem_venda["Loja"],
+                "Grupo": lojas_sem_venda["Grupo"],
+                "Tipo": lojas_sem_venda["Tipo"],
+                "Fat.Total": 0,
+                "Fat.Real": 0,
+                "Data": pd.NaT,
+                "Ano": None,
+                "Mês Num": None,
+                "Mês Nome": None,
+                "Mês": None,
+                "Dia": None,
+                "Agrupador": None,
+                "Ordem": None
+            })
 
-        df_filtrado = pd.concat([df_filtrado, df_sem_venda], ignore_index=True)
+            df_filtrado = pd.concat([df_filtrado, df_sem_venda], ignore_index=True)
 
 
-if modo_visao == "Por Grupo":
-    df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
-        Bruto=("Fat.Total", "sum"),
-        Real=("Fat.Real", "sum")
-    ).reset_index()
+    if modo_visao == "Por Grupo":
+        df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
+            Bruto=("Fat.Total", "sum"),
+            Real=("Fat.Real", "sum")
+        ).reset_index()
 
-    if tipo_metrica == "Bruto":
-        tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
-    elif tipo_metrica == "Real":
-        tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
+        if tipo_metrica == "Bruto":
+            tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
+        elif tipo_metrica == "Real":
+            tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
+        else:
+            tab_b = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
+            tab_r = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
+            tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
+            tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
+            tabela = pd.concat([tab_b, tab_r], axis=1)
+            colunas_intercaladas = []
+            for col in ordem:
+                colunas_intercaladas.append(f"{col} (Bruto)")
+                colunas_intercaladas.append(f"{col} (Real)")
+            tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
     else:
-        tab_b = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
-        tab_r = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
-        tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
-        tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
-        tabela = pd.concat([tab_b, tab_r], axis=1)
-        colunas_intercaladas = []
-        for col in ordem:
-            colunas_intercaladas.append(f"{col} (Bruto)")
-            colunas_intercaladas.append(f"{col} (Real)")
-        tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
-else:
-    tab_b = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
-    tab_r = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)        
+        tab_b = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
+        tab_r = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)        
     
-    if tipo_metrica == "Bruto":
-        tabela = tab_b
-    elif tipo_metrica == "Real":
-        tabela = tab_r
-    else:
-        tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
-        tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
-        tabela = pd.concat([tab_b, tab_r], axis=1)
-        tabela.columns = [
-            col if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""] else "Excluir"
-            for col in tabela.columns
-        ]
-        tabela = tabela.loc[:, tabela.columns != "Excluir"]
+        if tipo_metrica == "Bruto":
+            tabela = tab_b
+        elif tipo_metrica == "Real":
+            tabela = tab_r
+        else:
+            tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
+            tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
+            tabela = pd.concat([tab_b, tab_r], axis=1)
+            tabela.columns = [
+                col if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""] else "Excluir"
+                for col in tabela.columns
+            ]
+            tabela = tabela.loc[:, tabela.columns != "Excluir"]
 
 
             
-        colunas_intercaladas = []
-        for col in ordem:
-            colunas_intercaladas.append(f"{col} (Bruto)")
-            colunas_intercaladas.append(f"{col} (Real)")
+            colunas_intercaladas = []
+            for col in ordem:
+                colunas_intercaladas.append(f"{col} (Bruto)")
+                colunas_intercaladas.append(f"{col} (Real)")
 
-     # 🔥 Aqui já remove qualquer None no processo de montar a lista
-        colunas_intercaladas = [c for c in colunas_intercaladas if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
-        tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
+         # 🔥 Aqui já remove qualquer None no processo de montar a lista
+            colunas_intercaladas = [c for c in colunas_intercaladas if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
+            tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
      
 
 
-tabela = tabela[[col for col in tabela.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]]
+    tabela = tabela[[col for col in tabela.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]]
 
-if modo_visao == "Por Grupo":
-    tabela_final = tabela.copy()
-    tabela_final.index.name = "Grupo"
-elif modo_visao == "Por Loja":
-    tabela_final = tabela.copy()
-    tabela_final.index.name = "Loja"
+    if modo_visao == "Por Grupo":
+        tabela_final = tabela.copy()
+        tabela_final.index.name = "Grupo"
+    elif modo_visao == "Por Loja":
+        tabela_final = tabela.copy()
+        tabela_final.index.name = "Loja"
              
-# ✅ 🔥 Limpeza imediata e universal após criar tabela_final
-tabela_final.columns.name = None  # Remove nome do eixo das colunas
-tabela_final = tabela_final.loc[:, ~tabela_final.columns.isnull()]  # Remove colunas None (NaN real)
-tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
+    # ✅ 🔥 Limpeza imediata e universal após criar tabela_final
+    tabela_final.columns.name = None  # Remove nome do eixo das colunas
+    tabela_final = tabela_final.loc[:, ~tabela_final.columns.isnull()]  # Remove colunas None (NaN real)
+    tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
-if modo_visao == "Por Loja":
-    lojas_ativas = todas_lojas["Loja"].tolist()
-    lojas_existentes = tabela.index.tolist()
+    if modo_visao == "Por Loja":
+        lojas_ativas = todas_lojas["Loja"].tolist()
+        lojas_existentes = tabela.index.tolist()
 
-    lojas_faltando = list(set(lojas_ativas) - set(lojas_existentes))
+        lojas_faltando = list(set(lojas_ativas) - set(lojas_existentes))
 
-    if lojas_faltando:
-        df_sem_venda = pd.DataFrame(0, index=lojas_faltando, columns=tabela.columns)
-        tabela = pd.concat([tabela, df_sem_venda])
+        if lojas_faltando:
+            df_sem_venda = pd.DataFrame(0, index=lojas_faltando, columns=tabela.columns)
+            tabela = pd.concat([tabela, df_sem_venda])
 
-        tabela = tabela.sort_index()
+            tabela = tabela.sort_index()
 
-    colunas_ordenadas = [col for col in ordem if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns]
-    todas_colunas = []
-    for col in colunas_ordenadas:
-        if tipo_metrica == "Ambos":
-            if f"{col} (Bruto)" in tabela.columns: todas_colunas.append(f"{col} (Bruto)")
-            if f"{col} (Real)" in tabela.columns: todas_colunas.append(f"{col} (Real)")
-        else:
-            todas_colunas.append(col)
+        colunas_ordenadas = [col for col in ordem if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns]
+        todas_colunas = []
+            for col in colunas_ordenadas:
+            if tipo_metrica == "Ambos":
+                if f"{col} (Bruto)" in tabela.columns: todas_colunas.append(f"{col} (Bruto)")
+                if f"{col} (Real)" in tabela.columns: todas_colunas.append(f"{col} (Real)")
+            else:
+                todas_colunas.append(col)
 
 
-    # 🔥 Limpeza definitiva de colunas inválidas
-    tabela = tabela[todas_colunas]
-    tabela = tabela.loc[:, ~tabela.columns.isnull()]  # Remove colunas None (NaN real)
+        # 🔥 Limpeza definitiva de colunas inválidas
+        tabela = tabela[todas_colunas]
+        tabela = tabela.loc[:, ~tabela.columns.isnull()]  # Remove colunas None (NaN real)
   
-    tabela = tabela[todas_colunas]
-    if tipo_metrica == "Ambos":
-        cols_bruto = [col for col in tabela.columns if "(Bruto)" in col]
-        cols_real = [col for col in tabela.columns if "(Real)" in col]
+        tabela = tabela[todas_colunas]
+        if tipo_metrica == "Ambos":
+            cols_bruto = [col for col in tabela.columns if "(Bruto)" in col]
+            cols_real = [col for col in tabela.columns if "(Real)" in col]
 
-        if exibir_total:
-            tabela["Total Bruto"] = tabela[cols_bruto].sum(axis=1)
-            tabela["Total Real"] = tabela[cols_real].sum(axis=1)
-            colunas_finais = ["Total Bruto", "Total Real"] + [col for col in tabela.columns if col not in ["Total Bruto", "Total Real"]]
-            tabela = tabela[colunas_finais]
+            if exibir_total:
+                tabela["Total Bruto"] = tabela[cols_bruto].sum(axis=1)
+                tabela["Total Real"] = tabela[cols_real].sum(axis=1)
+                colunas_finais = ["Total Bruto", "Total Real"] + [col for col in tabela.columns if col not in ["Total Bruto", "Total Real"]]
+                tabela = tabela[colunas_finais]
 
-        total_row = pd.DataFrame(tabela.sum(numeric_only=True)).T
-        total_row.index = ["Total Geral"]
-        tabela_final = pd.concat([total_row, tabela])
-    else:
-        cols_validas = [col for col in tabela.columns if col != "Total"]
-        if exibir_total:
-            tabela["Total"] = tabela[cols_validas].sum(axis=1)
-            tabela = tabela[["Total"] + cols_validas]
+            total_row = pd.DataFrame(tabela.sum(numeric_only=True)).T
+            total_row.index = ["Total Geral"]
+            tabela_final = pd.concat([total_row, tabela])
         else:
-            tabela = tabela[cols_validas]
+            cols_validas = [col for col in tabela.columns if col != "Total"]
+            if exibir_total:
+                tabela["Total"] = tabela[cols_validas].sum(axis=1)
+                tabela = tabela[["Total"] + cols_validas]
+            else:
+                tabela = tabela[cols_validas]
 
         
-        total_geral = pd.DataFrame(tabela.sum(numeric_only=True)).T
-        total_geral.index = ["Total Geral"]
-        tabela_final = pd.concat([total_geral, tabela])
+            total_geral = pd.DataFrame(tabela.sum(numeric_only=True)).T
+            total_geral.index = ["Total Geral"]
+            tabela_final = pd.concat([total_geral, tabela])
 
-    quantidade = tabela.shape[0]
-    nome = "Grupos" if modo_visao == "Por Grupo" else "Lojas"
-    st.markdown(f"**🔢 Total de {nome}: {quantidade}**")
+        quantidade = tabela.shape[0]
+        nome = "Grupos" if modo_visao == "Por Grupo" else "Lojas"
+        st.markdown(f"**🔢 Total de {nome}: {quantidade}**")
 
-    # Detecta a coluna de data mais recente
-    colunas_validas = [col for col in tabela_final.columns if "/" in col or (col.isdigit() and len(col) == 4)]
+        # Detecta a coluna de data mais recente
+        colunas_validas = [col for col in tabela_final.columns if "/" in col or (col.isdigit() and len(col) == 4)]
 
-    def parse_col(col):
-        try:
-            if "/" in col:
-                return pd.to_datetime(f"01/{col}", dayfirst=True, errors="coerce")
-            elif col.isdigit() and len(col) == 4:
-                return pd.to_datetime(f"01/01/{col}", dayfirst=True)
-        except:
+        def parse_col(col):
+            try:
+                if "/" in col:
+                    return pd.to_datetime(f"01/{col}", dayfirst=True, errors="coerce")
+                elif col.isdigit() and len(col) == 4:
+                    return pd.to_datetime(f"01/01/{col}", dayfirst=True)
+            except:
+                return pd.NaT
             return pd.NaT
-        return pd.NaT
 
-    datas_convertidas = [(col, parse_col(col)) for col in colunas_validas if pd.notnull(parse_col(col))]
+        datas_convertidas = [(col, parse_col(col)) for col in colunas_validas if pd.notnull(parse_col(col))]
 
-    if datas_convertidas:
-        col_mais_recente = max(datas_convertidas, key=lambda x: x[1])[0]
+        if datas_convertidas:
+            col_mais_recente = max(datas_convertidas, key=lambda x: x[1])[0]
     
-        # Ordena pela coluna mais recente (exceto a linha Total Geral)
-        tem_total = "Total Geral" in tabela_final.index
-        if tem_total:
-            total_row = tabela_final.loc[["Total Geral"]]
-            corpo_ordenado = tabela_final.drop(index="Total Geral").sort_values(by=col_mais_recente, ascending=False)
-            tabela_final = pd.concat([total_row, corpo_ordenado])
-        else:
-            tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
+            # Ordena pela coluna mais recente (exceto a linha Total Geral)
+            tem_total = "Total Geral" in tabela_final.index
+            if tem_total:
+                total_row = tabela_final.loc[["Total Geral"]]
+                corpo_ordenado = tabela_final.drop(index="Total Geral").sort_values(by=col_mais_recente, ascending=False)
+                tabela_final = pd.concat([total_row, corpo_ordenado])
+            else:
+                tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
 
-    # 🔥 Ordenação da tabela na TELA: pela coluna (Bruto) mais recente, se não tiver, pela (Real)
-    colunas_bruto = [col for col in tabela_final.columns if '(Bruto)' in col]
-    colunas_real = [col for col in tabela_final.columns if '(Real)' in col]
+        # 🔥 Ordenação da tabela na TELA: pela coluna (Bruto) mais recente, se não tiver, pela (Real)
+        colunas_bruto = [col for col in tabela_final.columns if '(Bruto)' in col]
+        colunas_real = [col for col in tabela_final.columns if '(Real)' in col]
 
-    # 📅 Ordena as colunas com base na data do nome
-    def extrair_data(col):
-        try:
-            parte = col.split(' ')[0]
-            if '/' in parte:
-                return pd.to_datetime(f"01/{parte}", dayfirst=True)
-            elif parte.isdigit() and len(parte) == 4:
-                return pd.to_datetime(f"01/01/{parte}")
-        except:
+        # 📅 Ordena as colunas com base na data do nome
+        def extrair_data(col):
+            try:
+                parte = col.split(' ')[0]
+                if '/' in parte:
+                    return pd.to_datetime(f"01/{parte}", dayfirst=True)
+                elif parte.isdigit() and len(parte) == 4:
+                    return pd.to_datetime(f"01/01/{parte}")
+            except:
+                return pd.NaT
             return pd.NaT
-        return pd.NaT
 
-    # 🔍 Busca a coluna (Bruto) mais recente
-    if colunas_bruto:
-        colunas_bruto_ordenadas = sorted(colunas_bruto, key=extrair_data, reverse=True)
-        coluna_ordenacao = colunas_bruto_ordenadas[0]
-    elif colunas_real:
-        colunas_real_ordenadas = sorted(colunas_real, key=extrair_data, reverse=True)
-        coluna_ordenacao = colunas_real_ordenadas[0]
-    else:
-        coluna_ordenacao = None
-
-    # 🔥 Faz a ordenação, mantendo "Total Geral" no topo
-    if coluna_ordenacao:
-        tem_total = "Total Geral" in tabela_final.index
-        if tem_total:
-            total_row = tabela_final.loc[["Total Geral"]]
-            corpo_ordenado = tabela_final.drop(index="Total Geral").sort_values(by=coluna_ordenacao, ascending=False)
-            tabela_final = pd.concat([total_row, corpo_ordenado])
+        # 🔍 Busca a coluna (Bruto) mais recente
+        if colunas_bruto:
+            colunas_bruto_ordenadas = sorted(colunas_bruto, key=extrair_data, reverse=True)
+            coluna_ordenacao = colunas_bruto_ordenadas[0]
+        elif colunas_real:
+            colunas_real_ordenadas = sorted(colunas_real, key=extrair_data, reverse=True)
+            coluna_ordenacao = colunas_real_ordenadas[0]
         else:
-            tabela_final = tabela_final.sort_values(by=coluna_ordenacao, ascending=False)
+            coluna_ordenacao = None
+
+        # 🔥 Faz a ordenação, mantendo "Total Geral" no topo
+        if coluna_ordenacao:
+            tem_total = "Total Geral" in tabela_final.index
+            if tem_total:
+                total_row = tabela_final.loc[["Total Geral"]]
+                corpo_ordenado = tabela_final.drop(index="Total Geral").sort_values(by=coluna_ordenacao, ascending=False)
+                tabela_final = pd.concat([total_row, corpo_ordenado])
+            else:
+                tabela_final = tabela_final.sort_values(by=coluna_ordenacao, ascending=False)
 
     
-    tabela_formatada = tabela_final.applymap(
-        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x
-    )
+        tabela_formatada = tabela_final.applymap(
+            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x
+        )
 
   
     
-    st.dataframe(tabela_formatada, use_container_width=True)
+        st.dataframe(tabela_formatada, use_container_width=True)
 
 import io
 import itertools
@@ -930,12 +930,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             else:
                 worksheet.write(linha, col_num, str(val), subtotal_format)
         linha += 1
-
-
-
-
-
-
 
 # 🔥 Calcula o total geral para usar na porcentagem
 valor_total_geral = df_para_total.select_dtypes(include='number').sum().sum()
