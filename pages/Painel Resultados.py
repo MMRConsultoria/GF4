@@ -433,9 +433,11 @@ with aba4:
     
     
     # 🔄 Define o valor padrão conforme o agrupamento
-    if agrupamento == "Ano":
-        data_inicio_padrao = datetime(data_minima.year, 1, 1).date()
-        data_fim_padrao = datetime(data_maxima.year, 12, 31).date()
+    if agrupamento == "Ano" and ano_opcao:
+        ano_inicio = min(ano_opcao)
+        ano_fim = max(ano_opcao)
+        data_inicio_padrao = date(ano_inicio, 1, 1)
+        data_fim_padrao = date(ano_fim, 12, 31)
     elif agrupamento == "Mês":
         data_inicio_padrao = datetime(data_minima.year, data_minima.month, 1).date()
         data_fim_padrao = data_maxima.date()
