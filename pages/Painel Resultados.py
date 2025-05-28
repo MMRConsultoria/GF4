@@ -405,16 +405,34 @@ with aba4:
     
     with col4:
          agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
-
+    # 🔄 Define o valor padrão conforme o agrupamento
+    if agrupamento == "Ano":
+        data_inicio_padrao = pd.to_datetime(f"{data_minima.year}-01-01").date()
+        data_fim_padrao = pd.to_datetime(f"{data_maxima.year}-12-31").date()
+    elif agrupamento == "Mês":
+        data_inicio_padrao = pd.to_datetime(data_minima.replace(day=1)).date()
+        data_fim_padrao = pd.to_datetime(data_maxima).date()
+    else:  # Dia
+        data_inicio_padrao = hoje
+        data_fim_padrao = hoje
    
     # Campo de data seguro
+    #data_inicio, data_fim = st.date_input(
+    #    "",
+    #    value=[hoje, hoje],
+    #    min_value=data_minima,
+    #    max_value=data_maxima
+    #)
+
     data_inicio, data_fim = st.date_input(
         "",
-        value=[hoje, hoje],
+        value=[data_inicio_padrao, data_fim_padrao],
         min_value=data_minima,
         max_value=data_maxima
     )
-    
+
+
+
     #df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
 
     # ✅ Aplica o filtro de datas corretamente conforme o agrupamento
