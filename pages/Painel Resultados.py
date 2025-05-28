@@ -408,12 +408,28 @@ with aba4:
     
     with col4:
          agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
-    # 📌 Converte a coluna 'Data' do df_anos, com segurança
+
+    
+   # 🧠 Converte a coluna 'Data' com segurança (se ainda não fez isso antes)
     df_anos["Data"] = pd.to_datetime(df_anos["Data"], errors="coerce")
 
-    # 🧠 Extrai a data mínima e máxima dos dados válidos
+    # 📅 Detecta datas reais do dataframe completo
     data_minima = df_anos["Data"].min().date()
     data_maxima = df_anos["Data"].max().date()
+
+    # 🔄 Define ontem como padrão, respeitando os limites
+    ontem = date.today() - timedelta(days=1)
+    data_padrao = max(data_minima, min(ontem, data_maxima))
+
+    # ✅ Campo de data com valor padrão "ontem"
+    data_inicio, data_fim = st.date_input(
+        "",
+        value=[data_padrao, data_padrao],
+        min_value=data_minima,
+        max_value=data_maxima
+    )
+
+    
     
     # 🔄 Define o valor padrão conforme o agrupamento
     if agrupamento == "Ano":
@@ -426,24 +442,18 @@ with aba4:
         data_inicio_padrao = hoje
         data_fim_padrao = hoje
    
-    # Campo de data seguro
-    #data_inicio, data_fim = st.date_input(
-    #    "",
-    #    value=[hoje, hoje],
-    #    min_value=data_minima,
-    #    max_value=data_maxima
-    #)
+   
     # 🔒 Corrige valores fora dos limites
-    data_inicio_padrao = max(data_inicio_padrao, data_minima)
-    data_fim_padrao = min(data_fim_padrao, data_maxima)
+    #data_inicio_padrao = max(data_inicio_padrao, data_minima)
+    #data_fim_padrao = min(data_fim_padrao, data_maxima)
 
     # ✅ Campo de data com valores padrão corretos
-    data_inicio, data_fim = st.date_input(
-        "",
-        value=[data_inicio_padrao, data_fim_padrao],
-        min_value=data_minima,
-        max_value=data_maxima
-    )
+    #data_inicio, data_fim = st.date_input(
+     #   "",
+     #   value=[data_inicio_padrao, data_fim_padrao],
+     #   min_value=data_minima,
+     #   max_value=data_maxima
+    #)
 
 
     #df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
