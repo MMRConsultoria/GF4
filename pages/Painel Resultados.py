@@ -81,13 +81,7 @@ with aba1:
     aba = planilha.worksheet("Fat Sistema Externo")
     dados = aba.get_all_records()
     df = pd.DataFrame(dados)
-    
-    # ✅ Limpa espaços invisíveis nos nomes das colunas
-    df.columns = df.columns.str.strip()
-    
-    #st.write("🧪 Colunas carregadas:", df.columns.tolist())
-    
-    
+
     # 🔥 Normalização
     df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
     df["Loja"] = df["Loja"].astype(str).str.strip().str.lower().str.title()
@@ -95,6 +89,16 @@ with aba1:
     df_empresa["Grupo"] = df_empresa["Grupo"].astype(str).str.strip().str.upper()
     df["Grupo"] = df["Grupo"].astype(str).str.strip().str.upper()
     df["Grupo"] = df["Grupo"].str.split("-").str[0].str.strip()
+
+
+    
+    # ✅ Limpa espaços invisíveis nos nomes das colunas
+    df.columns = df.columns.str.strip()
+    
+    #st.write("🧪 Colunas carregadas:", df.columns.tolist())
+    
+    
+   
     def limpar_valor(x):
         try:
             if isinstance(x, str):
