@@ -349,24 +349,6 @@ with aba4:
     df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
 
    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
     meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
                   7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"}
 
@@ -548,6 +530,10 @@ elif modo_visao == "Por Loja":
     tabela_final = tabela.copy()
     tabela_final.index.name = "Loja"
              
+ # ✅ Remoção de coluna None, NaN, vazio
+    tabela_final.columns.name = None
+    colunas_validas = [col for col in tabela_final.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]
+    tabela_final = tabela_final[colunas_validas]
 
 
 if modo_visao == "Por Loja":
@@ -562,17 +548,6 @@ if modo_visao == "Por Loja":
 
         tabela = tabela.sort_index()
 
-
-
-  
-
-
-
-
-
-
-
-    
     colunas_ordenadas = [col for col in ordem if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns]
     todas_colunas = []
     for col in colunas_ordenadas:
@@ -686,11 +661,7 @@ if modo_visao == "Por Loja":
         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x
     )
 
-   # ✅ Remoção de coluna None, NaN, vazio
-    tabela_final.columns.name = None
-    colunas_validas = [col for col in tabela_final.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]
-    tabela_final = tabela_final[colunas_validas]
-
+  
     
     st.dataframe(tabela_formatada, use_container_width=True)
 
