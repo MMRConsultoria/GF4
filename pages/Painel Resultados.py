@@ -731,7 +731,7 @@ elif modo_visao == "Por Grupo":
     tabela_exportar = tabela_final.reset_index()
 
     if modo_visao == "Por Grupo":
-    tabela_exportar["Tipo"] = df_empresa.groupby("Grupo")["Tipo"].agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None).reindex(tabela_exportar["Grupo"]).values
+        tabela_exportar["Tipo"] = df_empresa.groupby("Grupo")["Tipo"].agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None).reindex(tabela_exportar["Grupo"]).values
  
     st.write("🚧 Debug Grupo", tabela_exportar)
     st.write("📄 df_empresa", df_empresa)
