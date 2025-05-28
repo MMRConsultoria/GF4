@@ -445,6 +445,22 @@ with aba4:
     # 🔥 Remove agrupadores inválidos (None, nan, vazio)
     df_filtrado = df_filtrado[~df_filtrado["Agrupador"].isin([None, "None", "nan", "NaN", ""])]
 
+
+  # Garante a ordem correta
+    ordem = (
+        df_filtrado[["Agrupador", "Ordem"]]
+        .drop_duplicates()
+        .dropna()
+        .sort_values("Ordem", ascending=False)
+    )["Agrupador"].tolist()
+   
+    ordem = [c for c in ordem if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
+
+    ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
+
+
+
+
 if modo_visao == "Por Loja":
     lojas_com_venda = df_filtrado["Loja"].unique()
     lojas_sem_venda = todas_lojas[~todas_lojas["Loja"].isin(lojas_com_venda)]
@@ -469,31 +485,6 @@ if modo_visao == "Por Loja":
         df_filtrado = pd.concat([df_filtrado, df_sem_venda], ignore_index=True)
 
 
-
-
-
-
-    
-    # Filtro para exibir ou não a coluna Total
-    #exibir_total_opcao = st.radio("📊 Coluna Total:", ["Sim", "Não"], index=0, horizontal=True)
-    #exibir_total = exibir_total_opcao == "Sim"
-
-   
-
-
-    
-    # Garante a ordem correta
-    ordem = (
-        df_filtrado[["Agrupador", "Ordem"]]
-        .drop_duplicates()
-        .dropna()
-        .sort_values("Ordem", ascending=False)
-    )["Agrupador"].tolist()
-   
-    ordem = [c for c in ordem if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
-
-    ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
-
 if modo_visao == "Por Grupo":
     df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
         Bruto=("Fat.Total", "sum"),
@@ -515,13 +506,14 @@ if modo_visao == "Por Grupo":
             colunas_intercaladas.append(f"{col} (Bruto)")
             colunas_intercaladas.append(f"{col} (Real)")
         tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
-    else:
-        tab_b = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
-        tab_r = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
-        if tipo_metrica == "Bruto":
-            tabela = tab_b
-        elif tipo_metrica == "Real":
-            tabela = tab_r
+else:
+    tab_b = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
+    tab_r = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)        
+    
+    if tipo_metrica == "Bruto":
+        tabela = tab_b
+    elif tipo_metrica == "Real":
+        tabela = tab_r
     else:
         tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
         tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
