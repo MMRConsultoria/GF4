@@ -391,7 +391,6 @@ with aba4:
         max_value=data_maxima
     )
     
-    
     #df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
 
     # ✅ Aplica o filtro de datas corretamente conforme o agrupamento
