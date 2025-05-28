@@ -530,8 +530,7 @@ with aba4:
         tabela_final = tabela.copy()
         tabela_final.index.name = "Loja"
 
-    st.write("🚧 Debug Grupo", tabela_exportar)
-    st.write("📄 df_empresa", df_empresa)
+
   
     # ✅ 🔥 Limpeza imediata e universal após criar tabela_final
     tabela_final.columns.name = None  # Remove nome do eixo das colunas
@@ -731,6 +730,10 @@ elif modo_visao == "Por Grupo":
         df_empresa[["Grupo", "Tipo"]].drop_duplicates(),
         on="Grupo", how="left"
     )
+
+    st.write("🚧 Debug Grupo", tabela_exportar)
+    st.write("📄 df_empresa", df_empresa)
+
 # 🔥 Define qual coluna usar para o acumulado (Bruto ou Real)
 coluna_acumulado = "Fat.Total"  # 🔥 Para Acumulado no mês pelo Bruto (com gorjeta)
 # Se quiser mudar para Real, basta trocar para:
