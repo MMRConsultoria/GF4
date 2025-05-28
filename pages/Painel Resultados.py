@@ -492,49 +492,59 @@ if modo_visao == "Por Loja":
 
     ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
 
+    if modo_visao == "Por Grupo":
+        df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
+            Bruto=("Fat.Total", "sum"),
+            Real=("Fat.Real", "sum")
+        ).reset_index()
 
-
-if modo_visao == "Por Grupo":
-    # 🔗 Garante que 'Grupo' e 'Tipo' estão presentes
-    if "Grupo" not in df_filtrado.columns:
-        df_filtrado = df_filtrado.merge(
-            df_empresa[["Loja", "Grupo", "Tipo"]].drop_duplicates(),
-            on="Loja", how="left"
-        )
-
-    df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
-        Bruto=("Fat.Total", "sum"),
-        Real=("Fat.Real", "sum")
-    ).reset_index()
-
-    if tipo_metrica == "Bruto":
-        tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
-
-    elif tipo_metrica == "Real":
-        tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
-
+        if tipo_metrica == "Bruto":
+            tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
+        elif tipo_metrica == "Real":
+            tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
+        else:
+            tab_b = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
+            tab_r = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
+            tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
+            tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
+            tabela = pd.concat([tab_b, tab_r], axis=1)
+            colunas_intercaladas = []
+            for col in ordem:
+                colunas_intercaladas.append(f"{col} (Bruto)")
+                colunas_intercaladas.append(f"{col} (Real)")
+            tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
     else:
-        tab_b = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
-        tab_r = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
+        tab_b = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
+        tab_r = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
+        if tipo_metrica == "Bruto":
+            tabela = tab_b
+        elif tipo_metrica == "Real":
+            tabela = tab_r
+        else:
+            tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
+            tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
+            tabela = pd.concat([tab_b, tab_r], axis=1)
+            tabela.columns = [
+                col if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""] else "Excluir"
+                for col in tabela.columns
+            ]
+            tabela = tabela.loc[:, tabela.columns != "Excluir"]
 
-        tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
-        tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
 
-        tabela = pd.concat([tab_b, tab_r], axis=1)
+            
+            colunas_intercaladas = []
+            for col in ordem:
+                colunas_intercaladas.append(f"{col} (Bruto)")
+                colunas_intercaladas.append(f"{col} (Real)")
+           
+            # 🔥 Aqui já remove qualquer None no processo de montar a lista
+            colunas_intercaladas = [c for c in colunas_intercaladas if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
+            tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
-        colunas_intercaladas = []
-        for col in ordem:
-            colunas_intercaladas.append(f"{col} (Bruto)")
-            colunas_intercaladas.append(f"{col} (Real)")
 
-        colunas_intercaladas = [
-            c for c in colunas_intercaladas
-            if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]
-        ]
+tabela = tabela[[col for col in tabela.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]]
 
-        tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
-
-elif modo_visao == "Por Loja":
+if modo_visao == "Por Loja":
     lojas_ativas = todas_lojas["Loja"].tolist()
     lojas_existentes = tabela.index.tolist()
 
@@ -543,34 +553,8 @@ elif modo_visao == "Por Loja":
     if lojas_faltando:
         df_sem_venda = pd.DataFrame(0, index=lojas_faltando, columns=tabela.columns)
         tabela = pd.concat([tabela, df_sem_venda])
+
         tabela = tabela.sort_index()
-
-    colunas_ordenadas = [
-        col for col in ordem
-        if col in tabela.columns or f"{col} (Bruto)" in tabela.columns or f"{col} (Real)" in tabela.columns
-    ]
-
-    todas_colunas = []
-    for col in colunas_ordenadas:
-        if tipo_metrica == "Ambos":
-            if f"{col} (Bruto)" in tabela.columns:
-                todas_colunas.append(f"{col} (Bruto)")
-            if f"{col} (Real)" in tabela.columns:
-                todas_colunas.append(f"{col} (Real)")
-        else:
-            todas_colunas.append(col)
-
-    colunas_intercaladas = [
-        c for c in todas_colunas
-        if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]
-    ]
-
-    tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
-
-
-
-    
-
 
 
 
@@ -762,16 +746,16 @@ elif modo_visao == "Por Grupo":
         df_empresa[["Grupo", "Tipo"]].drop_duplicates(),
         on="Grupo", how="left"
     )
+# 🔥 Define qual coluna usar para o acumulado (Bruto ou Real)
+coluna_acumulado = "Fat.Total"  # 🔥 Para Acumulado no mês pelo Bruto (com gorjeta)
+# Se quiser mudar para Real, basta trocar para:
+# coluna_acumulado = "Fat.Real"
 
-# 🔥 Define a coluna que será usada no Acumulado
-coluna_acumulado = "Fat.Total"  # 🔥 Bruto (com gorjeta)
-# 👉 Se quiser voltar para Real, troque por: coluna_acumulado = "Fat.Real"
-
-# 🔥 Cálculo do Acumulado
+# 🔥 Cálculo do Acumulado no Mês
 if mostrar_acumulado:
     primeiro_dia_mes = data_max.replace(day=1)
     df_acumulado = df_anos[
-        (df_anos["Data"] >= primeiro_dia_mes) & 
+        (df_anos["Data"] >= primeiro_dia_mes) &
         (df_anos["Data"] <= data_max)
     ].copy()
 
@@ -791,7 +775,9 @@ if mostrar_acumulado:
         columns={coluna_acumulado: "Acumulado no Mês"}
     )
 
-    
+
+
+
 # 🔥 Merge dos acumulados
 if mostrar_acumulado:
     if modo_visao == "Por Loja":
