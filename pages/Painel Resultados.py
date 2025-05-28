@@ -509,10 +509,14 @@ if modo_visao == "Por Grupo":
         tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
         tabela = pd.concat([tab_b, tab_r], axis=1)
         colunas_intercaladas = []
-            for col in ordem:
+        for col in ordem:
             colunas_intercaladas.append(f"{col} (Bruto)")
             colunas_intercaladas.append(f"{col} (Real)")
-        tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
+        colunas_intercaladas = [c for c in colunas_intercaladas if c in tabela.columns]
+        tabela = tabela[colunas_intercaladas]
+
+
+    
     else:
         tab_b = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
         tab_r = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
