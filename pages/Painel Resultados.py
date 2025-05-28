@@ -494,27 +494,27 @@ if modo_visao == "Por Loja":
 
     ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
 
-    if modo_visao == "Por Grupo":
-        df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
-            Bruto=("Fat.Total", "sum"),
-            Real=("Fat.Real", "sum")
-        ).reset_index()
+if modo_visao == "Por Grupo":
+    df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
+        Bruto=("Fat.Total", "sum"),
+        Real=("Fat.Real", "sum")
+    ).reset_index()
 
-        if tipo_metrica == "Bruto":
-            tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
-        elif tipo_metrica == "Real":
-            tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
-        else:
-            tab_b = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
-            tab_r = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
-            tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
-            tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
-            tabela = pd.concat([tab_b, tab_r], axis=1)
-            colunas_intercaladas = []
-            for col in ordem:
-                colunas_intercaladas.append(f"{col} (Bruto)")
-                colunas_intercaladas.append(f"{col} (Real)")
-            tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
+    if tipo_metrica == "Bruto":
+        tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
+    elif tipo_metrica == "Real":
+        tabela = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
+    else:
+        tab_b = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Bruto").fillna(0)
+        tab_r = df_grouped.pivot(index="Grupo", columns="Agrupador", values="Real").fillna(0)
+        tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
+        tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
+        tabela = pd.concat([tab_b, tab_r], axis=1)
+        colunas_intercaladas = []
+        for col in ordem:
+            colunas_intercaladas.append(f"{col} (Bruto)")
+            colunas_intercaladas.append(f"{col} (Real)")
+        tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
     else:
         tab_b = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Total", aggfunc="sum", fill_value=0)
         tab_r = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)
@@ -522,26 +522,26 @@ if modo_visao == "Por Loja":
             tabela = tab_b
         elif tipo_metrica == "Real":
             tabela = tab_r
-        else:
-            tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
-            tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
-            tabela = pd.concat([tab_b, tab_r], axis=1)
-            tabela.columns = [
-                col if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""] else "Excluir"
-                for col in tabela.columns
-            ]
-            tabela = tabela.loc[:, tabela.columns != "Excluir"]
+    else:
+        tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
+        tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
+        tabela = pd.concat([tab_b, tab_r], axis=1)
+        tabela.columns = [
+            col if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""] else "Excluir"
+            for col in tabela.columns
+        ]
+        tabela = tabela.loc[:, tabela.columns != "Excluir"]
 
 
             
-            colunas_intercaladas = []
-            for col in ordem:
-                colunas_intercaladas.append(f"{col} (Bruto)")
-                colunas_intercaladas.append(f"{col} (Real)")
+        colunas_intercaladas = []
+        for col in ordem:
+            colunas_intercaladas.append(f"{col} (Bruto)")
+            colunas_intercaladas.append(f"{col} (Real)")
            
-            # 🔥 Aqui já remove qualquer None no processo de montar a lista
-            colunas_intercaladas = [c for c in colunas_intercaladas if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
-            tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
+        # 🔥 Aqui já remove qualquer None no processo de montar a lista
+        colunas_intercaladas = [c for c in colunas_intercaladas if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
+        tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
 
 tabela = tabela[[col for col in tabela.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]]
