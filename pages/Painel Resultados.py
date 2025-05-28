@@ -428,6 +428,9 @@ with aba4:
     #    min_value=data_minima,
     #    max_value=data_maxima
     #)
+    # 🔒 Corrige valores fora dos limites
+    data_inicio_padrao = max(data_inicio_padrao, data_minima)
+    data_fim_padrao = min(data_fim_padrao, data_maxima)
 
     # ✅ Campo de data com valores padrão corretos
     data_inicio, data_fim = st.date_input(
