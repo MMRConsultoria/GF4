@@ -383,6 +383,30 @@ with aba4:
         data_minima = hoje
         data_maxima = hoje
 
+    
+
+    # Filtros laterais lado a lado
+    col1, col2, col3, col4 = st.columns([1.2, 2, 2, 2])  # col1 levemente mais estreita
+
+    with col1:
+        st.write("")  # Garante altura igual às outras colunas com título
+        exibir_total = st.radio(
+            " ", 
+            options=[True, False],
+            format_func=lambda x: "Total Sim" if x else "Total Não",
+            index=0,
+            horizontal=True
+        )
+    with col2:
+        modo_visao = st.radio(" ", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba4")
+
+    with col3:
+        tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba4")
+    
+    with col4:
+         agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
+
+   
     # Campo de data seguro
     data_inicio, data_fim = st.date_input(
         "",
@@ -417,45 +441,9 @@ with aba4:
 
 
 
+
     
-
-    # Filtros laterais lado a lado
-    col1, col2, col3, col4 = st.columns([1.2, 2, 2, 2])  # col1 levemente mais estreita
-
-    with col1:
-        st.write("")  # Garante altura igual às outras colunas com título
-        exibir_total = st.radio(
-            " ", 
-            options=[True, False],
-            format_func=lambda x: "Total Sim" if x else "Total Não",
-            index=0,
-            horizontal=True
-        )
-    with col2:
-        modo_visao = st.radio(" ", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba4")
-
-    with col3:
-        tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba4")
-    
-    with col4:
-         agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
- 
-    # ✅ Aplica o filtro de datas corretamente conforme o agrupamento
-    if agrupamento == "Dia" and data_inicio and data_fim:
-        df_filtrado = df_filtrado[
-            (df_filtrado["Data"] >= pd.to_datetime(data_inicio)) &
-            (df_filtrado["Data"] <= pd.to_datetime(data_fim))
-        ]
-    elif agrupamento == "Mês" and data_inicio and data_fim:
-        df_filtrado = df_filtrado[
-            (df_filtrado["Data"].dt.to_period("M") >= pd.to_datetime(data_inicio).to_period("M")) &
-            (df_filtrado["Data"].dt.to_period("M") <= pd.to_datetime(data_fim).to_period("M"))
-        ]
-    elif agrupamento == "Ano" and data_inicio and data_fim:
-        df_filtrado = df_filtrado[
-            (df_filtrado["Data"].dt.year >= pd.to_datetime(data_inicio).year) &
-            (df_filtrado["Data"].dt.year <= pd.to_datetime(data_fim).year)
-        ]
+   
     # Criação do agrupador e ordem com base na escolha
     if agrupamento == "Ano":
         df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
@@ -483,8 +471,7 @@ with aba4:
    
     ordem = [c for c in ordem if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
 
-    ordem = df_filtrado[["Agrupador", "Ordem"]].drop_duplicates().sort_values("Ordem", ascending=False)["Agrupador"].tolist()
-
+    
 
 
 
