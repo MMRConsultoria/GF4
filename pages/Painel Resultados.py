@@ -555,7 +555,13 @@ with aba4:
 
         tabela_final = pd.concat([total_geral, tabela])
 
-
+        # 🔍 Ordena a tabela pelo valor mais recente
+        colunas_numericas = tabela_final.select_dtypes(include='number').columns.tolist()
+        if colunas_numericas:
+            col_mais_recente = colunas_numericas[0]
+            if "Total" in col_mais_recente and len(colunas_numericas) > 1:
+                col_mais_recente = colunas_numericas[1]
+            tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
 
   
     # ✅ 🔥 Limpeza imediata e universal após criar tabela_final
