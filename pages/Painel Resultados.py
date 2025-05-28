@@ -668,7 +668,8 @@ with aba4:
         st.dataframe(tabela_formatada, use_container_width=True)
     else:
         st.warning("⚠️ Não há dados para exibir com os filtros atuais.")
-
+    st.write("🚧 Debug Grupo", tabela_exportar)
+    st.write("📄 df_empresa", df_empresa)
 
 import io
 import itertools
