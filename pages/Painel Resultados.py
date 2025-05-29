@@ -1005,36 +1005,70 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     linha += 1
 
     # 🔢 Subtotal por Grupo
-    for grupo_atual, cor in zip(tabela_exportar_sem_tipo["Grupo"].dropna().unique(), cores_grupo):
-        linhas_grupo = tabela_exportar_sem_tipo[
-            (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
-            ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
-        ]
+# 🔥 Monta a estrutura com Tipo + Grupo + Subtotal
+grupos_info = []
 
-        qtd_lojas = linhas_grupo["Loja"].nunique() if "Loja" in linhas_grupo.columns else ""
+for grupo_atual in tabela_exportar_sem_tipo["Grupo"].dropna().unique():
+    # Filtra as linhas desse grupo, ignorando subtotais ou totais anteriores
+    linhas_grupo = tabela_exportar_sem_tipo[
+        (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
+        ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+    ]
 
-        grupo_format = workbook.add_format({
-            'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
-        })
+    # Busca o tipo do grupo na tabela de empresas
+    tipo_grupo = df_empresa[df_empresa["Grupo"] == grupo_atual]["Tipo"].dropna().unique()
+    tipo_grupo = tipo_grupo[0] if len(tipo_grupo) > 0 else "Outro"
 
-        for _, row in linhas_grupo.iterrows():
-            for col_num, val in enumerate(row):
-                if isinstance(val, (int, float)) and not pd.isna(val):
-                    worksheet.write_number(linha, col_num, val, grupo_format)
-                else:
-                    worksheet.write(linha, col_num, str(val), grupo_format)
-            linha += 1
+    # Soma total (todas colunas numéricas)
+    subtotal = linhas_grupo.select_dtypes(include='number').sum().sum()
 
-        soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
-        linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
-        linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+    # Adiciona o dicionário na lista
+    grupos_info.append({
+        "grupo": grupo_atual,
+        "tipo": tipo_grupo,
+        "linhas": linhas_grupo,
+        "subtotal": subtotal
+    })
 
-        for col_num, val in enumerate(linha_grupo):
+# 🔃 Ordena por Tipo (alfabético) e dentro do Tipo pelo subtotal (decrescente)
+grupos_info = sorted(grupos_info, key=lambda x: (x["tipo"], -x["subtotal"]))
+
+# 🔁 Escreve os dados ordenados no Excel
+for info, cor in zip(grupos_info, cores_grupo):
+    grupo_atual = info["grupo"]
+    tipo_grupo = info["tipo"]     # só usamos internamente, não mostramos no Excel
+    linhas_grupo = info["linhas"]
+    subtotal = info["subtotal"]
+
+    qtd_lojas = linhas_grupo["Loja"].nunique() if "Loja" in linhas_grupo.columns else ""
+
+    grupo_format = workbook.add_format({
+        'bg_color': cor,
+        'border': 1,
+        'num_format': 'R$ #,##0.00'
+    })
+
+    # Escreve cada linha de loja do grupo
+    for _, row in linhas_grupo.iterrows():
+        for col_num, val in enumerate(row):
             if isinstance(val, (int, float)) and not pd.isna(val):
-                worksheet.write_number(linha, col_num, val, subtotal_format)
+                worksheet.write_number(linha, col_num, val, grupo_format)
             else:
-                worksheet.write(linha, col_num, str(val), subtotal_format)
+                worksheet.write(linha, col_num, str(val), grupo_format)
         linha += 1
+
+    # Escreve a linha de subtotal do grupo
+    soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
+    linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
+    linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+
+    for col_num, val in enumerate(linha_grupo):
+        if isinstance(val, (int, float)) and not pd.isna(val):
+            worksheet.write_number(linha, col_num, val, subtotal_format)
+        else:
+            worksheet.write(linha, col_num, str(val), subtotal_format)
+    linha += 1
+
 
 # 🔥 Calcula o total geral para usar na porcentagem
 valor_total_geral = df_para_total.select_dtypes(include='number').sum().sum()
