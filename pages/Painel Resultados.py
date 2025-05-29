@@ -413,6 +413,10 @@ with aba4:
     # 📌 Define data_fim como a data mais recente do DataFrame
     datas_disponiveis = sorted(pd.to_datetime(df_anos["Data"].dropna().unique()))
     data_fim = datas_disponiveis[-1].date() if datas_disponiveis else date.today()
+    # 🔢 Filtra só as lojas ativas
+    lojas_ativas = df_empresa[
+        df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
+     ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
     # 🔄 Se for agrupamento por Dia e modo Por Grupo, garantir exibição de todas as lojas ativas
     if agrupamento == "Dia" and modo_visao == "Por Grupo":
