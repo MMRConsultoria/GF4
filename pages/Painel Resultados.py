@@ -464,13 +464,13 @@ with aba4:
             (df_filtrado["Data"].dt.to_period("M") >= periodo_inicio) &
             (df_filtrado["Data"].dt.to_period("M") <= periodo_fim)
         ]
-    #elif agrupamento == "Ano":
-    #    ano_inicio = pd.to_datetime(data_inicio).year
-    #    ano_fim = pd.to_datetime(data_fim).year
-    #    df_filtrado = df_filtrado[
-    #        (df_filtrado["Data"].dt.year >= ano_inicio) &
-    #        (df_filtrado["Data"].dt.year <= ano_fim)
-    #    ]
+    elif agrupamento == "Ano":
+        ano_inicio = pd.to_datetime(data_inicio).year
+        ano_fim = pd.to_datetime(data_fim).year
+        df_filtrado = df_filtrado[
+            (df_filtrado["Data"].dt.year >= ano_inicio) &
+            (df_filtrado["Data"].dt.year <= ano_fim)
+        ]
 
 
     # Criação do agrupador e ordem com base na escolha
