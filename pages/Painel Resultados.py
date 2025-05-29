@@ -382,24 +382,7 @@ with aba4:
         data_minima = hoje
         data_maxima = hoje
 
-    # 🔢 Filtra só as lojas ativas
-    lojas_ativas = df_empresa[
-       df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
-    ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
-
     
-    
-
-   
-
-
-    # ✅ Campo de data com valores padrão corretos
-    data_inicio, data_fim = st.date_input(
-        "",
-        value=[data_inicio_padrao, data_fim_padrao],
-        min_value=data_minima,
-        max_value=data_maxima
-    )
 
     # Filtros laterais lado a lado
     col1, col2, col3, col4 = st.columns([1.2, 2, 2, 2])  # col1 levemente mais estreita
@@ -424,39 +407,7 @@ with aba4:
     with col4:
         agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
 
-    
-# 📌 Define data_fim como a data mais recente do DataFrame
-    datas_disponiveis = sorted(pd.to_datetime(df_anos["Data"].dropna().unique()))
-    data_minima = datas_disponiveis[0].date() if datas_disponiveis else hoje
-    data_maxima = datas_disponiveis[-1].date() if datas_disponiveis else hoje
 
-    # 🔄 Aplica o filtro principal com base no período
-    if agrupamento == "Dia" and modo_visao == "Por Grupo":
-        data_filtrada = pd.to_datetime(data_fim)
-        base_lojas = lojas_ativas.copy()
-        base_lojas["Data"] = data_filtrada
-
-        df_dia = df_anos[df_anos["Data"] == data_filtrada].copy()
-
-        df_filtrado = pd.merge(
-            base_lojas,
-            df_dia,
-            on=["Loja", "Data"],
-            how="left"
-        )
-
-        campos_valor = ["Fat.Total", "Fat.Real", "Serv/Tx", "Ticket"]
-        for col in campos_valor:
-            if col in df_filtrado.columns:
-                df_filtrado[col] = df_filtrado[col].fillna(0)
-
-        if "Grupo_y" in df_filtrado.columns:
-            df_filtrado["Grupo"] = df_filtrado["Grupo_x"].combine_first(df_filtrado["Grupo_y"])
-        elif "Grupo_x" in df_filtrado.columns:
-            df_filtrado["Grupo"] = df_filtrado["Grupo_x"]
-
-    else:
-        df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)].copy()
 
 
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
@@ -483,7 +434,13 @@ with aba4:
         data_inicio_padrao = max(data_minima, min(ontem, data_maxima))
         data_fim_padrao = data_inicio_padrao
 
-    
+    # ✅ Campo de data com valores padrão corretos
+    data_inicio, data_fim = st.date_input(
+        "",
+        value=[data_inicio_padrao, data_fim_padrao],
+        min_value=data_minima,
+        max_value=data_maxima
+    )
 
     if agrupamento == "Ano" and ano_opcao:
         df_filtrado = df_filtrado[df_filtrado["Ano"].isin(ano_opcao)]
