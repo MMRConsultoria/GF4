@@ -410,7 +410,9 @@ with aba4:
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
 
 
-
+    # 📌 Define data_fim como a data mais recente do DataFrame
+    datas_disponiveis = sorted(pd.to_datetime(df_anos["Data"].dropna().unique()))
+    data_fim = datas_disponiveis[-1].date() if datas_disponiveis else date.today()
 
     # 🔄 Se for agrupamento por Dia e modo Por Grupo, garantir exibição de todas as lojas ativas
     if agrupamento == "Dia" and modo_visao == "Por Grupo":
