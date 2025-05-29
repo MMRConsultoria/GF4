@@ -407,10 +407,41 @@ with aba4:
     with col4:
         agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
 
-
-
-
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
+
+
+
+
+    # 🔄 Se for agrupamento por Dia e modo Por Grupo, garantir exibição de todas as lojas ativas
+    if agrupamento == "Dia" and modo_visao == "Por Grupo":
+        # Garante que as datas estão no tipo datetime
+        data_selecionada = pd.to_datetime(data_fim)
+
+        # Base com todas as lojas ativas e data selecionada
+        base_lojas = lojas_ativas.copy()
+        base_lojas["Data"] = data_selecionada
+
+        # Filtra os dados reais do dia selecionado
+        df_dia = df_anos[df_anos["Data"] == data_selecionada].copy()
+
+        # Merge para garantir que todas as lojas estejam presentes
+        df_filtrado = pd.merge(
+            base_lojas,
+            df_dia,
+            on=["Loja", "Data"],
+            how="left"
+        )
+
+        # Preenche colunas numéricas com 0 para lojas sem movimento
+        for col in ["Fat.Total", "Fat.Real", "Serv/Tx", "Ticket"]:
+            if col in df_filtrado.columns:
+                df_filtrado[col] = df_filtrado[col].fillna(0)
+
+        # Corrige duplicidade de Grupo, se houver
+        if "Grupo_y" in df_filtrado.columns:
+            df_filtrado["Grupo"] = df_filtrado["Grupo_x"].combine_first(df_filtrado["Grupo_y"])
+        elif "Grupo_x" in df_filtrado.columns:
+            df_filtrado["Grupo"] = df_filtrado["Grupo_x"]
 
     # ✅ Só aplica o filtro de mês quando o agrupamento for "Mês" ou "Dia"
     if agrupamento in ["Mês", "Dia"]:
