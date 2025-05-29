@@ -1005,7 +1005,17 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     linha += 1
 
     # 🔢 Subtotal por Grupo
-    for grupo_atual, cor in zip(tabela_exportar_sem_tipo["Grupo"].dropna().unique(), cores_grupo):
+    # 🔢 Pré-processa a lista de grupos ordenada por Tipo
+    grupos_tipo = (
+        df_empresa[["Grupo", "Tipo"]]
+        .dropna()
+        .drop_duplicates()
+        .sort_values(by=["Tipo", "Grupo"])  # ordena por Tipo, depois por Grupo
+    )
+
+    grupos_ordenados = grupos_tipo["Grupo"].tolist()
+    for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
+    #for grupo_atual, cor in zip(tabela_exportar_sem_tipo["Grupo"].dropna().unique(), cores_grupo):
         linhas_grupo = tabela_exportar_sem_tipo[
             (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
             ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
