@@ -351,7 +351,42 @@ with aba4:
     ano_opcao = st.multiselect("📅 Selecione ano/mês(s):", options=anos_disponiveis, default=[ultimo_ano], key="ano_aba3")
     
    
-    df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
+    # 🔄 Aplica o filtro principal com base no período
+    if agrupamento == "Dia" and modo_visao == "Por Grupo":
+        # 🔎 Pega a data final como data do filtro (último dia do período selecionado)
+        data_filtrada = pd.to_datetime(data_fim)
+
+        # ✅ Cria base com todas as lojas ativas para o dia
+        base_lojas = lojas_ativas.copy()
+        base_lojas["Data"] = data_filtrada
+
+        # 🔎 Filtra os dados do dia específico
+        df_dia = df_anos[df_anos["Data"] == data_filtrada].copy()
+
+        # 🔗 Merge para garantir todas as lojas ativas, mesmo sem movimento
+        df_filtrado = pd.merge(
+            base_lojas,
+            df_dia,
+            on=["Loja", "Data"],
+            how="left"
+        )
+
+        # ✅ Preenche com 0 os campos numéricos
+        campos_valor = ["Fat.Total", "Fat.Real", "Serv/Tx", "Ticket"]
+        for col in campos_valor:
+            if col in df_filtrado.columns:
+               df_filtrado[col] = df_filtrado[col].fillna(0)
+
+        # 🛠️ Corrige campo duplicado de Grupo
+        if "Grupo_y" in df_filtrado.columns:
+            df_filtrado["Grupo"] = df_filtrado["Grupo_x"].combine_first(df_filtrado["Grupo_y"])
+        elif "Grupo_x" in df_filtrado.columns:
+            df_filtrado["Grupo"] = df_filtrado["Grupo_x"]
+
+    else:
+         # 👈 Filtro normal para os outros casos
+        df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)].copy()
+
 
    
     meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
