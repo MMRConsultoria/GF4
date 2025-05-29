@@ -967,21 +967,14 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     
     # 🔥 Subtotal por Tipo (Sempre aparece)
     for tipo_atual in sorted(tabela_exportar["Tipo"].dropna().unique()):
-        
-        # 🔍 Filtra só lojas ativas do tipo atual
-        lojas_ativas_tipo = df_empresa[
-            (df_empresa["Tipo"] == tipo_atual) &
-            (df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa")
-        ]["Loja"].unique()
-
-        # 🔢 Filtra os dados exportados com base nessas lojas ativas
         linhas_tipo = tabela_exportar_sem_tipo[
-            (tabela_exportar_sem_tipo["Loja"].isin(lojas_ativas_tipo)) &
-            ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+            (tabela_exportar_sem_tipo["Grupo"].isin(
+                df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
+            )) &
+      # ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+             ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
-
-    
-        qtd_lojas_tipo = df_empresa[df_empresa["Tipo"] == tipo_atual]["Loja"].nunique()
+        qtd_lojas_tipo = linhas_tipo["Loja"].nunique() if "Loja" in linhas_tipo.columns else ""
         soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
         linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
@@ -994,7 +987,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 worksheet.write(linha, col_num, str(val), subtotal_format)
         linha += 1
 
-    
     # 🔝 Total Geral
     linhas_validas = ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Total|Subtotal", case=False, na=False)
 
@@ -1050,7 +1042,27 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     )
 
     grupos_ordenados = grupos_tipo["Grupo"].tolist()
-   
+    if modo_visao == "Por Grupo":
+        tipos_ordenados = grupos_tipo["Tipo"].dropna().unique()
+
+        for tipo in tipos_ordenados:
+            grupos_do_tipo = grupos_tipo[grupos_tipo["Tipo"] == tipo]["Grupo"]
+            linhas_tipo = tabela_exportar_sem_tipo[
+                tabela_exportar_sem_tipo["Grupo"].isin(grupos_do_tipo)
+            ]
+            qtd_lojas_tipo = lojas_ativas[lojas_ativas["Tipo"] == tipo]["Loja"].nunique()
+
+            soma_tipo = linhas_tipo.select_dtypes(include='number').sum()
+
+            linha_tipo = [f"Tipo: {tipo}", f"Lojas: {qtd_lojas_tipo}"]
+            linha_tipo += [soma_tipo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+
+            for col_num, val in enumerate(linha_tipo):
+                if isinstance(val, (int, float)) and not pd.isna(val):
+                    worksheet.write_number(linha, col_num, val, subtotal_format)
+                else:
+                    worksheet.write(linha, col_num, str(val), subtotal_format)
+            linha += 1
 
 
     for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
