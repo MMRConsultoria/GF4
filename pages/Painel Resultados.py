@@ -443,22 +443,57 @@ with aba4:
             df_filtrado.rename(columns={"Grupo_x": "Grupo"}, inplace=True)
 
 
-        # 🔥 Força entrada para todos os grupos ativos no dia selecionado (mesmo com zero)
-        if agrupamento == "Dia" and modo_visao == "Por Grupo":
-            grupos_ativos = todas_lojas["Grupo"].unique()
-            grupos_presentes = df_filtrado["Grupo"].dropna().unique()
-            grupos_faltando = list(set(grupos_ativos) - set(grupos_presentes))
+    # 🔄 Aplica o filtro principal com base no período
+    if agrupamento == "Dia" and modo_visao == "Por Grupo":
+        data_selecionada = pd.to_datetime(data_fim)
 
-            if grupos_faltando:
-                df_faltando = pd.DataFrame({
-                    "Grupo": grupos_faltando,
-                    "Data": data_selecionada,
-                    "Fat.Total": 0,
-                    "Fat.Real": 0,
-                    "Agrupador": data_selecionada.strftime("%d/%m/%Y"),
-                    "Ordem": data_selecionada
-                })
-                df_filtrado = pd.concat([df_filtrado, df_faltando], ignore_index=True)
+        # 🧾 Cria base com todas as lojas ativas
+        lojas_ativas = df_empresa[
+            df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
+        ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
+
+        base_lojas = lojas_ativas.copy()
+        base_lojas["Data"] = data_selecionada
+
+        # 🎯 Filtra as vendas do dia
+        df_dia = df_anos[df_anos["Data"] == data_selecionada].copy()
+
+        # 🔗 Merge: todas as lojas aparecem, com ou sem movimento
+        df_filtrado = pd.merge(
+            base_lojas,
+            df_dia,
+            on=["Loja", "Data"],
+            how="left"
+        )
+
+        # 🛠️ Preenche Grupo, se tiver colunas duplicadas
+        if "Grupo_x" in df_filtrado.columns:
+            df_filtrado["Grupo"] = df_filtrado["Grupo_x"]
+        if "Grupo_y" in df_filtrado.columns:
+            df_filtrado["Grupo"] = df_filtrado["Grupo"].combine_first(df_filtrado["Grupo_y"])
+        df_filtrado.drop(columns=[col for col in df_filtrado.columns if col.startswith("Grupo_")], inplace=True)
+
+        # ✅ Preenche valores nulos com zero
+        for col in ["Fat.Total", "Fat.Real", "Serv/Tx", "Ticket"]:
+            if col in df_filtrado.columns:
+                df_filtrado[col] = df_filtrado[col].fillna(0)
+
+        # 🔥 Garante todos os grupos, mesmo sem lojas (ex: se não teve NENHUMA loja ativa de um grupo)
+        grupos_ativos = lojas_ativas["Grupo"].unique()
+        grupos_presentes = df_filtrado["Grupo"].dropna().unique()
+        grupos_faltando = list(set(grupos_ativos) - set(grupos_presentes))
+
+        if grupos_faltando:
+            df_faltando = pd.DataFrame({
+                "Grupo": grupos_faltando,
+                "Data": data_selecionada,
+                "Fat.Total": 0,
+                "Fat.Real": 0,
+                "Serv/Tx": 0,
+                "Ticket": 0,
+            })
+            df_filtrado = pd.concat([df_filtrado, df_faltando], ignore_index=True)
+
 
 
 
