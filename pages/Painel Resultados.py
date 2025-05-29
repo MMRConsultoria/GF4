@@ -382,7 +382,16 @@ with aba4:
         data_minima = hoje
         data_maxima = hoje
 
-    
+    # 📌 Define data_fim como a data mais recente do DataFrame
+    datas_disponiveis = sorted(pd.to_datetime(df_anos["Data"].dropna().unique()))
+    data_minima = datas_disponiveis[0].date() if datas_disponiveis else hoje
+    data_maxima = datas_disponiveis[-1].date() if datas_disponiveis else hoje
+
+    # 🔢 Filtra só as lojas ativas
+    lojas_ativas = df_empresa[
+       df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
+    ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
+
 
     # Filtros laterais lado a lado
     col1, col2, col3, col4 = st.columns([1.2, 2, 2, 2])  # col1 levemente mais estreita
@@ -407,9 +416,8 @@ with aba4:
     with col4:
         agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
 
-    # 📌 Define data_fim como a data mais recente do DataFrame
-    datas_disponiveis = sorted(pd.to_datetime(df_anos["Data"].dropna().unique()))
-    data_fim = datas_disponiveis[-1].date() if datas_disponiveis else date.today()
+    
+
 
     # 🔄 Aplica o filtro principal com base no período
     if agrupamento == "Dia" and modo_visao == "Por Grupo":
