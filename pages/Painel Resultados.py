@@ -418,10 +418,10 @@ with aba4:
 
 
 
-    meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
-
+   
     # ✅ Só aplica o filtro de mês quando o agrupamento for "Mês" ou "Dia"
     if agrupamento in ["Mês", "Dia"]:
+        meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
         df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
     
     # 🧠 Garante seleção válida
