@@ -490,7 +490,12 @@ with aba4:
 
     st.dataframe(df_maio2024[["Data", "Loja", "Grupo", "Fat.Real"]].sort_values("Fat.Real", ascending=False))
     
-   
+    duplicadas = df_anos[df_anos.duplicated(subset=["Data", "Loja", "Fat.Real"], keep=False)]
+    st.write("🔍 Linhas duplicadas?")
+    st.dataframe(duplicadas)
+
+
+    
     # Criação do agrupador e ordem com base na escolha
     if agrupamento == "Ano":
         df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
