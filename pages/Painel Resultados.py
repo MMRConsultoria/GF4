@@ -967,13 +967,20 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     
     # 🔥 Subtotal por Tipo (Sempre aparece)
     for tipo_atual in sorted(tabela_exportar["Tipo"].dropna().unique()):
+        
+        # 🔍 Filtra só lojas ativas do tipo atual
+        lojas_ativas_tipo = df_empresa[
+            (df_empresa["Tipo"] == tipo_atual) &
+            (df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa")
+        ]["Loja"].unique()
+
+        # 🔢 Filtra os dados exportados com base nessas lojas ativas
         linhas_tipo = tabela_exportar_sem_tipo[
-            (tabela_exportar_sem_tipo["Grupo"].isin(
-                df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
-            )) &
-     
-             ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+            (tabela_exportar_sem_tipo["Loja"].isin(lojas_ativas_tipo)) &
+            ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
+
+    
         qtd_lojas_tipo = df_empresa[df_empresa["Tipo"] == tipo_atual]["Loja"].nunique()
         soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
