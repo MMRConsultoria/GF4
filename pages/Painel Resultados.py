@@ -991,6 +991,12 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 worksheet.write(linha, col_num, str(val), subtotal_format)
         linha += 1
 
+    # 🔢 Filtra só as lojas ativas
+    lojas_ativas = df_empresa[
+       df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
+    ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
+    
+    
     # 🔝 Total Geral
     linhas_validas = ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Total|Subtotal", case=False, na=False)
 
@@ -1011,10 +1017,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     linha += 1
 
     # 🔢 Subtotal por Grupo
-   # 🔢 Filtra só as lojas ativas
-    lojas_ativas = df_empresa[
-       df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
-    ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
+   
 
     # 🔢 Filtra a base para considerar apenas as lojas ativas
 
@@ -1067,7 +1070,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             row = row.copy()
 
             if modo_visao == "Por Grupo":
-                 # 🟡 Insere quantidade de lojas ativas ao lado do grupo
+                # 🟡 Insere quantidade de lojas ativas ao lado do grupo
                 qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
                 row.iloc[0] = f"{grupo_atual} - Loja: {qtd_lojas}"
 
