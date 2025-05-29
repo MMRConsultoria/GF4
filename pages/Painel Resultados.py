@@ -1005,22 +1005,37 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     linha += 1
 
     # 🔢 Subtotal por Grupo
-   # 🔢 Calcula o subtotal (soma de todas as colunas numéricas) por grupo
-    df_numerico = tabela_exportar_sem_tipo.select_dtypes(include='number')
-    df_numerico["Grupo"] = tabela_exportar_sem_tipo["Grupo"]
+   # 🔢 Filtra só as lojas ativas
+    lojas_ativas = df_empresa[
+       df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
+    ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
+
+    # 🔢 Filtra a base para considerar apenas as lojas ativas
+    df_ativos = tabela_exportar_sem_tipo[
+        tabela_exportar_sem_tipo["Loja"].isin(lojas_ativas["Loja"])
+    ].copy()
+
+    # 🔢 Calcula subtotais por grupo (soma de todas as colunas numéricas)
+    df_numerico = df_ativos.select_dtypes(include='number')
+    df_numerico["Grupo"] = df_ativos["Grupo"]
 
     subtotais = df_numerico.groupby("Grupo").sum().sum(axis=1).reset_index()
     subtotais.columns = ["Grupo", "Subtotal"]
-    # 🔢 Junta com o Tipo
+
+    # 🔢 Junta com o Tipo e mantém somente grupos que aparecem nos dados ativos
+    grupos_com_dados = df_ativos["Grupo"].dropna().unique().tolist()
+
     grupos_tipo = (
-        df_empresa[["Grupo", "Tipo"]]
+        lojas_ativas[["Grupo", "Tipo"]]
         .dropna()
         .drop_duplicates()
         .merge(subtotais, on="Grupo", how="left")
+        .query("Grupo in @grupos_com_dados")
         .sort_values(by=["Tipo", "Subtotal"], ascending=[True, False])
     )
 
     grupos_ordenados = grupos_tipo["Grupo"].tolist()
+
 
     for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
     #for grupo_atual, cor in zip(tabela_exportar_sem_tipo["Grupo"].dropna().unique(), cores_grupo):
