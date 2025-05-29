@@ -406,8 +406,7 @@ with aba4:
 
 
     hoje = date.today()
-    
-   with col4:
+    with col4:
     agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
 
     # 🧠 Detecta anos selecionados
