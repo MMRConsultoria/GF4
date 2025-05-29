@@ -388,10 +388,7 @@ with aba4:
     ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
     
-    # 📌 Define data_fim como a data mais recente do DataFrame
-    datas_disponiveis = sorted(pd.to_datetime(df_anos["Data"].dropna().unique()))
-    data_minima = datas_disponiveis[0].date() if datas_disponiveis else hoje
-    data_maxima = datas_disponiveis[-1].date() if datas_disponiveis else hoje
+    
 
    
 
@@ -428,7 +425,10 @@ with aba4:
         agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
 
     
-
+# 📌 Define data_fim como a data mais recente do DataFrame
+    datas_disponiveis = sorted(pd.to_datetime(df_anos["Data"].dropna().unique()))
+    data_minima = datas_disponiveis[0].date() if datas_disponiveis else hoje
+    data_maxima = datas_disponiveis[-1].date() if datas_disponiveis else hoje
 
     # 🔄 Aplica o filtro principal com base no período
     if agrupamento == "Dia" and modo_visao == "Por Grupo":
