@@ -1122,7 +1122,7 @@ for grupo_atual, cor in zip(tabela_exportar_sem_tipo["Grupo"].dropna().unique(),
 
     # 🔥 Subtotal do grupo
     percentual_grupo = (soma_grupo / valor_total_geral) if valor_total_geral != 0 else 0
-    linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
+    linha_grupo = [f"{grupo_atual} - Lojas: {qtd_lojas}"]
     linha_grupo += [soma_grupo for _ in tabela_exportar_sem_tipo.columns[2:]]
 
     for col_num, val in enumerate(linha_grupo):
