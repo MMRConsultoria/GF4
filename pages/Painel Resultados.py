@@ -416,8 +416,8 @@ with aba4:
     if agrupamento in ["Mês", "Dia"]:
         df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
     else:
-    # Ignora filtro de mês — mantém todos os meses dos anos selecionados
-    pass
+        # Ignora filtro de mês — mantém todos os meses dos anos selecionados
+        pass
     
     # 🧠 Garante seleção válida
     anos_validos = [a for a in ano_opcao if isinstance(a, int)]
