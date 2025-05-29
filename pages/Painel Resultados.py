@@ -408,7 +408,7 @@ with aba4:
 
     hoje = date.today()
     with col4:
-        agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba3")
+        agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
    
     # 🧠 Garante seleção válida
     anos_validos = [a for a in ano_opcao if isinstance(a, int)]
@@ -490,7 +490,7 @@ with aba4:
     df_filtrado = df_filtrado[~df_filtrado["Agrupador"].isin([None, "None", "nan", "NaN", ""])]
 
 
-  # Garante a ordem correta
+    # Garante a ordem correta
     ordem = (
         df_filtrado[["Agrupador", "Ordem"]]
         .drop_duplicates()
