@@ -468,31 +468,7 @@ with aba4:
             (df_filtrado["Data"].dt.to_period("M") >= periodo_inicio) &
             (df_filtrado["Data"].dt.to_period("M") <= periodo_fim)
         ]
-    #elif agrupamento == "Ano":
-    #    ano_inicio = pd.to_datetime(data_inicio).year
-    #    ano_fim = pd.to_datetime(data_fim).year
-    #    df_filtrado = df_filtrado[
-    #        (df_filtrado["Data"].dt.year >= ano_inicio) &
-    #        (df_filtrado["Data"].dt.year <= ano_fim)
-    #    ]
-
-    # 🔍 Verifica se o problema está vindo dos valores
-    st.write("🧪 Soma Fat.Real em Maio/2024:")
-    soma_maio2024 = df_filtrado[
-        (df_filtrado["Mês Num"] == 5) & (df_filtrado["Ano"] == 2024)
-    ]["Fat.Real"].sum()
-    st.write(soma_maio2024)
-
-    
-    df_maio2024 = df_filtrado[
-        (df_filtrado["Mês Num"] == 5) & (df_filtrado["Ano"] == 2024)
-    ].copy()
-
-    st.dataframe(df_maio2024[["Data", "Loja", "Grupo", "Fat.Real"]].sort_values("Fat.Real", ascending=False))
-    
-    duplicadas = df_anos[df_anos.duplicated(subset=["Data", "Loja", "Fat.Real"], keep=False)]
-    st.write("🔍 Linhas duplicadas?")
-    st.dataframe(duplicadas)
+   
 
 
     
