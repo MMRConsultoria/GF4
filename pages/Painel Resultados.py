@@ -437,6 +437,22 @@ with aba4:
             on=["Loja", "Data"],
             how="left"
         )
+        # 🔥 Força entrada para todos os grupos ativos no dia selecionado (mesmo com zero)
+        if agrupamento == "Dia" and modo_visao == "Por Grupo":
+            grupos_ativos = todas_lojas["Grupo"].unique()
+            grupos_presentes = df_filtrado["Grupo"].dropna().unique()
+            grupos_faltando = list(set(grupos_ativos) - set(grupos_presentes))
+
+            if grupos_faltando:
+                df_faltando = pd.DataFrame({
+                    "Grupo": grupos_faltando,
+                    "Data": data_selecionada,
+                    "Fat.Total": 0,
+                    "Fat.Real": 0,
+                    "Agrupador": data_selecionada.strftime("%d/%m/%Y"),
+                    "Ordem": data_selecionada
+                })
+                df_filtrado = pd.concat([df_filtrado, df_faltando], ignore_index=True)
 
 
 
