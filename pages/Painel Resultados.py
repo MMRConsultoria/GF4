@@ -1050,7 +1050,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             linhas_tipo = tabela_exportar_sem_tipo[
                 tabela_exportar_sem_tipo["Grupo"].isin(grupos_do_tipo)
             ]
-            qtd_lojas_tipo = df_empresa[df_empresa["Tipo"] == tipo]["Loja"].nunique()
+            qtd_lojas_tipo = lojas_ativas[lojas_ativas["Tipo"] == tipo]["Loja"].nunique()
 
             soma_tipo = linhas_tipo.select_dtypes(include='number').sum()
 
