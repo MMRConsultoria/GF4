@@ -407,9 +407,10 @@ with aba4:
 
 
     hoje = date.today()
+
     with col4:
         agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
-   
+
     # 🧠 Garante seleção válida
     anos_validos = [a for a in ano_opcao if isinstance(a, int)]
 
@@ -441,16 +442,12 @@ with aba4:
     else:  # Dia
         data_inicio_padrao = hoje
         data_fim_padrao = hoje
-   
-   
-   
+
     # ✅ Só aplica o filtro de mês quando o agrupamento for "Mês" ou "Dia"
     if agrupamento in ["Mês", "Dia"]:
         meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
         df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
-
-   
     # ✅ Aplica o filtro de datas corretamente conforme o agrupamento
     if agrupamento == "Dia":
         df_filtrado = df_filtrado[
@@ -472,16 +469,13 @@ with aba4:
             (df_filtrado["Data"].dt.year <= ano_fim)
         ]
 
-
-    # Criação do agrupador e ordem com base na escolha
+    # 🔄 Criação do agrupador e ordem com base na escolha
     if agrupamento == "Ano":
         df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
         df_filtrado["Ordem"] = df_filtrado["Data"].dt.year
-
     elif agrupamento == "Mês":
         df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%m/%Y")
         df_filtrado["Ordem"] = df_filtrado["Data"].dt.to_period("M").dt.to_timestamp()
-
     elif agrupamento == "Dia":
         df_filtrado["Agrupador"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
         df_filtrado["Ordem"] = df_filtrado["Data"]
@@ -489,16 +483,16 @@ with aba4:
     # 🔥 Remove agrupadores inválidos (None, nan, vazio)
     df_filtrado = df_filtrado[~df_filtrado["Agrupador"].isin([None, "None", "nan", "NaN", ""])]
 
-
-    # Garante a ordem correta
+    # 🔄 Garante a ordem correta
     ordem = (
         df_filtrado[["Agrupador", "Ordem"]]
         .drop_duplicates()
         .dropna()
         .sort_values("Ordem", ascending=False)
     )["Agrupador"].tolist()
-   
+
     ordem = [c for c in ordem if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
+
 
     
 
