@@ -1073,7 +1073,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             if isinstance(val, (int, float)) and not pd.isna(val):
                 worksheet.write_number(linha, col_num, val, grupo_format)
             else:
-             worksheet.write(linha, col_num, str(val), grupo_format)
+                worksheet.write(linha, col_num, str(val), grupo_format)
         linha += 1
         # ✅ Subtotal por grupo apenas no modo "Por Loja"
         if modo_visao == "Por Loja":
