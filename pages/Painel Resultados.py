@@ -438,10 +438,7 @@ with aba4:
             how="left"
         )
 
-        # 🧪 ADICIONE AQUI
-        st.subheader("🔎 Debug: Lojas do grupo Amata no dia selecionado")
-        df_debug = df_filtrado[df_filtrado["Grupo"] == "Amata"]
-        st.write(df_debug)            
+
 
 
         # Preenche colunas numéricas com 0 para lojas sem movimento
@@ -454,6 +451,13 @@ with aba4:
             df_filtrado["Grupo"] = df_filtrado["Grupo_x"].combine_first(df_filtrado["Grupo_y"])
         elif "Grupo_x" in df_filtrado.columns:
             df_filtrado["Grupo"] = df_filtrado["Grupo_x"]
+
+        # 🧪 ADICIONE AQUI
+        st.subheader("🔎 Debug: Lojas do grupo Amata no dia selecionado")
+        df_debug = df_filtrado[df_filtrado["Grupo"] == "Amata"]
+        st.write(df_debug)            
+
+
 
     # ✅ Só aplica o filtro de mês quando o agrupamento for "Mês" ou "Dia"
     if agrupamento in ["Mês", "Dia"]:
