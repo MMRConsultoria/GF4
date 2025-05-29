@@ -986,29 +986,29 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             else:
                 worksheet.write(linha, col_num, str(val), subtotal_format)
         linha += 1
+        # 🔸 Total por Tipo (simples e compatível)
+        if "Tipo" in lojas_ativas.columns and "Loja" in tabela_exportar_sem_tipo.columns:
 
-    # ✅ Subtotais por Tipo (funciona para ambos os modos)
-    tipos_ordenados = lojas_ativas["Tipo"].dropna().unique()
+        tipos_ordenados = lojas_ativas["Tipo"].dropna().unique()
 
-    for tipo in tipos_ordenados:
-        lojas_do_tipo = lojas_ativas[lojas_ativas["Tipo"] == tipo]["Loja"].unique()
+        for tipo in tipos_ordenados:
+            lojas_do_tipo = lojas_ativas[lojas_ativas["Tipo"] == tipo]["Loja"].unique()
+            linhas_tipo = tabela_exportar_sem_tipo[
+                tabela_exportar_sem_tipo["Loja"].isin(lojas_do_tipo)
+            ]
 
-        linhas_tipo = tabela_exportar_sem_tipo[
-            tabela_exportar_sem_tipo["Loja"].isin(lojas_do_tipo)
-        ]
+            qtd_lojas_tipo = len(lojas_do_tipo)
+            soma_tipo = linhas_tipo.select_dtypes(include='number').sum()
 
-        qtd_lojas_tipo = len(lojas_do_tipo)
-        soma_tipo = linhas_tipo.select_dtypes(include='number').sum()
+            linha_tipo = [f"Tipo: {tipo}", f"Lojas: {qtd_lojas_tipo}"]
+            linha_tipo += [soma_tipo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
-        linha_tipo = [f"Tipo: {tipo}", f"Lojas: {qtd_lojas_tipo}"]
-        linha_tipo += [soma_tipo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
-
-        for col_num, val in enumerate(linha_tipo):
-            if isinstance(val, (int, float)) and not pd.isna(val):
-                worksheet.write_number(linha, col_num, val, subtotal_format)
-            else:
-                worksheet.write(linha, col_num, str(val), subtotal_format)
-        linha += 1
+            for col_num, val in enumerate(linha_tipo):
+                if isinstance(val, (int, float)) and not pd.isna(val):
+                    worksheet.write_number(linha, col_num, val, subtotal_format)
+                else:
+                    worksheet.write(linha, col_num, str(val), subtotal_format)
+            linha += 1
 
     
     # 🔝 Total Geral
