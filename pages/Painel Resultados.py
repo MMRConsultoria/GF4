@@ -437,6 +437,10 @@ with aba4:
             on=["Loja", "Data"],
             how="left"
         )
+
+        df_filtrado.rename(columns={"Grupo_x": "Grupo"}, inplace=True)
+
+        
         # 🔥 Força entrada para todos os grupos ativos no dia selecionado (mesmo com zero)
         if agrupamento == "Dia" and modo_visao == "Por Grupo":
             grupos_ativos = todas_lojas["Grupo"].unique()
