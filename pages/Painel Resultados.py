@@ -483,8 +483,12 @@ with aba4:
     ]["Fat.Real"].sum()
     st.write(soma_maio2024)
 
+    
+    df_maio2024 = df_filtrado[
+        (df_filtrado["Mês Num"] == 5) & (df_filtrado["Ano"] == 2024)
+    ].copy()
 
-
+    st.dataframe(df_maio2024[["Data", "Loja", "Grupo", "Fat.Real"]].sort_values("Fat.Real", ascending=False))
     
    
     # Criação do agrupador e ordem com base na escolha
