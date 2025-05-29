@@ -364,11 +364,7 @@ with aba4:
     mes_atual_nome = meses_dict[datetime.today().month]
     meses_selecionados = st.multiselect("", options=meses_nomes_disponiveis, default=[mes_atual_nome], key="meses_aba3")
     
-    meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
-
-    # ✅ Só aplica o filtro de mês quando o agrupamento for "Mês" ou "Dia"
-    if agrupamento in ["Mês", "Dia"]:
-        df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
+   
    # Garantir que "hoje" seja do tipo date
     hoje = date.today()
 
@@ -411,6 +407,14 @@ with aba4:
     with col4:
         agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
 
+
+
+
+    meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
+
+    # ✅ Só aplica o filtro de mês quando o agrupamento for "Mês" ou "Dia"
+    if agrupamento in ["Mês", "Dia"]:
+    df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
     
     # 🧠 Garante seleção válida
     anos_validos = [a for a in ano_opcao if isinstance(a, int)]
