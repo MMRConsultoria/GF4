@@ -407,25 +407,31 @@ with aba4:
 
     hoje = date.today()
     
-    with col4:
-         agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
+   with col4:
+    agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
 
-    
-   # 🧠 Converte a coluna 'Data' com segurança (se ainda não fez isso antes)
-    df_anos["Data"] = pd.to_datetime(df_anos["Data"], errors="coerce")
+    # 🧠 Detecta anos selecionados
+    ano_opcao = st.multiselect("📅 Selecione ano/mês(s):", options=anos_disponiveis, default=[ultimo_ano], key="ano_aba3")
 
-    # 📅 Detecta datas reais do dataframe completo
-    data_minima = df_anos["Data"].min().date()
-    data_maxima = df_anos["Data"].max().date()
+    # 🧠 Garante seleção válida
+    anos_validos = [a for a in ano_opcao if isinstance(a, int)]
 
-    # 🔄 Define ontem como padrão, respeitando os limites
-    ontem = date.today() - timedelta(days=1)
-    data_padrao = max(data_minima, min(ontem, data_maxima))
+    # 📅 Define intervalo padrão com base no agrupamento
+    if agrupamento == "Ano" and anos_validos:
+        data_inicio_padrao = date(min(anos_validos), 1, 1)
+        data_fim_padrao = date(max(anos_validos), 12, 31)
+    elif agrupamento == "Mês":
+        data_inicio_padrao = datetime(data_minima.year, data_minima.month, 1).date()
+        data_fim_padrao = data_maxima
+    else:  # Dia
+        ontem = date.today() - timedelta(days=1)
+        data_inicio_padrao = max(data_minima, min(ontem, data_maxima))
+        data_fim_padrao = data_inicio_padrao
 
-    # ✅ Campo de data com valor padrão "ontem"
+    # ✅ Campo de data com valores padrão corretos
     data_inicio, data_fim = st.date_input(
         "",
-        value=[data_padrao, data_padrao],
+        value=[data_inicio_padrao, data_fim_padrao],
         min_value=data_minima,
         max_value=data_maxima
     )
