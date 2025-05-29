@@ -1067,7 +1067,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             if modo_visao == "Por Grupo":
                  # 🟡 Insere quantidade de lojas ativas ao lado do grupo
                 qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
-             row.iloc[0] = f"{grupo_atual} - Loja: {qtd_lojas}"
+                 row.iloc[0] = f"{grupo_atual} - Loja: {qtd_lojas}"
 
         for col_num, val in enumerate(row):
             if isinstance(val, (int, float)) and not pd.isna(val):
