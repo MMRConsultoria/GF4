@@ -974,7 +974,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
       # ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
              ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
-        qtd_lojas_tipo = lojas_ativas[lojas_ativas["Tipo"] == tipo_atual]["Loja"].nunique()
+        tipo_do_grupo = grupos_tipo.loc[grupos_tipo["Grupo"] == grupo_atual, "Tipo"].values[0]
+        qtd_lojas_tipo = lojas_ativas[lojas_ativas["Tipo"] == tipo_do_grupo]["Loja"].nunique()
         soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
         linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
