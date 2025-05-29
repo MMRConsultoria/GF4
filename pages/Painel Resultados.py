@@ -442,14 +442,6 @@ with aba4:
         max_value=data_maxima
     )
 
-    
-    
-    # 🔄 Define o valor padrão conforme o agrupamento
-    #if agrupamento == "Ano" and ano_opcao:
-    #    ano_inicio = min(ano_opcao)
-    #    ano_fim = max(ano_opcao)
-    #    data_inicio_padrao = date(ano_inicio, 1, 1)
-    #    data_fim_padrao = date(ano_fim, 12, 31)
     if agrupamento == "Ano" and ano_opcao:
         df_filtrado = df_filtrado[df_filtrado["Ano"].isin(ano_opcao)]
 
@@ -462,21 +454,7 @@ with aba4:
         data_fim_padrao = hoje
    
    
-    # 🔒 Corrige valores fora dos limites
-    #data_inicio_padrao = max(data_inicio_padrao, data_minima)
-    #data_fim_padrao = min(data_fim_padrao, data_maxima)
-
-    # ✅ Campo de data com valores padrão corretos
-    #data_inicio, data_fim = st.date_input(
-     #   "",
-     #   value=[data_inicio_padrao, data_fim_padrao],
-     #   min_value=data_minima,
-     #   max_value=data_maxima
-    #)
-
-
-    #df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
-
+   
     # ✅ Aplica o filtro de datas corretamente conforme o agrupamento
     if agrupamento == "Dia":
         df_filtrado = df_filtrado[
@@ -498,7 +476,12 @@ with aba4:
     #        (df_filtrado["Data"].dt.year <= ano_fim)
     #    ]
 
-
+    # 🔍 Verifica se o problema está vindo dos valores
+    st.write("🧪 Soma Fat.Real em Maio/2024:")
+    soma_maio2024 = df_filtrado[
+        (df_filtrado["Mês Num"] == 5) & (df_filtrado["Ano"] == 2024)
+    ]["Fat.Real"].sum()
+    st.write(soma_maio2024)
 
 
 
