@@ -461,7 +461,7 @@ with aba4:
     
     elif agrupamento == "Mês":
         data_inicio_padrao = datetime(data_minima.year, data_minima.month, 1).date()
-        data_fim_padrao = data_maxima.date()
+        data_fim_padrao = data_maxima
     else:  # Dia
         data_inicio_padrao = hoje
         data_fim_padrao = hoje
