@@ -1065,16 +1065,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                     worksheet.write(linha, col_num, str(val), grupo_format)
             linha += 1
 
-        soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
-        linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
-        linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
-
-        for col_num, val in enumerate(linha_grupo):
-            if isinstance(val, (int, float)) and not pd.isna(val):
-                worksheet.write_number(linha, col_num, val, subtotal_format)
-            else:
-                worksheet.write(linha, col_num, str(val), subtotal_format)
-        linha += 1
+        
 
 # 🔥 Calcula o total geral para usar na porcentagem
 valor_total_geral = df_para_total.select_dtypes(include='number').sum().sum()
