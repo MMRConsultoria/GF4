@@ -363,6 +363,14 @@ with aba4:
     meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
     mes_atual_nome = meses_dict[datetime.today().month]
     meses_selecionados = st.multiselect("", options=meses_nomes_disponiveis, default=[mes_atual_nome], key="meses_aba3")
+
+    # ✅ Corrige: Filtra mês E ano corretamente
+    meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
+    df_filtrado = df_anos[
+        (df_anos["Ano"].isin(ano_opcao)) &
+        (df_anos["Mês Num"].isin(meses_numeros))
+    ]
+
     
    
    # Garantir que "hoje" seja do tipo date
