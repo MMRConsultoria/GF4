@@ -1073,7 +1073,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             for col_num, val in enumerate(linha_grupo):
                 if isinstance(val, (int, float)) and not pd.isna(val):
                     worksheet.write_number(linha, col_num, val, subtotal_format)
-               else:
+                else:
                     worksheet.write(linha, col_num, str(val), subtotal_format)
             linha += 1
 
