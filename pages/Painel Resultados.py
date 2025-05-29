@@ -998,7 +998,9 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     df_para_total = tabela_exportar_sem_tipo[linhas_validas]
 
     soma_total = df_para_total.select_dtypes(include='number').sum()
-    linha_total = ["Total Geral", ""]
+    # 🔢 Conta todas as lojas ativas (sem duplicar)
+    total_lojas_ativas = lojas_ativas["Loja"].nunique()
+    linha_total = [f"Total Geral", f"Lojas: {total_lojas_ativas}"]
     linha_total += [soma_total.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
     for col_num, val in enumerate(linha_total):
