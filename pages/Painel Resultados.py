@@ -1071,7 +1071,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         # ✅ Subtotal por grupo apenas no modo "Por Loja"
         if modo_visao == "Por Loja":
             soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
-            linha_grupo = [f"{grupo_atual} - Lojas: {qtd_lojas}"]
+            linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
             linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
             for col_num, val in enumerate(linha_grupo):
