@@ -485,16 +485,19 @@ with aba4:
 
         if grupos_faltando:
             df_faltando = pd.DataFrame({
-            "Grupo": grupos_faltando,
-            "Data": data_selecionada,
-            "Fat.Total": 0,
-            "Fat.Real": 0,
-            "Serv/Tx": 0,
-            "Ticket": 0,
-            "Agrupador": data_selecionada.strftime("%d/%m/%Y"),
-            "Ordem": data_selecionada
-        })
-        df_filtrado = pd.concat([df_filtrado, df_faltando], ignore_index=True)
+                "Grupo": grupos_faltando,
+                "Data": data_selecionada,
+                "Fat.Total": 0,
+                "Fat.Real": 0,
+                "Serv/Tx": 0,
+                "Ticket": 0,
+                "Agrupador": data_selecionada.strftime("%d/%m/%Y"),
+                "Ordem": data_selecionada
+            })
+    
+            df_filtrado = pd.concat([df_filtrado, df_faltando], ignore_index=True)
+        else:
+            df_faltando = pd.DataFrame()  # evita erro futuro se a variável for chamada por engano
 
 
 
