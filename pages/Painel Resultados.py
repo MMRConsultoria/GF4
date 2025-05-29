@@ -350,7 +350,7 @@ with aba4:
     ultimo_ano = anos_disponiveis[0] if anos_disponiveis else datetime.today().year
     ano_opcao = st.multiselect("📅 Selecione ano/mês(s):", options=anos_disponiveis, default=[ultimo_ano], key="ano_aba3")
     
-    
+   
     df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
 
    
@@ -409,9 +409,7 @@ with aba4:
     with col4:
         agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
 
-    # 🧠 Detecta anos selecionados
-    ano_opcao = st.multiselect("📅 Selecione ano/mês(s):", options=anos_disponiveis, default=[ultimo_ano], key="ano_aba3")
-
+    
     # 🧠 Garante seleção válida
     anos_validos = [a for a in ano_opcao if isinstance(a, int)]
 
