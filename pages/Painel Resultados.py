@@ -1005,10 +1005,12 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     linha += 1
 
     # 🔢 Subtotal por Grupo
-    # 🔢 Calcula subtotais por grupo
-    subtotais = tabela_exportar_sem_tipo.groupby("Grupo").select_dtypes(include='number').sum().sum(axis=1).reset_index()
-    subtotais.columns = ["Grupo", "Subtotal"]
+   # 🔢 Calcula o subtotal (soma de todas as colunas numéricas) por grupo
+    df_numerico = tabela_exportar_sem_tipo.select_dtypes(include='number')
+    df_numerico["Grupo"] = tabela_exportar_sem_tipo["Grupo"]
 
+    subtotais = df_numerico.groupby("Grupo").sum().sum(axis=1).reset_index()
+    subtotais.columns = ["Grupo", "Subtotal"]
     # 🔢 Junta com o Tipo
     grupos_tipo = (
         df_empresa[["Grupo", "Tipo"]]
