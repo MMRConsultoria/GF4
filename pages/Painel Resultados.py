@@ -1043,9 +1043,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     grupos_ordenados = grupos_tipo["Grupo"].tolist()
 
-
     for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
-    #for grupo_atual, cor in zip(tabela_exportar_sem_tipo["Grupo"].dropna().unique(), cores_grupo):
         linhas_grupo = tabela_exportar_sem_tipo[
             (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
             ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
@@ -1054,18 +1052,32 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         qtd_lojas = linhas_grupo["Loja"].nunique() if "Loja" in linhas_grupo.columns else ""
 
         grupo_format = workbook.add_format({
-            'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
+          'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
         })
 
-        for _, row in linhas_grupo.iterrows():
-            for col_num, val in enumerate(row):
+        if modo_visao == "Por Grupo":
+           # ✅ Só uma linha por grupo
+            soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
+            linha_grupo = [f"{grupo_atual} - Lojas: {qtd_lojas}"]
+            linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[1:]]
+
+            for col_num, val in enumerate(linha_grupo):
                 if isinstance(val, (int, float)) and not pd.isna(val):
                     worksheet.write_number(linha, col_num, val, grupo_format)
                 else:
                     worksheet.write(linha, col_num, str(val), grupo_format)
             linha += 1
-        # ✅ Subtotal por grupo apenas no modo "Por Loja"
-        if modo_visao == "Por Loja":
+
+        elif modo_visao == "Por Loja":
+            # ✅ Lista lojas + subtotal do grupo
+            for _, row in linhas_grupo.iterrows():
+                for col_num, val in enumerate(row):
+                    if isinstance(val, (int, float)) and not pd.isna(val):
+                        worksheet.write_number(linha, col_num, val, grupo_format)
+                    else:
+                        worksheet.write(linha, col_num, str(val), grupo_format)
+                linha += 1
+
             soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
             linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
             linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
@@ -1076,6 +1088,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 else:
                     worksheet.write(linha, col_num, str(val), subtotal_format)
             linha += 1
+
 
 # 🔥 Calcula o total geral para usar na porcentagem
 valor_total_geral = df_para_total.select_dtypes(include='number').sum().sum()
