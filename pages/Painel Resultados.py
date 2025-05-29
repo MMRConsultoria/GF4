@@ -414,7 +414,7 @@ with aba4:
 
     # ✅ Só aplica o filtro de mês quando o agrupamento for "Mês" ou "Dia"
     if agrupamento in ["Mês", "Dia"]:
-    df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
+        df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
     
     # 🧠 Garante seleção válida
     anos_validos = [a for a in ano_opcao if isinstance(a, int)]
