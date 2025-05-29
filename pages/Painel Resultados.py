@@ -1062,12 +1062,19 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         })
 
         for _, row in linhas_grupo.iterrows():
-            for col_num, val in enumerate(row):
-                if isinstance(val, (int, float)) and not pd.isna(val):
-                    worksheet.write_number(linha, col_num, val, grupo_format)
-                else:
-                    worksheet.write(linha, col_num, str(val), grupo_format)
-            linha += 1
+            row = row.copy()
+
+            if modo_visao == "Por Grupo":
+                 # 🟡 Insere quantidade de lojas ativas ao lado do grupo
+                qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
+             row.iloc[0] = f"{grupo_atual} - Loja: {qtd_lojas}"
+
+        for col_num, val in enumerate(row):
+            if isinstance(val, (int, float)) and not pd.isna(val):
+                worksheet.write_number(linha, col_num, val, grupo_format)
+            else:
+             worksheet.write(linha, col_num, str(val), grupo_format)
+        linha += 1
         # ✅ Subtotal por grupo apenas no modo "Por Loja"
         if modo_visao == "Por Loja":
             soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
