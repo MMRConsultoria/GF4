@@ -987,42 +987,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 worksheet.write(linha, col_num, str(val), subtotal_format)
         linha += 1
 
-    # 🔸 Bloco de totais por Tipo (funciona para Por Loja e Por Grupo)
-    tipos_ordenados = lojas_ativas["Tipo"].dropna().unique()
-
-    for tipo in tipos_ordenados:
-        grupos_do_tipo = lojas_ativas[lojas_ativas["Tipo"] == tipo]["Grupo"].unique()
-        linhas_tipo = tabela_exportar_sem_tipo[
-            tabela_exportar_sem_tipo["Grupo"].isin(grupos_do_tipo)
-        ]
-
-        qtd_lojas_tipo = lojas_ativas[lojas_ativas["Tipo"] == tipo]["Loja"].nunique()
-        soma_tipo = linhas_tipo.select_dtypes(include='number').sum()
-
-        linha_tipo = [f"Tipo: {tipo}", f"Lojas: {qtd_lojas_tipo}"]
-        linha_tipo += [soma_tipo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
-
-        for col_num, val in enumerate(linha_tipo):
-            if isinstance(val, (int, float)) and not pd.isna(val):
-                worksheet.write_number(linha, col_num, val, subtotal_format)
-            else:
-                worksheet.write(linha, col_num, str(val), subtotal_format)
-        linha += 1
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     
     # 🔝 Total Geral
