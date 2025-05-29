@@ -1011,6 +1011,17 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
     # 🔢 Filtra a base para considerar apenas as lojas ativas
+
+    if "Loja" in tabela_exportar_sem_tipo.columns:
+     df_ativos = tabela_exportar_sem_tipo[
+         tabela_exportar_sem_tipo["Loja"].isin(lojas_ativas["Loja"])
+    ].copy()
+    else:
+        df_ativos = tabela_exportar_sem_tipo.copy()
+
+
+
+
     df_ativos = tabela_exportar_sem_tipo[
         tabela_exportar_sem_tipo["Loja"].isin(lojas_ativas["Loja"])
     ].copy()
