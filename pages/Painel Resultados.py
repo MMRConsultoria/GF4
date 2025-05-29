@@ -438,6 +438,11 @@ with aba4:
             how="left"
         )
 
+    st.subheader("🔎 Debug: Lojas do grupo Amata no dia selecionado")
+    df_debug = df_filtrado[df_filtrado["Grupo"] == "Amata"]
+    st.write(df_debug)
+
+
         # Preenche colunas numéricas com 0 para lojas sem movimento
         for col in ["Fat.Total", "Fat.Real", "Serv/Tx", "Ticket"]:
             if col in df_filtrado.columns:
