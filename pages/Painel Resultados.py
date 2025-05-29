@@ -362,13 +362,6 @@ with aba4:
     mes_atual_nome = meses_dict[datetime.today().month]
     meses_selecionados = st.multiselect("", options=meses_nomes_disponiveis, default=[mes_atual_nome], key="meses_aba4")
 
-    
-
-
-
-
-    
-
     # 🔄 Só aplica o filtro de mês quando o agrupamento for "Mês" ou "Dia"
     if agrupamento in ["Mês", "Dia"]:
         meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
@@ -394,8 +387,6 @@ with aba4:
         data_minima = hoje
         data_maxima = hoje
 
-    
-
     # Filtros laterais lado a lado
     col1, col2, col3, col4 = st.columns([1.2, 2, 2, 2])  # col1 levemente mais estreita
 
@@ -418,13 +409,7 @@ with aba4:
     hoje = date.today()
     with col4:
         agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
-
-
-
-
    
-   
-    
     # 🧠 Garante seleção válida
     anos_validos = [a for a in ano_opcao if isinstance(a, int)]
 
@@ -448,18 +433,8 @@ with aba4:
         max_value=data_maxima
     )
 
-    
-    
-    # 🔄 Define o valor padrão conforme o agrupamento
-    #if agrupamento == "Ano" and ano_opcao:
-    #    ano_inicio = min(ano_opcao)
-    #    ano_fim = max(ano_opcao)
-    #    data_inicio_padrao = date(ano_inicio, 1, 1)
-    #    data_fim_padrao = date(ano_fim, 12, 31)
     if agrupamento == "Ano" and ano_opcao:
         df_filtrado = df_filtrado[df_filtrado["Ano"].isin(ano_opcao)]
-
-    
     elif agrupamento == "Mês":
         data_inicio_padrao = datetime(data_minima.year, data_minima.month, 1).date()
         data_fim_padrao = data_maxima
@@ -468,21 +443,14 @@ with aba4:
         data_fim_padrao = hoje
    
    
-    # 🔒 Corrige valores fora dos limites
-    #data_inicio_padrao = max(data_inicio_padrao, data_minima)
-    #data_fim_padrao = min(data_fim_padrao, data_maxima)
-
-    # ✅ Campo de data com valores padrão corretos
-    #data_inicio, data_fim = st.date_input(
-     #   "",
-     #   value=[data_inicio_padrao, data_fim_padrao],
-     #   min_value=data_minima,
-     #   max_value=data_maxima
-    #)
+   
+    # ✅ Só aplica o filtro de mês quando o agrupamento for "Mês" ou "Dia"
+    if agrupamento in ["Mês", "Dia"]:
+        meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
+        df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
 
 
-    #df_filtrado = df_filtrado[(df_filtrado["Data"] >= pd.to_datetime(data_inicio)) & (df_filtrado["Data"] <= pd.to_datetime(data_fim))].copy()
-
+   
     # ✅ Aplica o filtro de datas corretamente conforme o agrupamento
     if agrupamento == "Dia":
         df_filtrado = df_filtrado[
@@ -505,14 +473,6 @@ with aba4:
     #    ]
 
 
-
-     # ✅ Só aplica o filtro de mês quando o agrupamento for "Mês" ou "Dia"
-    if agrupamento in ["Mês", "Dia"]:
-        meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
-        df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
-
-    
-   
     # Criação do agrupador e ordem com base na escolha
     if agrupamento == "Ano":
         df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
