@@ -1047,13 +1047,12 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
     
-        linhas_grupo = tabela_exportar_sem_tipo[
-            (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
-            ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+        linhas_grupo = df_ativos[
+            (df_ativos["Grupo"] == grupo_atual) &
+            ~df_ativos[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
 
-        qtd_lojas = linhas_grupo["Loja"].nunique() if "Loja" in linhas_grupo.columns else ""
-
+        qtd_lojas_tipo = lojas_ativas[lojas_ativas["Tipo"] == tipo_atual]["Loja"].nunique()
         grupo_format = workbook.add_format({
             'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
         })
