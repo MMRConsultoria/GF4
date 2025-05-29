@@ -975,8 +975,10 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
              ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
         
-        qtd_lojas_tipo = lojas_ativas[lojas_ativas["Tipo"] == tipo_atual]["Loja"].nunique()
-
+        qtd_lojas_tipo = df_empresa[
+            (df_empresa["Tipo"] == tipo_atual) &
+            (df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa")
+        ]["Loja"].nunique()
         soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
         linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
@@ -1049,9 +1051,9 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
     
-        linhas_grupo = df_ativos[
-            (df_ativos["Grupo"] == grupo_atual) &
-            ~df_ativos[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+        linhas_grupo = tabela_exportar_sem_tipo[
+            (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
+            ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
 
         qtd_lojas_tipo = lojas_ativas[lojas_ativas["Tipo"] == tipo_atual]["Loja"].nunique()
