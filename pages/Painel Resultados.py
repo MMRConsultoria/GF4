@@ -1012,20 +1012,16 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     # 🔢 Filtra a base para considerar apenas as lojas ativas
 
-    if "Loja" in tabela_exportar_sem_tipo.columns:
-     df_ativos = tabela_exportar_sem_tipo[
-         tabela_exportar_sem_tipo["Loja"].isin(lojas_ativas["Loja"])
-    ].copy()
+    # 🔒 Garante que só aplica o filtro se "Loja" existir
+    if "Loja" in tabela_exportar_sem_tipo.columns and "Loja" in lojas_ativas.columns:
+        df_ativos = tabela_exportar_sem_tipo[
+            tabela_exportar_sem_tipo["Loja"].isin(lojas_ativas["Loja"])
+        ].copy()
     else:
         df_ativos = tabela_exportar_sem_tipo.copy()
 
-
-
-
-    df_ativos = tabela_exportar_sem_tipo[
-        tabela_exportar_sem_tipo["Loja"].isin(lojas_ativas["Loja"])
-    ].copy()
-
+    
+   
     # 🔢 Calcula subtotais por grupo (soma de todas as colunas numéricas)
     df_numerico = df_ativos.select_dtypes(include='number')
     df_numerico["Grupo"] = df_ativos["Grupo"]
