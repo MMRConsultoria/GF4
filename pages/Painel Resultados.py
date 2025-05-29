@@ -438,9 +438,11 @@ with aba4:
             how="left"
         )
 
-        df_filtrado.rename(columns={"Grupo_x": "Grupo"}, inplace=True)
+        # ✅ Renomeia a coluna para garantir consistência
+        if "Grupo_x" in df_filtrado.columns:
+            df_filtrado.rename(columns={"Grupo_x": "Grupo"}, inplace=True)
 
-        
+
         # 🔥 Força entrada para todos os grupos ativos no dia selecionado (mesmo com zero)
         if agrupamento == "Dia" and modo_visao == "Por Grupo":
             grupos_ativos = todas_lojas["Grupo"].unique()
@@ -466,12 +468,7 @@ with aba4:
             if col in df_filtrado.columns:
                 df_filtrado[col] = df_filtrado[col].fillna(0)
 
-        # Corrige duplicidade de Grupo, se houver
-        if "Grupo_y" in df_filtrado.columns:
-            df_filtrado["Grupo"] = df_filtrado["Grupo_x"].combine_first(df_filtrado["Grupo_y"])
-        elif "Grupo_x" in df_filtrado.columns:
-            df_filtrado["Grupo"] = df_filtrado["Grupo_x"]
-
+        
         # 🧪 ADICIONE AQUI
         st.subheader("🔎 Debug: Lojas do grupo Amata no dia selecionado")
         df_debug = df_filtrado[df_filtrado["Grupo"] == "Amata"]
