@@ -451,7 +451,7 @@ with aba4:
 
         # 🔄 Aplica o filtro principal com base no período
     if agrupamento == "Dia" and modo_visao == "Por Grupo":
-        datas_selecionadas = pd.date_range(start=data_inicio, end=data_fim)
+        data_selecionada = pd.to_datetime(data_fim)
 
         # 🧾 Lojas ativas
         lojas_ativas = df_empresa[
