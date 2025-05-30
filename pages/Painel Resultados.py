@@ -446,8 +446,8 @@ with aba4:
 
        
 # 🕐 Converte as datas do filtro
-data_inicio = pd.to_datetime(st.session_state["data_inicio"])
-data_fim = pd.to_datetime(st.session_state["data_fim"])
+data_inicio = pd.to_datetime(st.session_state.get("data_inicio", pd.Timestamp.today().replace(day=1)))
+data_fim = pd.to_datetime(st.session_state.get("data_fim", pd.Timestamp.today()))
 
 # 🔄 Aplica o filtro principal com base no período
 if agrupamento == "Dia" and modo_visao == "Por Grupo":
