@@ -430,16 +430,7 @@ with aba4:
        
         
 
-        # 🎯 Vendas no dia
-        df_dia = df_anos[df_anos["Data"] == data_selecionada].copy()
-
-        # 🔗 Merge: todas as lojas aparecem
-        df_filtrado = pd.merge(
-            base_lojas,
-            df_dia,
-            on=["Loja", "Data"],
-            how="left"
-        )
+        
 
         # 🧹 Trata colunas duplicadas de Grupo
         if "Grupo_x" in df_filtrado.columns:
