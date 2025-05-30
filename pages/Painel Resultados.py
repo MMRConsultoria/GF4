@@ -1135,7 +1135,31 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     grupos_ordenados = grupos_tipo["Grupo"].tolist()
     
+    # ✅ Adiciona acumulado dos grupos ativos, se visão por Grupo e agrupado por Dia
+    if modo_visao == "Por Grupo" and agrupamento == "Dia":
+        grupos_ativos = df_empresa[
+            df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "ativo"
+        ]["Grupo"].dropna().unique()
 
+        df_acumulado_grupo = (
+            df_filtrado[df_filtrado["Grupo"].isin(grupos_ativos)]
+            .groupby("Grupo")[["Fat.Total", "Fat.Real", "Serv/Tx", "Ticket"]]
+            .sum()
+            .reset_index()
+        )
+
+        df_acumulado_grupo["Loja"] = "ACUMULADO GRUPO ATIVO"
+        df_acumulado_grupo["Tipo"] = None
+        df_acumulado_grupo["Data"] = None
+        df_acumulado_grupo["Ano"] = None
+        df_acumulado_grupo["Mês Num"] = None
+        df_acumulado_grupo["Mês Nome"] = None
+        df_acumulado_grupo["Mês"] = None
+        df_acumulado_grupo["Dia"] = None
+        df_acumulado_grupo["Agrupador"] = "ACUMULADO"
+        df_acumulado_grupo["Ordem"] = 99999999
+
+        df_filtrado = pd.concat([df_filtrado, df_acumulado_grupo], ignore_index=True)
 
     for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
     
@@ -1151,6 +1175,11 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         for _, row in linhas_grupo.iterrows():
             row = row.copy()
+
+
+
+
+
 
             if modo_visao == "Por Grupo":
                 # 🟡 Insere quantidade de lojas ativas ao lado do grupo
