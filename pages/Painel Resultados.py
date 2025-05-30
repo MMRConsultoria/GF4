@@ -1190,15 +1190,13 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     grupos_ordenados = grupos_tipo["Grupo"].tolist()
 
 
-if modo_visao == "Por Grupo" and agrupamento == "Dia":
-    if "Loja" in tabela_exportar_sem_tipo.columns:
+    if modo_visao == "Por Grupo" and agrupamento == "Dia":
         linhas_acumulado = tabela_exportar_sem_tipo[
             tabela_exportar_sem_tipo["Loja"] == "ACUMULADO GRUPO ATIVO"
         ]
 
         acumulado_format = workbook.add_format({
-            'bold': True, 'bg_color': '#F4CCCC',
-            'border': 1, 'num_format': 'R$ #,##0.00'
+          'bold': True, 'bg_color': '#F4CCCC', 'border': 1, 'num_format': 'R$ #,##0.00'
         })
 
         for _, row in linhas_acumulado.iterrows():
