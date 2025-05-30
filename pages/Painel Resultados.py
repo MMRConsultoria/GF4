@@ -1,5 +1,3 @@
-
-
 # pages/PainelResultados.py
 import streamlit as st
 st.set_page_config(page_title="Vendas Diarias", layout="wide")  # ✅ Escolha um título só
@@ -1192,13 +1190,15 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     grupos_ordenados = grupos_tipo["Grupo"].tolist()
 
 
-    if modo_visao == "Por Grupo" and agrupamento == "Dia":
+if modo_visao == "Por Grupo" and agrupamento == "Dia":
+    if "Loja" in tabela_exportar_sem_tipo.columns:
         linhas_acumulado = tabela_exportar_sem_tipo[
             tabela_exportar_sem_tipo["Loja"] == "ACUMULADO GRUPO ATIVO"
         ]
 
         acumulado_format = workbook.add_format({
-          'bold': True, 'bg_color': '#F4CCCC', 'border': 1, 'num_format': 'R$ #,##0.00'
+            'bold': True, 'bg_color': '#F4CCCC',
+            'border': 1, 'num_format': 'R$ #,##0.00'
         })
 
         for _, row in linhas_acumulado.iterrows():
