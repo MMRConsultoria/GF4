@@ -1161,6 +1161,33 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         df_filtrado = pd.concat([df_filtrado, df_acumulado_grupo], ignore_index=True)
 
+
+# ✅ Adiciona grupos ativos sem movimento no df_filtrado (zerado)
+        grupos_presentes = df_filtrado["Grupo"].dropna().unique()
+        grupos_sem_movimento = list(set(grupos_ativos) - set(grupos_presentes))
+
+        if grupos_sem_movimento:
+            df_sem_mov = pd.DataFrame({
+                "Grupo": grupos_sem_movimento,
+                "Loja": [f"{g} - Loja: 0" for g in grupos_sem_movimento],
+                "Fat.Total": 0,
+                "Fat.Real": 0,
+                "Serv/Tx": 0,
+                "Ticket": 0,
+                "Data": None,
+                "Ano": None,
+                "Mês Num": None,
+                "Mês Nome": None,
+                "Mês": None,
+                "Dia": None,
+                "Agrupador": "ACUMULADO",
+                "Ordem": 99999999
+            })
+
+            df_filtrado = pd.concat([df_filtrado, df_sem_mov], ignore_index=True)
+
+
+
     for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
 
 
