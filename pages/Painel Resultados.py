@@ -449,23 +449,20 @@ with aba4:
             df_filtrado.rename(columns={"Grupo_x": "Grupo"}, inplace=True)
 
 
-        # 🔄 Aplica o filtro principal com base no período
-    if agrupamento == "Dia" and modo_visao == "Por Grupo":
-        data_selecionada = pd.to_datetime(data_fim)
+# 🔄 Aplica o filtro principal com base no período
+if agrupamento == "Dia" and modo_visao == "Por Grupo":
+    lista_dfs = []
 
-        # 🧾 Lojas ativas
+    for data_selecionada in pd.date_range(start=data_inicio, end=data_fim):
         lojas_ativas = df_empresa[
             df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
         ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
-        # 🔗 Base com todas as lojas ativas + data
         base_lojas = lojas_ativas.copy()
         base_lojas["Data"] = data_selecionada
 
-        # 🎯 Vendas no dia
         df_dia = df_anos[df_anos["Data"] == data_selecionada].copy()
 
-        # 🔗 Merge: todas as lojas aparecem
         df_filtrado = pd.merge(
             base_lojas,
             df_dia,
@@ -473,19 +470,16 @@ with aba4:
             how="left"
         )
 
-        # 🧹 Trata colunas duplicadas de Grupo
         if "Grupo_x" in df_filtrado.columns:
             df_filtrado["Grupo"] = df_filtrado["Grupo_x"]
         if "Grupo_y" in df_filtrado.columns:
             df_filtrado["Grupo"] = df_filtrado["Grupo"].combine_first(df_filtrado["Grupo_y"])
         df_filtrado.drop(columns=[col for col in df_filtrado.columns if col.startswith("Grupo_")], inplace=True)
 
-        # ✅ Preenche dados nulos
         for col in ["Fat.Total", "Fat.Real", "Serv/Tx", "Ticket"]:
             if col in df_filtrado.columns:
                 df_filtrado[col] = df_filtrado[col].fillna(0)
 
-        # 🧮 Preenche colunas de data para manter compatibilidade
         df_filtrado["Ano"] = data_selecionada.year
         df_filtrado["Mês Num"] = data_selecionada.month
         df_filtrado["Mês Nome"] = data_selecionada.strftime('%B')
@@ -494,42 +488,49 @@ with aba4:
         df_filtrado["Agrupador"] = data_selecionada.strftime('%d/%m/%Y')
         df_filtrado["Ordem"] = data_selecionada
 
-        # 🔥 Garante que grupos ativos SEM movimento apareçam com 0
-        grupos_ativos = df_empresa[
-            df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "ativo"
-        ]["Grupo"].dropna().unique()
+        lista_dfs.append(df_filtrado)
 
-        grupos_presentes = df_filtrado["Grupo"].dropna().unique()
-        grupos_faltando = list(set(grupos_ativos) - set(grupos_presentes))
+    # 🔗 Junta todos os dias
+    df_filtrado = pd.concat(lista_dfs, ignore_index=True)
 
-        if grupos_faltando:
-            df_faltando = pd.DataFrame({
-                "Grupo": grupos_faltando,
-                "Loja": [f"Grupo_{g}_sem_loja" for g in grupos_faltando],
-                "Tipo": None,
-                "Data": data_selecionada,
-                "Fat.Total": 0,
-                "Fat.Real": 0,
-                "Serv/Tx": 0,
-                "Ticket": 0,
-                "Ano": data_selecionada.year,
-                "Mês Num": data_selecionada.month,
-                "Mês Nome": data_selecionada.strftime('%B'),
-                "Mês": data_selecionada.strftime('%m/%Y'),
-                "Dia": data_selecionada.strftime('%d/%m/%Y'),
-                "Agrupador": data_selecionada.strftime('%d/%m/%Y'),
-                "Ordem": data_selecionada
-            })
+    # 🔥 Garante que grupos ativos SEM movimento apareçam com 0
+    grupos_ativos = df_empresa[
+        df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "ativo"
+    ]["Grupo"].dropna().unique()
 
-            df_filtrado = pd.concat([df_filtrado, df_faltando], ignore_index=True)
+    grupos_presentes = df_filtrado["Grupo"].dropna().unique()
+    grupos_faltando = list(set(grupos_ativos) - set(grupos_presentes))
 
+    if grupos_faltando:
+        df_faltando = pd.DataFrame({
+            "Grupo": grupos_faltando,
+            "Loja": [f"Grupo_{g}_sem_loja" for g in grupos_faltando],
+            "Tipo": None,
+            "Data": pd.to_datetime(data_fim),
+            "Fat.Total": 0,
+            "Fat.Real": 0,
+            "Serv/Tx": 0,
+            "Ticket": 0,
+            "Ano": data_fim.year,
+            "Mês Num": data_fim.month,
+            "Mês Nome": data_fim.strftime('%B'),
+            "Mês": data_fim.strftime('%m/%Y'),
+            "Dia": data_fim.strftime('%d/%m/%Y'),
+            "Agrupador": data_fim.strftime('%d/%m/%Y'),
+            "Ordem": pd.to_datetime(data_fim)
+        })
+
+        df_filtrado = pd.concat([df_filtrado, df_faltando], ignore_index=True)
+
+            
         # Preenche colunas numéricas com 0 para lojas sem movimento
         for col in ["Fat.Total", "Fat.Real", "Serv/Tx", "Ticket"]:
             if col in df_filtrado.columns:
                 df_filtrado[col] = df_filtrado[col].fillna(0)
 
         
-        
+       
+
 
 
 
