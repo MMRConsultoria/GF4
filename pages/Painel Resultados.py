@@ -1078,7 +1078,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
-debug    for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
+    for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
         worksheet.write(0, col_num, header, header_format)
 
     linha = 1
