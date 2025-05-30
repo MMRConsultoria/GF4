@@ -1191,21 +1191,32 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     grupos_ordenados = grupos_tipo["Grupo"].tolist()
 
+
+    if modo_visao == "Por Grupo" and agrupamento == "Dia":
+        linhas_acumulado = tabela_exportar_sem_tipo[
+            tabela_exportar_sem_tipo["Loja"] == "ACUMULADO GRUPO ATIVO"
+        ]
+
+        acumulado_format = workbook.add_format({
+          'bold': True, 'bg_color': '#F4CCCC', 'border': 1, 'num_format': 'R$ #,##0.00'
+        })
+
+    for _, row in linhas_acumulado.iterrows():
+        for col_num, val in enumerate(row):
+            if isinstance(val, (int, float)) and not pd.isna(val):
+                worksheet.write_number(linha, col_num, val, acumulado_format)
+            else:
+                worksheet.write(linha, col_num, str(val), acumulado_format)
+        linha += 1
     
     for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
 
-
-
-
-
-
-    
         linhas_grupo = tabela_exportar_sem_tipo[
             (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
             ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
 
-       
+        
         grupo_format = workbook.add_format({
             'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
         })
