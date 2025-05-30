@@ -488,6 +488,7 @@ with aba4:
         if grupos_faltando:
             df_faltando = pd.DataFrame({
                 "Grupo": grupos_faltando,
+                "Loja": [f"Grupo_{g}_sem_loja" for g in grupos_faltando],  # 👉 cria nome fictício de loja
                 "Data": data_selecionada,
                 "Fat.Total": 0,
                 "Fat.Real": 0,
