@@ -420,36 +420,7 @@ with aba4:
         df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
      ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
-    # 🔄 Se for agrupamento por Dia e modo Por Grupo, garantir exibição de todas as lojas ativas
-    if agrupamento == "Dia" and modo_visao == "Por Grupo":
-        # Garante que as datas estão no tipo datetime
-        data_selecionada = pd.to_datetime(data_fim)
-
-        # 🧾 Cria base com todas as lojas ativas
-        lojas_ativas = df_empresa[
-            df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
-        ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
-
-
-        # Base com todas as lojas ativas e data selecionada
-        base_lojas = lojas_ativas.copy()
-        base_lojas["Data"] = data_selecionada
-
-        # Filtra os dados reais do dia selecionado
-        df_dia = df_anos[df_anos["Data"] == data_selecionada].copy()
-
-        # Merge para garantir que todas as lojas estejam presentes
-        df_filtrado = pd.merge(
-            base_lojas,
-            df_dia,
-            on=["Loja", "Data"],
-            how="left"
-        )
-
-        # ✅ Renomeia a coluna para garantir consistência
-        if "Grupo_x" in df_filtrado.columns:
-            df_filtrado.rename(columns={"Grupo_x": "Grupo"}, inplace=True)
-
+   
 
         # 🔄 Aplica o filtro principal com base no período
     if agrupamento == "Dia" and modo_visao == "Por Grupo":
