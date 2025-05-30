@@ -1,4 +1,4 @@
-# pages/PainelResultados.py
+       # pages/PainelResultados.py
 import streamlit as st
 st.set_page_config(page_title="Vendas Diarias", layout="wide")  # ✅ Escolha um título só
 
@@ -444,10 +444,10 @@ with aba4:
             how="left"
         )
 
-        # ✅ Renomeia a coluna para garantir consistência
-        if "Grupo_x" in df_filtrado.columns:
-            df_filtrado.rename(columns={"Grupo_x": "Grupo"}, inplace=True)
-
+       
+# 🕐 Converte as datas do filtro
+data_inicio = pd.to_datetime(st.session_state["data_inicio"])
+data_fim = pd.to_datetime(st.session_state["data_fim"])
 
 # 🔄 Aplica o filtro principal com base no período
 if agrupamento == "Dia" and modo_visao == "Por Grupo":
