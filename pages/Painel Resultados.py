@@ -1205,7 +1205,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
 
-        qtd_lojas_tipo = lojas_ativas[lojas_ativas["Tipo"] == tipo_atual]["Loja"].nunique()
+       
         grupo_format = workbook.add_format({
             'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
         })
