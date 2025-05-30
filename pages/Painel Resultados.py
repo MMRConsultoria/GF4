@@ -409,8 +409,7 @@ with aba4:
 
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
 
-
-   # 📌 Converte as datas selecionadas no filtro
+# 📌 Converte as datas selecionadas no filtro
 data_inicio = pd.to_datetime(st.session_state.get("data_inicio", pd.Timestamp.today().replace(day=1)))
 data_fim = pd.to_datetime(st.session_state.get("data_fim", pd.Timestamp.today()))
 
@@ -421,6 +420,7 @@ lojas_ativas = df_empresa[
 
 if agrupamento == "Dia" and modo_visao == "Por Grupo":
     lista_dfs = []
+
     grupos_ativos = df_empresa[
         df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "ativo"
     ]["Grupo"].dropna().unique()
@@ -457,12 +457,19 @@ if agrupamento == "Dia" and modo_visao == "Por Grupo":
         df_merge["Agrupador"] = data_selecionada.strftime('%d/%m/%Y')
         df_merge["Ordem"] = data_selecionada
 
-        # 🔥 Adiciona grupos faltantes com 0 para o dia atual
-        grupos_presentes = df_merge["Grupo"].dropna().unique()
+        lista_dfs.append(df_merge)
+
+    # Junta todos os dias
+    df_filtrado = pd.concat(lista_dfs, ignore_index=True)
+
+    # 🔥 Adiciona grupos faltantes com 0 para cada dia
+    lista_faltantes = []
+    for data_selecionada in pd.date_range(start=data_inicio, end=data_fim):    
+        grupos_presentes = df_filtrado[df_filtrado["Data"] == data_selecionada]["Grupo"].dropna().unique()
         grupos_faltando = list(set(grupos_ativos) - set(grupos_presentes))
 
         if grupos_faltando:
-            df_faltando = pd.DataFrame({
+            df_faltante = pd.DataFrame({
                 "Grupo": grupos_faltando,
                 "Loja": [f"Grupo_{g}_sem_loja" for g in grupos_faltando],
                 "Tipo": None,
@@ -479,14 +486,23 @@ if agrupamento == "Dia" and modo_visao == "Por Grupo":
                 "Agrupador": data_selecionada.strftime('%d/%m/%Y'),
                 "Ordem": data_selecionada
             })
+            lista_faltantes.append(df_faltante)
 
-            df_merge = pd.concat([df_merge, df_faltando], ignore_index=True)
+    if lista_faltantes:
+        df_filtrado = pd.concat([df_filtrado] + lista_faltantes, ignore_index=True)
 
-        lista_dfs.append(df_merge)
+    
 
-    # Junta todos os dias
-    df_filtrado = pd.concat(lista_dfs, ignore_index=True)
- 
+
+
+
+
+
+
+
+
+    
+       
 
         
         
