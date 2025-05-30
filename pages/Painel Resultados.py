@@ -494,12 +494,18 @@ with aba4:
         if grupos_faltando:
             df_faltando = pd.DataFrame({
                 "Grupo": grupos_faltando,
-                "Loja": [f"Grupo_{g}_sem_loja" for g in grupos_faltando],  # 👉 cria nome fictício de loja
+                "Loja": [f"Grupo_{g}_sem_loja" for g in grupos_faltando],
+                "Tipo": None,
                 "Data": data_selecionada,
                 "Fat.Total": 0,
                 "Fat.Real": 0,
                 "Serv/Tx": 0,
                 "Ticket": 0,
+                "Ano": data_selecionada.year,
+                "Mês Num": data_selecionada.month,
+                "Mês Nome": data_selecionada.strftime('%B'),
+                "Mês": data_selecionada.strftime('%m/%Y'),
+                "Dia": data_selecionada.strftime('%d/%m/%Y'),
                 "Agrupador": data_selecionada.strftime("%d/%m/%Y"),
                 "Ordem": data_selecionada
             })
@@ -1230,4 +1236,3 @@ st.download_button(
     file_name="faturamento_visual.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
-
