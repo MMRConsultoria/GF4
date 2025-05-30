@@ -486,7 +486,7 @@ if agrupamento == "Dia" and modo_visao == "Por Grupo":
                 "Agrupador": data_selecionada.strftime('%d/%m/%Y'),
                 "Ordem": data_selecionada
             })
-            lista_faltantes.append(df_faltante)
+            lista_faltantes.append(df_faltanto)
 
     if lista_faltantes:
         df_filtrado = pd.concat([df_filtrado] + lista_faltantes, ignore_index=True)
