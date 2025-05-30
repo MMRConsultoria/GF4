@@ -523,10 +523,7 @@ with aba4:
 
             df_filtrado = pd.concat([df_filtrado, df_faltando], ignore_index=True)
 
-        # 🧪 Debug opcional
-        st.subheader("🔎 Debug: Lojas/Grupos do dia selecionado")
-        st.dataframe(df_filtrado)
-
+      
 
 
         # Preenche colunas numéricas com 0 para lojas sem movimento
