@@ -428,9 +428,7 @@ with aba4:
         data_selecionada = pd.to_datetime(data_fim)
 
        
-        # 🔗 Base com todas as lojas ativas + data
-        base_lojas = lojas_ativas.copy()
-        base_lojas["Data"] = data_selecionada
+        
 
         # 🎯 Vendas no dia
         df_dia = df_anos[df_anos["Data"] == data_selecionada].copy()
