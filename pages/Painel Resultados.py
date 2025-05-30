@@ -1121,7 +1121,19 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     subtotais = df_numerico.groupby("Grupo").sum().sum(axis=1).reset_index()
     subtotais.columns = ["Grupo", "Subtotal"]
 
-    
+    # 🔢 Junta com o Tipo e mantém somente grupos que aparecem nos dados ativos
+    grupos_com_dados = df_ativos["Grupo"].dropna().unique().tolist()
+
+    grupos_tipo = (
+        lojas_ativas[["Grupo", "Tipo"]]
+        .dropna()
+        .drop_duplicates()
+        .merge(subtotais, on="Grupo", how="left")
+        .query("Grupo in @grupos_com_dados")
+        .sort_values(by=["Tipo", "Subtotal"], ascending=[True, False])
+    )
+
+    grupos_ordenados = grupos_tipo["Grupo"].tolist()
     
     # ✅ Adiciona acumulado dos grupos ativos, se visão por Grupo e agrupado por Dia
     if modo_visao == "Por Grupo" and agrupamento == "Dia":
@@ -1149,64 +1161,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         df_filtrado = pd.concat([df_filtrado, df_acumulado_grupo], ignore_index=True)
 
-
-# ✅ Adiciona grupos ativos sem movimento no df_filtrado (zerado)
-        grupos_presentes = df_filtrado["Grupo"].dropna().unique()
-        grupos_sem_movimento = list(set(grupos_ativos) - set(grupos_presentes))
-
-        if grupos_sem_movimento:
-            df_sem_mov = pd.DataFrame({
-                "Grupo": grupos_sem_movimento,
-                "Loja": [f"{g} - Loja: 0" for g in grupos_sem_movimento],
-                "Fat.Total": 0,
-                "Fat.Real": 0,
-                "Serv/Tx": 0,
-                "Ticket": 0,
-                "Data": None,
-                "Ano": None,
-                "Mês Num": None,
-                "Mês Nome": None,
-                "Mês": None,
-                "Dia": None,
-                "Agrupador": "ACUMULADO",
-                "Ordem": 99999999
-            })
-
-            df_filtrado = pd.concat([df_filtrado, df_sem_mov], ignore_index=True)
-            tabela_exportar_sem_tipo = pd.concat([tabela_exportar_sem_tipo, df_sem_mov], ignore_index=True)
-
-# 🔢 Junta com o Tipo e mantém somente grupos que aparecem nos dados ativos
-    grupos_com_dados = df_ativos["Grupo"].dropna().unique().tolist()
-
-    grupos_tipo = (
-        lojas_ativas[["Grupo", "Tipo"]]
-        .dropna()
-        .drop_duplicates()
-        .merge(subtotais, on="Grupo", how="left")
-        .query("Grupo in @grupos_com_dados")
-        .sort_values(by=["Tipo", "Subtotal"], ascending=[True, False])
-    )
-
-    grupos_ordenados = grupos_tipo["Grupo"].tolist()
-
-
-    if modo_visao == "Por Grupo" and agrupamento == "Dia":
-        linhas_acumulado = tabela_exportar_sem_tipo[
-            tabela_exportar_sem_tipo["Loja"] == "ACUMULADO GRUPO ATIVO"
-    ]
-
-        acumulado_format = workbook.add_format({
-          'bold': True, 'bg_color': '#F4CCCC', 'border': 1, 'num_format': 'R$ #,##0.00'
-        })
-
-    for _, row in linhas_acumulado.iterrows():
-        for col_num, val in enumerate(row):
-            if isinstance(val, (int, float)) and not pd.isna(val):
-                worksheet.write_number(linha, col_num, val, acumulado_format)
-            else:
-                worksheet.write(linha, col_num, str(val), acumulado_format)
-        linha += 1
-    
     for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
 
 
@@ -1220,7 +1174,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
         ]
 
-        
+        qtd_lojas_tipo = lojas_ativas[lojas_ativas["Tipo"] == tipo_atual]["Loja"].nunique()
         grupo_format = workbook.add_format({
             'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
         })
