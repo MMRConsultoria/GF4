@@ -449,8 +449,8 @@ with aba4:
             df_filtrado.rename(columns={"Grupo_x": "Grupo"}, inplace=True)
 
 
-    # 🔄 Aplica o filtro principal com base no período
-    if agrupamento == "Dia" and modo_visao == "Por Grupo":
+# 🔄 Aplica o filtro principal com base no período
+if agrupamento == "Dia" and modo_visao == "Por Grupo":
     data_selecionada = pd.to_datetime(data_fim)
 
     # 🧾 Cria base com todas as lojas ativas
