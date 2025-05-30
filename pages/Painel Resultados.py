@@ -479,9 +479,7 @@ with aba4:
                 df_filtrado[col] = df_filtrado[col].fillna(0)
 
         # 🔥 Garante todos os grupos, mesmo sem lojas (ex: se não teve NENHUMA loja ativa de um grupo)
-        grupos_ativos = df_empresa[
-            df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "ativo"
-        ]["Grupo"].dropna().unique()
+        grupos_ativos = lojas_ativas["Grupo"].unique()
         grupos_presentes = df_filtrado["Grupo"].dropna().unique()
         grupos_faltando = list(set(grupos_ativos) - set(grupos_presentes))
 
