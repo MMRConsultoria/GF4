@@ -1229,13 +1229,13 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 })
 
                 for _, row in acumulado.iterrows():
-                    for col_num, val in enumerate(row[tabela_exportar_sem_tipo.columns]):
+                    for col_num, col in enumerate(tabela_exportar_sem_tipo.columns):
+                        val = row.get(col, "")
                         if isinstance(val, (int, float)) and not pd.isna(val):
                             worksheet.write_number(linha, col_num, val, grupo_format)
                         else:
                             worksheet.write(linha, col_num, str(val), grupo_format)
                     linha += 1
-
 
 # 🔧 Ajustes visuais finais
 worksheet.set_column(0, num_colunas, 18)
