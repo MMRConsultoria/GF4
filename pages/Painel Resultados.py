@@ -451,7 +451,7 @@ with aba4:
 
         # 🔄 Aplica o filtro principal com base no período
     if agrupamento == "Dia" and modo_visao == "Por Grupo":
-        data_selecionada = pd.to_datetime(data_fim)
+        datas_selecionadas = pd.date_range(start=data_inicio, end=data_fim)
 
         # 🧾 Lojas ativas
         lojas_ativas = df_empresa[
@@ -523,9 +523,7 @@ with aba4:
 
             df_filtrado = pd.concat([df_filtrado, df_faltando], ignore_index=True)
 
-        
-
-
+       
         # Preenche colunas numéricas com 0 para lojas sem movimento
         for col in ["Fat.Total", "Fat.Real", "Serv/Tx", "Ticket"]:
             if col in df_filtrado.columns:
@@ -1075,8 +1073,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
-    # Cabeçalho
-    for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
+debug    for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
         worksheet.write(0, col_num, header, header_format)
 
     linha = 1
