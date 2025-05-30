@@ -1218,8 +1218,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         # ✅ Escreve o acumulado dos grupos ativos no final do Excel
         if modo_visao == "Por Grupo" and agrupamento == "Dia":
-            acumulado = df_filtrado[df_filtrado["Loja"] == "ACUMULADO GRUPO ATIVO"]
-
+            acumulado = df_filtrado[df_filtrado["Loja"] == "ACUMULADO GRUPO ATIVO"].copy()
+            acumulado = acumulado[[col for col in tabela_exportar_sem_tipo.columns if col in acumulado.columns]]
             if not acumulado.empty:
                 grupo_format = workbook.add_format({
                     'bg_color': '#FFD966',
