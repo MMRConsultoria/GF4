@@ -1216,26 +1216,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                     worksheet.write(linha, col_num, str(val), subtotal_format)
             linha += 1
 
-        # ✅ Escreve o acumulado dos grupos ativos no final do Excel
-        if modo_visao == "Por Grupo" and agrupamento == "Dia":
-            acumulado = df_filtrado[df_filtrado["Loja"] == "ACUMULADO GRUPO ATIVO"].copy()
-            acumulado = acumulado[[col for col in tabela_exportar_sem_tipo.columns if col in acumulado.columns]]
-            if not acumulado.empty:
-                grupo_format = workbook.add_format({
-                    'bg_color': '#FFD966',
-                    'border': 1,
-                    'num_format': 'R$ #,##0.00',
-                    'bold': True
-                })
-
-                for _, row in acumulado.iterrows():
-                    for col_num, col in enumerate(tabela_exportar_sem_tipo.columns):
-                        val = row.get(col, "")
-                        if isinstance(val, (int, float)) and not pd.isna(val):
-                            worksheet.write_number(linha, col_num, val, grupo_format)
-                        else:
-                            worksheet.write(linha, col_num, str(val), grupo_format)
-                    linha += 1
+       
 
 # 🔧 Ajustes visuais finais
 worksheet.set_column(0, num_colunas, 18)
