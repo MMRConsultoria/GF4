@@ -1193,22 +1193,28 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     if modo_visao == "Por Grupo" and agrupamento == "Dia":
         linhas_acumulado = tabela_exportar_sem_tipo[
             tabela_exportar_sem_tipo["Loja"] == "ACUMULADO GRUPO ATIVO"
-        ]
+    ]
 
         acumulado_format = workbook.add_format({
           'bold': True, 'bg_color': '#F4CCCC', 'border': 1, 'num_format': 'R$ #,##0.00'
         })
 
-        for _, row in linhas_acumulado.iterrows():
-            for col_num, val in enumerate(row):
-                if isinstance(val, (int, float)) and not pd.isna(val):
-                    worksheet.write_number(linha, col_num, val, acumulado_format)
-                else:
-                    worksheet.write(linha, col_num, str(val), acumulado_format)
-            linha += 1
+    for _, row in linhas_acumulado.iterrows():
+        for col_num, val in enumerate(row):
+            if isinstance(val, (int, float)) and not pd.isna(val):
+                worksheet.write_number(linha, col_num, val, acumulado_format)
+            else:
+                worksheet.write(linha, col_num, str(val), acumulado_format)
+        linha += 1
     
     for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
 
+
+
+
+
+
+    
         linhas_grupo = tabela_exportar_sem_tipo[
             (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
             ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
@@ -1258,15 +1264,15 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
        
 
-    # 🔧 Ajustes visuais finais
-    worksheet.set_column(0, num_colunas, 18)
-    # Atualiza o cabeçalho para incluir a coluna % Participação
-    for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
-        worksheet.write(0, col_num, header, header_format)
-    # 🔥 Adiciona o cabeçalho da coluna de participação
-    worksheet.write(0, num_colunas, "% Participação", header_format)
+# 🔧 Ajustes visuais finais
+worksheet.set_column(0, num_colunas, 18)
+# Atualiza o cabeçalho para incluir a coluna % Participação
+for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
+    worksheet.write(0, col_num, header, header_format)
+# 🔥 Adiciona o cabeçalho da coluna de participação
+worksheet.write(0, num_colunas, "% Participação", header_format)
 
-    worksheet.hide_gridlines(option=2)
+worksheet.hide_gridlines(option=2)
 
 # 🔽 Botão Download
 st.download_button(
