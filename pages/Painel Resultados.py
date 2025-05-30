@@ -466,6 +466,25 @@ if agrupamento == "Dia" and modo_visao == "Por Grupo":
         df_merge["Agrupador"] = data_dia.strftime('%d/%m/%Y')
         df_merge["Ordem"] = data_dia
 
+        lista_dfs.append(df_merge) 
+        
+           
+# 🔚 Junta todos os dias
+    df_filtrado = pd.concat(lista_dfs, ignore_index=True)
+
+          
+        
+
+
+
+    # ✅ Só aplica o filtro de mês quando o agrupamento for "Mês" ou "Dia"
+    if agrupamento in ["Mês", "Dia"]:
+        df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
+    else:
+        # Ignora filtro de mês — mantém todos os meses dos anos selecionados
+        pass
+
+
         # Grupos presentes nesse dia
         grupos_presentes = df_merge["Grupo"].dropna().unique()
         grupos_faltando = list(set(grupos_ativos) - set(grupos_presentes))
@@ -493,20 +512,7 @@ if agrupamento == "Dia" and modo_visao == "Por Grupo":
 
         lista_dfs.append(df_merge)
 
-    # 🔚 Junta todos os dias
-    df_filtrado = pd.concat(lista_dfs, ignore_index=True)
-
-          
-        
-
-
-
-    # ✅ Só aplica o filtro de mês quando o agrupamento for "Mês" ou "Dia"
-    if agrupamento in ["Mês", "Dia"]:
-        df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
-    else:
-        # Ignora filtro de mês — mantém todos os meses dos anos selecionados
-        pass
+    
     
     # 🧠 Garante seleção válida
     anos_validos = [a for a in ano_opcao if isinstance(a, int)]
