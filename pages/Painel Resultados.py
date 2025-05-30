@@ -410,11 +410,9 @@ with aba4:
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
 
 
-    
-
-    # 🕐 Converte as datas do filtro
-    data_inicio = pd.to_datetime(st.session_state.get("data_inicio", pd.Timestamp.today().replace(day=1)))
-    data_fim = pd.to_datetime(st.session_state.get("data_fim", pd.Timestamp.today()))
+    # 📌 Define data_fim como a data mais recente do DataFrame
+    datas_disponiveis = sorted(pd.to_datetime(df_anos["Data"].dropna().unique()))
+    data_fim = datas_disponiveis[-1].date() if datas_disponiveis else date.today()
 
 
     # 🔢 Filtra só as lojas ativas
@@ -474,47 +472,35 @@ with aba4:
         grupos_presentes = df_filtrado["Grupo"].dropna().unique()
         grupos_faltando = list(set(grupos_ativos) - set(grupos_presentes))
 
-    # 🔥 Garante que grupos ativos SEM movimento apareçam com 0 em cada dia
-grupos_ativos = df_empresa[
-    df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "ativo"
-]["Grupo"].dropna().unique()
+        if grupos_faltando:
+            df_faltando = pd.DataFrame({
+                "Grupo": grupos_faltando,
+                "Loja": [f"Grupo_{g}_sem_loja" for g in grupos_faltando],
+                "Tipo": None,
+                "Data": data_selecionada,
+                "Fat.Total": 0,
+                "Fat.Real": 0,
+                "Serv/Tx": 0,
+                "Ticket": 0,
+                "Ano": data_selecionada.year,
+                "Mês Num": data_selecionada.month,
+                "Mês Nome": data_selecionada.strftime('%B'),
+                "Mês": data_selecionada.strftime('%m/%Y'),
+                "Dia": data_selecionada.strftime('%d/%m/%Y'),
+                "Agrupador": data_selecionada.strftime('%d/%m/%Y'),
+                "Ordem": data_selecionada
+            })
 
-lista_completa = []
-
-for data_selecionada in pd.date_range(start=data_inicio, end=data_fim):
-    grupos_presentes = df_filtrado[df_filtrado["Data"] == data_selecionada]["Grupo"].dropna().unique()
-    grupos_faltando = list(set(grupos_ativos) - set(grupos_presentes))
-
-    if grupos_faltando:
-        df_faltando = pd.DataFrame({
-            "Grupo": grupos_faltando,
-            "Loja": [f"Grupo_{g}_sem_loja" for g in grupos_faltando],
-            "Tipo": None,
-            "Data": data_selecionada,
-            "Fat.Total": 0,
-            "Fat.Real": 0,
-            "Serv/Tx": 0,
-            "Ticket": 0,
-            "Ano": data_selecionada.year,
-            "Mês Num": data_selecionada.month,
-            "Mês Nome": data_selecionada.strftime('%B'),
-            "Mês": data_selecionada.strftime('%m/%Y'),
-            "Dia": data_selecionada.strftime('%d/%m/%Y'),
-            "Agrupador": data_selecionada.strftime('%d/%m/%Y'),
-            "Ordem": data_selecionada
-        })
-
-        lista_completa.append(df_faltando)
-
-# Junta todos os grupos faltantes de todos os dias
-if lista_completa:
-    df_faltantes_geral = pd.concat(lista_completa, ignore_index=True)
-    df_filtrado = pd.concat([df_filtrado, df_faltantes_geral], ignore_index=True)
-    
+            df_filtrado = pd.concat([df_filtrado, df_faltando], ignore_index=True)
 
 
 
+        # Preenche colunas numéricas com 0 para lojas sem movimento
+        for col in ["Fat.Total", "Fat.Real", "Serv/Tx", "Ticket"]:
+            if col in df_filtrado.columns:
+                df_filtrado[col] = df_filtrado[col].fillna(0)
 
+        
         
 
 
