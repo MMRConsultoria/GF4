@@ -464,13 +464,7 @@ with aba4:
         df_filtrado["Agrupador"] = data_selecionada.strftime('%d/%m/%Y')
         df_filtrado["Ordem"] = data_selecionada
 
-    # ✅ Campo de data com valores padrão corretos
-    data_inicio, data_fim = st.date_input(
-        "",
-        value=[data_inicio_padrao, data_fim_padrao],
-        min_value=data_minima,
-        max_value=data_maxima
-    )
+    
 
 
 
@@ -546,7 +540,14 @@ with aba4:
         data_inicio_padrao = max(data_minima, min(ontem, data_maxima))
         data_fim_padrao = data_inicio_padrao
 
-    
+    # ✅ Campo de data com valores padrão corretos
+    data_inicio, data_fim = st.date_input(
+        "",
+        value=[data_inicio_padrao, data_fim_padrao],
+        min_value=data_minima,
+        max_value=data_maxima
+    )
+
     if agrupamento == "Ano" and ano_opcao:
         df_filtrado = df_filtrado[df_filtrado["Ano"].isin(ano_opcao)]
 
