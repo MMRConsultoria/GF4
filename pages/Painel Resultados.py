@@ -322,6 +322,7 @@ with aba4:
     </style>
     """, unsafe_allow_html=True)
   
+
     # 🔧 Padroniza nomes de Loja e Grupo
     df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.title()
     df_empresa["Grupo"] = df_empresa["Grupo"].astype(str).str.strip().str.upper()
@@ -329,7 +330,8 @@ with aba4:
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.title()
     df_anos["Grupo"] = df_anos["Grupo"].astype(str).str.strip().str.upper()
 
-    
+
+
     # Normaliza dados
     
     df_anos["Grupo"] = df_anos["Grupo"].str.split("-").str[0].str.strip()
@@ -417,6 +419,7 @@ with aba4:
 
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
 
+    
 
     # 📌 Define data_fim como a data mais recente do DataFrame
     datas_disponiveis = sorted(pd.to_datetime(df_anos["Data"].dropna().unique()))
@@ -460,6 +463,25 @@ with aba4:
         df_filtrado["Dia"] = data_selecionada.strftime('%d/%m/%Y')
         df_filtrado["Agrupador"] = data_selecionada.strftime('%d/%m/%Y')
         df_filtrado["Ordem"] = data_selecionada
+
+    # ✅ Campo de data com valores padrão corretos
+    data_inicio, data_fim = st.date_input(
+        "",
+        value=[data_inicio_padrao, data_fim_padrao],
+        min_value=data_minima,
+        max_value=data_maxima
+    )
+
+
+
+        # Filtro de datas (Dia)
+    if agrupamento == "Dia":
+        df_filtrado = df_filtrado[
+            (df_filtrado["Data"] >= pd.to_datetime(data_inicio)) &
+            (df_filtrado["Data"] <= pd.to_datetime(data_fim))
+        ]
+
+
 
         # 🔥 Garante que grupos ativos SEM movimento apareçam com 0
         grupos_ativos = df_empresa[
@@ -524,14 +546,7 @@ with aba4:
         data_inicio_padrao = max(data_minima, min(ontem, data_maxima))
         data_fim_padrao = data_inicio_padrao
 
-    # ✅ Campo de data com valores padrão corretos
-    data_inicio, data_fim = st.date_input(
-        "",
-        value=[data_inicio_padrao, data_fim_padrao],
-        min_value=data_minima,
-        max_value=data_maxima
-    )
-
+    
     if agrupamento == "Ano" and ano_opcao:
         df_filtrado = df_filtrado[df_filtrado["Ano"].isin(ano_opcao)]
 
