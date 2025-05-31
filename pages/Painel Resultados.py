@@ -561,7 +561,8 @@ with aba4:
             (df_filtrado["Data"].dt.to_period("M") <= periodo_fim)
         ]
    
-
+    df_filtrado["Grupo"] = df_filtrado["Grupo"].astype(str).str.strip().str.upper()
+    df_filtrado["Loja"] = df_filtrado["Loja"].astype(str).str.strip().str.title()
 
     
     # Criação do agrupador e ordem com base na escolha
