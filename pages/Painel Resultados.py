@@ -322,14 +322,7 @@ with aba4:
     </style>
     """, unsafe_allow_html=True)
   
-    # 🔧 Padroniza nomes de Loja e Grupo
-    df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.title()
-    df_empresa["Grupo"] = df_empresa["Grupo"].astype(str).str.strip().str.upper()
 
-    df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.title()
-    df_anos["Grupo"] = df_anos["Grupo"].astype(str).str.strip().str.upper()
-
-    
     # Normaliza dados
     
     df_anos["Grupo"] = df_anos["Grupo"].str.split("-").str[0].str.strip()
@@ -359,8 +352,7 @@ with aba4:
     
    
     df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
-    df_filtrado["Grupo"] = df_filtrado["Grupo"].astype(str).str.strip().str.upper()
-    df_filtrado["Loja"] = df_filtrado["Loja"].astype(str).str.strip().str.title()
+
    
     meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
                   7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"}
@@ -561,8 +553,7 @@ with aba4:
             (df_filtrado["Data"].dt.to_period("M") <= periodo_fim)
         ]
    
-    df_filtrado["Grupo"] = df_filtrado["Grupo"].astype(str).str.strip().str.upper()
-    df_filtrado["Loja"] = df_filtrado["Loja"].astype(str).str.strip().str.title()
+
 
     
     # Criação do agrupador e ordem com base na escolha
