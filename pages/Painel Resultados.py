@@ -322,7 +322,14 @@ with aba4:
     </style>
     """, unsafe_allow_html=True)
   
+    # 🔧 Padroniza nomes de Loja e Grupo
+    df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.title()
+    df_empresa["Grupo"] = df_empresa["Grupo"].astype(str).str.strip().str.upper()
 
+    df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.title()
+    df_anos["Grupo"] = df_anos["Grupo"].astype(str).str.strip().str.upper()
+
+    
     # Normaliza dados
     
     df_anos["Grupo"] = df_anos["Grupo"].str.split("-").str[0].str.strip()
