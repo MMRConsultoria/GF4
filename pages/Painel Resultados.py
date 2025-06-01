@@ -375,7 +375,15 @@ with aba4:
     #meses_selecionados = st.multiselect("", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis, key="meses_aba3")
     meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
     mes_atual_nome = meses_dict[datetime.today().month]
-    meses_selecionados = st.multiselect("", options=meses_nomes_disponiveis, default=[mes_atual_nome], key="meses_aba3")
+    default_valido = [mes_atual_nome] if mes_atual_nome in meses_nomes_disponiveis else []
+
+    meses_selecionados = st.multiselect(
+        "",
+        options=meses_nomes_disponiveis,
+        default=default_valido,
+        key="meses_aba3"
+    )
+
     
     meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
     df_filtrado = df_filtrado[df_filtrado["Mês Num"].isin(meses_numeros)]
