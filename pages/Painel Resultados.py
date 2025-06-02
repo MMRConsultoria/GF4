@@ -359,7 +359,8 @@ with aba4:
     
    
     df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
-
+    df_filtrado["Grupo"] = df_filtrado["Grupo"].astype(str).str.strip().str.upper()
+    df_filtrado["Loja"] = df_filtrado["Loja"].astype(str).str.strip().str.title()
    
     meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
                   7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"}
