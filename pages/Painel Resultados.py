@@ -464,16 +464,6 @@ with aba4:
         df_filtrado["Agrupador"] = data_selecionada.strftime('%d/%m/%Y')
         df_filtrado["Ordem"] = data_selecionada
 
-    
-
-
-
-        # Filtro de datas (Dia)
-    if agrupamento == "Dia":
-        df_filtrado = df_filtrado[
-            (df_filtrado["Data"] >= pd.to_datetime(data_inicio)) &
-            (df_filtrado["Data"] <= pd.to_datetime(data_fim))
-        ]
 
 
 
