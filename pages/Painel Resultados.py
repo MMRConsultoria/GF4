@@ -325,6 +325,9 @@ with aba4:
 
     # Normaliza dados
     
+
+    df_empresa["Grupo"] = df_empresa["Grupo"].astype(str).str.strip().str.upper()
+    #df_filtrado["Grupo"] = df_filtrado["Grupo"].astype(str).str.strip().str.upper()
     df_anos["Grupo"] = df_anos["Grupo"].str.split("-").str[0].str.strip()
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
