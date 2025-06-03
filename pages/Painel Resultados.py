@@ -1176,9 +1176,9 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
             soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
 
-            linha_grupo = [f"{grupo_atual} - Loja: {qtd_lojas}", ""]
-            linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
-
+            total = soma_grupo.get("Fat.Total", "")  # ou outro campo base do Total
+            linha_grupo = [f"{grupo_atual}", f"Lojas: {qtd_lojas}"]
+            linha_grupo += [total] + [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
             for col_num, val in enumerate(linha_grupo):
                 if isinstance(val, (int, float)) and not pd.isna(val):
                     worksheet.write_number(linha, col_num, val, grupo_format)
