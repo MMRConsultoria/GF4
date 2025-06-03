@@ -1171,21 +1171,20 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
         })
 
-        # ⛔️ Oculta as lojas quando for Por Grupo + Dia
-        if not (modo_visao == "Por Grupo" and agrupamento == "Dia"):
-            for _, row in linhas_grupo.iterrows():
-                row = row.copy()
+        if modo_visao == "Por Grupo" and agrupamento == "Dia":
+            # ✅ Linha resumida: "GRU - Loja: 12"
+            qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
+            soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
 
-                if modo_visao == "Por Grupo":
-                    qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
-                    row.iloc[0] = f"{grupo_atual} - Loja: {qtd_lojas}"
+            linha_grupo = [f"{grupo_atual} - Loja: {qtd_lojas}", ""]
+            linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
-                for col_num, val in enumerate(row):
-                    if isinstance(val, (int, float)) and not pd.isna(val):
-                        worksheet.write_number(linha, col_num, val, grupo_format)
-                    else:
-                        worksheet.write(linha, col_num, str(val), grupo_format)
-                linha += 1
+            for col_num, val in enumerate(linha_grupo):
+                if isinstance(val, (int, float)) and not pd.isna(val):
+                    worksheet.write_number(linha, col_num, val, grupo_format)
+                else:
+                    worksheet.write(linha, col_num, str(val), grupo_format)
+            linha += 1
 
         elif modo_visao == "Por Loja":
             # ✅ Mantém a escrita linha a linha com cores por grupo
