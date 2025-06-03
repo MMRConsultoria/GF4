@@ -936,6 +936,8 @@ if mostrar_acumulado:
     )
     df_acumulado = df_acumulado.loc[:, ~df_acumulado.columns.str.endswith('_drop')]
 
+    df_acumulado["Grupo"] = df_acumulado["Grupo"].astype(str).str.strip().str.upper()
+    
     acumulado_por_tipo = df_acumulado.groupby("Tipo")[coluna_acumulado].sum().reset_index().rename(
         columns={coluna_acumulado: "Acumulado no Mês Tipo"}
     )
