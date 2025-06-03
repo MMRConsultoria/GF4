@@ -325,10 +325,7 @@ with aba4:
 
     # Normaliza dados
     
-    #df_anos["Grupo"] = df_anos["Grupo"].str.split("-").str[0].str.strip()
-    df_anos["Grupo"] = df_anos["Grupo"].str.split("-").str[0].str.strip().str.upper()
-    df_empresa["Grupo"] = df_empresa["Grupo"].str.strip().str.upper()
-
+    df_anos["Grupo"] = df_anos["Grupo"].str.split("-").str[0].str.strip()
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
@@ -1019,28 +1016,6 @@ tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 
 # 🔥 Geração do Excel
-# 🔗 Garante que a coluna "Loja" esteja presente
-if "Loja" not in tabela_exportar_sem_tipo.columns and "Loja" in df_empresa.columns:
-    tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
-        df_empresa[["Loja", "Grupo"]].drop_duplicates(),
-        on="Grupo",
-        how="left"
-    )
-
-if modo_visao == "Por Grupo" and agrupamento == "Dia":
-
-    # ✅ Cria coluna "Total"
-    colunas_numericas = tabela_exportar_sem_tipo.select_dtypes(include='number').columns.tolist()
-    tabela_exportar_sem_tipo["Total"] = tabela_exportar_sem_tipo[colunas_numericas].sum(axis=1)
-
-    # ✅ Reorganiza as colunas
-    colunas_base = ["Grupo", "Loja", "Total"]
-    colunas_restantes = [col for col in tabela_exportar_sem_tipo.columns if col not in colunas_base]
-    colunas_finais = [col for col in colunas_base if col in tabela_exportar_sem_tipo.columns] + colunas_restantes
-    tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[colunas_finais]
-
-
-
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
 
@@ -1089,9 +1064,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         ]["Loja"].nunique()
         soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
-        
-        
-        
         linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
         linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
@@ -1189,53 +1161,51 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         df_filtrado = pd.concat([df_filtrado, df_acumulado_grupo], ignore_index=True)
 
-    if modo_visao == "Por Grupo":
-        for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
-            # 🔢 Filtra as linhas do grupo atual
-            linhas_grupo = tabela_exportar_sem_tipo[
-                (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
-                ~tabela_exportar_sem_tipo["Grupo"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
-            ]
+    for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
 
-            # 🔢 Quantidade de lojas ativas no grupo
-            qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
 
-            # 🔢 Soma das colunas numéricas
-            soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
 
-            # ✅ Cria linha final: Grupo, Qtde Lojas e Totais
-            linha_grupo = [grupo_atual, f"Lojas: {qtd_lojas}"]
-            linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
-            # ✅ Estilo
-            grupo_format = workbook.add_format({
-                'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
-            })
 
-            # ✅ Escreve a linha no Excel
-            for col_num, val in enumerate(linha_grupo):
+
+    
+        linhas_grupo = tabela_exportar_sem_tipo[
+            (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
+            ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+        ]
+
+        qtd_lojas_tipo = lojas_ativas[lojas_ativas["Tipo"] == tipo_atual]["Loja"].nunique()
+        grupo_format = workbook.add_format({
+            'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
+        })
+
+        for _, row in linhas_grupo.iterrows():
+            row = row.copy()
+
+
+
+
+
+
+            if modo_visao == "Por Grupo":
+                # 🟡 Insere quantidade de lojas ativas ao lado do grupo
+                qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
+                row.iloc[0] = f"{grupo_atual} - Loja: {qtd_lojas}"
+
+            for col_num, val in enumerate(row):
                 if isinstance(val, (int, float)) and not pd.isna(val):
                     worksheet.write_number(linha, col_num, val, grupo_format)
                 else:
                     worksheet.write(linha, col_num, str(val), grupo_format)
             linha += 1
 
-    linhas_grupo = tabela_exportar_sem_tipo[
-        (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
-        ~tabela_exportar_sem_tipo["Grupo"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
-]
         
-    if modo_visao == "Por Loja":
-        for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
-            # 🔁 Filtra as linhas do grupo atual
-            linhas_grupo = tabela_exportar_sem_tipo[
-                (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
-                ~tabela_exportar_sem_tipo["Grupo"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
-            ]
-
+        # ✅ Subtotal por grupo apenas no modo "Por Loja"
+        if modo_visao == "Por Loja":
             soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
+            # 🔧 Calcula somente as lojas ativas no grupo
             qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
-
+            
             linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
             linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
