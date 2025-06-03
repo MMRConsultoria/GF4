@@ -1220,7 +1220,8 @@ worksheet.set_column(0, num_colunas, 18)
 
 
 # Atualiza o cabeçalho, renomeando a segunda coluna para "Qtde"
-for col_num in range(len(colunas) + 1):  # +1 por causa da nova coluna "Total"
+colunas = list(tabela_exportar_sem_tipo.columns)  # ✅ Garante que a lista de colunas está definida
+for col_num in range(len(colunas) + 1):  # +1 porque vamos adicionar a coluna "Total"
     if col_num == 1:
         worksheet.write(0, col_num, "Lojas", header_format)  # <- AQUI está certo
     elif col_num == primeira_data_idx:
