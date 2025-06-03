@@ -1223,7 +1223,7 @@ worksheet.set_column(0, num_colunas, 18)
 # Atualiza o cabeçalho, renomeando a segunda coluna para "Qtde"
 for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
     if col_num == 1:
-        worksheet.write(0, col_num, "Qtde", header_format)
+        worksheet.write(0, col_num, "Total Lojas", header_format)
     else:
         worksheet.write(0, col_num, header, header_format)
 
