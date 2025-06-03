@@ -1,6 +1,7 @@
 # pages/PainelResultados.py
 import streamlit as st
 st.set_page_config(page_title="Vendas Diarias", layout="wide")  # ✅ Escolha um título só
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -1018,6 +1019,19 @@ tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 
 # 🔥 Geração do Excel
+
+# ✅ Adiciona coluna "Total" com a soma das colunas numéricas
+colunas_numericas = tabela_exportar_sem_tipo.select_dtypes(include='number').columns.tolist()
+tabela_exportar_sem_tipo["Total"] = tabela_exportar_sem_tipo[colunas_numericas].sum(axis=1)
+
+# ✅ Reorganiza para: Grupo | Loja | Total | [colunas restantes]
+colunas_finais = ["Grupo", "Loja", "Total"] + [
+    col for col in tabela_exportar_sem_tipo.columns if col not in ["Grupo", "Loja", "Total"]
+]
+tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[colunas_finais]
+
+
+
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
 
@@ -1066,7 +1080,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         ]["Loja"].nunique()
         soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
-        
         
         
         
@@ -1228,8 +1241,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 worksheet.set_column(0, num_colunas, 18)
 # Atualiza o cabeçalho para incluir a coluna % Participação
 for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
-    nome_coluna = "Lojas" if header == "Total" and modo_visao == "Por Grupo" and agrupamento == "Dia" else header
-    worksheet.write(0, col_num, nome_coluna, header_format)
+    worksheet.write(0, col_num, header, header_format)
 # 🔥 Adiciona o cabeçalho da coluna de participação
 worksheet.write(0, num_colunas, "% Participação", header_format)
 
