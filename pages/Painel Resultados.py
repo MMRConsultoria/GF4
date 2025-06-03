@@ -1225,7 +1225,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         ~tabela_exportar_sem_tipo["Grupo"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
 ]
         
-   if modo_visao == "Por Loja":
+    if modo_visao == "Por Loja":
         for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
             # 🔁 Filtra as linhas do grupo atual
             linhas_grupo = tabela_exportar_sem_tipo[
