@@ -325,7 +325,10 @@ with aba4:
 
     # Normaliza dados
     
-    df_anos["Grupo"] = df_anos["Grupo"].str.split("-").str[0].str.strip()
+        #df_anos["Grupo"] = df_anos["Grupo"].str.split("-").str[0].str.strip()
+    df_anos["Grupo"] = df_anos["Grupo"].str.split("-").str[0].str.strip().str.upper()
+    df_empresa["Grupo"] = df_empresa["Grupo"].str.strip().str.upper()
+    
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
