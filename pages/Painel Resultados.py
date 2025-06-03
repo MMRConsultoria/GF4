@@ -1176,6 +1176,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
             soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
 
+            total = soma_grupo.get("Fat.Total", "")  # ou outro campo base do Total
             linha_grupo = [grupo_atual, f"Lojas: {qtd_lojas}"]
             linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
             for col_num, val in enumerate(linha_grupo):
@@ -1220,16 +1221,11 @@ worksheet.set_column(0, num_colunas, 18)
 
 
 # Atualiza o cabeçalho, renomeando a segunda coluna para "Qtde"
-colunas = list(tabela_exportar_sem_tipo.columns)  # ✅ Garante que a lista de colunas está definida
-for col_num in range(len(colunas) + 1):  # +1 porque vamos adicionar a coluna "Total"
+for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
     if col_num == 1:
-        worksheet.write(0, col_num, "Lojas", header_format)  # <- AQUI está certo
-    elif col_num == primeira_data_idx:
-        worksheet.write(0, col_num, "Total", header_format)  # <- AQUI define o novo "Total"
-    elif col_num < primeira_data_idx:
-        worksheet.write(0, col_num, colunas[col_num], header_format)
+        worksheet.write(0, col_num, "Qtde", header_format)
     else:
-        worksheet.write(0, col_num, colunas[col_num - 1], header_format)
+        worksheet.write(0, col_num, header, header_format)
 
 
 # 🔥 Adiciona o cabeçalho da coluna de participação
