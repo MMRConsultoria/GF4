@@ -1177,7 +1177,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
 
             total = soma_grupo.get("Fat.Total", "")  # ou outro campo base do Total
-            linha_grupo = [f"{grupo_atual}", f"Lojas: {qtd_lojas}"]
+            linha_grupo = [grupo_atual, f"Lojas: {qtd_lojas}"]
             linha_grupo += [total] + [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
             for col_num, val in enumerate(linha_grupo):
                 if isinstance(val, (int, float)) and not pd.isna(val):
@@ -1217,8 +1217,14 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 # 🔧 Ajustes visuais finais
 worksheet.set_column(0, num_colunas, 18)
 # Atualiza o cabeçalho para incluir a coluna % Participação
+
+
+
 for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
-    worksheet.write(0, col_num, header, header_format)
+    nome_coluna = "Qtde" if col_num == 1 else header
+    worksheet.write(0, col_num, nome_coluna, header_format)
+
+
 # 🔥 Adiciona o cabeçalho da coluna de participação
 worksheet.write(0, num_colunas, "% Participação", header_format)
 
