@@ -1214,14 +1214,20 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         if modo_visao == "Por Grupo":
             qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
 
-            # ✅ Soma colunas numéricas
-            soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
+            soma_grupo = tabela_exportar_sem_tipo[
+                (tabela_exportar_sem_tipo["Grupo"] == grupo_atual)
+                & ~tabela_exportar_sem_tipo["Grupo"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+            ].select_dtypes(include='number').sum()
 
-            # ✅ Cria linha de saída
-            linha_grupo = [grupo_atual, f"Loja: {qtd_lojas}"]
+            linha_grupo = [f"{grupo_atual}", f"Lojas: {qtd_lojas}"]
             linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
-            # ✅ Escreve a linha no Excel
+            grupo_format = workbook.add_format({
+                'bg_color': cor,
+                'border': 1,
+                'num_format': 'R$ #,##0.00'
+            })
+
             for col_num, val in enumerate(linha_grupo):
                 if isinstance(val, (int, float)) and not pd.isna(val):
                     worksheet.write_number(linha, col_num, val, grupo_format)
