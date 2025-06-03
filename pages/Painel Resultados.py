@@ -1024,10 +1024,14 @@ tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 colunas_numericas = tabela_exportar_sem_tipo.select_dtypes(include='number').columns.tolist()
 tabela_exportar_sem_tipo["Total"] = tabela_exportar_sem_tipo[colunas_numericas].sum(axis=1)
 
-# ✅ Reorganiza para: Grupo | Loja | Total | [colunas restantes]
-colunas_finais = ["Grupo", "Loja", "Total"] + [
-    col for col in tabela_exportar_sem_tipo.columns if col not in ["Grupo", "Loja", "Total"]
-]
+# ✅ Reorganiza colunas SOMENTE se todas existirem
+colunas_base = ["Grupo", "Loja", "Total"]
+colunas_restantes = [col for col in tabela_exportar_sem_tipo.columns if col not in colunas_base]
+
+# 🔍 Garante que todas as colunas existem antes de aplicar
+colunas_finais = [col for col in colunas_base if col in tabela_exportar_sem_tipo.columns] + colunas_restantes
+
+# ✅ Reordena somente com colunas válidas
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[colunas_finais]
 
 
