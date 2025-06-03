@@ -1218,17 +1218,20 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             if modo_visao == "Por Grupo":
                 qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
 
-                if row.name == linhas_grupo.index[0]:  # ✅ Só mostra o total de lojas na primeira linha do grupo
-                    row.iloc[0] = f"{grupo_atual} - Loja: {qtd_lojas}"
-                else:
-                    row.iloc[0] = grupo_atual  # ⛔️ Não repete "Loja: x"
+                 # ✅ Soma colunas numéricas
+                soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
 
-            for col_num, val in enumerate(row):
-                if isinstance(val, (int, float)) and not pd.isna(val):
-                    worksheet.write_number(linha, col_num, val, grupo_format)
-                else:
-                    worksheet.write(linha, col_num, str(val), grupo_format)
-            linha += 1
+                # ✅ Cria linha de saída
+                linha_grupo = [grupo_atual, f"Loja: {qtd_lojas}"]
+                linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+
+                # ✅ Escreve a linha no Excel
+                for col_num, val in enumerate(linha_grupo):
+                    if isinstance(val, (int, float)) and not pd.isna(val):
+                        worksheet.write_number(linha, col_num, val, grupo_format)
+                    else:
+                        worksheet.write(linha, col_num, str(val), grupo_format)
+                linha += 1
 
         
         # ✅ Subtotal por grupo apenas no modo "Por Loja"
