@@ -327,7 +327,7 @@ with aba4:
     
 
     df_empresa["Grupo"] = df_empresa["Grupo"].astype(str).str.strip().str.upper()
-    #df_filtrado["Grupo"] = df_filtrado["Grupo"].astype(str).str.strip().str.upper()
+    df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Grupo"] = df_anos["Grupo"].str.split("-").str[0].str.strip()
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
@@ -355,6 +355,9 @@ with aba4:
     
    
     df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
+    # ✅ Normaliza o Grupo e Loja logo após criar df_filtrado
+    df_filtrado["Grupo"] = df_filtrado["Grupo"].astype(str).str.strip().str.upper()
+    df_filtrado["Loja"] = df_filtrado["Loja"].astype(str).str.strip().str.lower().str.title()
 
    
     meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
