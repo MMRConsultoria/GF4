@@ -1179,14 +1179,20 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
         })
 
-        if modo_visao == "Por Grupo" and agrupamento == "Dia":
-            qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
-            soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
+        for _, row in linhas_grupo.iterrows():
+            row = row.copy()
 
-            linha_grupo = [grupo_atual, f"Lojas: {qtd_lojas}"] + \
-                          [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
-            for col_num, val in enumerate(linha_grupo):
+
+
+
+
+            if modo_visao == "Por Grupo":
+                # 🟡 Insere quantidade de lojas ativas ao lado do grupo
+                qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
+                row.iloc[0] = f"{grupo_atual} - Loja: {qtd_lojas}"
+
+            for col_num, val in enumerate(row):
                 if isinstance(val, (int, float)) and not pd.isna(val):
                     worksheet.write_number(linha, col_num, val, grupo_format)
                 else:
