@@ -1067,21 +1067,12 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         ]["Loja"].nunique()
         soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
-        # 🔍 Recupera os valores que você quer posicionar fixamente
-        valor_total = soma_colunas.get("Total", "")
-        # Encontra dinamicamente o nome da primeira coluna de data (geralmente tipo '02/06/2025')
-        coluna_data_dia = [col for col in tabela_exportar_sem_tipo.columns if "/" in col]
-        valor_data_dia = soma_colunas.get(coluna_data_dia[0], "") if coluna_data_dia else ""
-        valor_acumulado = soma_colunas.get("Acumulado no Mês", "")
-
-        # Monta a linha na ordem desejada
-        linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}", valor_total, valor_data_dia, valor_acumulado]
         
         
         
         
-        #linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
-        #linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+        linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
+        linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
         for col_num, val in enumerate(linha_tipo):
             if isinstance(val, (int, float)) and not pd.isna(val):
@@ -1238,7 +1229,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 worksheet.set_column(0, num_colunas, 18)
 # Atualiza o cabeçalho para incluir a coluna % Participação
 for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
-    worksheet.write(0, col_num, header, header_format)
+    nome_coluna = "Lojas" if header == "Total" and modo_visao == "Por Grupo" and agrupamento == "Dia" else header
+    worksheet.write(0, col_num, nome_coluna, header_format)
 # 🔥 Adiciona o cabeçalho da coluna de participação
 worksheet.write(0, num_colunas, "% Participação", header_format)
 
