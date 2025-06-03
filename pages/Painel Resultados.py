@@ -1019,7 +1019,26 @@ tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 
 # 🔥 Geração do Excel
+# 🔗 Garante que a coluna "Loja" esteja presente
+if "Loja" not in tabela_exportar_sem_tipo.columns and "Loja" in df_empresa.columns:
+    tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
+        df_empresa[["Loja", "Grupo"]].drop_duplicates(),
+        on="Grupo",
+        how="left"
+    )
 
+ if modo_visao == "Por Grupo" and agrupamento == "Dia":
+
+    # ✅ Cria coluna "Total"
+    colunas_numericas = tabela_exportar_sem_tipo.select_dtypes(include='number').columns.tolist()
+    tabela_exportar_sem_tipo["Total"] = tabela_exportar_sem_tipo[colunas_numericas].sum(axis=1)
+
+    # ✅ Reorganiza as colunas
+    colunas_base = ["Grupo", "Loja", "Total"]
+    colunas_restantes = [col for col in tabela_exportar_sem_tipo.columns if col not in colunas_base]
+    colunas_finais = [col for col in colunas_base if col in tabela_exportar_sem_tipo.columns] + colunas_restantes
+    tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[colunas_finais]
+       
 # ✅ Adiciona coluna "Total" com a soma das colunas numéricas
 colunas_numericas = tabela_exportar_sem_tipo.select_dtypes(include='number').columns.tolist()
 tabela_exportar_sem_tipo["Total"] = tabela_exportar_sem_tipo[colunas_numericas].sum(axis=1)
