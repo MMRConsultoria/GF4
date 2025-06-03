@@ -1180,18 +1180,18 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         })
 
         if modo_visao == "Por Grupo" and agrupamento == "Dia":
-        qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
-        soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
+            qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
+            soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
 
-        linha_grupo = [grupo_atual, f"Lojas: {qtd_lojas}"] + \
-                [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+            linha_grupo = [grupo_atual, f"Lojas: {qtd_lojas}"] + \
+                          [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
-        for col_num, val in enumerate(linha_grupo):
-            if isinstance(val, (int, float)) and not pd.isna(val):
-                worksheet.write_number(linha, col_num, val, grupo_format)
-            else:
-                worksheet.write(linha, col_num, str(val), grupo_format)
-        linha += 1
+            for col_num, val in enumerate(linha_grupo):
+                if isinstance(val, (int, float)) and not pd.isna(val):
+                    worksheet.write_number(linha, col_num, val, grupo_format)
+                else:
+                    worksheet.write(linha, col_num, str(val), grupo_format)
+            linha += 1
 
         
         # ✅ Subtotal por grupo apenas no modo "Por Loja"
