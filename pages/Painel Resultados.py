@@ -1236,21 +1236,21 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             linha += 1
 
         
-        # ✅ Subtotal por grupo apenas no modo "Por Loja"
-        if modo_visao == "Por Loja":
-            soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
-            # 🔧 Calcula somente as lojas ativas no grupo
-            qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
+    # ✅ Subtotal por grupo apenas no modo "Por Loja"
+    if modo_visao == "Por Loja":
+        soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
+        # 🔧 Calcula somente as lojas ativas no grupo
+        qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
             
-            linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
-            linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+        linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
+        linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
-            for col_num, val in enumerate(linha_grupo):
-                if isinstance(val, (int, float)) and not pd.isna(val):
-                    worksheet.write_number(linha, col_num, val, subtotal_format)
-                else:
-                    worksheet.write(linha, col_num, str(val), subtotal_format)
-            linha += 1
+        for col_num, val in enumerate(linha_grupo):
+            if isinstance(val, (int, float)) and not pd.isna(val):
+                worksheet.write_number(linha, col_num, val, subtotal_format)
+            else:
+                worksheet.write(linha, col_num, str(val), subtotal_format)
+        linha += 1
 
        
 
