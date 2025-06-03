@@ -1013,7 +1013,8 @@ tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 
 
-
+# Cria uma nova coluna fixa chamada "Total Lojas" com valores vazios (será preenchida manualmente no Excel)
+tabela_exportar_sem_tipo.insert(1, "Total Lojas", "")
 
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
@@ -1064,8 +1065,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         ]["Loja"].nunique()
         soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
-        linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
-        linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+        linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]  # colunas 0 e 1
+        linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]  # colunas a partir da 2
 
         for col_num, val in enumerate(linha_tipo):
             if isinstance(val, (int, float)) and not pd.isna(val):
@@ -1089,8 +1090,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     soma_total = df_para_total.select_dtypes(include='number').sum()
     # 🔢 Conta todas as lojas ativas (sem duplicar)
     total_lojas_ativas = lojas_ativas["Loja"].nunique()
-    linha_total = [f"Total Geral", f"Lojas: {total_lojas_ativas}"]
-    linha_total += [soma_total.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+    linha_total = ["Total Geral", f"Lojas: {total_lojas_ativas}"]  # colunas 0 e 1
+    linha_total += [soma_total.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]  # a partir da 2
 
     for col_num, val in enumerate(linha_total):
         if isinstance(val, (int, float)) and not pd.isna(val):
@@ -1177,7 +1178,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
 
             total = soma_grupo.get("Fat.Total", "")  # ou outro campo base do Total
-            linha_grupo = [grupo_atual, f"Lojas: {qtd_lojas}"]
+            linha_grupo = [grupo_atual, f"Lojas: {qtd_lojas}"]  # colunas 0 e 1
             linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
             for col_num, val in enumerate(linha_grupo):
                 if isinstance(val, (int, float)) and not pd.isna(val):
