@@ -1207,31 +1207,27 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
         })
 
-        for _, row in linhas_grupo.iterrows():
-            row = row.copy()
+        
 
 
 
+        if modo_visao == "Por Grupo":
+            qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
 
+            # ✅ Soma colunas numéricas
+            soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
 
+            # ✅ Cria linha de saída
+            linha_grupo = [grupo_atual, f"Loja: {qtd_lojas}"]
+            linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
-            if modo_visao == "Por Grupo":
-                qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
-
-                 # ✅ Soma colunas numéricas
-                soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
-
-                # ✅ Cria linha de saída
-                linha_grupo = [grupo_atual, f"Loja: {qtd_lojas}"]
-                linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
-
-                # ✅ Escreve a linha no Excel
-                for col_num, val in enumerate(linha_grupo):
-                    if isinstance(val, (int, float)) and not pd.isna(val):
-                        worksheet.write_number(linha, col_num, val, grupo_format)
-                    else:
-                        worksheet.write(linha, col_num, str(val), grupo_format)
-                linha += 1
+            # ✅ Escreve a linha no Excel
+            for col_num, val in enumerate(linha_grupo):
+                if isinstance(val, (int, float)) and not pd.isna(val):
+                    worksheet.write_number(linha, col_num, val, grupo_format)
+                else:
+                    worksheet.write(linha, col_num, str(val), grupo_format)
+            linha += 1
 
         
         # ✅ Subtotal por grupo apenas no modo "Por Loja"
