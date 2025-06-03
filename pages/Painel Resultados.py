@@ -1220,11 +1220,15 @@ worksheet.set_column(0, num_colunas, 18)
 
 
 # Atualiza o cabeçalho, renomeando a segunda coluna para "Qtde"
-for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
+for col_num in range(len(colunas) + 1):  # +1 por causa da nova coluna "Total"
     if col_num == 1:
-        worksheet.write(0, col_num, "Qtde", header_format)
+        worksheet.write(0, col_num, "Lojas", header_format)  # <- AQUI está certo
+    elif col_num == primeira_data_idx:
+        worksheet.write(0, col_num, "Total", header_format)  # <- AQUI define o novo "Total"
+    elif col_num < primeira_data_idx:
+        worksheet.write(0, col_num, colunas[col_num], header_format)
     else:
-        worksheet.write(0, col_num, header, header_format)
+        worksheet.write(0, col_num, colunas[col_num - 1], header_format)
 
 
 # 🔥 Adiciona o cabeçalho da coluna de participação
