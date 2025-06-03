@@ -1216,9 +1216,12 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 
             if modo_visao == "Por Grupo":
-                # 🟡 Insere quantidade de lojas ativas ao lado do grupo
                 qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
-                row.iloc[0] = f"{grupo_atual} - Loja: {qtd_lojas}"
+
+                if row.name == linhas_grupo.index[0]:  # ✅ Só mostra o total de lojas na primeira linha do grupo
+                    row.iloc[0] = f"{grupo_atual} - Loja: {qtd_lojas}"
+                else:
+                    row.iloc[0] = grupo_atual  # ⛔️ Não repete "Loja: x"
 
             for col_num, val in enumerate(row):
                 if isinstance(val, (int, float)) and not pd.isna(val):
