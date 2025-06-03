@@ -1016,6 +1016,21 @@ tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 
 # 🔥 Geração do Excel
+
+# ✅ Adiciona coluna 'Total' com a soma das colunas numéricas a partir da 3ª coluna em diante
+colunas_valores = tabela_exportar_sem_tipo.select_dtypes(include='number').columns.tolist()
+tabela_exportar_sem_tipo.insert(
+    2,  # após Grupo e Loja/Qtde
+    "Total",
+    tabela_exportar_sem_tipo[colunas_valores].sum(axis=1)
+)
+
+
+
+
+
+
+
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
 
