@@ -1027,7 +1027,7 @@ if "Loja" not in tabela_exportar_sem_tipo.columns and "Loja" in df_empresa.colum
         how="left"
     )
 
- if modo_visao == "Por Grupo" and agrupamento == "Dia":
+if modo_visao == "Por Grupo" and agrupamento == "Dia":
 
     # ✅ Cria coluna "Total"
     colunas_numericas = tabela_exportar_sem_tipo.select_dtypes(include='number').columns.tolist()
