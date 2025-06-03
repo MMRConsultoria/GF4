@@ -1161,29 +1161,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         df_filtrado = pd.concat([df_filtrado, df_acumulado_grupo], ignore_index=True)
 
-    if modo_visao == "Por Grupo" and agrupamento == "Dia":
-        for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
-            linhas_grupo = tabela_exportar_sem_tipo[
-                (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
-                ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
-            ]
-
-            qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
-            soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
-
-            linha_grupo = [f"{grupo_atual} - Loja: {qtd_lojas}", ""]
-            linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
-
-            grupo_format = workbook.add_format({
-                'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
-            })
-
-            for col_num, val in enumerate(linha_grupo):
-                if isinstance(val, (int, float)) and not pd.isna(val):
-                    worksheet.write_number(linha, col_num, val, grupo_format)
-                else:
-                        worksheet.write(linha, col_num, str(val), grupo_format)
-            linha += 1
+    for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
 
 
 
