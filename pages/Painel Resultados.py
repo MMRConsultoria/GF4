@@ -1220,9 +1220,12 @@ worksheet.set_column(0, num_colunas, 18)
 
 
 
+# Atualiza o cabeçalho, renomeando a segunda coluna para "Qtde"
 for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
-    nome_coluna = "Qtde" if col_num == 1 else header
-    worksheet.write(0, col_num, nome_coluna, header_format)
+    if col_num == 1:
+        worksheet.write(0, col_num, "Qtde", header_format)
+    else:
+        worksheet.write(0, col_num, header, header_format)
 
 
 # 🔥 Adiciona o cabeçalho da coluna de participação
