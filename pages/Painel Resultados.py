@@ -325,10 +325,10 @@ with aba4:
 
     # Normaliza dados
     
-        #df_anos["Grupo"] = df_anos["Grupo"].str.split("-").str[0].str.strip()
+    #df_anos["Grupo"] = df_anos["Grupo"].str.split("-").str[0].str.strip()
     df_anos["Grupo"] = df_anos["Grupo"].str.split("-").str[0].str.strip().str.upper()
     df_empresa["Grupo"] = df_empresa["Grupo"].str.strip().str.upper()
-    
+
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
     df_anos["Fat.Total"] = pd.to_numeric(df_anos["Fat.Total"], errors="coerce")
@@ -1067,8 +1067,21 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         ]["Loja"].nunique()
         soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
-        linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
-        linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+        # 🔍 Recupera os valores que você quer posicionar fixamente
+        valor_total = soma_colunas.get("Total", "")
+        # Encontra dinamicamente o nome da primeira coluna de data (geralmente tipo '02/06/2025')
+        coluna_data_dia = [col for col in tabela_exportar_sem_tipo.columns if "/" in col]
+        valor_data_dia = soma_colunas.get(coluna_data_dia[0], "") if coluna_data_dia else ""
+        valor_acumulado = soma_colunas.get("Acumulado no Mês", "")
+
+        # Monta a linha na ordem desejada
+        linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}", valor_total, valor_data_dia, valor_acumulado]
+        
+        
+        
+        
+        #linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
+        #linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
         for col_num, val in enumerate(linha_tipo):
             if isinstance(val, (int, float)) and not pd.isna(val):
