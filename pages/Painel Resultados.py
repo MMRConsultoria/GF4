@@ -1161,9 +1161,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         df_filtrado = pd.concat([df_filtrado, df_acumulado_grupo], ignore_index=True)
 
-        
-
-
     if modo_visao == "Por Grupo" and agrupamento == "Dia":
         for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
             linhas_grupo = tabela_exportar_sem_tipo[
@@ -1190,6 +1187,41 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 
 
+
+
+
+    
+        linhas_grupo = tabela_exportar_sem_tipo[
+            (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
+            ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+        ]
+
+        qtd_lojas_tipo = lojas_ativas[lojas_ativas["Tipo"] == tipo_atual]["Loja"].nunique()
+        grupo_format = workbook.add_format({
+            'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
+        })
+
+        for _, row in linhas_grupo.iterrows():
+            row = row.copy()
+
+
+
+
+
+
+            if modo_visao == "Por Grupo":
+                # 🟡 Insere quantidade de lojas ativas ao lado do grupo
+                qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
+                row.iloc[0] = f"{grupo_atual} - Loja: {qtd_lojas}"
+
+            for col_num, val in enumerate(row):
+                if isinstance(val, (int, float)) and not pd.isna(val):
+                    worksheet.write_number(linha, col_num, val, grupo_format)
+                else:
+                    worksheet.write(linha, col_num, str(val), grupo_format)
+            linha += 1
+
+        
         # ✅ Subtotal por grupo apenas no modo "Por Loja"
         if modo_visao == "Por Loja":
             soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
@@ -1204,16 +1236,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                     worksheet.write_number(linha, col_num, val, subtotal_format)
                 else:
                     worksheet.write(linha, col_num, str(val), subtotal_format)
-            linha += 1       
-
-
-
-
-    
-       
-
-        
-       
+            linha += 1
 
        
 
