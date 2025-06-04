@@ -1054,6 +1054,27 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
+    
+    # 🔧 Estilo para valores
+    valor_formatado = workbook.add_format({
+        'num_format': 'R$ #,##0.00',
+        'align': 'right',
+        'valign': 'vcenter'
+    })
+
+    # 🔧 Ajusta altura da linha do cabeçalho
+    worksheet.set_row(0, 39)
+
+    # 🔧 Escreve cabeçalho + define largura 19 para todas as colunas
+    for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
+        worksheet.write(0, col_num, header, header_format)
+        worksheet.set_column(col_num, col_num, 19, valor_formatado)  # aplica largura fixa e formatação
+
+
+
+
+
+
 
     cores_grupo = itertools.cycle(["#D9EAD3", "#CFE2F3"])
 
@@ -1248,22 +1269,22 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
        
 
 # 🔧 Ajustes visuais finais
-worksheet.set_column(0, num_colunas, 18)
+#worksheet.set_column(0, num_colunas, 18)
 # Atualiza o cabeçalho para incluir a coluna % Participação
 
 
 
 # Atualiza o cabeçalho, renomeando a segunda coluna para "Qtde"
-for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
-    # Aplica o cabeçalho com quebra de texto
-    worksheet.write(0, col_num, header, header_format)
+#for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
+#    # Aplica o cabeçalho com quebra de texto
+#    worksheet.write(0, col_num, header, header_format)
     
-    # Ajusta largura automática com base no conteúdo do cabeçalho e valores
-    # Limita o mínimo e máximo para manter consistência
-    valores_coluna = tabela_exportar_sem_tipo[header].astype(str)
-    max_len = max(valores_coluna.map(len).max(), len(header))
-    largura = min(max(max_len + 2, 12), 30)  # mínimo 12, máximo 30
-    worksheet.set_column(col_num, col_num, 19)
+#    # Ajusta largura automática com base no conteúdo do cabeçalho e valores
+#    # Limita o mínimo e máximo para manter consistência
+#    valores_coluna = tabela_exportar_sem_tipo[header].astype(str)
+#    max_len = max(valores_coluna.map(len).max(), len(header))
+#    largura = min(max(max_len + 2, 12), 30)  # mínimo 12, máximo 30
+#    worksheet.set_column(col_num, col_num, 19)
 
 
 
@@ -1281,3 +1302,4 @@ st.download_button(
     file_name="faturamento_visual.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
+
