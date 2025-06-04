@@ -908,38 +908,12 @@ if modo_visao == "Por Loja":
                                       [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]]
 
 elif modo_visao == "Por Grupo":
-    # ✅ Se for visão por grupo e dia, força entrada dos grupos ativos mesmo sem venda
-    if agrupamento == "Dia":
-        grupos_ativos = df_empresa[
-            df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "ativo"
-        ][["Grupo", "Tipo"]].drop_duplicates()
-    #✅ Padroniza nomes para comparação correta
-        tabela_final.index = tabela_final.index.astype(str).str.strip().str.upper()
-        grupos_ativos["Grupo"] = grupos_ativos["Grupo"].astype(str).str.strip().str.upper()
-        grupos_ativos["Tipo"] = grupos_ativos["Tipo"].astype(str).str.strip()
-
-        grupos_presentes = pd.Series(tabela_final.index).dropna().astype(str).str.strip().str.upper().unique()
-        grupos_faltando = grupos_ativos[~grupos_ativos["Grupo"].isin(grupos_presentes)]
-
-        grupos_presentes = tabela_final.index.dropna().unique()
-        grupos_faltando = grupos_ativos[~grupos_ativos["Grupo"].isin(grupos_presentes)]
-
-        if not grupos_faltando.empty:
-            # Cria um DataFrame com os grupos zerados
-            colunas_numericas = tabela_final.select_dtypes(include='number').columns
-            grupos_zerados = pd.DataFrame(0, index=grupos_faltando["Grupo"], columns=colunas_numericas)
-
-            # Junta ao tabela_final original
-            tabela_final = pd.concat([tabela_final, grupos_zerados], axis=0)
-
     tabela_final.index.name = "Grupo"
     tabela_exportar = tabela_final.reset_index()
 
     if modo_visao == "Por Grupo":
         tabela_exportar["Tipo"] = df_empresa.groupby("Grupo")["Tipo"].agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None).reindex(tabela_exportar["Grupo"]).values
  
-
-
  
     #st.write("🚧 Debug Grupo", tabela_exportar)
     #st.write("📄 df_empresa", df_empresa)
