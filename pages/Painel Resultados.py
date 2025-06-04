@@ -1075,9 +1075,8 @@ tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 
 
-if modo_visao == "Por Grupo":
-    if "Total Lojas" not in tabela_exportar_sem_tipo.columns:
-        tabela_exportar_sem_tipo.insert(1, "Total Lojas", "")
+if modo_visao == "Por Grupo" and agrupamento == "Dia":
+    tabela_exportar_sem_tipo.insert(1, "Total Lojas", "")
 
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
