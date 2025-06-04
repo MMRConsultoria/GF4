@@ -917,7 +917,7 @@ elif modo_visao == "Por Grupo":
 # ✅ Insere grupos ativos sem movimento antes da exportação
     if agrupamento == "Dia":
         grupos_ativos = df_empresa[
-            df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "ativo"
+            df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "Ativo"
         ][["Grupo", "Tipo"]].drop_duplicates()
 
         grupos_presentes = tabela_exportar["Grupo"].dropna().unique()
