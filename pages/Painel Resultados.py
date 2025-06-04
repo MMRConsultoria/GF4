@@ -429,34 +429,10 @@ with aba4:
    
 
 
-    # 🔄 Aplica o filtro principal com base no período
-    data_selecionada = pd.to_datetime(data_fim)
-    df_filtrado = df_anos[df_anos["Data"] == data_selecionada].copy()
+        # 🔄 Aplica o filtro principal com base no período
+    if agrupamento == "Dia" and modo_visao == "Por Grupo":
+        data_selecionada = pd.to_datetime(data_fim)
 
-    # ✅ Garante que todos os grupos ativos apareçam mesmo sem movimento
-    if modo_visao == "Por Grupo" and agrupamento == "Dia":
-        grupos_ativos = df_empresa[
-            df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "ativo"
-        ][["Grupo", "Tipo"]].drop_duplicates()
-
-        base_grupos = grupos_ativos.copy()
-        base_grupos["Data"] = data_selecionada
-
-        # Merge com os dados reais — garante presença mesmo sem movimento
-        df_filtrado = pd.merge(base_grupos, df_filtrado, on=["Grupo", "Data"], how="left")
-
-        # Preenche NaNs nas colunas numéricas com 0
-        colunas_numericas = df_filtrado.select_dtypes(include='number').columns
-        df_filtrado[colunas_numericas] = df_filtrado[colunas_numericas].fillna(0)
-
-        # Preenche campos textuais faltantes
-        for col in ["Loja", "Agrupador", "Ordem", "Ano", "Mês Num", "Mês Nome", "Mês", "Dia"]:
-            if col in df_filtrado.columns:
-                df_filtrado[col] = df_filtrado[col].fillna("")
-
-        # Garante coluna 'Ordem' se não existir
-        if "Ordem" not in df_filtrado.columns:
-            df_filtrado["Ordem"] = 0
        
         
 
