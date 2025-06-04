@@ -1276,7 +1276,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
         })
 
-        if modo_visao == "Por Grupo" and agrupamento == "Dia":
+        if modo_visao == "Por Grupo" and agrupamento in ["Dia", "Mês", "Ano"]:
             # ✅ Linha resumida: "GRU - Loja: 12"
             qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
             soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
