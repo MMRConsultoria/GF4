@@ -1263,7 +1263,7 @@ for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
     valores_coluna = tabela_exportar_sem_tipo[header].astype(str)
     max_len = max(valores_coluna.map(len).max(), len(header))
     largura = min(max(max_len + 2, 12), 30)  # mínimo 12, máximo 30
-    worksheet.set_column(col_num, col_num, largura)
+    worksheet.set_column(col_num, col_num, 19)
 
 
 
