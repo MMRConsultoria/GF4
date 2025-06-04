@@ -913,6 +913,13 @@ elif modo_visao == "Por Grupo":
         grupos_ativos = df_empresa[
             df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "ativo"
         ][["Grupo", "Tipo"]].drop_duplicates()
+        #✅ Padroniza nomes para comparação correta
+        tabela_final.index = tabela_final.index.astype(str).str.strip().str.upper()
+        grupos_ativos["Grupo"] = grupos_ativos["Grupo"].astype(str).str.strip().str.upper()
+        grupos_ativos["Tipo"] = grupos_ativos["Tipo"].astype(str).str.strip()
+
+        grupos_presentes = pd.Series(tabela_final.index).dropna().astype(str).str.strip().str.upper().unique()
+        grupos_faltando = grupos_ativos[~grupos_ativos["Grupo"].isin(grupos_presentes)]
 
         grupos_presentes = tabela_final.index.dropna().unique()
         grupos_faltando = grupos_ativos[~grupos_ativos["Grupo"].isin(grupos_presentes)]
