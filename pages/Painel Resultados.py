@@ -644,14 +644,12 @@ with aba4:
         tab_r = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)        
     
         if tipo_metrica == "Bruto":
-            tab_b.columns = [f"Fat Total {col}" for col in tab_b.columns]
             tabela = tab_b
         elif tipo_metrica == "Real":
-            tab_r.columns = [f"Fat Real {col}" for col in tab_r.columns]
             tabela = tab_r
         else:
-            tab_b.columns = [f"Fat Total {c}" for c in tab_b.columns]
-            tab_r.columns = [f"Fat Real {c}" for c in tab_r.columns]
+            tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
+            tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
             tabela = pd.concat([tab_b, tab_r], axis=1)
             tabela.columns = [
                 col if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""] else "Excluir"
@@ -1002,7 +1000,20 @@ tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 # ✅ Aqui faz a substituição de NaN na coluna Acumulado no Mês
 if "Acumulado no Mês" in tabela_exportar_sem_tipo.columns:
     tabela_exportar_sem_tipo["Acumulado no Mês"] = tabela_exportar_sem_tipo["Acumulado no Mês"].fillna(0)
-tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=lambda x: x.replace('Bruto', 'Bruto- Com Gorjeta').replace('Real', 'Real-Sem Gorjeta'))
+def renomear_colunas_excel(col):
+    col = str(col)
+    padrao_data = r"\d{2}/\d{2}/\d{4}"
+
+    if re.match(padrao_data, col):
+        return f"Fat Total {col}"
+    elif re.match(padrao_data, col.replace(" (Bruto)", "")):
+        return f"Fat Total {col.replace(' (Bruto)', '')}"
+    elif re.match(padrao_data, col.replace(" (Real)", "")):
+        return f"Fat Real {col.replace(' (Real)', '')}"
+    else:
+        return col
+
+tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns=renomear_colunas_excel)
 
 
 if modo_visao == "Por Loja":
