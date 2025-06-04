@@ -1075,8 +1075,22 @@ tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 
 
-if modo_visao == "Por Grupo" and agrupamento == "Dia":
-    tabela_exportar_sem_tipo.insert(1, "Total Lojas", "")
+if modo_visao == "Por Grupo" and agrupamento in ["Dia", "Mês", "Ano"]:
+    # 🔢 Soma as colunas numéricas da linha
+    colunas_valores = tabela_exportar_sem_tipo.select_dtypes(include='number').columns
+    tabela_exportar_sem_tipo["Total"] = tabela_exportar_sem_tipo[colunas_valores].sum(axis=1)
+
+    # 🔢 Conta lojas ativas por grupo
+    total_lojas_por_grupo = df_empresa[
+        df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
+    ].groupby("Grupo")["Loja"].nunique()
+
+    # 🔢 Preenche a coluna "Total Lojas"
+    tabela_exportar_sem_tipo["Total Lojas"] = tabela_exportar_sem_tipo["Grupo"].map(total_lojas_por_grupo).fillna(0).astype(int).apply(lambda x: f"Lojas: {x}")
+
+    # 🔁 Reorganiza as colunas
+    cols_ordem = ["Grupo", "Total Lojas", "Total"] + [col for col in tabela_exportar_sem_tipo.columns if col not in ["Grupo", "Total Lojas", "Total"]]
+    tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_ordem]
 
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
