@@ -709,6 +709,12 @@ with aba4:
                 col_mais_recente = colunas_numericas[1]
             tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
 
+
+
+
+
+
+
         tabela_formatada = tabela_final.applymap(
             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             if isinstance(x, (float, int)) else x
@@ -908,11 +914,35 @@ if modo_visao == "Por Loja":
                                       [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]]
 
 elif modo_visao == "Por Grupo":
-    tabela_final.index.name = "Grupo"
+    if agrupamento == "Dia":
+        # ✅ Pega grupos ativos padronizados
+        grupos_ativos = df_empresa[
+            df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "ativo"
+        ]["Grupo"].dropna().astype(str).str.strip().str.upper().unique()
+
+        # ✅ Padroniza index da tabela
+        tabela_final.index = tabela_final.index.astype(str).str.strip().str.upper()
+        tabela_final.index.name = "Grupo"
+
+        # ✅ Descobre quais estão faltando
+        grupos_presentes = tabela_final.index.dropna().unique()
+        grupos_faltando = list(set(grupos_ativos) - set(grupos_presentes))
+
+        if grupos_faltando:
+            colunas_numericas = tabela_final.select_dtypes(include='number').columns
+            grupos_zerados = pd.DataFrame(0, index=grupos_faltando, columns=colunas_numericas)
+
+            tabela_final = pd.concat([tabela_final, grupos_zerados], axis=0)
+            tabela_final = tabela_final.sort_index()
+
+    # Continua normalmente
     tabela_exportar = tabela_final.reset_index()
 
     if modo_visao == "Por Grupo":
         tabela_exportar["Tipo"] = df_empresa.groupby("Grupo")["Tipo"].agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None).reindex(tabela_exportar["Grupo"]).values
+ 
+
+
  
     #st.write("🚧 Debug Grupo", tabela_exportar)
     #st.write("📄 df_empresa", df_empresa)
@@ -971,7 +1001,10 @@ else:
         tabela_exportar["Acumulado no Mês (Com Gorjeta)"] = None
     tabela_exportar["Acumulado no Mês Tipo"] = None
 
-
+# ✅ Corrige NaN no acumulado das lojas sem movimento
+tabela_exportar["Acumulado no Mês (Com Gorjeta)"] = (
+    tabela_exportar["Acumulado no Mês (Com Gorjeta)"].fillna(0)
+)
 
 # 🔥 Remove a coluna "Acumulado no Mês Tipo" do corpo
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo","Tipo"], errors="ignore")
