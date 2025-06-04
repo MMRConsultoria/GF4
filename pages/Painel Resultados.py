@@ -938,9 +938,13 @@ elif modo_visao == "Por Grupo":
     # Continua normalmente
     tabela_exportar = tabela_final.reset_index()
 
-    if modo_visao == "Por Grupo":
-        tabela_exportar["Tipo"] = df_empresa.groupby("Grupo")["Tipo"].agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None).reindex(tabela_exportar["Grupo"]).values
- 
+    # ✅ Garante que coluna "Grupo" existe antes de usar
+    if "Grupo" in tabela_exportar.columns:
+        tipo_por_grupo = df_empresa.groupby("Grupo")["Tipo"].agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None)
+        tabela_exportar["Tipo"] = tabela_exportar["Grupo"].map(tipo_por_grupo)
+    else:
+        st.warning("⚠️ Coluna 'Grupo' não encontrada ao tentar atribuir 'Tipo'.")
+
 
 
  
