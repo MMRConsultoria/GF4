@@ -644,12 +644,14 @@ with aba4:
         tab_r = df_filtrado.pivot_table(index="Loja", columns="Agrupador", values="Fat.Real", aggfunc="sum", fill_value=0)        
     
         if tipo_metrica == "Bruto":
+            tab_b.columns = [f"Fat Total {col}" for col in tab_b.columns]
             tabela = tab_b
         elif tipo_metrica == "Real":
+            tab_r.columns = [f"Fat Real {col}" for col in tab_r.columns]
             tabela = tab_r
         else:
-            tab_b.columns = [f"{c} (Bruto)" for c in tab_b.columns]
-            tab_r.columns = [f"{c} (Real)" for c in tab_r.columns]
+            tab_b.columns = [f"Fat Total {c}" for c in tab_b.columns]
+            tab_r.columns = [f"Fat Real {c}" for c in tab_r.columns]
             tabela = pd.concat([tab_b, tab_r], axis=1)
             tabela.columns = [
                 col if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""] else "Excluir"
