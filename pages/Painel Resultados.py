@@ -908,40 +908,32 @@ if modo_visao == "Por Loja":
                                       [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]]
 
 elif modo_visao == "Por Grupo":
+    # ✅ Se for visão por grupo e dia, força entrada dos grupos ativos mesmo sem venda
+    if agrupamento == "Dia":
+        grupos_ativos = df_empresa[
+            df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "ativo"
+        ][["Grupo", "Tipo"]].drop_duplicates()
+
+        grupos_presentes = tabela_final.index.dropna().unique()
+        grupos_faltando = grupos_ativos[~grupos_ativos["Grupo"].isin(grupos_presentes)]
+
+        if not grupos_faltando.empty:
+            # Cria um DataFrame com os grupos zerados
+            colunas_numericas = tabela_final.select_dtypes(include='number').columns
+            grupos_zerados = pd.DataFrame(0, index=grupos_faltando["Grupo"], columns=colunas_numericas)
+
+            # Junta ao tabela_final original
+            tabela_final = pd.concat([tabela_final, grupos_zerados], axis=0)
+
     tabela_final.index.name = "Grupo"
     tabela_exportar = tabela_final.reset_index()
 
     if modo_visao == "Por Grupo":
         tabela_exportar["Tipo"] = df_empresa.groupby("Grupo")["Tipo"].agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None).reindex(tabela_exportar["Grupo"]).values
  
-# ✅ Insere grupos ativos sem movimento antes da exportação
-    if agrupamento == "Dia":
-        grupos_ativos = df_empresa[
-            df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "Ativo"
-        ][["Grupo", "Tipo"]].drop_duplicates()
-
-        grupos_presentes = tabela_exportar["Grupo"].dropna().unique()
-        grupos_faltando = grupos_ativos[~grupos_ativos["Grupo"].isin(grupos_presentes)]
-
-        if not grupos_faltando.empty:
-            grupos_faltando["Fat.Total"] = 0
-            grupos_faltando["Fat.Real"] = 0
-            grupos_faltando["Serv/Tx"] = 0
-            grupos_faltando["Ticket"] = 0
-            grupos_faltando["Loja"] = "Sem Movimento"
-            grupos_faltando["Data"] = data_fim
-            grupos_faltando["Ano"] = data_fim.year
-            grupos_faltando["Mês Num"] = data_fim.month
-            grupos_faltando["Mês Nome"] = data_fim.strftime('%B')
-            grupos_faltando["Mês"] = data_fim.strftime('%m/%Y')
-            grupos_faltando["Dia"] = data_fim.strftime('%d/%m/%Y')
-            grupos_faltando["Agrupador"] = data_fim.strftime('%d/%m/%Y')
-            grupos_faltando["Ordem"] = pd.to_datetime(data_fim)
-
-            tabela_exportar = pd.concat([tabela_exportar, grupos_faltando], ignore_index=True)
 
 
-
+ 
     #st.write("🚧 Debug Grupo", tabela_exportar)
     #st.write("📄 df_empresa", df_empresa)
 
