@@ -1077,8 +1077,12 @@ tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 if modo_visao == "Por Grupo" and agrupamento in ["Dia", "Mês", "Ano"]:
     # 🔢 Soma as colunas numéricas da linha
-    colunas_valores = tabela_exportar_sem_tipo.select_dtypes(include='number').columns
+    colunas_valores = [
+        col for col in tabela_exportar_sem_tipo.select_dtypes(include='number').columns
+        if col not in ["Acumulado no Mês (Com Gorjeta)"]
+    ]
     tabela_exportar_sem_tipo["Total"] = tabela_exportar_sem_tipo[colunas_valores].sum(axis=1)
+
 
     # 🔢 Conta lojas ativas por grupo
     total_lojas_por_grupo = df_empresa[
@@ -1334,3 +1338,4 @@ st.download_button(
     file_name="faturamento_visual.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
+
