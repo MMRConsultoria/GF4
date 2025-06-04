@@ -1021,9 +1021,8 @@ tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 
 
-# Cria uma nova coluna fixa chamada "Total Lojas" com valores vazios (será preenchida manualmente no Excel)
-tabela_exportar_sem_tipo.insert(1, "Total Lojas", "")
-
+if modo_visao == "Por Grupo" and agrupamento == "Dia":
+    tabela_exportar_sem_tipo.insert(1, "Total Lojas", "")
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
