@@ -708,6 +708,28 @@ with aba4:
             if "Total" in col_mais_recente and len(colunas_numericas) > 1:
                 col_mais_recente = colunas_numericas[1]
             tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
+    # ✅ Garante grupos ativos sem movimento no Streamlit também
+    if modo_visao == "Por Grupo" and agrupamento == "Dia":
+        grupos_ativos = df_empresa[
+            df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "ativo"
+        ]["Grupo"].dropna().unique()
+
+        # Padroniza nomes para garantir comparação correta
+        tabela_final.index = tabela_final.index.astype(str).str.strip().str.upper()
+        grupos_ativos = pd.Series(grupos_ativos).astype(str).str.strip().str.upper()
+
+        grupos_presentes = tabela_final.index.dropna().unique()
+        grupos_faltando = list(set(grupos_ativos) - set(grupos_presentes))
+
+        if grupos_faltando:
+            colunas_numericas = tabela_final.select_dtypes(include='number').columns
+            grupos_zerados = pd.DataFrame(0, index=grupos_faltando, columns=colunas_numericas)
+            tabela_final = pd.concat([tabela_final, grupos_zerados])
+
+
+
+
+
 
         tabela_formatada = tabela_final.applymap(
             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
