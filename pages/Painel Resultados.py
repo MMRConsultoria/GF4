@@ -914,7 +914,6 @@ elif modo_visao == "Por Grupo":
     if modo_visao == "Por Grupo":
         tabela_exportar["Tipo"] = df_empresa.groupby("Grupo")["Tipo"].agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None).reindex(tabela_exportar["Grupo"]).values
  
- 
     #st.write("🚧 Debug Grupo", tabela_exportar)
     #st.write("📄 df_empresa", df_empresa)
 
@@ -972,10 +971,7 @@ else:
         tabela_exportar["Acumulado no Mês (Com Gorjeta)"] = None
     tabela_exportar["Acumulado no Mês Tipo"] = None
 
-# ✅ Corrige NaN no acumulado das lojas sem movimento
-tabela_exportar["Acumulado no Mês (Com Gorjeta)"] = (
-    tabela_exportar["Acumulado no Mês (Com Gorjeta)"].fillna(0)
-)
+
 
 # 🔥 Remove a coluna "Acumulado no Mês Tipo" do corpo
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo","Tipo"], errors="ignore")
