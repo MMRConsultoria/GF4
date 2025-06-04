@@ -971,7 +971,10 @@ else:
         tabela_exportar["Acumulado no Mês (Com Gorjeta)"] = None
     tabela_exportar["Acumulado no Mês Tipo"] = None
 
-
+# ✅ Corrige NaN no acumulado das lojas sem movimento
+tabela_exportar["Acumulado no Mês (Com Gorjeta)"] = (
+    tabela_exportar["Acumulado no Mês (Com Gorjeta)"].fillna(0)
+)
 
 # 🔥 Remove a coluna "Acumulado no Mês Tipo" do corpo
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo","Tipo"], errors="ignore")
