@@ -914,31 +914,28 @@ if modo_visao == "Por Loja":
                                       [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]]
 
 elif modo_visao == "Por Grupo":
-    # ✅ Se for visão por grupo e dia, força entrada dos grupos ativos mesmo sem venda
     if agrupamento == "Dia":
+        # ✅ Pega grupos ativos padronizados
         grupos_ativos = df_empresa[
             df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "ativo"
-        ][["Grupo", "Tipo"]].drop_duplicates()
-        #✅ Padroniza nomes para comparação correta
+        ]["Grupo"].dropna().astype(str).str.strip().str.upper().unique()
+
+        # ✅ Padroniza index da tabela
         tabela_final.index = tabela_final.index.astype(str).str.strip().str.upper()
-        grupos_ativos["Grupo"] = grupos_ativos["Grupo"].astype(str).str.strip().str.upper()
-        grupos_ativos["Tipo"] = grupos_ativos["Tipo"].astype(str).str.strip()
+        tabela_final.index.name = "Grupo"
 
-        grupos_presentes = pd.Series(tabela_final.index).dropna().astype(str).str.strip().str.upper().unique()
-        grupos_faltando = grupos_ativos[~grupos_ativos["Grupo"].isin(grupos_presentes)]
-
+        # ✅ Descobre quais estão faltando
         grupos_presentes = tabela_final.index.dropna().unique()
-        grupos_faltando = grupos_ativos[~grupos_ativos["Grupo"].isin(grupos_presentes)]
+        grupos_faltando = list(set(grupos_ativos) - set(grupos_presentes))
 
-        if not grupos_faltando.empty:
-            # Cria um DataFrame com os grupos zerados
+        if grupos_faltando:
             colunas_numericas = tabela_final.select_dtypes(include='number').columns
-            grupos_zerados = pd.DataFrame(0, index=grupos_faltando["Grupo"], columns=colunas_numericas)
+            grupos_zerados = pd.DataFrame(0, index=grupos_faltando, columns=colunas_numericas)
 
-            # Junta ao tabela_final original
             tabela_final = pd.concat([tabela_final, grupos_zerados], axis=0)
+            tabela_final = tabela_final.sort_index()
 
-    tabela_final.index.name = "Grupo"
+    # Continua normalmente
     tabela_exportar = tabela_final.reset_index()
 
     if modo_visao == "Por Grupo":
