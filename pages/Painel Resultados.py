@@ -949,7 +949,7 @@ if mostrar_acumulado:
     )
 
 
-
+    df_acumulado["Grupo"] = df_acumulado["Grupo"].astype(str).str.strip().str.upper()
 
 # 🔥 Merge dos acumulados
 if mostrar_acumulado:
@@ -957,16 +957,27 @@ if mostrar_acumulado:
         tabela_exportar = tabela_exportar.merge(acumulado_por_loja, on="Loja", how="left")
     if modo_visao == "Por Grupo":
         tabela_exportar = tabela_exportar.merge(acumulado_por_grupo, on="Grupo", how="left")
+    
+    # 🔄 Renomeia a coluna comum dos dois modos
+    tabela_exportar = tabela_exportar.rename(columns={
+        "Acumulado no Mês": "Acumulado no Mês (Com Gorjeta)"
+    })
+    
     tabela_exportar = tabela_exportar.merge(acumulado_por_tipo, on="Tipo", how="left")
 else:
     if modo_visao == "Por Loja":
-        tabela_exportar["Acumulado no Mês"] = None
+        tabela_exportar["Acumulado no Mês (Com Gorjeta)"] = None
     if modo_visao == "Por Grupo":
-        tabela_exportar["Acumulado no Mês"] = None
+        tabela_exportar["Acumulado no Mês (Com Gorjeta)"] = None
     tabela_exportar["Acumulado no Mês Tipo"] = None
+
+
 
 # 🔥 Remove a coluna "Acumulado no Mês Tipo" do corpo
 tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo","Tipo"], errors="ignore")
+tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns={
+    "Acumulado no Mês": "Acumulado no Mês (Com Gorjeta)"
+})
 
 # 🔍 Ordenação pela data mais recente
 colunas_data = [col for col in tabela_exportar_sem_tipo.columns if "/" in col]
@@ -1023,6 +1034,7 @@ tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 if modo_visao == "Por Grupo" and agrupamento == "Dia":
     tabela_exportar_sem_tipo.insert(1, "Total Lojas", "")
+
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
