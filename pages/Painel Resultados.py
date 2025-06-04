@@ -709,12 +709,6 @@ with aba4:
                 col_mais_recente = colunas_numericas[1]
             tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
 
-
-
-
-
-
-
         tabela_formatada = tabela_final.applymap(
             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             if isinstance(x, (float, int)) else x
@@ -914,37 +908,36 @@ if modo_visao == "Por Loja":
                                       [col for col in tabela_exportar.columns if col not in ["Grupo", "Loja", "Tipo"]]]
 
 elif modo_visao == "Por Grupo":
+    # ✅ Se for visão por grupo e dia, força entrada dos grupos ativos mesmo sem venda
     if agrupamento == "Dia":
-        # ✅ Pega grupos ativos padronizados
         grupos_ativos = df_empresa[
             df_empresa["Grupo Ativo"].astype(str).str.strip().str.lower() == "ativo"
-        ]["Grupo"].dropna().astype(str).str.strip().str.upper().unique()
-
-        # ✅ Padroniza index da tabela
+        ][["Grupo", "Tipo"]].drop_duplicates()
+    #✅ Padroniza nomes para comparação correta
         tabela_final.index = tabela_final.index.astype(str).str.strip().str.upper()
-        tabela_final.index.name = "Grupo"
+        grupos_ativos["Grupo"] = grupos_ativos["Grupo"].astype(str).str.strip().str.upper()
+        grupos_ativos["Tipo"] = grupos_ativos["Tipo"].astype(str).str.strip()
 
-        # ✅ Descobre quais estão faltando
+        grupos_presentes = pd.Series(tabela_final.index).dropna().astype(str).str.strip().str.upper().unique()
+        grupos_faltando = grupos_ativos[~grupos_ativos["Grupo"].isin(grupos_presentes)]
+
         grupos_presentes = tabela_final.index.dropna().unique()
-        grupos_faltando = list(set(grupos_ativos) - set(grupos_presentes))
+        grupos_faltando = grupos_ativos[~grupos_ativos["Grupo"].isin(grupos_presentes)]
 
-        if grupos_faltando:
+        if not grupos_faltando.empty:
+            # Cria um DataFrame com os grupos zerados
             colunas_numericas = tabela_final.select_dtypes(include='number').columns
-            grupos_zerados = pd.DataFrame(0, index=grupos_faltando, columns=colunas_numericas)
+            grupos_zerados = pd.DataFrame(0, index=grupos_faltando["Grupo"], columns=colunas_numericas)
 
+            # Junta ao tabela_final original
             tabela_final = pd.concat([tabela_final, grupos_zerados], axis=0)
-            tabela_final = tabela_final.sort_index()
 
-    # Continua normalmente
+    tabela_final.index.name = "Grupo"
     tabela_exportar = tabela_final.reset_index()
 
-    # ✅ Garante que coluna "Grupo" existe antes de usar
-    if "Grupo" in tabela_exportar.columns:
-        tipo_por_grupo = df_empresa.groupby("Grupo")["Tipo"].agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None)
-        tabela_exportar["Tipo"] = tabela_exportar["Grupo"].map(tipo_por_grupo)
-    else:
-        st.warning("⚠️ Coluna 'Grupo' não encontrada ao tentar atribuir 'Tipo'.")
-
+    if modo_visao == "Por Grupo":
+        tabela_exportar["Tipo"] = df_empresa.groupby("Grupo")["Tipo"].agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None).reindex(tabela_exportar["Grupo"]).values
+ 
 
 
  
