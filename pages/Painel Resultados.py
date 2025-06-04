@@ -1059,7 +1059,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     header_format = workbook.add_format({
         'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
-        'align': 'center', 'valign': 'vcenter', 'border': 1
+        'align': 'center', 'valign': 'vcenter', 'border': 1,'text_wrap': True
     })
     subtotal_format = workbook.add_format({
         'bold': True, 'bg_color': '#FFE599', 'border': 1, 'num_format': 'R$ #,##0.00'
@@ -1255,10 +1255,18 @@ worksheet.set_column(0, num_colunas, 18)
 
 # Atualiza o cabeçalho, renomeando a segunda coluna para "Qtde"
 for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
-    if col_num == 1:
-        worksheet.write(0, col_num, "Total Lojas", header_format)
-    else:
-        worksheet.write(0, col_num, header, header_format)
+    # Aplica o cabeçalho com quebra de texto
+    worksheet.write(0, col_num, header, header_format)
+    
+    # Ajusta largura automática com base no conteúdo do cabeçalho e valores
+    # Limita o mínimo e máximo para manter consistência
+    valores_coluna = tabela_exportar_sem_tipo[header].astype(str)
+    max_len = max(valores_coluna.map(len).max(), len(header))
+    largura = min(max(max_len + 2, 12), 30)  # mínimo 12, máximo 30
+    worksheet.set_column(col_num, col_num, largura)
+
+
+
 
 
 # 🔥 Adiciona o cabeçalho da coluna de participação
