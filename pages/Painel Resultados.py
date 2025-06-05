@@ -1377,8 +1377,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 
 
-# 🔥 Adiciona o cabeçalho da coluna de participação
-worksheet.write(0, num_colunas, "% Participação", header_format)
+
 
 
 # 🔧 Formato percentual brasileiro no Excel
