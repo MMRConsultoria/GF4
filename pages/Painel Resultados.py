@@ -1027,6 +1027,39 @@ if coluna_mais_recente:
 
 # 🔥 Remove colunas 100% vazias
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
+
+# ✅ Cálculo de %Grupo e % Loja/Grupo (somente no modo Por Loja)
+if modo_visao == "Por Loja":
+    # Identifica colunas de valor válidas (exclui colunas fixas)
+    colunas_valores = [
+        col for col in tabela_exportar_sem_tipo.columns
+        if col not in ["Grupo", "Loja", "Acumulado no Mês (Com Gorjeta)"]
+        and pd.api.types.is_numeric_dtype(tabela_exportar_sem_tipo[col])
+    ]
+
+    # Total geral: soma de todos os valores das colunas numéricas
+    soma_total_geral = tabela_exportar_sem_tipo[colunas_valores].sum().sum()
+
+    # %Grupo = valor da loja dividido pela soma total geral
+    tabela_exportar_sem_tipo["%Grupo"] = (
+        tabela_exportar_sem_tipo[colunas_valores].sum(axis=1) / soma_total_geral
+    ).fillna(0)
+
+    # % Loja/Grupo = valor da loja dividido pela soma total do seu grupo
+    soma_por_grupo = (
+        tabela_exportar_sem_tipo.groupby("Grupo")[colunas_valores].sum().sum(axis=1)
+    )
+
+    tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
+        lambda row: row[colunas_valores].sum() / soma_por_grupo.get(row["Grupo"], 1),
+        axis=1
+    ).fillna(0)
+
+
+
+
+
+
 # ✅ Aqui faz a substituição de NaN na coluna Acumulado no Mês
 if "Acumulado no Mês" in tabela_exportar_sem_tipo.columns:
     tabela_exportar_sem_tipo["Acumulado no Mês"] = tabela_exportar_sem_tipo["Acumulado no Mês"].fillna(0)
