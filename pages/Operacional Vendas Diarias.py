@@ -602,7 +602,7 @@ with aba4:
                 df_diff = df_comp[~(df_comp["Valor Bruto Iguais"] & df_comp["Valor Real Iguais"])].copy()
 
                 # 🔥 Filtro para ignorar as diferenças do grupo Kopp
-                df_diff = df_diff[~df_diff["Nome Loja Everest"].str.contains("Kopp", case=False, na=False)]
+                df_diff = df_diff[~df_diff["Nome Loja Everest"].str.contains("KOPP", case=False, na=False)]
 
 
                 
