@@ -1223,10 +1223,10 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     cores_grupo = itertools.cycle(["#D9EAD3", "#CFE2F3"])
 
-    header_format = workbook.add_format({
-        'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
-        'align': 'center', 'valign': 'vcenter', 'border': 1,'text_wrap': True
-    })
+    #header_format = workbook.add_format({
+    #    'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
+    #    'align': 'center', 'valign': 'vcenter', 'border': 1,'text_wrap': True
+    #})
     subtotal_format = workbook.add_format({
         'bold': True, 'bg_color': '#FFE599', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
