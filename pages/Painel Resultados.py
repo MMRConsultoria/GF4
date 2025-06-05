@@ -1198,7 +1198,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'num_format': '0,00%', 'align': 'right', 'valign': 'vcenter'
     })
 
-    # ✅ Cabeçalho com estilos e formatações por tipo (corrigido)
+    # ✅ Cabeçalho com estilos e formatações por tipo (corrigido e unificado)
     percentuais = ["%Grupo", "% Loja/Grupo"]
 
     for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
@@ -1206,10 +1206,11 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         if header in percentuais:
             worksheet.set_column(col_num, col_num, 12, percent_formatado)
-        elif pd.api.types.is_numeric_dtype(tabela_exportar_sem_tipo[header]):
+        elif pd.api.types.is_numeric_dtype(tabela_exportar_sem_tipo[header]) and not any(p in header for p in percentuais):
             worksheet.set_column(col_num, col_num, 19, valor_formatado)
         else:
             worksheet.set_column(col_num, col_num, 25)
+
 
             
 
