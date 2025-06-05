@@ -1258,8 +1258,12 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]  # colunas a partir da 2
 
         for col_num, val in enumerate(linha_tipo):
+            header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
             if isinstance(val, (int, float)) and not pd.isna(val):
-                worksheet.write_number(linha, col_num, val, subtotal_format)
+                if header in ["%Grupo", "% Loja/Grupo"]:
+                    worksheet.write_number(linha, col_num, val, percent_formatado)
+                else:
+                    worksheet.write_number(linha, col_num, val, subtotal_format)
             else:
                 worksheet.write(linha, col_num, str(val), subtotal_format)
         linha += 1
