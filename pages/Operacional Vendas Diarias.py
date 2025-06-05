@@ -505,10 +505,12 @@ with aba4:
         aba_externo = planilha.worksheet("Fat Sistema Externo")
 
         df_everest = pd.DataFrame(aba_everest.get_all_values()[1:])
-        df_externo = pd.DataFrame(aba_externo.get_all_values()[1:])
+        df_externo = pd.DataFrame(aba_externo.get_all_records())
+        #df_externo = pd.DataFrame(aba_externo.get_all_values()[1:])
 
         df_everest.columns = [f"col{i}" for i in range(df_everest.shape[1])]
-        df_externo.columns = [f"col{i}" for i in range(df_externo.shape[1])]
+        #df_externo.columns = [f"col{i}" for i in range(df_externo.shape[1])]
+
 
         df_everest["col0"] = pd.to_datetime(df_everest["col0"], dayfirst=True, errors="coerce")
         df_externo["col0"] = pd.to_datetime(df_externo["col0"], dayfirst=True, errors="coerce")
