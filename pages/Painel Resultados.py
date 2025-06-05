@@ -1030,42 +1030,6 @@ tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 
 
 
-
-
-
-# ✅ Cálculo de %Grupo e % Loja/Grupo (somente no modo Por Loja)
-if modo_visao == "Por Loja":
-    # Identifica colunas numéricas (exceto as fixas)
-    colunas_valores = [
-        col for col in tabela_exportar_sem_tipo.columns
-        if col not in ["Grupo", "Loja", "Acumulado no Mês (Com Gorjeta)"]
-        and pd.api.types.is_numeric_dtype(tabela_exportar_sem_tipo[col])
-    ]
-
-    # Soma total geral (todas as lojas)
-    soma_total_geral = tabela_exportar_sem_tipo[colunas_valores].sum().sum()
-
-    # %Grupo = valor da loja / total geral (formato 0,00%)
-    tabela_exportar_sem_tipo["%Grupo"] = (
-        tabela_exportar_sem_tipo[colunas_valores].sum(axis=1) / soma_total_geral
-    ).fillna(0).apply(lambda x: f"{x:.2%}".replace(".", ","))
-
-    # Soma total por grupo
-    soma_por_grupo = (
-        tabela_exportar_sem_tipo.groupby("Grupo")[colunas_valores].sum().sum(axis=1)
-    )
-
-    # % Loja/Grupo = valor loja / total do grupo (formato 0,00%)
-    tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
-        lambda row: f"{row[colunas_valores].sum() / soma_por_grupo.get(row['Grupo'], 1):.2%}".replace(".", ",")
-        if soma_por_grupo.get(row["Grupo"], 1) != 0 else "0,00%",
-        axis=1
-    )
-
-
-
-
-
 # ✅ Aqui faz a substituição de NaN na coluna Acumulado no Mês
 if "Acumulado no Mês" in tabela_exportar_sem_tipo.columns:
     tabela_exportar_sem_tipo["Acumulado no Mês"] = tabela_exportar_sem_tipo["Acumulado no Mês"].fillna(0)
@@ -1368,6 +1332,33 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 # 🔥 Adiciona o cabeçalho da coluna de participação
 worksheet.write(0, num_colunas, "% Participação", header_format)
+
+
+# 🔧 Formato percentual brasileiro no Excel
+percent_formatado = workbook.add_format({
+    'num_format': '0,00%',  # <- formato percentual com vírgula
+    'align': 'right',
+    'valign': 'vcenter'
+})
+
+# ✅ Reescreve as colunas de % com formatação correta (modo Por Loja)
+if modo_visao == "Por Loja":
+    colunas_percentuais = ["%Grupo", "% Loja/Grupo"]
+    col_idx_map = {
+        col: idx for idx, col in enumerate(tabela_exportar_sem_tipo.columns)
+        if col in colunas_percentuais
+    }
+
+    for row_idx, row in tabela_exportar_sem_tipo.iterrows():
+        for col_name, col_idx in col_idx_map.items():
+            try:
+                # Converte string "13,41%" → número 0.1341
+                val = float(str(row[col_name]).replace("%", "").replace(",", ".").strip()) / 100
+                worksheet.write_number(row_idx + 1, col_idx, val, percent_formatado)
+            except:
+                worksheet.write(row_idx + 1, col_idx, row[col_name])  # fallback como texto
+
+
 
 worksheet.hide_gridlines(option=2)
 
