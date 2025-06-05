@@ -1048,7 +1048,7 @@ if modo_visao == "Por Loja":
     # %Grupo = valor da loja / total geral (como string percentual)
     tabela_exportar_sem_tipo["%Grupo"] = (
         tabela_exportar_sem_tipo[colunas_valores].sum(axis=1) / soma_total_geral
-    ).fillna(0).apply(lambda x: f"{x:.2%}")
+    ).fillna(0).apply(lambda x: f"{x:.2%}"..replace(".", ","))
 
     # % Loja/Grupo = valor loja / total do grupo (como string percentual)
     soma_por_grupo = (
