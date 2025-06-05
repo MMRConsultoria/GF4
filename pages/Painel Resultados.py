@@ -1215,19 +1215,17 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'align': 'center', 'valign': 'vcenter', 'border': 1, 'text_wrap': True
     })
 
-    # 🔧 Cabeçalho
+    # 🔧 Aplica cabeçalhos e formatação por coluna
     for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
         worksheet.write(0, col_num, header, header_format)
 
-    worksheet.set_row(0, 39)  # altura da linha do cabeçalho
-
-    # 🔧 Aplica formatação R$ ou %
-    for col_num, col_name in enumerate(tabela_exportar_sem_tipo.columns):
-        if col_name in ["%Grupo", "% Loja/Grupo"]:
+        if header in ["%Grupo", "% Loja/Grupo"]:
             worksheet.set_column(col_num, col_num, 12, percent_formatado)
         else:
             worksheet.set_column(col_num, col_num, 19, valor_formatado)
 
+    # 🔧 Ajusta altura da linha do cabeçalho
+    worksheet.set_row(0, 39)
 
     
 
