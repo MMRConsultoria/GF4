@@ -1151,15 +1151,19 @@ if modo_visao == "Por Loja":
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
 
+
+    # ✅ Formata %Grupo e % Loja/Grupo como percentual no Excel
+    if modo_visao == "Por Loja":
+        for col in ["%Grupo", "% Loja/Grupo"]:
+            if col in tabela_exportar_sem_tipo.columns:
+                col_idx = tabela_exportar_sem_tipo.columns.get_loc(col)
+                worksheet.set_column(col_idx, col_idx, 12, percent_formatado)
+    
+    
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
     
-# ✅ Formata %Grupo e % Loja/Grupo como percentual no Excel
-if modo_visao == "Por Loja":
-    for col in ["%Grupo", "% Loja/Grupo"]:
-        if col in tabela_exportar_sem_tipo.columns:
-            col_idx = tabela_exportar_sem_tipo.columns.get_loc(col)
-            worksheet.set_column(col_idx, col_idx, 12, percent_formatado)
+
 
 
     header_format = workbook.add_format({
