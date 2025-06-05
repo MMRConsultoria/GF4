@@ -1235,9 +1235,9 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     })
 
     # 🔧 Escreve cabeçalho e aplica largura + formatação
-    for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
-        worksheet.write(0, col_num, header, header_format)
-        worksheet.set_column(col_num, col_num, 19, valor_formatado)
+    #for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
+    #    worksheet.write(0, col_num, header, header_format)
+    #    worksheet.set_column(col_num, col_num, 19, valor_formatado)
 
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
