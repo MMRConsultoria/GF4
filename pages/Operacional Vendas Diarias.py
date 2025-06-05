@@ -505,12 +505,10 @@ with aba4:
         aba_externo = planilha.worksheet("Fat Sistema Externo")
 
         df_everest = pd.DataFrame(aba_everest.get_all_values()[1:])
-        df_externo = pd.DataFrame(aba_externo.get_all_records())
-        #df_externo = pd.DataFrame(aba_externo.get_all_values()[1:])
+        df_externo = pd.DataFrame(aba_externo.get_all_values()[1:])
 
         df_everest.columns = [f"col{i}" for i in range(df_everest.shape[1])]
-        #df_externo.columns = [f"col{i}" for i in range(df_externo.shape[1])]
-
+        df_externo.columns = [f"col{i}" for i in range(df_externo.shape[1])]
 
         df_everest["col0"] = pd.to_datetime(df_everest["col0"], dayfirst=True, errors="coerce")
         df_externo["col0"] = pd.to_datetime(df_externo["col0"], dayfirst=True, errors="coerce")
@@ -570,12 +568,6 @@ with aba4:
                     "col8": "Valor Real (Externo)"
                 })
 
-
-                 #🔥 Remove registros do grupo KOPP (qualquer variação)
-                ex = ex[~ex["Grupo"].str.contains("kopp", case=False, na=False)]
-
-
-                
                 ev["Data"] = pd.to_datetime(ev["Data"], errors="coerce").dt.date
                 ex["Data"] = pd.to_datetime(ex["Data"], errors="coerce").dt.date
 
@@ -609,12 +601,8 @@ with aba4:
 
                 df_diff = df_comp[~(df_comp["Valor Bruto Iguais"] & df_comp["Valor Real Iguais"])].copy()
 
-               # 🔥 Filtro para ignorar as diferenças do grupo Kopp
-                filtro_kopp = df_diff["Nome Loja Everest"].str.contains(r"\bkopp\b", case=False, na=False, regex=True) | \
-                              df_diff["Nome Loja Sistema Externo"].str.contains(r"\bkopp\b", case=False, na=False, regex=True)
-
-                df_diff = df_diff[~filtro_kopp]
-
+                # 🔥 Filtro para ignorar as diferenças do grupo Kopp
+                df_diff = df_diff[~df_diff["Nome Loja Everest"].str.contains("kop", case=False, na=False)]
 
 
                 
