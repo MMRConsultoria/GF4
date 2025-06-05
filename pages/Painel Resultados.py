@@ -1057,7 +1057,7 @@ if modo_visao == "Por Loja":
 
     tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
         lambda row: f"{row[colunas_valores].sum() / soma_por_grupo.get(row['Grupo'], 1):.2%}"
-        if soma_por_grupo.get(row["Grupo"], 1) != 0 else "0.00%",
+        if soma_por_grupo.get(row["Grupo"], 1) != 0 else "0,00%",
         axis=1
     )
 
