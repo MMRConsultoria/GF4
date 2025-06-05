@@ -1185,37 +1185,10 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
-    # 🔧 Define os formatos antes de aplicar
-    percent_formatado = workbook.add_format({
-        'num_format': '0,00%',
-        'align': 'right',
-        'valign': 'vcenter'
-    })
-
-    valor_formatado = workbook.add_format({
-        'num_format': 'R$ #,##0.00',
-        'align': 'right',
-        'valign': 'vcenter'
-    })
-
-
-
-
-
     # 🔧 Escreve cabeçalho e aplica largura + formatação
-    colunas_percentuais = ["%Grupo", "% Loja/Grupo"]
-    col_idx_percentuais = []
-
     for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
         worksheet.write(0, col_num, header, header_format)
-        
-        if header in colunas_percentuais:
-            worksheet.set_column(col_num, col_num, 12, percent_formatado)  # <-- aplica % aqui
-            col_idx_percentuais.append(col_num)
-        else:
-            worksheet.set_column(col_num, col_num, 19, valor_formatado)  # <-- R$ para o resto
-
-
+        worksheet.set_column(col_num, col_num, 19, valor_formatado)
 
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
@@ -1407,30 +1380,31 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 
 
-# 🔧 Formato percentual brasileiro no Excel
+# Após cálculo dos percentuais
+tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["%Grupo"].astype(float)
+tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo["% Loja/Grupo"].astype(float)
+
+# Formato percentual
 percent_formatado = workbook.add_format({
-    'num_format': '0,00%',  # <- formato percentual com vírgula
+    'num_format': '0,00%',
     'align': 'right',
     'valign': 'vcenter'
 })
 
-# ✅ Reescreve as colunas de % com formatação correta (modo Por Loja)
-if modo_visao == "Por Loja":
-    colunas_percentuais = ["%Grupo", "% Loja/Grupo"]
-    col_idx_map = {
-        col: idx for idx, col in enumerate(tabela_exportar_sem_tipo.columns)
-        if col in colunas_percentuais
-    }
+# Aplica formatação por coluna
+colunas_percentuais = ["%Grupo", "% Loja/Grupo"]
+col_idx_map = {
+    col: idx for idx, col in enumerate(tabela_exportar_sem_tipo.columns)
+    if col in colunas_percentuais
+}
 
-    for row_idx, row in tabela_exportar_sem_tipo.iterrows():
-        for col_name, col_idx in col_idx_map.items():
-            try:
-                # Converte string "13,41%" → número 0.1341
-                val = float(row[col_name])
-                worksheet.write(row_idx + 1, col_idx, val, percent_formatado)
-            except:
-                worksheet.write(row_idx + 1, col_idx, str(row[col_name]))  # fallback
-
+for row_idx, row in tabela_exportar_sem_tipo.iterrows():
+    for col_name, col_idx in col_idx_map.items():
+        try:
+            val = float(row[col_name])
+            worksheet.write_number(row_idx + 1, col_idx, val, percent_formatado)
+        except:
+            worksheet.write(row_idx + 1, col_idx, str(row[col_name]))
 
 
 worksheet.hide_gridlines(option=2)
