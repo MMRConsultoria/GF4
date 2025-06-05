@@ -1198,7 +1198,15 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
     
-
+    header_format = workbook.add_format({
+        'bold': True,
+        'bg_color': '#4F81BD',
+        'font_color': 'white',
+        'align': 'center',
+        'valign': 'vcenter',
+        'border': 1,
+        'text_wrap': True
+    })
 
     # 🔧 Estilo de formatação
     valor_formatado = workbook.add_format({
