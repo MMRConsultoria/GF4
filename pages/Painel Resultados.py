@@ -1142,51 +1142,7 @@ if modo_visao == "Por Loja":
             if soma_por_grupo.get(row["Grupo"], 1) != 0 else 0,
             axis=1
         )
-# ✅ Cálculo das colunas %Grupo e % Loja/Grupo (somente no modo Por Loja)
-if modo_visao == "Por Loja":
-    base_percentual = (
-        "Acumulado no Mês (Com Gorjeta)"
-        if "Acumulado no Mês (Com Gorjeta)" in tabela_exportar_sem_tipo.columns
-        and tabela_exportar_sem_tipo["Acumulado no Mês (Com Gorjeta)"].sum() > 0
-        else None
-    )
 
-    if base_percentual:
-        total_geral = tabela_exportar_sem_tipo[base_percentual].sum()
-        soma_por_grupo = tabela_exportar_sem_tipo.groupby("Grupo")[base_percentual].sum()
-
-        tabela_exportar_sem_tipo["%Grupo"] = (
-            tabela_exportar_sem_tipo[base_percentual] / total_geral
-        ).fillna(0)
-
-        tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
-            lambda row: row[base_percentual] / soma_por_grupo.get(row["Grupo"], 1)
-            if soma_por_grupo.get(row["Grupo"], 1) != 0 else 0,
-            axis=1
-        )
-    else:
-        colunas_valores = [
-            col for col in tabela_exportar_sem_tipo.columns
-            if pd.api.types.is_numeric_dtype(tabela_exportar_sem_tipo[col])
-            and col not in ["Total"]
-        ]
-        total_geral = tabela_exportar_sem_tipo[colunas_valores].sum().sum()
-        soma_por_grupo = (
-            tabela_exportar_sem_tipo[colunas_valores]
-            .groupby(tabela_exportar_sem_tipo["Grupo"])
-            .sum()
-            .sum(axis=1)
-        )
-
-        tabela_exportar_sem_tipo["%Grupo"] = (
-            tabela_exportar_sem_tipo[colunas_valores].sum(axis=1) / total_geral
-        ).fillna(0)
-
-        tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
-            lambda row: row[colunas_valores].sum() / soma_por_grupo.get(row["Grupo"], 1)
-            if soma_por_grupo.get(row["Grupo"], 1) != 0 else 0,
-            axis=1
-        )
 
 
 
@@ -1198,6 +1154,14 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
     
+# ✅ Formata %Grupo e % Loja/Grupo como percentual no Excel
+if modo_visao == "Por Loja":
+    for col in ["%Grupo", "% Loja/Grupo"]:
+        if col in tabela_exportar_sem_tipo.columns:
+            col_idx = tabela_exportar_sem_tipo.columns.get_loc(col)
+            worksheet.set_column(col_idx, col_idx, 12, percent_formatado)
+
+
     header_format = workbook.add_format({
         'bold': True,
         'bg_color': '#4F81BD',
