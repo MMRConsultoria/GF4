@@ -1391,8 +1391,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                             worksheet.write_number(linha, col_num, val, percent_formatado)
                     else:
                             worksheet.write_number(linha, col_num, val, grupo_format)
-                else:
-                    worksheet.write(linha, col_num, str(val), grupo_format)
+                    else:
+                        worksheet.write(linha, col_num, str(val), grupo_format)
                 linha += 1
 
             # ✅ Subtotal para o grupo
