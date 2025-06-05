@@ -568,6 +568,12 @@ with aba4:
                     "col8": "Valor Real (Externo)"
                 })
 
+
+                 #🔥 Remove registros do grupo KOPP (qualquer variação)
+                ex = ex[~ex["Grupo"].str.contains("kopp", case=False, na=False)]
+
+
+                
                 ev["Data"] = pd.to_datetime(ev["Data"], errors="coerce").dt.date
                 ex["Data"] = pd.to_datetime(ex["Data"], errors="coerce").dt.date
 
