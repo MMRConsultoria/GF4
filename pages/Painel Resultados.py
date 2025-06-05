@@ -1211,7 +1211,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         else:
             worksheet.set_column(col_num, col_num, 25)
 
-
             
 
         
