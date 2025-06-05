@@ -1,3 +1,4 @@
+
 # pages/PainelResultados.py
 import streamlit as st
 st.set_page_config(page_title="Vendas Diarias", layout="wide")  # ✅ Escolha um título só
@@ -1040,6 +1041,16 @@ if modo_visao == "Por Loja":
     ]
 
     soma_total_geral = tabela_exportar_sem_tipo[colunas_valores].sum().sum()
+
+
+    # ✅ Soma total por grupo (como Series)
+    soma_por_grupo = (
+        tabela_exportar_sem_tipo[colunas_valores]
+        .groupby(tabela_exportar_sem_tipo["Grupo"])
+        .sum()
+        .sum(axis=1)
+    )
+
 
     tabela_exportar_sem_tipo["%Grupo"] = (
         tabela_exportar_sem_tipo[colunas_valores].sum(axis=1) / soma_total_geral
