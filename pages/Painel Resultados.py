@@ -1185,10 +1185,10 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
-    # 🔧 Escreve cabeçalho e aplica largura + formatação
-    for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
-        worksheet.write(0, col_num, header, header_format)
-        worksheet.set_column(col_num, col_num, 19, valor_formatado)
+  #  # 🔧 Escreve cabeçalho e aplica largura + formatação
+  #  for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
+  #      worksheet.write(0, col_num, header, header_format)
+  #      worksheet.set_column(col_num, col_num, 19, valor_formatado)
 
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
@@ -1412,7 +1412,7 @@ if modo_visao == "Por Loja":
 
     for row_idx, row in tabela_exportar_sem_tipo.iterrows():
         for col_name, col_idx in col_idx_map.items():
-            try:
+            try:    
                 val = float(row[col_name])
                 worksheet.write_number(row_idx + 1, col_idx, val, percent_formatado)
             except:
