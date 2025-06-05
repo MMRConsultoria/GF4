@@ -1393,9 +1393,10 @@ if modo_visao == "Por Loja":
             try:
                 # Converte string "13,41%" → número 0.1341
                 val = float(str(row[col_name]).replace("%", "").replace(",", ".").strip()) / 100
-                worksheet.write_number(row_idx + 1, col_idx, val, percent_formatado)
+                worksheet.write(row_idx + 1, col_idx, val, percent_formatado)
             except:
-                worksheet.write(row_idx + 1, col_idx, row[col_name])  # fallback como texto
+                # Se falhar a conversão, escreve o conteúdo como está (texto)
+                worksheet.write(row_idx + 1, col_idx, str(row[col_name]))
 
 
 
