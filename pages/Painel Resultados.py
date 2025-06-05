@@ -1398,10 +1398,10 @@ colunas_percentuais = ["%Grupo", "% Loja/Grupo"]
 for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
     worksheet.write(0, col_num, header, header_format)
 
-    if header in colunas_percentuais:
-        worksheet.set_column(col_num, col_num, 12, percent_formatado)  # ✅ aplica % aqui
+    if header in ["%Grupo", "% Loja/Grupo"]:
+        worksheet.set_column(col_num, col_num, 12, percent_formatado)  # ✅ formato percentual
     else:
-        worksheet.set_column(col_num, col_num, 19, valor_formatado)    # ✅ aplica R$ aqui
+        worksheet.set_column(col_num, col_num, 19, valor_formatado)    # ✅ formato monetário
 
 # ✅ Reescreve os valores como numéricos e aplica formato percentual de verdade
 if modo_visao == "Por Loja":
