@@ -1045,21 +1045,23 @@ if modo_visao == "Por Loja":
     # Soma total geral (todas as lojas)
     soma_total_geral = tabela_exportar_sem_tipo[colunas_valores].sum().sum()
 
-    # %Grupo = valor da loja / total geral (como string percentual)
+    # %Grupo = valor da loja / total geral (formato 0,00%)
     tabela_exportar_sem_tipo["%Grupo"] = (
         tabela_exportar_sem_tipo[colunas_valores].sum(axis=1) / soma_total_geral
-    ).fillna(0).apply(lambda x: f"{x:.2%}"..replace(".", ","))
+    ).fillna(0).apply(lambda x: f"{x:.2%}".replace(".", ","))
 
-    # % Loja/Grupo = valor loja / total do grupo (como string percentual)
+    # Soma total por grupo
     soma_por_grupo = (
         tabela_exportar_sem_tipo.groupby("Grupo")[colunas_valores].sum().sum(axis=1)
     )
 
+    # % Loja/Grupo = valor loja / total do grupo (formato 0,00%)
     tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
-        lambda row: f"{row[colunas_valores].sum() / soma_por_grupo.get(row['Grupo'], 1):.2%}"
-        if soma_por_grupo.get(row["Grupo"], 1) != 0 else "0.00%",
+        lambda row: f"{row[colunas_valores].sum() / soma_por_grupo.get(row['Grupo'], 1):.2%}".replace(".", ",")
+        if soma_por_grupo.get(row["Grupo"], 1) != 0 else "0,00%",
         axis=1
     )
+
 
 
 
