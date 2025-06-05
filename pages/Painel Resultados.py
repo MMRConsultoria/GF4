@@ -1198,21 +1198,20 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'num_format': '0,00%', 'align': 'right', 'valign': 'vcenter'
     })
 
-    # ✅ Cabeçalho com estilos e formatações por tipo
+    # ✅ Cabeçalho com estilos e formatações por tipo (corrigido)
+    percentuais = ["%Grupo", "% Loja/Grupo"]
+
     for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
         worksheet.write(0, col_num, header, header_format)
 
-        # 🔢 Coluna percentual
-        if header in ["%Grupo", "% Loja/Grupo"]:
+        if header in percentuais:
             worksheet.set_column(col_num, col_num, 12, percent_formatado)
-
-        # 🔢 Coluna com valor monetário (qualquer coluna numérica que não seja %)
         elif pd.api.types.is_numeric_dtype(tabela_exportar_sem_tipo[header]):
             worksheet.set_column(col_num, col_num, 19, valor_formatado)
-
-        # 🔤 Coluna de texto ou categórica
         else:
             worksheet.set_column(col_num, col_num, 25)
+
+            
 
         
 
