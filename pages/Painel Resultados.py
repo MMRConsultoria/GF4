@@ -1198,17 +1198,23 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'num_format': '0,00%', 'align': 'right', 'valign': 'vcenter'
     })
 
-    # Cabeçalhos e colunas
+    # ✅ Cabeçalho com estilos e formatações por tipo
     for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
         worksheet.write(0, col_num, header, header_format)
+
+        # 🔢 Coluna percentual
         if header in ["%Grupo", "% Loja/Grupo"]:
             worksheet.set_column(col_num, col_num, 12, percent_formatado)
-        else:
+
+        # 🔢 Coluna com valor monetário (qualquer coluna numérica que não seja %)
+        elif pd.api.types.is_numeric_dtype(tabela_exportar_sem_tipo[header]):
             worksheet.set_column(col_num, col_num, 19, valor_formatado)
 
-    worksheet.set_row(0, 39)
+        # 🔤 Coluna de texto ou categórica
+        else:
+            worksheet.set_column(col_num, col_num, 25)
 
-    
+        
 
 
 
@@ -1237,16 +1243,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
 
-     # 🔧 Estilo para valores
-    valor_formatado = workbook.add_format({
-        'num_format': 'R$ #,##0.00',
-        'align': 'right',
-        'valign': 'vcenter'
-    })
-
-    # 🔧 Ajusta altura da linha do cabeçalho
-    worksheet.set_row(0, 39)
-
+    
 
     # 🔥 Determina a coluna de identificação (Loja ou Grupo)
     coluna_id = "Loja" if "Loja" in tabela_exportar_sem_tipo.columns else "Grupo"
@@ -1418,28 +1415,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
        
 
-# 🔧 Estilo de formatação
-valor_formatado = workbook.add_format({
-    'num_format': 'R$ #,##0.00',
-    'align': 'right',
-    'valign': 'vcenter'
-})
-percent_formatado = workbook.add_format({
-    'num_format': '0,00%',
-    'align': 'right',
-    'valign': 'vcenter'
-})
 
-# 🔧 Cabeçalho com estilos
-for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
-    worksheet.write(0, col_num, header, header_format)
-    if header in ["%Grupo", "% Loja/Grupo"]:
-        worksheet.set_column(col_num, col_num, 12, percent_formatado)
-    else:
-        worksheet.set_column(col_num, col_num, 19, valor_formatado)
 
-# 🔧 Altura do cabeçalho
-worksheet.set_row(0, 39)
 
 
 
