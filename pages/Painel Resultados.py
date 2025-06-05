@@ -1186,10 +1186,20 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     })
 
     # 🔧 Escreve cabeçalho e aplica largura + formatação
+    colunas_percentuais = ["%Grupo", "% Loja/Grupo"]
+    col_idx_percentuais = []
+
     for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
         worksheet.write(0, col_num, header, header_format)
-        worksheet.set_column(col_num, col_num, 19, valor_formatado)
+        
+        if header in colunas_percentuais:
+            worksheet.set_column(col_num, col_num, 12, percent_formatado)  # <-- aplica % aqui
+            col_idx_percentuais.append(col_num)
+        else:
+            worksheet.set_column(col_num, col_num, 19, valor_formatado)  # <-- R$ para o resto
 
+
+            
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
 
