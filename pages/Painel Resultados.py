@@ -1133,39 +1133,6 @@ if modo_visao == "Por Grupo" and agrupamento in ["Dia", "Mês", "Ano"]:
     tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_ordem]
 
 
-# 🔧 Estilo de percentual
-percent_formatado = workbook.add_format({
-    'num_format': '0.00%',
-    'align': 'right',
-    'valign': 'vcenter'
-})
-
-# ✅ Reaplica formatação percentual nas células %Grupo e % Loja/Grupo
-if modo_visao == "Por Loja":
-    colunas_percentuais = ["%Grupo", "% Loja/Grupo"]
-    col_idx_map = {col: idx for idx, col in enumerate(tabela_exportar_sem_tipo.columns) if col in colunas_percentuais}
-
-    for row_idx, row in tabela_exportar_sem_tipo.iterrows():
-        for col_name, col_idx in col_idx_map.items():
-            val = row[col_name]
-            if isinstance(val, (float, int)) and not pd.isna(val):
-                worksheet.write_number(row_idx + 1, col_idx, val, percent_formatado)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
