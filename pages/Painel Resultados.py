@@ -1030,6 +1030,45 @@ tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.dropna(axis=1, how="all")
 
 
 
+
+# ✅ Cálculo de %Grupo e % Loja/Grupo (somente no modo Por Loja)
+if modo_visao == "Por Loja":
+    colunas_valores = [
+        col for col in tabela_exportar_sem_tipo.columns
+        if col not in ["Grupo", "Loja", "Acumulado no Mês (Com Gorjeta)"]
+        and pd.api.types.is_numeric_dtype(tabela_exportar_sem_tipo[col])
+    ]
+
+    soma_total_geral = tabela_exportar_sem_tipo[colunas_valores].sum().sum()
+
+    tabela_exportar_sem_tipo["%Grupo"] = (
+        tabela_exportar_sem_tipo[colunas_valores].sum(axis=1) / soma_total_geral
+    ).fillna(0).apply(lambda x: f"{x:.2%}".replace(".", ","))
+
+    soma_por_grupo = (
+        tabela_exportar_sem_tipo.groupby("Grupo")[colunas_valores].sum().sum(axis=1)
+    )
+
+    tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
+        lambda row: f"{row[colunas_valores].sum() / soma_por_grupo.get(row['Grupo'], 1):.2%}".replace(".", ",")
+        if soma_por_grupo.get(row["Grupo"], 1) != 0 else "0,00%",
+        axis=1
+    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ✅ Aqui faz a substituição de NaN na coluna Acumulado no Mês
 if "Acumulado no Mês" in tabela_exportar_sem_tipo.columns:
     tabela_exportar_sem_tipo["Acumulado no Mês"] = tabela_exportar_sem_tipo["Acumulado no Mês"].fillna(0)
