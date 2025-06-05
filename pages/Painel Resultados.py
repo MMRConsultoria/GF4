@@ -1152,6 +1152,9 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
+
+
+
     
     # 🔧 Estilo para valores
     valor_formatado = workbook.add_format({
@@ -1160,18 +1163,47 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'valign': 'vcenter'
     })
 
-
-
     percent_formatado = workbook.add_format({
         'num_format': '0,00%',
         'align': 'right',
         'valign': 'vcenter'
     })
+
+    # 🧾 Cabeçalhos e formatação
+    header_format = workbook.add_format({
+        'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
+        'align': 'center', 'valign': 'vcenter', 'border': 1, 'text_wrap': True
+    })
+
+    for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
+        worksheet.write(0, col_num, header, header_format)
+
     # 🔧 Ajusta altura da linha do cabeçalho
     worksheet.set_row(0, 39)
 
-    # Exemplo de uso correto
-    worksheet.set_column(5, 5, 12, percent_formatado)
+    # 🧾 Aplica formatação: R$ para todas exceto as duas últimas (%)
+    num_colunas = len(tabela_exportar_sem_tipo.columns)
+    for col_num in range(num_colunas):
+        if col_num in [num_colunas - 2, num_colunas - 1]:
+            worksheet.set_column(col_num, col_num, 12, percent_formatado)
+        else:
+            worksheet.set_column(col_num, col_num, 19, valor_formatado)
+
+
+# ✅ Reescreve os valores % como numéricos com formatação percentual
+    if modo_visao == "Por Loja":
+        for row_idx, row in tabela_exportar_sem_tipo.iterrows():
+            for offset in [-2, -1]:  # últimas duas colunas
+                col_idx = num_colunas + offset
+                try:
+                    val = float(row.iloc[col_idx])
+                    worksheet.write_number(row_idx + 1, col_idx, val, percent_formatado)
+                except:
+                    worksheet.write(row_idx + 1, col_idx, str(row.iloc[col_idx]))
+
+
+    
+   
 
     
 
@@ -1387,19 +1419,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 
 
-# ✅ Formata as duas últimas colunas como percentual (em vez de R$)
-if modo_visao == "Por Loja":
-    colunas_total = len(tabela_exportar_sem_tipo.columns)
-    colunas_percentuais_idx = [colunas_total - 2, colunas_total - 1]  # últimas duas
 
-    for col_idx in colunas_percentuais_idx:
-        worksheet.set_column(col_idx, col_idx, 12, percent_formatado)
-
-        for row_idx, valor in enumerate(tabela_exportar_sem_tipo.iloc[:, col_idx]):
-            try:
-                worksheet.write_number(row_idx + 1, col_idx, float(valor), percent_formatado)
-            except:
-                worksheet.write(row_idx + 1, col_idx, str(valor))
 
 
 
