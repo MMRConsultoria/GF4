@@ -1160,8 +1160,18 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'valign': 'vcenter'
     })
 
+
+
+    percent_formatado = workbook.add_format({
+        'num_format': '0,00%',
+        'align': 'right',
+        'valign': 'vcenter'
+    })
     # 🔧 Ajusta altura da linha do cabeçalho
     worksheet.set_row(0, 39)
+
+    # Exemplo de uso correto
+    worksheet.set_column(5, 5, 12, percent_formatado)
 
     
 
@@ -1184,22 +1194,10 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
-  #  # 🔧 Escreve cabeçalho e aplica largura + formatação
-  #  for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
-  #      worksheet.write(0, col_num, header, header_format)
-  #      worksheet.set_column(col_num, col_num, 19, valor_formatado)
-
-# 🧾 Escreve cabeçalho e aplica formato correto por coluna
+    # 🔧 Escreve cabeçalho e aplica largura + formatação
     for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
         worksheet.write(0, col_num, header, header_format)
-
-        if header in ["%Grupo", "% Loja/Grupo"]:
-            worksheet.set_column(col_num, col_num, 12, percent_formatado)  # ✅ formato percentual
-        else:
-            worksheet.set_column(col_num, col_num, 19, valor_formatado)    # ✅ formato monetário 
-
-
-
+        worksheet.set_column(col_num, col_num, 19, valor_formatado)
 
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
@@ -1389,38 +1387,20 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 
 
-# 🔧 Define os formatos corretamente
-valor_formatado = workbook.add_format({
-    'num_format': 'R$ #,##0.00',
-    'align': 'right',
-    'valign': 'vcenter'
-})
-
-percent_formatado = workbook.add_format({
-    'num_format': '0,00%',
-    'align': 'right',
-    'valign': 'vcenter'
-})
-
-# 🔍 Mapeia colunas percentuais
-colunas_percentuais = ["%Grupo", "% Loja/Grupo"]
-
-
-
-# ✅ Reescreve os valores como numéricos e aplica formato percentual de verdade
+# ✅ Formata as duas últimas colunas como percentual (em vez de R$)
 if modo_visao == "Por Loja":
-    col_idx_map = {
-        col: idx for idx, col in enumerate(tabela_exportar_sem_tipo.columns)
-        if col in colunas_percentuais
-    }
+    colunas_total = len(tabela_exportar_sem_tipo.columns)
+    colunas_percentuais_idx = [colunas_total - 2, colunas_total - 1]  # últimas duas
 
-    for row_idx, row in tabela_exportar_sem_tipo.iterrows():
-        for col_name, col_idx in col_idx_map.items():
-            try:    
-                val = float(row[col_name])
-                worksheet.write_number(row_idx + 1, col_idx, val, percent_formatado)
+    for col_idx in colunas_percentuais_idx:
+        worksheet.set_column(col_idx, col_idx, 12, percent_formatado)
+
+        for row_idx, valor in enumerate(tabela_exportar_sem_tipo.iloc[:, col_idx]):
+            try:
+                worksheet.write_number(row_idx + 1, col_idx, float(valor), percent_formatado)
             except:
-                worksheet.write(row_idx + 1, col_idx, str(row[col_name]))  # fallback como texto
+                worksheet.write(row_idx + 1, col_idx, str(valor))
+
 
 
 worksheet.hide_gridlines(option=2)
