@@ -601,8 +601,11 @@ with aba4:
 
                 df_diff = df_comp[~(df_comp["Valor Bruto Iguais"] & df_comp["Valor Real Iguais"])].copy()
 
-                # 🔥 Filtro para ignorar as diferenças do grupo Kopp
-                df_diff = df_diff[~df_diff["Nome Loja Everest"].str.contains(r"\bko+p+\b", case=False, na=False, regex=True)]
+               # 🔥 Filtro para ignorar as diferenças do grupo Kopp
+                filtro_kopp = df_diff["Nome Loja Everest"].str.contains(r"\bkopp\b", case=False, na=False, regex=True) | \
+                              df_diff["Nome Loja Sistema Externo"].str.contains(r"\bkopp\b", case=False, na=False, regex=True)
+
+                df_diff = df_diff[~filtro_kopp]
 
 
 
