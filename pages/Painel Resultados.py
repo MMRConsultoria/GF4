@@ -1185,6 +1185,23 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
+    # 🔧 Define os formatos antes de aplicar
+    percent_formatado = workbook.add_format({
+        'num_format': '0,00%',
+        'align': 'right',
+        'valign': 'vcenter'
+    })
+
+    valor_formatado = workbook.add_format({
+        'num_format': 'R$ #,##0.00',
+        'align': 'right',
+        'valign': 'vcenter'
+    })
+
+
+
+
+
     # 🔧 Escreve cabeçalho e aplica largura + formatação
     colunas_percentuais = ["%Grupo", "% Loja/Grupo"]
     col_idx_percentuais = []
@@ -1199,7 +1216,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             worksheet.set_column(col_num, col_num, 19, valor_formatado)  # <-- R$ para o resto
 
 
-            
+
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
 
