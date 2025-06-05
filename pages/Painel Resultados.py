@@ -1,4 +1,3 @@
-
 # pages/PainelResultados.py
 import streamlit as st
 st.set_page_config(page_title="Vendas Diarias", layout="wide")  # ✅ Escolha um título só
@@ -1190,6 +1189,18 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
   #      worksheet.write(0, col_num, header, header_format)
   #      worksheet.set_column(col_num, col_num, 19, valor_formatado)
 
+# 🧾 Escreve cabeçalho e aplica formato correto por coluna
+    for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
+        worksheet.write(0, col_num, header, header_format)
+
+        if header in ["%Grupo", "% Loja/Grupo"]:
+            worksheet.set_column(col_num, col_num, 12, percent_formatado)  # ✅ formato percentual
+        else:
+            worksheet.set_column(col_num, col_num, 19, valor_formatado)    # ✅ formato monetário 
+
+
+
+
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
 
@@ -1394,14 +1405,7 @@ percent_formatado = workbook.add_format({
 # 🔍 Mapeia colunas percentuais
 colunas_percentuais = ["%Grupo", "% Loja/Grupo"]
 
-# 🧾 Escreve cabeçalho e aplica formato correto por coluna
-for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
-    worksheet.write(0, col_num, header, header_format)
 
-    if header in ["%Grupo", "% Loja/Grupo"]:
-        worksheet.set_column(col_num, col_num, 12, percent_formatado)  # ✅ formato percentual
-    else:
-        worksheet.set_column(col_num, col_num, 19, valor_formatado)    # ✅ formato monetário
 
 # ✅ Reescreve os valores como numéricos e aplica formato percentual de verdade
 if modo_visao == "Por Loja":
