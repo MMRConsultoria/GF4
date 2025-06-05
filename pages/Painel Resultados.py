@@ -1142,52 +1142,40 @@ if modo_visao == "Por Loja":
             if soma_por_grupo.get(row["Grupo"], 1) != 0 else 0,
             axis=1
         )
-# ✅ Cálculo das colunas %Grupo e % Loja/Grupo (somente no modo Por Loja)
 if modo_visao == "Por Loja":
-    base_percentual = (
-        "Acumulado no Mês (Com Gorjeta)"
-        if "Acumulado no Mês (Com Gorjeta)" in tabela_exportar_sem_tipo.columns
-        and tabela_exportar_sem_tipo["Acumulado no Mês (Com Gorjeta)"].sum() > 0
-        else None
-    )
+    base = "Acumulado no Mês (Com Gorjeta)"
+    usar_base = base in tabela_exportar_sem_tipo.columns and tabela_exportar_sem_tipo[base].sum() > 0
 
-    if base_percentual:
-        total_geral = tabela_exportar_sem_tipo[base_percentual].sum()
-        soma_por_grupo = tabela_exportar_sem_tipo.groupby("Grupo")[base_percentual].sum()
+    if usar_base:
+        total_geral = tabela_exportar_sem_tipo[base].sum()
+        soma_por_grupo = tabela_exportar_sem_tipo.groupby("Grupo")[base].sum()
 
-        tabela_exportar_sem_tipo["%Grupo"] = (
-            tabela_exportar_sem_tipo[base_percentual] / total_geral
-        ).fillna(0)
-
+        tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo[base] / total_geral
         tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
-            lambda row: row[base_percentual] / soma_por_grupo.get(row["Grupo"], 1)
+            lambda row: row[base] / soma_por_grupo.get(row["Grupo"], 1)
             if soma_por_grupo.get(row["Grupo"], 1) != 0 else 0,
             axis=1
         )
     else:
         colunas_valores = [
-            col for col in tabela_exportar_sem_tipo.columns
-            if pd.api.types.is_numeric_dtype(tabela_exportar_sem_tipo[col])
-            and col not in ["Total"]
+            col for col in tabela_exportar_sem_tipo.select_dtypes(include='number').columns
+            if col not in ["Total"]
         ]
         total_geral = tabela_exportar_sem_tipo[colunas_valores].sum().sum()
         soma_por_grupo = (
-            tabela_exportar_sem_tipo[colunas_valores]
-            .groupby(tabela_exportar_sem_tipo["Grupo"])
-            .sum()
-            .sum(axis=1)
+            tabela_exportar_sem_tipo.groupby("Grupo")[colunas_valores].sum().sum(axis=1)
         )
 
-        tabela_exportar_sem_tipo["%Grupo"] = (
-            tabela_exportar_sem_tipo[colunas_valores].sum(axis=1) / total_geral
-        ).fillna(0)
-
+        tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo[colunas_valores].sum(axis=1) / total_geral
         tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
             lambda row: row[colunas_valores].sum() / soma_por_grupo.get(row["Grupo"], 1)
             if soma_por_grupo.get(row["Grupo"], 1) != 0 else 0,
             axis=1
         )
 
+    # Arredondamento preventivo
+    tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["%Grupo"].fillna(0).round(6)
+    tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo["% Loja/Grupo"].fillna(0).round(6)
 
 
 
@@ -1195,36 +1183,29 @@ if modo_visao == "Por Loja":
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
-
     workbook = writer.book
     worksheet = writer.sheets["Faturamento"]
 
-    # 🔧 Estilos
-    valor_formatado = workbook.add_format({
-        'num_format': 'R$ #,##0.00',
-        'align': 'right',
-        'valign': 'vcenter'
-    })
-    percent_formatado = workbook.add_format({
-        'num_format': '0,00%',
-        'align': 'right',
-        'valign': 'vcenter'
-    })
+    # Formatos
     header_format = workbook.add_format({
         'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
         'align': 'center', 'valign': 'vcenter', 'border': 1, 'text_wrap': True
     })
+    valor_formatado = workbook.add_format({
+        'num_format': 'R$ #,##0.00', 'align': 'right', 'valign': 'vcenter'
+    })
+    percent_formatado = workbook.add_format({
+        'num_format': '0,00%', 'align': 'right', 'valign': 'vcenter'
+    })
 
-    # 🔧 Aplica cabeçalhos e formatação por coluna
+    # Cabeçalhos e colunas
     for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
         worksheet.write(0, col_num, header, header_format)
-
         if header in ["%Grupo", "% Loja/Grupo"]:
             worksheet.set_column(col_num, col_num, 12, percent_formatado)
         else:
             worksheet.set_column(col_num, col_num, 19, valor_formatado)
 
-    # 🔧 Ajusta altura da linha do cabeçalho
     worksheet.set_row(0, 39)
 
     
