@@ -1378,33 +1378,45 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 
 
+# 🔧 Define os formatos corretamente
+valor_formatado = workbook.add_format({
+    'num_format': 'R$ #,##0.00',
+    'align': 'right',
+    'valign': 'vcenter'
+})
 
-
-# Após cálculo dos percentuais
-tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["%Grupo"].astype(float)
-tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo["% Loja/Grupo"].astype(float)
-
-# Formato percentual
 percent_formatado = workbook.add_format({
     'num_format': '0,00%',
     'align': 'right',
     'valign': 'vcenter'
 })
 
-# Aplica formatação por coluna
+# 🔍 Mapeia colunas percentuais
 colunas_percentuais = ["%Grupo", "% Loja/Grupo"]
-col_idx_map = {
-    col: idx for idx, col in enumerate(tabela_exportar_sem_tipo.columns)
-    if col in colunas_percentuais
-}
 
-for row_idx, row in tabela_exportar_sem_tipo.iterrows():
-    for col_name, col_idx in col_idx_map.items():
-        try:
-            val = float(row[col_name])
-            worksheet.write_number(row_idx + 1, col_idx, val, percent_formatado)
-        except:
-            worksheet.write(row_idx + 1, col_idx, str(row[col_name]))
+# 🧾 Escreve cabeçalho e aplica formato correto por coluna
+for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
+    worksheet.write(0, col_num, header, header_format)
+
+    if header in colunas_percentuais:
+        worksheet.set_column(col_num, col_num, 12, percent_formatado)  # ✅ aplica % aqui
+    else:
+        worksheet.set_column(col_num, col_num, 19, valor_formatado)    # ✅ aplica R$ aqui
+
+# ✅ Reescreve os valores como numéricos e aplica formato percentual de verdade
+if modo_visao == "Por Loja":
+    col_idx_map = {
+        col: idx for idx, col in enumerate(tabela_exportar_sem_tipo.columns)
+        if col in colunas_percentuais
+    }
+
+    for row_idx, row in tabela_exportar_sem_tipo.iterrows():
+        for col_name, col_idx in col_idx_map.items():
+            try:
+                val = float(row[col_name])
+                worksheet.write_number(row_idx + 1, col_idx, val, percent_formatado)
+            except:
+                worksheet.write(row_idx + 1, col_idx, str(row[col_name]))  # fallback como texto
 
 
 worksheet.hide_gridlines(option=2)
