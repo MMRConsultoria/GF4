@@ -1198,7 +1198,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'num_format': '0,00%', 'align': 'right', 'valign': 'vcenter'
     })
 
-    # ✅ Cabeçalho com estilos e formatações por tipo (corrigido e unificado)
+   # ✅ Cabeçalho com estilos e formatações por tipo (corrigido e unificado)
     percentuais = ["%Grupo", "% Loja/Grupo"]
 
     for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
@@ -1213,8 +1213,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
             
 
-        
-
 
 
 
@@ -1223,21 +1221,13 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     cores_grupo = itertools.cycle(["#D9EAD3", "#CFE2F3"])
 
-    #header_format = workbook.add_format({
-    #    'bold': True, 'bg_color': '#4F81BD', 'font_color': 'white',
-    #    'align': 'center', 'valign': 'vcenter', 'border': 1,'text_wrap': True
-    #})
+    
     subtotal_format = workbook.add_format({
         'bold': True, 'bg_color': '#FFE599', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
     totalgeral_format = workbook.add_format({
         'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
-
-    # 🔧 Escreve cabeçalho e aplica largura + formatação
-    #for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
-    #    worksheet.write(0, col_num, header, header_format)
-    #    worksheet.set_column(col_num, col_num, 19, valor_formatado)
 
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
@@ -1381,7 +1371,11 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
             for col_num, val in enumerate(linha_grupo):
                 if isinstance(val, (int, float)) and not pd.isna(val):
-                    worksheet.write_number(linha, col_num, val, grupo_format)
+                    header = tabela_exportar_sem_tipo.columns[col_num]
+                    if header in ["%Grupo", "% Loja/Grupo"]:
+                            worksheet.write_number(linha, col_num, val, percent_formatado)
+                    else:
+                            worksheet.write_number(linha, col_num, val, grupo_format)
                 else:
                     worksheet.write(linha, col_num, str(val), grupo_format)
             linha += 1
@@ -1392,9 +1386,13 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 row = row.copy()
                 for col_num, val in enumerate(row):
                     if isinstance(val, (int, float)) and not pd.isna(val):
-                        worksheet.write_number(linha, col_num, val, grupo_format)
+                        header = tabela_exportar_sem_tipo.columns[col_num]
+                        if header in ["%Grupo", "% Loja/Grupo"]:
+                            worksheet.write_number(linha, col_num, val, percent_formatado)
                     else:
-                        worksheet.write(linha, col_num, str(val), grupo_format)
+                            worksheet.write_number(linha, col_num, val, grupo_format)
+                else:
+                    worksheet.write(linha, col_num, str(val), grupo_format)
                 linha += 1
 
             # ✅ Subtotal para o grupo
