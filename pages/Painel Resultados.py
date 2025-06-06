@@ -1179,7 +1179,9 @@ if modo_visao == "Por Loja":
     # 🔁 Corrige valores percentuais para escala correta no Excel
     for col in ["%Grupo", "% Loja/Grupo"]:
         if col in tabela_exportar_sem_tipo.columns:
-            tabela_exportar_sem_tipo[col] = tabela_exportar_sem_tipo[col].astype(float)
+           tabela_exportar_sem_tipo[col] = tabela_exportar_sem_tipo[col].apply(
+            lambda x: float(str(x).replace('%', '').replace(',', '.')) if pd.notna(x) else 0
+        )
 
 
 
