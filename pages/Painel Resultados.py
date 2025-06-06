@@ -1261,7 +1261,9 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
             if isinstance(val, (int, float)) and not pd.isna(val):
                 if header in ["%Grupo", "% Loja/Grupo"]:
-                    worksheet.write_number(linha, col_num, val, percent_formatado)
+                    val = 0 if pd.isna(val) else val
+                    worksheet.write_number(linha, col_num, float(val), percent_formatado)
+                   
                 else:
                     worksheet.write_number(linha, col_num, val, subtotal_format)
             else:
@@ -1290,7 +1292,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
         if isinstance(val, (int, float)) and not pd.isna(val):
             if header in ["%Grupo", "% Loja/Grupo"]:
-                worksheet.write_number(linha, col_num, val, percent_formatado)
+                val = 0 if pd.isna(val) else val
+                worksheet.write_number(linha, col_num, float(val), percent_formatado)
             else:
                 worksheet.write_number(linha, col_num, val, totalgeral_format)
         else:
@@ -1395,7 +1398,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 header = tabela_exportar_sem_tipo.columns[col_num]
                 if isinstance(val, (int, float)) and not pd.isna(val):
                     if header in ["%Grupo", "% Loja/Grupo"]:
-                        worksheet.write_number(linha, col_num, val, percent_formatado)
+                        val = 0 if pd.isna(val) else val
+                        worksheet.write_number(linha, col_num, float(val), percent_formatado)
                     else:
                         worksheet.write_number(linha, col_num, val, grupo_format)
                 else:
@@ -1411,7 +1415,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                     if isinstance(val, (int, float)) and not pd.isna(val):
                         header = tabela_exportar_sem_tipo.columns[col_num]
                         if header in ["%Grupo", "% Loja/Grupo"]:
-                            worksheet.write_number(linha, col_num, val, percent_formatado)
+                            val = 0 if pd.isna(val) else val
+                            worksheet.write_number(linha, col_num, float(val), percent_formatado)
                         else:
                             worksheet.write_number(linha, col_num, val, grupo_format)
                     else:
@@ -1430,7 +1435,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 
                 if isinstance(val, (int, float)) and not pd.isna(val):
                     if header in ["%Grupo", "% Loja/Grupo"]:
-                        worksheet.write_number(linha, col_num, val, percent_formatado)
+                        val = 0 if pd.isna(val) else val
+                        worksheet.write_number(linha, col_num, float(val), percent_formatado)
                     else:
                         worksheet.write_number(linha, col_num, val, subtotal_format)
                 else:
