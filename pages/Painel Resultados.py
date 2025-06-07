@@ -1075,60 +1075,6 @@ tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 
 
-if modo_visao == "Por Loja":
-    base = "Acumulado no Mês (Com Gorjeta)"
-    usar_base = base in tabela_exportar_sem_tipo.columns and tabela_exportar_sem_tipo[base].sum() > 0
-
-    if usar_base:
-        total_geral = tabela_exportar_sem_tipo[base].sum()
-        soma_por_grupo = tabela_exportar_sem_tipo.groupby("Grupo")[base].sum()
-
-        tabela_exportar_sem_tipo["%Grupo_calc"] = tabela_exportar_sem_tipo[base] / total_geral
-        tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
-            lambda row: row[base] / soma_por_grupo.get(row["Grupo"], 1)
-            if soma_por_grupo.get(row["Grupo"], 1) != 0 else 0,
-            axis=1
-        )
-    else:
-        colunas_valores = [
-            col for col in tabela_exportar_sem_tipo.select_dtypes(include='number').columns
-            if col not in ["Total"]
-        ]
-        total_geral = tabela_exportar_sem_tipo[colunas_valores].sum().sum()
-        soma_por_grupo = (
-            tabela_exportar_sem_tipo.groupby("Grupo")[colunas_valores].sum().sum(axis=1)
-        )
-
-        tabela_exportar_sem_tipo["%Grupo_calc"] = tabela_exportar_sem_tipo[colunas_valores].sum(axis=1) / total_geral
-        tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
-            lambda row: row[colunas_valores].sum() / soma_por_grupo.get(row["Grupo"], 1)
-            if soma_por_grupo.get(row["Grupo"], 1) != 0 else 0,
-            axis=1
-        )
-
-    # === Limpeza visual ===
-    linhas_lojas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
-    linhas_subtotais = tabela_exportar_sem_tipo["Loja"].astype(str).str.startswith("Subtotal")
-    linha_total = tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Total Geral", case=False, na=False)
-
-    # %Grupo só em subtotais e total
-    linhas_agrupadas = linhas_subtotais | linha_total
-    tabela_exportar_sem_tipo["%Grupo"] = np.where(
-        linhas_agrupadas,
-        tabela_exportar_sem_tipo["%Grupo_calc"],
-        ""
-    )
-
-    # Limpa % Loja/Grupo no total geral
-    tabela_exportar_sem_tipo.loc[linha_total, "% Loja/Grupo"] = ""
-
-    # Remove coluna auxiliar
-    tabela_exportar_sem_tipo.drop(columns=["%Grupo_calc"], inplace=True)
-
-    # Arredonda onde for numérico, senão mantém vazio
-    for col in ["%Grupo", "% Loja/Grupo"]:
-        tabela_exportar_sem_tipo[col] = pd.to_numeric(tabela_exportar_sem_tipo[col], errors='coerce').round(6)
-        tabela_exportar_sem_tipo[col] = tabela_exportar_sem_tipo[col].fillna("")
 
         
 
@@ -1353,10 +1299,12 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             for _, row in linhas_grupo.iterrows():
                 row = row.copy()
                 for col_num, val in enumerate(row):
+                    header = tabela_exportar_sem_tipo.columns[col_num]
                     if isinstance(val, (int, float)) and not pd.isna(val):
-                        header = tabela_exportar_sem_tipo.columns[col_num]
                         if header in ["%Grupo", "% Loja/Grupo"]:
-                            worksheet.write_number(linha, col_num, val, percent_formatado)
+                            worksheet.write_number(linha, col_num, float(val), workbook.add_format({
+                                'num_format': '0.00%', 'align': 'right', 'valign': 'vcenter', 'bg_color': cor, 'border': 1
+                            }))
                         else:
                             worksheet.write_number(linha, col_num, val, grupo_format)
                     else:
