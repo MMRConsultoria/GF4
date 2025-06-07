@@ -1150,8 +1150,8 @@ if modo_visao == "Por Loja":
         
 
     # Arredondamento preventivo
-    tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["%Grupo"].fillna(0).round(6)
-    tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo["% Loja/Grupo"].fillna(0).round(6)
+    #tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["%Grupo"].fillna(0).round(6)
+    #tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo["% Loja/Grupo"].fillna(0).round(6)
 
 
 
