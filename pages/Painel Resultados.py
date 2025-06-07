@@ -1151,6 +1151,25 @@ if modo_visao == "Por Loja":
 
 
 
+    # 🔍 Calcular %Grupo por Tipo (para preencher nas linhas "Tipo:")
+    linhas_validas_tipo = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total|Tipo:", case=False, na=False)
+
+    if usar_base:
+        soma_por_tipo = tabela_exportar_sem_tipo.loc[linhas_validas_tipo].groupby("Tipo")[base].sum()
+    else:
+        soma_por_tipo = (
+            tabela_exportar_sem_tipo.loc[linhas_validas_tipo]
+            .groupby("Tipo")[colunas_valores]
+            .sum()
+            .sum(axis=1)
+        )
+
+    total_geral_tipo = soma_por_tipo.sum()
+    percentual_por_tipo = (soma_por_tipo / total_geral_tipo).round(6)
+
+
+
+
 
 
 from datetime import datetime
