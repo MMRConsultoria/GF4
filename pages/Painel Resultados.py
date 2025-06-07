@@ -1173,6 +1173,25 @@ if modo_visao == "Por Loja":
             axis=1
         )
 
+    # Arredondamento apenas onde for número (para evitar sobrescrever as células limpadas)
+    for col in ["%Grupo", "% Loja/Grupo"]:
+        if col in tabela_exportar_sem_tipo.columns:
+            tabela_exportar_sem_tipo[col] = pd.to_numeric(tabela_exportar_sem_tipo[col], errors='coerce').round(6)
+
+    # === Limpeza visual ===
+    # Marcar como linha de loja (não é subtotal nem total)
+    linhas_lojas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+    
+    # Marcar linha de total geral
+    linha_total = tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Total Geral", case=False, na=False)
+
+    # Limpa %Grupo nas lojas (só aparece nos subtotais e total)
+    tabela_exportar_sem_tipo.loc[linhas_lojas, "%Grupo"] = ""
+
+    # Limpa % Loja/Grupo no Total Geral
+    tabela_exportar_sem_tipo.loc[linha_total, "% Loja/Grupo"] = ""
+
+
     # Arredondamento preventivo
     tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["%Grupo"].fillna(0).round(6)
     tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo["% Loja/Grupo"].fillna(0).round(6)
@@ -1195,7 +1214,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'num_format': 'R$ #,##0.00', 'align': 'right', 'valign': 'vcenter'
     })
     percent_formatado = workbook.add_format({
-        'num_format': '0.00%', 'align': 'right', 'valign': 'vcenter'
+        'num_format': '0,00%', 'align': 'right', 'valign': 'vcenter'
     })
 
    # ✅ Cabeçalho com estilos e formatações por tipo (corrigido e unificado)
