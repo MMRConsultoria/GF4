@@ -1103,54 +1103,35 @@ if modo_visao == "Por Loja":
             axis=1
         )
 
-    # === Limpeza visual ===
-    linhas_lojas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
-    linhas_subtotais = tabela_exportar_sem_tipo["Loja"].astype(str).str.startswith("Subtotal")
-    linha_total = tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Total Geral", case=False, na=False)
+    # 🔍 Identificadores de linha
+    col_id = "Loja"
+    linhas_lojas = ~tabela_exportar_sem_tipo[col_id].astype(str).str.contains("Subtotal|Total|Tipo:", case=False, na=False)
+    linhas_subtotais = tabela_exportar_sem_tipo[col_id].astype(str).str.startswith("Subtotal")
+    linhas_tipos = tabela_exportar_sem_tipo[col_id].astype(str).str.startswith("Tipo:")
+    linha_total = tabela_exportar_sem_tipo[col_id].astype(str).str.contains("Total Geral", case=False, na=False)
 
-    # %Grupo só em subtotais e total
-    linhas_agrupadas = linhas_subtotais | linha_total
+    # 🔄 Aplica %Grupo apenas nas linhas agrupadas
+    linhas_agrupadas = linhas_subtotais | linha_total | linhas_tipos
     tabela_exportar_sem_tipo["%Grupo"] = np.where(
         linhas_agrupadas,
         tabela_exportar_sem_tipo["%Grupo_calc"],
         ""
     )
 
-    # Limpa % Loja/Grupo no total geral
+    # Limpa % Loja/Grupo no Total Geral
     tabela_exportar_sem_tipo.loc[linha_total, "% Loja/Grupo"] = ""
 
-    # Remove coluna auxiliar
+    # Remove auxiliar
     tabela_exportar_sem_tipo.drop(columns=["%Grupo_calc"], inplace=True)
 
-    # Arredondamento apenas onde for número
+    # Arredonda onde for número
     for col in ["%Grupo", "% Loja/Grupo"]:
         if col in tabela_exportar_sem_tipo.columns:
             tabela_exportar_sem_tipo[col] = pd.to_numeric(tabela_exportar_sem_tipo[col], errors='coerce').round(6)
-
-    # === Limpeza visual ===
-    # Marcar como linha de loja (não é subtotal nem total)
-    linhas_lojas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
-
-    # Marcar linha de subtotal ou total
-    linhas_agrupadas = tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
-    linha_total = tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Total Geral", case=False, na=False)
-
-    # Apagar %Grupo nas linhas das lojas (fica só nas agrupadas)
-    tabela_exportar_sem_tipo.loc[linhas_lojas, "%Grupo"] = ""
-
-    # Apagar % Loja/Grupo no Total Geral (fica só nas lojas)
-    tabela_exportar_sem_tipo.loc[linha_total, "% Loja/Grupo"] = ""
-
-        
-
-
-    # Arredondamento preventivo
-    #tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["%Grupo"].fillna(0).round(6)
-    #tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo["% Loja/Grupo"].fillna(0).round(6)
+            tabela_exportar_sem_tipo[col] = tabela_exportar_sem_tipo[col].fillna("")
 
 
 
-# 🔥 Geração do Excel
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
