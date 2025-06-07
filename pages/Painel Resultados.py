@@ -37,7 +37,6 @@ df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_r
 # 2. Configuração inicial do app
 # ================================
 
-
 # 🎨 Estilizar abas
 st.markdown("""
     <style>
