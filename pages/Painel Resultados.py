@@ -1183,20 +1183,7 @@ if modo_visao == "Por Loja":
         if col in tabela_exportar_sem_tipo.columns:
             tabela_exportar_sem_tipo[col] = pd.to_numeric(tabela_exportar_sem_tipo[col], errors='coerce').round(6)
 
-    # === Limpeza visual ===
-    # Marcar como linha de loja (não é subtotal nem total)
-    linhas_lojas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
     
-    # Marcar linha de total geral
-    linha_total = tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Total Geral", case=False, na=False)
-
-    # Limpa %Grupo nas lojas (só aparece nos subtotais e total)
-    tabela_exportar_sem_tipo.loc[linhas_lojas, "%Grupo"] = ""
-
-    # Limpa % Loja/Grupo no Total Geral
-    tabela_exportar_sem_tipo.loc[linha_total, "% Loja/Grupo"] = ""
-  
-        
 
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
