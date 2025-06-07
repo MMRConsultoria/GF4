@@ -1167,6 +1167,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     'valign': 'vcenter',
     'bg_color': '#FFE599',
     'border': 1
+    'bold': True  # ⬅️ negrito ativado   
     })
 
    # ✅ Cabeçalho com estilos e formatações por tipo (corrigido e unificado)
