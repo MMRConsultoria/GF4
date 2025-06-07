@@ -1147,8 +1147,7 @@ if modo_visao == "Por Loja":
     # Limpa % Loja/Grupo no Total Geral
     tabela_exportar_sem_tipo.loc[linha_total, "% Loja/Grupo"] = ""
 
-        )
-
+        
 
     # Arredondamento preventivo
     tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["%Grupo"].fillna(0).round(6)
