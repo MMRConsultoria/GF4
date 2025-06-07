@@ -1138,19 +1138,26 @@ if modo_visao == "Por Loja":
     # Subtotais e Total Geral
     linhas_agrupadas = lojas.str.contains("Subtotal|Total", case=False, na=False)
 
-    # ✅ Mostra %Grupo só nos subtotais e total
-    tabela_exportar_sem_tipo["%Grupo"] = ""
-    tabela_exportar_sem_tipo.loc[linhas_agrupadas, "%Grupo"] = tabela_exportar_sem_tipo.loc[linhas_agrupadas, "%Grupo_calc"]
+    import numpy as np
 
-    # ❌ Esconde % Loja/Grupo nas linhas de total/subtotal
-    tabela_exportar_sem_tipo.loc[linhas_agrupadas, "% Loja/Grupo"] = ""
+    # Limpa %Grupo e preenche apenas em subtotais e total
+    tabela_exportar_sem_tipo["%Grupo"] = np.where(
+        linhas_agrupadas,
+        tabela_exportar_sem_tipo["%Grupo_calc"],
+        ""
+    )
 
-    # 🔚 Remove auxiliar
+    # Limpa % Loja/Grupo no Total Geral
+    tabela_exportar_sem_tipo.loc[linha_total, "% Loja/Grupo"] = ""
+
+    # Remove auxiliar
     tabela_exportar_sem_tipo.drop(columns=["%Grupo_calc"], inplace=True)
 
-    # ✅ Arredondamento
-    tabela_exportar_sem_tipo["%Grupo"] = pd.to_numeric(tabela_exportar_sem_tipo["%Grupo"], errors='coerce').round(6)
-    tabela_exportar_sem_tipo["% Loja/Grupo"] = pd.to_numeric(tabela_exportar_sem_tipo["% Loja/Grupo"], errors='coerce').round(6)
+    # Arredondamento final só nos valores numéricos
+    for col in ["%Grupo", "% Loja/Grupo"]:
+        tabela_exportar_sem_tipo[col] = pd.to_numeric(tabela_exportar_sem_tipo[col], errors='coerce').round(6)
+        tabela_exportar_sem_tipo[col] = tabela_exportar_sem_tipo[col].fillna("")
+
         
 
 
