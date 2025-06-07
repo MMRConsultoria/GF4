@@ -1122,13 +1122,24 @@ if modo_visao == "Por Loja":
     # Remove coluna auxiliar
     tabela_exportar_sem_tipo.drop(columns=["%Grupo_calc"], inplace=True)
 
-    # Arredonda onde for numérico, senão mantém vazio
+    # Arredondamento apenas onde for número
     for col in ["%Grupo", "% Loja/Grupo"]:
-        tabela_exportar_sem_tipo[col] = pd.to_numeric(tabela_exportar_sem_tipo[col], errors='coerce').round(6)
-        tabela_exportar_sem_tipo[col] = tabela_exportar_sem_tipo[col].fillna("")
+        if col in tabela_exportar_sem_tipo.columns:
+            tabela_exportar_sem_tipo[col] = pd.to_numeric(tabela_exportar_sem_tipo[col], errors='coerce').round(6)
 
+    # === Limpeza visual ===
+    # Marcar como linha de loja (não é subtotal nem total)
+    linhas_lojas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
 
+    # Marcar linha de subtotal ou total
+    linhas_agrupadas = tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+    linha_total = tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Total Geral", case=False, na=False)
 
+    # Apagar %Grupo nas linhas das lojas (fica só nas agrupadas)
+    tabela_exportar_sem_tipo.loc[linhas_lojas, "%Grupo"] = ""
+
+    # Apagar % Loja/Grupo no Total Geral (fica só nas lojas)
+    tabela_exportar_sem_tipo.loc[linha_total, "% Loja/Grupo"] = ""
 
         
 
