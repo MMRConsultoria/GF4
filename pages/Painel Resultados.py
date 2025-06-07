@@ -1082,8 +1082,8 @@ if modo_visao == "Por Loja":
         # 👇 Soma total geral da base
         total_geral = soma_por_grupo.sum()
 
-# 👇 Cria dicionário com % de cada grupo
-percentual_por_grupo = (soma_por_grupo / total_geral).round(6)
+        # 👇 Cria dicionário com % de cada grupo
+        percentual_por_grupo = (soma_por_grupo / total_geral).round(6)
 
         tabela_exportar_sem_tipo["%Grupo_calc"] = tabela_exportar_sem_tipo[base] / total_geral
         tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
