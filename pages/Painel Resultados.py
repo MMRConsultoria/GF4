@@ -1172,19 +1172,14 @@ if modo_visao == "Por Loja":
             if soma_por_grupo.get(row["Grupo"], 1) != 0 else 0,
             axis=1
         )
-        
-    
-    
-    # Arredondamento preventivo
-    tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["%Grupo"].fillna(0).astype(float).round(6)
-    tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo["% Loja/Grupo"].fillna(0).astype(float).round(6)
-    # 🔁 Corrige valores percentuais para escala correta no Excel
-    for col in ["%Grupo", "% Loja/Grupo"]:
-        if col in tabela_exportar_sem_tipo.columns:
-            tabela_exportar_sem_tipo[col] = tabela_exportar_sem_tipo[col].astype(float)
-  
-        
 
+    # Arredondamento preventivo
+    tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["%Grupo"].fillna(0).round(6)
+    tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo["% Loja/Grupo"].fillna(0).round(6)
+
+
+
+# 🔥 Geração do Excel
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
@@ -1200,7 +1195,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'num_format': 'R$ #,##0.00', 'align': 'right', 'valign': 'vcenter'
     })
     percent_formatado = workbook.add_format({
-        'num_format': '0.00%', 'align': 'right', 'valign': 'vcenter'
+        'num_format': '0,00%', 'align': 'right', 'valign': 'vcenter'
     })
 
    # ✅ Cabeçalho com estilos e formatações por tipo (corrigido e unificado)
@@ -1216,8 +1211,17 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         else:
             worksheet.set_column(col_num, col_num, 25)
 
+            
+
+
+
+
+
+
+
     cores_grupo = itertools.cycle(["#D9EAD3", "#CFE2F3"])
-   
+
+    
     subtotal_format = workbook.add_format({
         'bold': True, 'bg_color': '#FFE599', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
@@ -1227,6 +1231,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
+
+    
 
     # 🔥 Determina a coluna de identificação (Loja ou Grupo)
     coluna_id = "Loja" if "Loja" in tabela_exportar_sem_tipo.columns else "Grupo"
@@ -1255,9 +1261,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
             if isinstance(val, (int, float)) and not pd.isna(val):
                 if header in ["%Grupo", "% Loja/Grupo"]:
-                   
                     worksheet.write_number(linha, col_num, val, percent_formatado)
-                   
                 else:
                     worksheet.write_number(linha, col_num, val, subtotal_format)
             else:
@@ -1286,7 +1290,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
         if isinstance(val, (int, float)) and not pd.isna(val):
             if header in ["%Grupo", "% Loja/Grupo"]:
-                
                 worksheet.write_number(linha, col_num, val, percent_formatado)
             else:
                 worksheet.write_number(linha, col_num, val, totalgeral_format)
@@ -1372,34 +1375,18 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
 
             total = soma_grupo.get("Fat.Total", "")  # ou outro campo base do Total
-            linha_grupo = []
-            total_geral_grupo = tabela_exportar_sem_tipo["Acumulado no Mês (Com Gorjeta)"].sum()
-
-            for col_num, header in enumerate(tabela_exportar_sem_tipo.columns):
-                if col_num == 0:
-                    linha_grupo.append(grupo_atual)
-                elif col_num == 1:
-                    linha_grupo.append(f"Lojas: {qtd_lojas}")
-                elif header == "%Grupo":
-                    base = soma_grupo.get("Acumulado no Mês (Com Gorjeta)", 0)
-                    linha_grupo.append(base / total_geral_grupo if total_geral_grupo > 0 else 0)
-                elif header == "% Loja/Grupo":
-                    linha_grupo.append(1.0)
-                else:
-                    linha_grupo.append(soma_grupo.get(header, ""))
-            linha += 1
+            linha_grupo = [grupo_atual, f"Lojas: {qtd_lojas}"]  # colunas 0 e 1
+            linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
             for col_num, val in enumerate(linha_grupo):
-                header = tabela_exportar_sem_tipo.columns[col_num]
                 if isinstance(val, (int, float)) and not pd.isna(val):
+                    header = tabela_exportar_sem_tipo.columns[col_num]
                     if header in ["%Grupo", "% Loja/Grupo"]:
-                        
-                        worksheet.write_number(linha, col_num, float(val), percent_formatado)
+                            worksheet.write_number(linha, col_num, val, percent_formatado)
                     else:
-                        worksheet.write_number(linha, col_num, val, grupo_format)
+                            worksheet.write_number(linha, col_num, val, grupo_format)
                 else:
                     worksheet.write(linha, col_num, str(val), grupo_format)
             linha += 1
-
 
         elif modo_visao == "Por Loja":
             # ✅ Mantém a escrita linha a linha com cores por grupo
@@ -1409,8 +1396,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                     if isinstance(val, (int, float)) and not pd.isna(val):
                         header = tabela_exportar_sem_tipo.columns[col_num]
                         if header in ["%Grupo", "% Loja/Grupo"]:
-                            val = 0 if pd.isna(val) else val
-                            worksheet.write_number(linha, col_num, float(val), percent_formatado)
+                            worksheet.write_number(linha, col_num, val, percent_formatado)
                         else:
                             worksheet.write_number(linha, col_num, val, grupo_format)
                     else:
@@ -1425,14 +1411,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
             for col_num, val in enumerate(linha_grupo):
-                header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
-                
                 if isinstance(val, (int, float)) and not pd.isna(val):
-                    if header in ["%Grupo", "% Loja/Grupo"]:
-                        val = 0 if pd.isna(val) else val
-                        worksheet.write_number(linha, col_num, float(val), percent_formatado)
-                    else:
-                        worksheet.write_number(linha, col_num, val, subtotal_format)
+                    worksheet.write_number(linha, col_num, val, subtotal_format)
                 else:
                     worksheet.write(linha, col_num, str(val), subtotal_format)
             linha += 1
