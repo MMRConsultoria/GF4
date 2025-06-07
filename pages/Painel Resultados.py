@@ -1082,8 +1082,8 @@ if modo_visao == "Por Loja":
         # 👇 Soma total geral da base
         total_geral = soma_por_grupo.sum()
 
-        # 👇 Cria dicionário com % de cada grupo
-        percentual_por_grupo = (soma_por_grupo / total_geral).round(6)
+# 👇 Cria dicionário com % de cada grupo
+percentual_por_grupo = (soma_por_grupo / total_geral).round(6)
 
         tabela_exportar_sem_tipo["%Grupo_calc"] = tabela_exportar_sem_tipo[base] / total_geral
         tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
@@ -1327,9 +1327,11 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         })
 
         if modo_visao == "Por Grupo" and agrupamento in ["Dia", "Mês", "Ano"]:
+            # ✅ Linha resumida: "GRU - Loja: 12"
             qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
             soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
 
+            total = soma_grupo.get("Fat.Total", "")  # ou outro campo base do Total
             linha_grupo = []
             for col in tabela_exportar_sem_tipo.columns:
                 if col == tabela_exportar_sem_tipo.columns[0]:
@@ -1338,25 +1340,17 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                     linha_grupo.append(f"Lojas: {qtd_lojas}")
                 else:
                     linha_grupo.append(soma_grupo.get(col, ""))
-
+     
             for col_num, val in enumerate(linha_grupo):
-                header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
-
-                if header == "%Grupo":
-                    grupo_nome = str(grupo_atual).replace("Subtotal ", "").replace("Tipo: ", "").replace("Total Geral", "").split(" - ")[0].strip()
-                    valor_percentual = percentual_por_grupo.get(grupo_nome, "")
-                    if isinstance(valor_percentual, (int, float)) and not pd.isna(valor_percentual):
-                        worksheet.write_number(linha, col_num, valor_percentual, percent_formatado)
+                if isinstance(val, (int, float)) and not pd.isna(val):
+                    header = tabela_exportar_sem_tipo.columns[col_num]
+                    if header in ["%Grupo", "% Loja/Grupo"]:
+                            worksheet.write_number(linha, col_num, val, percent_formatado)
                     else:
-                        worksheet.write(linha, col_num, "", subtotal_format)
-                elif header == "% Loja/Grupo":
-                    worksheet.write(linha, col_num, "", subtotal_format)
-                elif isinstance(val, (int, float)) and not pd.isna(val):
-                    worksheet.write_number(linha, col_num, val, subtotal_format)
+                            worksheet.write_number(linha, col_num, val, grupo_format)
                 else:
-                    worksheet.write(linha, col_num, str(val), subtotal_format)
+                    worksheet.write(linha, col_num, str(val), grupo_format)
             linha += 1
-
 
         elif modo_visao == "Por Loja":
             # ✅ Mantém a escrita linha a linha com cores por grupo
