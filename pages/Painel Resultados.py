@@ -1075,28 +1075,6 @@ tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 
 
-if modo_visao == "Por Grupo" and agrupamento in ["Dia", "Mês", "Ano"]:
-    # 🔢 Soma as colunas numéricas da linha
-    colunas_valores = [
-        col for col in tabela_exportar_sem_tipo.columns
-        if pd.api.types.is_numeric_dtype(tabela_exportar_sem_tipo[col])
-        and col not in ["Total", "Acumulado no Mês (Com Gorjeta)"]
-    ]
-    tabela_exportar_sem_tipo["Total"] = tabela_exportar_sem_tipo[colunas_valores].sum(axis=1)
-
-    # 🔢 Conta lojas ativas por grupo
-    total_lojas_por_grupo = df_empresa[
-        df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
-    ].groupby("Grupo")["Loja"].nunique()
-
-    # 🔢 Preenche a coluna "Total Lojas"
-    tabela_exportar_sem_tipo["Total Lojas"] = tabela_exportar_sem_tipo["Grupo"].map(total_lojas_por_grupo).fillna(0).astype(int).apply(lambda x: f"Lojas: {x}")
-
-    # 🔁 Reorganiza as colunas
-    cols_ordem = ["Grupo", "Total Lojas", "Total"] + [col for col in tabela_exportar_sem_tipo.columns if col not in ["Grupo", "Total Lojas", "Total"]]
-    tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols_ordem]
-
-
 if modo_visao == "Por Loja":
     base = "Acumulado no Mês (Com Gorjeta)"
     usar_base = base in tabela_exportar_sem_tipo.columns and tabela_exportar_sem_tipo[base].sum() > 0
@@ -1105,7 +1083,6 @@ if modo_visao == "Por Loja":
         total_geral = tabela_exportar_sem_tipo[base].sum()
         soma_por_grupo = tabela_exportar_sem_tipo.groupby("Grupo")[base].sum()
 
-        # ✅ Cálculo bruto em coluna auxiliar
         tabela_exportar_sem_tipo["%Grupo_calc"] = tabela_exportar_sem_tipo[base] / total_geral
         tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
             lambda row: row[base] / soma_por_grupo.get(row["Grupo"], 1)
@@ -1130,30 +1107,25 @@ if modo_visao == "Por Loja":
         )
 
     # === Limpeza visual ===
-    lojas = tabela_exportar_sem_tipo["Loja"].astype(str)
+    linhas_lojas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+    linhas_subtotais = tabela_exportar_sem_tipo["Loja"].astype(str).str.startswith("Subtotal")
+    linha_total = tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Total Geral", case=False, na=False)
 
-    # Linhas que representam lojas normais (não subtotais ou total)
-    linhas_lojas = ~lojas.str.contains("Subtotal|Total", case=False, na=False)
-
-    # Subtotais e Total Geral
-    linhas_agrupadas = lojas.str.contains("Subtotal|Total", case=False, na=False)
-
-    import numpy as np
-
-    # Limpa %Grupo e preenche apenas em subtotais e total
+    # %Grupo só em subtotais e total
+    linhas_agrupadas = linhas_subtotais | linha_total
     tabela_exportar_sem_tipo["%Grupo"] = np.where(
         linhas_agrupadas,
         tabela_exportar_sem_tipo["%Grupo_calc"],
         ""
     )
 
-    # Limpa % Loja/Grupo no Total Geral
+    # Limpa % Loja/Grupo no total geral
     tabela_exportar_sem_tipo.loc[linha_total, "% Loja/Grupo"] = ""
 
-    # Remove auxiliar
+    # Remove coluna auxiliar
     tabela_exportar_sem_tipo.drop(columns=["%Grupo_calc"], inplace=True)
 
-    # Arredondamento final só nos valores numéricos
+    # Arredonda onde for numérico, senão mantém vazio
     for col in ["%Grupo", "% Loja/Grupo"]:
         tabela_exportar_sem_tipo[col] = pd.to_numeric(tabela_exportar_sem_tipo[col], errors='coerce').round(6)
         tabela_exportar_sem_tipo[col] = tabela_exportar_sem_tipo[col].fillna("")
