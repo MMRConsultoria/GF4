@@ -1134,7 +1134,24 @@ if modo_visao == "Por Loja":
             tabela_exportar_sem_tipo[col] = tabela_exportar_sem_tipo[col].fillna("")
 
 
+from datetime import datetime
 
+coluna_acumulado = "Acumulado no Mês (Com Gorjeta)"
+hoje = datetime.now()
+mes_corrente = hoje.month
+ano_corrente = hoje.year
+
+mostrar_acumulado = (
+    agrupamento == "Dia" and
+    coluna_acumulado in tabela_exportar_sem_tipo.columns and
+    "Ano" in tabela_exportar_sem_tipo.columns and
+    "Mês Num" in tabela_exportar_sem_tipo.columns and
+    tabela_exportar_sem_tipo["Ano"].eq(ano_corrente).any() and
+    tabela_exportar_sem_tipo["Mês Num"].eq(mes_corrente).any()
+)
+
+if not mostrar_acumulado and coluna_acumulado in tabela_exportar_sem_tipo.columns:
+    tabela_exportar_sem_tipo.drop(columns=[coluna_acumulado], inplace=True)
 
 
 
