@@ -1165,7 +1165,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     'align': 'right',
     'valign': 'vcenter',
     'bg_color': '#FFE599',
-    'border': 1
+    'border': 1,
     'bold': True  # ⬅️ negrito ativado
     })
 
