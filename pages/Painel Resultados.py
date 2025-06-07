@@ -1248,45 +1248,46 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     
     # 🔥 Subtotal por Tipo (Sempre aparece)
-    for tipo_atual in sorted(tabela_exportar["Tipo"].dropna().unique()):
-        linhas_tipo = tabela_exportar_sem_tipo[
-            (tabela_exportar_sem_tipo["Grupo"].isin(
-                df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
-            )) &
-      # ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
-             ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
-        ]
-        
-        qtd_lojas_tipo = df_empresa[
-            (df_empresa["Tipo"] == tipo_atual) &
-            (df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa")
-        ]["Loja"].nunique()
-        soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
+for tipo_atual in sorted(tabela_exportar["Tipo"].dropna().unique()):
+    linhas_tipo = tabela_exportar_sem_tipo[
+        (tabela_exportar_sem_tipo["Grupo"].isin(
+            df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
+        )) &
+        ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+    ]
+    
+    qtd_lojas_tipo = df_empresa[
+        (df_empresa["Tipo"] == tipo_atual) &
+        (df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa")
+    ]["Loja"].nunique()
+    
+    soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
-        linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]  # colunas 0 e 1
-        linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]  # colunas a partir da 2
+    linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
+    linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
-        for col_num, val in enumerate(linha_tipo):
-            header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
+    for col_num, val in enumerate(linha_tipo):
+        header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
 
-            if header == "%Grupo":
-                tipo_nome = linha_tipo[0].replace("Tipo: ", "").strip()
-                valor_percentual = percentual_por_tipo.get(tipo_nome, "")
-                if valor_percentual != "":
-                    worksheet.write_number(linha, col_num, valor_percentual, percent_formatado)
-                else:
-                    worksheet.write(linha, col_num, "", subtotal_format)
-
-            elif header == "% Loja/Grupo":
+        if header == "%Grupo":
+            tipo_nome = linha_tipo[0].replace("Tipo: ", "").strip()
+            valor_percentual = percentual_por_tipo.get(tipo_nome, "")
+            if valor_percentual != "":
+                worksheet.write_number(linha, col_num, valor_percentual, percent_formatado)
+            else:
                 worksheet.write(linha, col_num, "", subtotal_format)
 
-            elif isinstance(val, (int, float)) and not pd.isna(val):
-                worksheet.write_number(linha, col_num, val, subtotal_format)
+        elif header == "% Loja/Grupo":
+            worksheet.write(linha, col_num, "", subtotal_format)
 
-            else:
-                worksheet.write(linha, col_num, str(val), subtotal_format)
+        elif isinstance(val, (int, float)) and not pd.isna(val):
+            worksheet.write_number(linha, col_num, val, subtotal_format)
 
-        linha += 1
+        else:
+            worksheet.write(linha, col_num, str(val), subtotal_format)
+
+    linha += 1
+
 
     # 🔢 Filtra só as lojas ativas
     lojas_ativas = df_empresa[
