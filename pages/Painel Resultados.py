@@ -1133,6 +1133,15 @@ if modo_visao == "Por Loja":
             tabela_exportar_sem_tipo[col] = pd.to_numeric(tabela_exportar_sem_tipo[col], errors='coerce').round(6)
             tabela_exportar_sem_tipo[col] = tabela_exportar_sem_tipo[col].fillna("")
 
+            
+    # 🔧 Garante que "Tipo" está presente em tabela_exportar_sem_tipo
+    if "Tipo" not in tabela_exportar_sem_tipo.columns and "Loja" in tabela_exportar_sem_tipo.columns:
+        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
+            df_empresa[["Loja", "Tipo"]],
+            on="Loja",
+            how="left"
+        )
+
     # 🔍 Calcular %Grupo por Tipo (para preencher nas linhas "Tipo:")
     linhas_validas_tipo = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total|Tipo:", case=False, na=False)
 
@@ -1150,6 +1159,7 @@ if modo_visao == "Por Loja":
     percentual_por_tipo = (soma_por_tipo / total_geral_tipo).round(6)
 
 
+    
 
     # 🔍 Calcular %Grupo por Tipo (para preencher nas linhas "Tipo:")
     linhas_validas_tipo = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total|Tipo:", case=False, na=False)
