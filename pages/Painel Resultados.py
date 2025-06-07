@@ -1172,19 +1172,6 @@ if modo_visao == "Por Loja":
             if soma_por_grupo.get(row["Grupo"], 1) != 0 else 0,
             axis=1
         )
-    
-    
-    
-    
-    
-    # Arredondamento preventivo
-    tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["%Grupo"].fillna(0).astype(float).round(6)
-    tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo["% Loja/Grupo"].fillna(0).astype(float).round(6)
-    # 🔁 Corrige valores percentuais para escala correta no Excel
-    for col in ["%Grupo", "% Loja/Grupo"]:
-        if col in tabela_exportar_sem_tipo.columns:
-            tabela_exportar_sem_tipo[col] = tabela_exportar_sem_tipo[col].astype(float)
-  
         if modo_visao == "Por Loja":
             # Marcar como linha de loja (não é subtotal nem total)
             linhas_lojas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
@@ -1200,6 +1187,19 @@ if modo_visao == "Por Loja":
 
             # Limpa % Loja/Grupo no Total Geral (mantém apenas nos grupos)
             tabela_exportar_sem_tipo.loc[linha_total, "% Loja/Grupo"] = ""
+    
+    
+    
+    
+    # Arredondamento preventivo
+    tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["%Grupo"].fillna(0).astype(float).round(6)
+    tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo["% Loja/Grupo"].fillna(0).astype(float).round(6)
+    # 🔁 Corrige valores percentuais para escala correta no Excel
+    for col in ["%Grupo", "% Loja/Grupo"]:
+        if col in tabela_exportar_sem_tipo.columns:
+            tabela_exportar_sem_tipo[col] = tabela_exportar_sem_tipo[col].astype(float)
+  
+        
 
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
