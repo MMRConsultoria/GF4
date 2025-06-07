@@ -37,6 +37,7 @@ df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_r
 # 2. Configuração inicial do app
 # ================================
 
+
 # 🎨 Estilizar abas
 st.markdown("""
     <style>
@@ -1082,7 +1083,10 @@ if modo_visao == "Por Loja":
         total_geral = soma_por_grupo.sum()
 
         # ✅ Cria dicionário com % de cada grupo
-        percentual_por_grupo = (soma_por_grupo / total_geral).round(6)
+        percentual_por_grupo = soma_por_grupo.apply(
+            lambda x: round(x / total_geral, 6) if total_geral > 0 else 0
+        )
+
 
         # 🧮 Cálculo das colunas da tabela
         tabela_exportar_sem_tipo["%Grupo_calc"] = tabela_exportar_sem_tipo[base] / total_geral
@@ -1103,7 +1107,9 @@ if modo_visao == "Por Loja":
         total_geral = tabela_exportar_sem_tipo[colunas_valores].sum().sum()
         soma_por_grupo = tabela_exportar_sem_tipo.loc[linhas_lojas].groupby("Grupo")[colunas_valores].sum().sum(axis=1)
 
-        percentual_por_grupo = (soma_por_grupo / total_geral).round(6)
+        percentual_por_grupo = soma_por_grupo.apply(
+            lambda x: round(x / total_geral, 6) if total_geral > 0 else 0
+        )
   
 
         tabela_exportar_sem_tipo["%Grupo_calc"] = tabela_exportar_sem_tipo[colunas_valores].sum(axis=1) / total_geral
