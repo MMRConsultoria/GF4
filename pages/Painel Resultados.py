@@ -1281,8 +1281,15 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             soma_grupo = linhas_grupo.select_dtypes(include='number').sum()
 
             total = soma_grupo.get("Fat.Total", "")  # ou outro campo base do Total
-            linha_grupo = [grupo_atual, f"Lojas: {qtd_lojas}"]  # colunas 0 e 1
-            linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+            linha_grupo = []
+            for col in tabela_exportar_sem_tipo.columns:
+                if col == tabela_exportar_sem_tipo.columns[0]:
+                    linha_grupo.append(grupo_atual)
+                elif col == tabela_exportar_sem_tipo.columns[1]:
+                    linha_grupo.append(f"Lojas: {qtd_lojas}")
+                else:
+                    linha_grupo.append(soma_grupo.get(col, ""))
+     
             for col_num, val in enumerate(linha_grupo):
                 if isinstance(val, (int, float)) and not pd.isna(val):
                     header = tabela_exportar_sem_tipo.columns[col_num]
