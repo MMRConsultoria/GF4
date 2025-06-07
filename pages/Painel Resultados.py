@@ -1389,7 +1389,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                     grupo_nome = linha_grupo[0].replace("Subtotal ", "").strip()
                     valor_percentual = percentual_por_grupo.get(grupo_nome, "")
                     if valor_percentual != "":
-                        worksheet.write_number(linha, col_num, valor_percentual, percent_formatado)
+                        worksheet.write_number(linha, col_num, valor_percentual, subtotal_format)
                     else:
                         worksheet.write(linha, col_num, "", subtotal_format)
                 elif header == "% Loja/Grupo":
