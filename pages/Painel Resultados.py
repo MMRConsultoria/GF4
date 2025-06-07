@@ -1172,7 +1172,11 @@ if modo_visao == "Por Loja":
             if soma_por_grupo.get(row["Grupo"], 1) != 0 else 0,
             axis=1
         )
-
+    
+    
+    
+    
+    
     # Arredondamento preventivo
     tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["%Grupo"].fillna(0).astype(float).round(6)
     tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo["% Loja/Grupo"].fillna(0).astype(float).round(6)
@@ -1180,10 +1184,23 @@ if modo_visao == "Por Loja":
     for col in ["%Grupo", "% Loja/Grupo"]:
         if col in tabela_exportar_sem_tipo.columns:
             tabela_exportar_sem_tipo[col] = tabela_exportar_sem_tipo[col].astype(float)
-    print(tabela_exportar_sem_tipo[["%Grupo", "% Loja/Grupo"]].head(10))
+  
+    if modo_visao == "Por Loja":
+        # Marcar como linha de loja (não é subtotal nem total)
+        linhas_lojas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+        
+        # Marcar como linha de subtotal
+        linhas_subtotais = tabela_exportar_sem_tipo["Loja"].astype(str).str.startswith("Subtotal")
+        
+        # Marcar linha de total geral
+        linha_total = tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Total Geral", case=False, na=False)
 
+        # Limpa %Grupo nas lojas normais (deixa só nos subtotais e total)
+        tabela_exportar_sem_tipo.loc[linhas_lojas, "%Grupo"] = ""
 
-# 🔥 Geração do Excel
+        # Limpa % Loja/Grupo no Total Geral (mantém apenas nos grupos)
+        tabela_exportar_sem_tipo.loc[linha_total, "% Loja/Grupo"] = ""
+
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
@@ -1215,17 +1232,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         else:
             worksheet.set_column(col_num, col_num, 25)
 
-            
-
-
-
-
-
-
-
     cores_grupo = itertools.cycle(["#D9EAD3", "#CFE2F3"])
-
-    
+   
     subtotal_format = workbook.add_format({
         'bold': True, 'bg_color': '#FFE599', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
@@ -1235,8 +1243,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
-
-    
 
     # 🔥 Determina a coluna de identificação (Loja ou Grupo)
     coluna_id = "Loja" if "Loja" in tabela_exportar_sem_tipo.columns else "Grupo"
