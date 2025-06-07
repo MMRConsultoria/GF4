@@ -1144,10 +1144,10 @@ ano_corrente = hoje.year
 mostrar_acumulado = (
     agrupamento == "Dia" and
     coluna_acumulado in tabela_exportar_sem_tipo.columns and
-    "Ano" in tabela_exportar_sem_tipo.columns and
-    "Mês Num" in tabela_exportar_sem_tipo.columns and
-    tabela_exportar_sem_tipo["Ano"].eq(ano_corrente).any() and
-    tabela_exportar_sem_tipo["Mês Num"].eq(mes_corrente).any()
+    "Ano" in df_filtrado.columns and
+    "Mês Num" in df_filtrado.columns and
+    df_filtrado["Ano"].eq(ano_corrente).any() and
+    df_filtrado["Mês Num"].eq(mes_corrente).any()
 )
 
 if not mostrar_acumulado and coluna_acumulado in tabela_exportar_sem_tipo.columns:
