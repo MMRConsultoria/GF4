@@ -1074,7 +1074,7 @@ tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 if modo_visao == "Por Loja":
     base = "Acumulado no Mês (Com Gorjeta)"
-    usar_base = base in tabela_exportar_sem_tipo.columns and tabela_exportar_sem_tipo[base].sum() > 0
+    usar_base = base in tabela_exportar_sem_tipo.columns and tabela_exportar_sem_tipo[base].notna().sum() > 0
 
     if usar_base:
         total_geral = tabela_exportar_sem_tipo[base].sum()
