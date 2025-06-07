@@ -1133,6 +1133,24 @@ if modo_visao == "Por Loja":
             tabela_exportar_sem_tipo[col] = pd.to_numeric(tabela_exportar_sem_tipo[col], errors='coerce').round(6)
             tabela_exportar_sem_tipo[col] = tabela_exportar_sem_tipo[col].fillna("")
 
+from datetime import datetime
+
+coluna_acumulado = "Acumulado no Mês (Com Gorjeta)"
+hoje = datetime.now()
+mes_corrente = hoje.month
+ano_corrente = hoje.year
+
+mostrar_acumulado = (
+    agrupamento == "Dia" and
+    coluna_acumulado in tabela_exportar_sem_tipo.columns and
+    "Ano" in df_filtrado.columns and
+    "Mês Num" in df_filtrado.columns and
+    df_filtrado["Ano"].eq(ano_corrente).any() and
+    df_filtrado["Mês Num"].eq(mes_corrente).any()
+)
+
+if not mostrar_acumulado and coluna_acumulado in tabela_exportar_sem_tipo.columns:
+    tabela_exportar_sem_tipo.drop(columns=[coluna_acumulado], inplace=True)
 
 
 
