@@ -1135,6 +1135,35 @@ if modo_visao == "Por Loja":
 
 
 
+from datetime import datetime
+
+# 🔍 Verifica se deve exibir a coluna "Acumulado no Mês (Com Gorjeta)"
+coluna_acumulado = "Acumulado no Mês (Com Gorjeta)"
+hoje = datetime.now()
+mes_corrente = hoje.month
+ano_corrente = hoje.year
+
+mostrar_acumulado = (
+    agrupamento == "Dia" and
+    tabela_exportar_sem_tipo["Ano"].eq(ano_corrente).any() and
+    tabela_exportar_sem_tipo["Mês Num"].eq(mes_corrente).any()
+)
+
+# 🧽 Remove a coluna se não for para mostrar
+if not mostrar_acumulado and coluna_acumulado in tabela_exportar_sem_tipo.columns:
+    tabela_exportar_sem_tipo.drop(columns=[coluna_acumulado], inplace=True)
+
+
+
+
+
+
+
+
+
+
+
+
 
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
@@ -1404,25 +1433,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 
        
-        
-                
-        from datetime import datetime
-
-        # 🔍 Verifica se deve exibir a coluna "Acumulado no Mês (Com Gorjeta)"
-        coluna_acumulado = "Acumulado no Mês (Com Gorjeta)"
-        hoje = datetime.now()
-        mes_corrente = hoje.month
-        ano_corrente = hoje.year
-
-        mostrar_acumulado = (
-            agrupamento == "Dia" and
-            tabela_exportar_sem_tipo["Ano"].eq(ano_corrente).any() and
-            tabela_exportar_sem_tipo["Mês Num"].eq(mes_corrente).any()
-        )
-
-        # 🧽 Remove a coluna se não for para mostrar
-        if not mostrar_acumulado and coluna_acumulado in tabela_exportar_sem_tipo.columns:
-            tabela_exportar_sem_tipo.drop(columns=[coluna_acumulado], inplace=True)
 
 
 
