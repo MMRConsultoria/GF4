@@ -1199,7 +1199,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'num_format': 'R$ #,##0.00', 'align': 'right', 'valign': 'vcenter'
     })
     percent_formatado = workbook.add_format({
-        'num_format': '0,00%', 'align': 'right', 'valign': 'vcenter'
+        'num_format': '0.00%', 'align': 'right', 'valign': 'vcenter'
     })
 
    # ✅ Cabeçalho com estilos e formatações por tipo (corrigido e unificado)
