@@ -22,6 +22,7 @@ from datetime import datetime, date, timedelta
 # 🔒 Bloqueia o acesso caso o usuário não esteja logado
 if not st.session_state.get("acesso_liberado"):
     st.stop()
+
 # ================================
 # 1. Conexão com Google Sheets
 # ================================
@@ -1132,79 +1133,6 @@ if modo_visao == "Por Loja":
             tabela_exportar_sem_tipo[col] = pd.to_numeric(tabela_exportar_sem_tipo[col], errors='coerce').round(6)
             tabela_exportar_sem_tipo[col] = tabela_exportar_sem_tipo[col].fillna("")
 
-            
-    # 🔧 Garante que "Tipo" está presente em tabela_exportar_sem_tipo
-    if "Tipo" not in tabela_exportar_sem_tipo.columns and "Loja" in tabela_exportar_sem_tipo.columns:
-        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.merge(
-            df_empresa[["Loja", "Tipo"]],
-            on="Loja",
-            how="left"
-        )
-
-    # 🔍 Calcular %Grupo por Tipo (para preencher nas linhas "Tipo:")
-    linhas_validas_tipo = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total|Tipo:", case=False, na=False)
-
-    if usar_base:
-        soma_por_tipo = tabela_exportar_sem_tipo.loc[linhas_validas_tipo].groupby("Tipo")[base].sum()
-    else:
-        soma_por_tipo = (
-            tabela_exportar_sem_tipo.loc[linhas_validas_tipo]
-            .groupby("Tipo")[colunas_valores]
-            .sum()
-            .sum(axis=1)
-        )
-
-    total_geral_tipo = soma_por_tipo.sum()
-    percentual_por_tipo = (soma_por_tipo / total_geral_tipo).round(6)
-
-
-    
-
-    # 🔍 Calcular %Grupo por Tipo (para preencher nas linhas "Tipo:")
-    linhas_validas_tipo = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total|Tipo:", case=False, na=False)
-
-    if usar_base:
-        soma_por_tipo = tabela_exportar_sem_tipo.loc[linhas_validas_tipo].groupby("Tipo")[base].sum()
-    else:
-        soma_por_tipo = (
-            tabela_exportar_sem_tipo.loc[linhas_validas_tipo]
-            .groupby("Tipo")[colunas_valores]
-            .sum()
-            .sum(axis=1)
-        )
-
-    total_geral_tipo = soma_por_tipo.sum()
-    percentual_por_tipo = (soma_por_tipo / total_geral_tipo).round(6)
-
-
-
-
-
-
-from datetime import datetime
-
-coluna_acumulado = "Acumulado no Mês (Com Gorjeta)"
-hoje = datetime.now()
-mes_corrente = hoje.month
-ano_corrente = hoje.year
-
-mostrar_acumulado = (
-    agrupamento == "Dia" and
-    coluna_acumulado in tabela_exportar_sem_tipo.columns and
-    "Ano" in df_filtrado.columns and
-    "Mês Num" in df_filtrado.columns and
-    df_filtrado["Ano"].eq(ano_corrente).any() and
-    df_filtrado["Mês Num"].eq(mes_corrente).any()
-)
-
-if not mostrar_acumulado and coluna_acumulado in tabela_exportar_sem_tipo.columns:
-    tabela_exportar_sem_tipo.drop(columns=[coluna_acumulado], inplace=True)
-
-
-
-
-
-
 
 
 
@@ -1276,46 +1204,34 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     
     # 🔥 Subtotal por Tipo (Sempre aparece)
-for tipo_atual in sorted(tabela_exportar["Tipo"].dropna().unique()):
-    linhas_tipo = tabela_exportar_sem_tipo[
-        (tabela_exportar_sem_tipo["Grupo"].isin(
-            df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
-        )) &
-        ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
-    ]
-    
-    qtd_lojas_tipo = df_empresa[
-        (df_empresa["Tipo"] == tipo_atual) &
-        (df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa")
-    ]["Loja"].nunique()
-    
-    soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
+    for tipo_atual in sorted(tabela_exportar["Tipo"].dropna().unique()):
+        linhas_tipo = tabela_exportar_sem_tipo[
+            (tabela_exportar_sem_tipo["Grupo"].isin(
+                df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
+            )) &
+      # ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+             ~tabela_exportar_sem_tipo[coluna_id].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+        ]
+        
+        qtd_lojas_tipo = df_empresa[
+            (df_empresa["Tipo"] == tipo_atual) &
+            (df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa")
+        ]["Loja"].nunique()
+        soma_colunas = linhas_tipo.select_dtypes(include='number').sum()
 
-    linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]
-    linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
+        linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]  # colunas 0 e 1
+        linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]  # colunas a partir da 2
 
-    for col_num, val in enumerate(linha_tipo):
-        header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
-
-        if header == "%Grupo":
-            tipo_nome = linha_tipo[0].replace("Tipo: ", "").strip()
-            valor_percentual = percentual_por_tipo.get(tipo_nome, "")
-            if valor_percentual != "":
-                worksheet.write_number(linha, col_num, valor_percentual, percent_formatado)
+        for col_num, val in enumerate(linha_tipo):
+            header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
+            if isinstance(val, (int, float)) and not pd.isna(val):
+                if header in ["%Grupo", "% Loja/Grupo"]:
+                    worksheet.write_number(linha, col_num, val, percent_formatado)
+                else:
+                    worksheet.write_number(linha, col_num, val, subtotal_format)
             else:
-                worksheet.write(linha, col_num, "", subtotal_format)
-
-        elif header == "% Loja/Grupo":
-            worksheet.write(linha, col_num, "", subtotal_format)
-
-        elif isinstance(val, (int, float)) and not pd.isna(val):
-            worksheet.write_number(linha, col_num, val, subtotal_format)
-
-        else:
-            worksheet.write(linha, col_num, str(val), subtotal_format)
-
-    linha += 1
-
+                worksheet.write(linha, col_num, str(val), subtotal_format)
+        linha += 1
 
     # 🔢 Filtra só as lojas ativas
     lojas_ativas = df_empresa[
@@ -1468,14 +1384,14 @@ for tipo_atual in sorted(tabela_exportar["Tipo"].dropna().unique()):
             linha_grupo = [f"Subtotal {grupo_atual}", f"Lojas: {qtd_lojas}"]
             linha_grupo += [soma_grupo.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]
 
-            for col_num, val in enumerate(linha_tipo):
-                header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
-
+            for col_num, val in enumerate(linha_grupo):
+                header = tabela_exportar_sem_tipo.columns[col_num]
+                
                 if header == "%Grupo":
-                    tipo_nome = linha_tipo[0].replace("Tipo: ", "").strip()
-                    valor_percentual = percentual_por_tipo.get(tipo_nome, "")
+                    grupo_nome = linha_grupo[0].replace("Subtotal ", "").strip()
+                    valor_percentual = percentual_por_grupo.get(grupo_nome, "")
                     if valor_percentual != "":
-                        worksheet.write_number(linha, col_num, valor_percentual, percent_formatado)
+                        worksheet.write_number(linha, col_num, valor_percentual, percent_formatado_subtotal)
                     else:
                         worksheet.write(linha, col_num, "", subtotal_format)
                 elif header == "% Loja/Grupo":
@@ -1488,6 +1404,7 @@ for tipo_atual in sorted(tabela_exportar["Tipo"].dropna().unique()):
 
 
        
+
 
 
 
