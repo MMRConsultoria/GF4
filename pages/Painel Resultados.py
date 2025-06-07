@@ -1099,48 +1099,54 @@ if modo_visao == "Por Grupo" and agrupamento in ["Dia", "Mês", "Ano"]:
 
 # ✅ Cálculo das colunas %Grupo e % Loja/Grupo (somente no modo Por Loja)
 if modo_visao == "Por Loja":
-    base_percentual = (
-        "Acumulado no Mês (Com Gorjeta)"
-        if "Acumulado no Mês (Com Gorjeta)" in tabela_exportar_sem_tipo.columns
-        and tabela_exportar_sem_tipo["Acumulado no Mês (Com Gorjeta)"].sum() > 0
-        else None
-    )
+    base = "Acumulado no Mês (Com Gorjeta)"
+    usar_base = base in tabela_exportar_sem_tipo.columns and tabela_exportar_sem_tipo[base].sum() > 0
 
-    if base_percentual:
-        total_geral = tabela_exportar_sem_tipo[base_percentual].sum()
-        soma_por_grupo = tabela_exportar_sem_tipo.groupby("Grupo")[base_percentual].sum()
+    if usar_base:
+        total_geral = tabela_exportar_sem_tipo[base].sum()
+        soma_por_grupo = tabela_exportar_sem_tipo.groupby("Grupo")[base].sum()
 
-        tabela_exportar_sem_tipo["%Grupo"] = (
-            tabela_exportar_sem_tipo[base_percentual] / total_geral
-        ).fillna(0)
-
+        tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo[base] / total_geral
         tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
-            lambda row: row[base_percentual] / soma_por_grupo.get(row["Grupo"], 1)
+            lambda row: row[base] / soma_por_grupo.get(row["Grupo"], 1)
             if soma_por_grupo.get(row["Grupo"], 1) != 0 else 0,
             axis=1
         )
     else:
         colunas_valores = [
-            col for col in tabela_exportar_sem_tipo.columns
-            if pd.api.types.is_numeric_dtype(tabela_exportar_sem_tipo[col])
-            and col not in ["Total"]
+            col for col in tabela_exportar_sem_tipo.select_dtypes(include='number').columns
+            if col not in ["Total"]
         ]
         total_geral = tabela_exportar_sem_tipo[colunas_valores].sum().sum()
         soma_por_grupo = (
-            tabela_exportar_sem_tipo[colunas_valores]
-            .groupby(tabela_exportar_sem_tipo["Grupo"])
-            .sum()
-            .sum(axis=1)
+            tabela_exportar_sem_tipo.groupby("Grupo")[colunas_valores].sum().sum(axis=1)
         )
 
-        tabela_exportar_sem_tipo["%Grupo"] = (
-            tabela_exportar_sem_tipo[colunas_valores].sum(axis=1) / total_geral
-        ).fillna(0)
-
+        tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo[colunas_valores].sum(axis=1) / total_geral
         tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
             lambda row: row[colunas_valores].sum() / soma_por_grupo.get(row["Grupo"], 1)
             if soma_por_grupo.get(row["Grupo"], 1) != 0 else 0,
             axis=1
+        )
+
+    # Arredondamento apenas onde for número (para evitar sobrescrever as células limpadas)
+    for col in ["%Grupo", "% Loja/Grupo"]:
+        if col in tabela_exportar_sem_tipo.columns:
+            tabela_exportar_sem_tipo[col] = pd.to_numeric(tabela_exportar_sem_tipo[col], errors='coerce').round(6)
+
+    # === Limpeza visual ===
+    # Marcar como linha de loja (não é subtotal nem total)
+    linhas_lojas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
+    
+    # Marcar linha de total geral
+    linha_total = tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Total Geral", case=False, na=False)
+
+    # Limpa %Grupo nas lojas (só aparece nos subtotais e total)
+    tabela_exportar_sem_tipo.loc[linhas_lojas, "%Grupo"] = ""
+
+    # Limpa % Loja/Grupo no Total Geral
+    tabela_exportar_sem_tipo.loc[linha_total, "% Loja/Grupo"] = ""
+
         )
 
 
