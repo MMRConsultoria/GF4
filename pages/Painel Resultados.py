@@ -1174,8 +1174,8 @@ if modo_visao == "Por Loja":
         )
 
     # Arredondamento preventivo
-    tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["%Grupo"].fillna(0).round(6)
-    tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo["% Loja/Grupo"].fillna(0).round(6)
+    tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["%Grupo"].fillna(0).astype(float).round(6)
+    tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo["% Loja/Grupo"].fillna(0).astype(float).round(6)
     # 🔁 Corrige valores percentuais para escala correta no Excel
     for col in ["%Grupo", "% Loja/Grupo"]:
         if col in tabela_exportar_sem_tipo.columns:
@@ -1199,7 +1199,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'num_format': 'R$ #,##0.00', 'align': 'right', 'valign': 'vcenter'
     })
     percent_formatado = workbook.add_format({
-        'num_format': '0,00%;-0,00%;"0,00%"', 'align': 'right', 'valign': 'vcenter'
+        'num_format': '0,00%', 'align': 'right', 'valign': 'vcenter'
     })
 
    # ✅ Cabeçalho com estilos e formatações por tipo (corrigido e unificado)
