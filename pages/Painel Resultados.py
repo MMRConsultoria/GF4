@@ -1105,7 +1105,7 @@ if modo_visao == "Por Loja":
         total_geral = tabela_exportar_sem_tipo[base].sum()
         soma_por_grupo = tabela_exportar_sem_tipo.groupby("Grupo")[base].sum()
 
-        # 🧮 Cálculo completo para todos
+        # ✅ Cálculo bruto em coluna auxiliar
         tabela_exportar_sem_tipo["%Grupo_calc"] = tabela_exportar_sem_tipo[base] / total_geral
         tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
             lambda row: row[base] / soma_por_grupo.get(row["Grupo"], 1)
@@ -1119,10 +1119,7 @@ if modo_visao == "Por Loja":
         ]
         total_geral = tabela_exportar_sem_tipo[colunas_valores].sum().sum()
         soma_por_grupo = (
-            tabela_exportar_sem_tipo
-            .groupby("Grupo")[colunas_valores]
-            .sum()
-            .sum(axis=1)
+            tabela_exportar_sem_tipo.groupby("Grupo")[colunas_valores].sum().sum(axis=1)
         )
 
         tabela_exportar_sem_tipo["%Grupo_calc"] = tabela_exportar_sem_tipo[colunas_valores].sum(axis=1) / total_geral
@@ -1133,27 +1130,27 @@ if modo_visao == "Por Loja":
         )
 
     # === Limpeza visual ===
-    linhas_lojas = ~tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Subtotal|Total", case=False, na=False)
-    linha_total = tabela_exportar_sem_tipo["Loja"].astype(str).str.contains("Total Geral", case=False, na=False)
+    lojas = tabela_exportar_sem_tipo["Loja"].astype(str)
 
-    # Copia os valores calculados apenas onde for subtotal ou total
+    # Linhas que representam lojas normais (não subtotais ou total)
+    linhas_lojas = ~lojas.str.contains("Subtotal|Total", case=False, na=False)
+
+    # Subtotais e Total Geral
+    linhas_agrupadas = lojas.str.contains("Subtotal|Total", case=False, na=False)
+
+    # ✅ Mostra %Grupo só nos subtotais e total
     tabela_exportar_sem_tipo["%Grupo"] = ""
-    tabela_exportar_sem_tipo.loc[~linhas_lojas, "%Grupo"] = (
-        tabela_exportar_sem_tipo.loc[~linhas_lojas, "%Grupo_calc"].round(6)
-    )
+    tabela_exportar_sem_tipo.loc[linhas_agrupadas, "%Grupo"] = tabela_exportar_sem_tipo.loc[linhas_agrupadas, "%Grupo_calc"]
 
-    # Limpa % Loja/Grupo no Total Geral
-    tabela_exportar_sem_tipo.loc[linha_total, "% Loja/Grupo"] = ""
+    # ❌ Esconde % Loja/Grupo nas linhas de total/subtotal
+    tabela_exportar_sem_tipo.loc[linhas_agrupadas, "% Loja/Grupo"] = ""
 
-    # Remove coluna auxiliar
+    # 🔚 Remove auxiliar
     tabela_exportar_sem_tipo.drop(columns=["%Grupo_calc"], inplace=True)
 
-    # Arredonda
-    tabela_exportar_sem_tipo["% Loja/Grupo"] = pd.to_numeric(
-        tabela_exportar_sem_tipo["% Loja/Grupo"], errors='coerce'
-    ).round(6)
-
-
+    # ✅ Arredondamento
+    tabela_exportar_sem_tipo["%Grupo"] = pd.to_numeric(tabela_exportar_sem_tipo["%Grupo"], errors='coerce').round(6)
+    tabela_exportar_sem_tipo["% Loja/Grupo"] = pd.to_numeric(tabela_exportar_sem_tipo["% Loja/Grupo"], errors='coerce').round(6)
         
 
 
