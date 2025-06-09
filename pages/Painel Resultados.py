@@ -1140,17 +1140,19 @@ hoje = datetime.now()
 mes_corrente = hoje.month
 ano_corrente = hoje.year
 
+# ✅ Mostra acumulado SOMENTE se todo o período estiver dentro do mês atual
 mostrar_acumulado = (
     agrupamento == "Dia" and
-    coluna_acumulado in tabela_exportar_sem_tipo.columns and
-    "Ano" in df_filtrado.columns and
-    "Mês Num" in df_filtrado.columns and
-    df_filtrado["Ano"].eq(ano_corrente).any() and
-    df_filtrado["Mês Num"].eq(mes_corrente).any()
+    data_inicio.month == mes_corrente and
+    data_inicio.year == ano_corrente and
+    data_fim.month == mes_corrente and
+    data_fim.year == ano_corrente
 )
 
-if not mostrar_acumulado and coluna_acumulado in tabela_exportar_sem_tipo.columns:
-    tabela_exportar_sem_tipo.drop(columns=[coluna_acumulado], inplace=True)
+# 🔄 Se não deve mostrar, apenas limpa os valores (mantém a estrutura)
+if not mostrar_acumulado:
+    if coluna_acumulado in tabela_exportar_sem_tipo.columns:
+        tabela_exportar_sem_tipo[coluna_acumulado] = ""
 
 
 
