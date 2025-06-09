@@ -1094,6 +1094,10 @@ if modo_visao == "Por Loja":
 
         percentual_por_grupo = (soma_por_grupo / total_geral).round(6)
 
+
+        **percentual_por_grupo["TOTAL GERAL"] = 1.0**
+
+
         tabela_exportar_sem_tipo["%Grupo_calc"] = tabela_exportar_sem_tipo[base] / total_geral
         tabela_exportar_sem_tipo["% Loja/Grupo"] = tabela_exportar_sem_tipo.apply(
             lambda row: row[base] / soma_por_grupo.get(row["Grupo"], 1)
@@ -1345,7 +1349,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     for col_num, val in enumerate(linha_total):
         header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
         if header == "%Grupo":
-            worksheet.write_number(linha, col_num, 1.0, percent_formatado_subtotal)  # ❌ isso aplica cor amarela
+            worksheet.write_number(linha, col_num, 1.0, percent_formatado_totalgeral)  # ❌ isso aplica cor amarela
         elif header == "% Loja/Grupo":
             worksheet.write(linha, col_num, "", totalgeral_format)
         elif isinstance(val, (int, float)) and not pd.isna(val):
