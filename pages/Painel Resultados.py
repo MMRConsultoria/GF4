@@ -1140,7 +1140,6 @@ hoje = datetime.now()
 mes_corrente = hoje.month
 ano_corrente = hoje.year
 
-# 🔒 Garante que o acumulado só apareça no agrupamento 'Dia'
 mostrar_acumulado = (
     agrupamento == "Dia" and
     coluna_acumulado in tabela_exportar_sem_tipo.columns and
@@ -1149,6 +1148,7 @@ mostrar_acumulado = (
     df_filtrado["Ano"].eq(ano_corrente).any() and
     df_filtrado["Mês Num"].eq(mes_corrente).any()
 )
+
 if not mostrar_acumulado and coluna_acumulado in tabela_exportar_sem_tipo.columns:
     tabela_exportar_sem_tipo.drop(columns=[coluna_acumulado], inplace=True)
 
@@ -1438,6 +1438,35 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         df_filtrado = pd.concat([df_filtrado, df_acumulado_grupo], ignore_index=True)
 
+    # ✅ Cálculo do %Grupo no modo "Por Grupo"
+    if modo_visao == "Por Grupo":
+        base_col = "Acumulado no Mês (Com Gorjeta)"
+        usar_base = base_col in tabela_exportar_sem_tipo.columns and tabela_exportar_sem_tipo[base_col].sum() > 0
+
+        if usar_base:
+            soma_por_grupo = tabela_exportar_sem_tipo[
+                ~tabela_exportar_sem_tipo["Grupo"].astype(str).str.contains("Total Geral", case=False, na=False)
+            ].groupby("Grupo")[base_col].sum()
+            total_geral = soma_por_grupo.sum()
+            percentual_por_grupo = (soma_por_grupo / total_geral).round(6)
+            percentual_por_grupo["TOTAL GERAL"] = 1.0  # Garante 100% para o total
+        else:
+            colunas_valores = tabela_exportar_sem_tipo.select_dtypes(include='number').columns
+            colunas_validas = [col for col in colunas_valores if col not in ["Total"]]
+
+            soma_por_grupo = tabela_exportar_sem_tipo[
+                ~tabela_exportar_sem_tipo["Grupo"].astype(str).str.contains("Total Geral", case=False, na=False)
+            ].groupby("Grupo")[colunas_validas].sum().sum(axis=1)
+            total_geral = soma_por_grupo.sum()
+            percentual_por_grupo = (soma_por_grupo / total_geral).round(6)
+            percentual_por_grupo["TOTAL GERAL"] = 1.0
+
+
+
+
+
+
+
     for grupo_atual, cor in zip(grupos_ordenados, cores_grupo):
         linhas_grupo = tabela_exportar_sem_tipo[
             (tabela_exportar_sem_tipo["Grupo"] == grupo_atual) &
@@ -1464,14 +1493,21 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                     linha_grupo.append(soma_grupo.get(col, ""))
      
             for col_num, val in enumerate(linha_grupo):
+                header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
+
                 if isinstance(val, (int, float)) and not pd.isna(val):
-                    header = tabela_exportar_sem_tipo.columns[col_num]
-                    if header in ["%Grupo", "% Loja/Grupo"]:
-                            worksheet.write_number(linha, col_num, val, percent_formatado)
+                    if header == "%Grupo":
+                        grupo_nome = str(grupo_atual).strip().upper()
+                        valor_percentual = percentual_por_grupo.get(grupo_nome, "")
+                        if valor_percentual != "":
+                            worksheet.write_number(linha, col_num, valor_percentual, percent_formatado)
+                        else:
+                            worksheet.write(linha, col_num, "", grupo_format)
                     else:
-                            worksheet.write_number(linha, col_num, val, grupo_format)
+                        worksheet.write_number(linha, col_num, val, grupo_format)
                 else:
                     worksheet.write(linha, col_num, str(val), grupo_format)
+
             linha += 1
 
         elif modo_visao == "Por Loja":
