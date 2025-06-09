@@ -1360,11 +1360,12 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
     for col_num, val in enumerate(linha_total):
         header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
-        if isinstance(val, (int, float)) and not pd.isna(val):
-            if header in ["%Grupo", "% Loja/Grupo"]:
-                worksheet.write_number(linha, col_num, val, percent_formatado)
-            else:
-                worksheet.write_number(linha, col_num, val, totalgeral_format)
+        if header == "%Grupo":
+            worksheet.write_number(linha, col_num, 1.0, totalgeral_format)  # ✅ 100%
+        elif header == "% Loja/Grupo":
+            worksheet.write(linha, col_num, "", totalgeral_format)
+        elif isinstance(val, (int, float)) and not pd.isna(val):
+            worksheet.write_number(linha, col_num, val, totalgeral_format)
         else:
             worksheet.write(linha, col_num, str(val), totalgeral_format)
     linha += 1
