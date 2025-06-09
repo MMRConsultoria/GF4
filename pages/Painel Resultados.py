@@ -1181,6 +1181,18 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     'bold': True  # ⬅️ negrito ativado
     })
 
+
+
+
+    percent_formatado_totalgeral = workbook.add_format({
+        'num_format': '0.00%',
+        'align': 'right',
+        'valign': 'vcenter',
+        'bg_color': '#A9D08E',  # mesma cor do total geral
+        'border': 1,
+        'bold': True
+})
+
    # ✅ Cabeçalho com estilos e formatações por tipo (corrigido e unificado)
     percentuais = ["%Grupo", "% Loja/Grupo"]
 
@@ -1220,6 +1232,77 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     # 🔥 Determina a coluna de identificação (Loja ou Grupo)
     coluna_id = "Loja" if "Loja" in tabela_exportar_sem_tipo.columns else "Grupo"
 
+
+
+    # ✅ Percentual por Tipo - com mesma lógica do Grupo
+    coluna_acumulado_tipo = "Acumulado no Mês Tipo"
+    usar_base_tipo = (
+        mostrar_acumulado and
+        coluna_acumulado_tipo in tabela_exportar.columns and
+        tabela_exportar[coluna_acumulado_tipo].sum() > 0
+    )
+
+    if usar_base_tipo:
+        percentual_por_tipo = (
+            tabela_exportar[["Tipo", coluna_acumulado_tipo]]
+            .drop_duplicates()
+            .set_index("Tipo")
+            .div(tabela_exportar[coluna_acumulado_tipo].sum())
+            .rename(columns={coluna_acumulado_tipo: "%Grupo Tipo"})
+        )
+    else:
+        # Soma total por tipo com base nas colunas numéricas da tabela_exportar_sem_tipo
+        colunas_numericas_sem_tipo = tabela_exportar_sem_tipo.select_dtypes(include="number").columns.tolist()
+        colunas_validas = [col for col in colunas_numericas_sem_tipo if col not in ["Total"]]
+
+        df_tipo_soma = tabela_exportar_sem_tipo.copy()
+        df_tipo_soma["Tipo"] = tabela_exportar["Tipo"]
+
+        soma_por_tipo = (
+            df_tipo_soma.groupby("Tipo")[colunas_validas]
+            .sum()
+            .sum(axis=1)
+        )
+        total_geral_tipo = soma_por_tipo.sum()
+
+        percentual_por_tipo = (
+            soma_por_tipo / total_geral_tipo
+        ).round(6).to_frame(name="%Grupo Tipo")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
     # 🔥 Subtotal por Tipo (Sempre aparece)
     for tipo_atual in sorted(tabela_exportar["Tipo"].dropna().unique()):
@@ -1242,11 +1325,17 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         for col_num, val in enumerate(linha_tipo):
             header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
-            if isinstance(val, (int, float)) and not pd.isna(val):
-                if header in ["%Grupo", "% Loja/Grupo"]:
-                    worksheet.write_number(linha, col_num, val, percent_formatado)
+            if header == "%Grupo":
+                tipo_nome = linha_tipo[0].replace("Tipo:", "").strip()
+                valor_percentual = percentual_por_tipo.at[tipo_nome, "%Grupo Tipo"] if tipo_nome in percentual_por_tipo.index else ""
+                if valor_percentual != "":
+                    worksheet.write_number(linha, col_num, valor_percentual, percent_formatado_subtotal)
                 else:
-                    worksheet.write_number(linha, col_num, val, subtotal_format)
+                    worksheet.write(linha, col_num, "", subtotal_format)
+            elif header == "% Loja/Grupo":
+                worksheet.write(linha, col_num, "", subtotal_format)
+            elif isinstance(val, (int, float)) and not pd.isna(val):
+                worksheet.write_number(linha, col_num, val, subtotal_format)
             else:
                 worksheet.write(linha, col_num, str(val), subtotal_format)
         linha += 1
