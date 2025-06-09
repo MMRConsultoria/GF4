@@ -1313,7 +1313,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 tipo_nome = linha_tipo[0].replace("Tipo:", "").strip()
                 valor_percentual = percentual_por_tipo.at[tipo_nome, "%Grupo Tipo"] if tipo_nome in percentual_por_tipo.index else ""
                 if valor_percentual != "":
-                    worksheet.write_number(linha, col_num, 1.0, percent_formatado_totalgeral)
+                    worksheet.write_number(linha, col_num, valor_percentual, percent_formatado_subtotal)
                 else:
                     worksheet.write(linha, col_num, "", subtotal_format)
             elif header == "% Loja/Grupo":
