@@ -1565,15 +1565,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             linha += 1
 
 
-       
-
-
-
-
-
-
-
-
 worksheet.hide_gridlines(option=2)
 
 # 🔽 Botão Download
