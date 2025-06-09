@@ -1307,21 +1307,17 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         linha_tipo = [f"Tipo: {tipo_atual}", f"Lojas: {qtd_lojas_tipo}"]  # colunas 0 e 1
         linha_tipo += [soma_colunas.get(col, "") for col in tabela_exportar_sem_tipo.columns[2:]]  # colunas a partir da 2
 
-        for col_num, val in enumerate(linha_tipo):
+        for col_num, val in enumerate(linha_total):
             header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
+            
             if header == "%Grupo":
-                tipo_nome = linha_tipo[0].replace("Tipo:", "").strip()
-                valor_percentual = percentual_por_tipo.at[tipo_nome, "%Grupo Tipo"] if tipo_nome in percentual_por_tipo.index else ""
-                if valor_percentual != "":
-                    worksheet.write_number(linha, col_num, valor_percentual, percent_formatado_totalgeral)
-                else:
-                    worksheet.write(linha, col_num, "", subtotal_format)
+                worksheet.write_number(linha, col_num, 1.0, percent_formatado_totalgeral)  # ✅ VERDE ESCURO + %
             elif header == "% Loja/Grupo":
-                worksheet.write(linha, col_num, "", subtotal_format)
+                worksheet.write(linha, col_num, "", totalgeral_format)
             elif isinstance(val, (int, float)) and not pd.isna(val):
-                worksheet.write_number(linha, col_num, val, subtotal_format)
+                worksheet.write_number(linha, col_num, val, totalgeral_format)
             else:
-                worksheet.write(linha, col_num, str(val), subtotal_format)
+                worksheet.write(linha, col_num, str(val), totalgeral_format)
         linha += 1
 
     # 🔢 Filtra só as lojas ativas
