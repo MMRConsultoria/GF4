@@ -1405,7 +1405,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     for col_num, val in enumerate(linha_total):
         header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
         if header == "%Grupo":
-            worksheet.write_number(linha, col_num, 1.0, totalgeral_format)  # ✅ 100%
+            worksheet.write_number(linha, col_num, 1.0, percent_formatado_totalgeral)  # ✅ 100%
         elif header == "% Loja/Grupo":
             worksheet.write(linha, col_num, "", totalgeral_format)
         elif isinstance(val, (int, float)) and not pd.isna(val):
@@ -1491,6 +1491,19 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             'border': 1,
             'num_format': '0.00%'
         })
+
+
+        percent_formatado_totalgeral = workbook.add_format({
+            'num_format': '0.00%',
+            'align': 'right',
+            'valign': 'vcenter',
+            'bg_color': '#A9D08E',  # mesma cor do total geral
+            'border': 1,
+            'bold': True
+        })
+
+
+
 
 
         if modo_visao == "Por Grupo" and agrupamento in ["Dia", "Mês", "Ano"]:
