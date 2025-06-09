@@ -1282,6 +1282,8 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
 
+    
+
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
 
@@ -1334,6 +1336,14 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         ).round(6).to_frame(name="%Grupo Tipo")
 
 
+        percent_formatado_totalgeral = workbook.add_format({
+            'num_format': '0.00%',
+            'align': 'right',
+            'valign': 'vcenter',
+            'bg_color': '#A9D08E',  # mesma cor do total geral
+            'border': 1,
+            'bold': True
+        })
 
 
 
@@ -1505,6 +1515,15 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         grupo_format = workbook.add_format({
             'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
         })
+
+        percent_formatado_grupo = workbook.add_format({
+            'bg_color': cor,
+            'border': 1,
+            'num_format': '0.00%'
+        })
+
+
+
 
         if modo_visao == "Por Grupo" and agrupamento in ["Dia", "Mês", "Ano"]:
             # ✅ Linha resumida: "GRU - Loja: 12"
