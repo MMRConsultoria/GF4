@@ -1070,6 +1070,71 @@ tabela_final.columns.name = None  # Remove nome do eixo das colunas
 tabela_final = tabela_final.loc[:, ~tabela_final.columns.isnull()]
 tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
+if modo_visao == "Por Grupo":
+    base_col = "Acumulado no Mês (Com Gorjeta)"
+    usar_base = (
+        base_col in tabela_exportar_sem_tipo.columns and
+        tabela_exportar_sem_tipo[base_col].sum() > 0
+    )
+
+    if usar_base:
+        # Agrupa por grupo e soma os valores da coluna base
+        soma_por_grupo = tabela_exportar_sem_tipo[
+            ~tabela_exportar_sem_tipo["Grupo"].astype(str).str.contains("Total Geral", case=False, na=False)
+        ].groupby("Grupo")[base_col].sum()
+        total_geral = soma_por_grupo.sum()
+        percentual_por_grupo = (soma_por_grupo / total_geral).round(6)
+        percentual_por_grupo["TOTAL GERAL"] = 1.0
+    else:
+        colunas_numericas = tabela_exportar_sem_tipo.select_dtypes(include="number").columns
+        colunas_validas = [col for col in colunas_numericas if col not in ["Total"]]
+
+        soma_por_grupo = tabela_exportar_sem_tipo[
+            ~tabela_exportar_sem_tipo["Grupo"].astype(str).str.contains("Total Geral", case=False, na=False)
+        ].groupby("Grupo")[colunas_validas].sum().sum(axis=1)
+        total_geral = soma_por_grupo.sum()
+        percentual_por_grupo = (soma_por_grupo / total_geral).round(6)
+        percentual_por_grupo["TOTAL GERAL"] = 1.0
+
+    # ✅ Garante que a coluna exista no dataframe
+    if "%Grupo" not in tabela_exportar_sem_tipo.columns:
+        tabela_exportar_sem_tipo["%Grupo"] = ""
+
+    # ✅ Reposiciona %Grupo para o final
+    cols = list(tabela_exportar_sem_tipo.columns)
+    if cols[-1] != "%Grupo":
+        cols = [col for col in cols if col != "%Grupo"] + ["%Grupo"]
+        tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 if modo_visao == "Por Loja":
     base = "Acumulado no Mês (Com Gorjeta)"
@@ -1140,7 +1205,6 @@ hoje = datetime.now()
 mes_corrente = hoje.month
 ano_corrente = hoje.year
 
-# 🔒 Garante que o acumulado só apareça no agrupamento 'Dia'
 mostrar_acumulado = (
     agrupamento == "Dia" and
     coluna_acumulado in tabela_exportar_sem_tipo.columns and
@@ -1149,6 +1213,7 @@ mostrar_acumulado = (
     df_filtrado["Ano"].eq(ano_corrente).any() and
     df_filtrado["Mês Num"].eq(mes_corrente).any()
 )
+
 if not mostrar_acumulado and coluna_acumulado in tabela_exportar_sem_tipo.columns:
     tabela_exportar_sem_tipo.drop(columns=[coluna_acumulado], inplace=True)
 
@@ -1243,18 +1308,12 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     )
 
     if usar_base_tipo:
-        df_tipo = (
-            tabela_exportar[["Tipo", coluna_acumulado_tipo]]
-            .dropna(subset=["Tipo", coluna_acumulado_tipo])
-            .groupby("Tipo")[coluna_acumulado_tipo]
-            .sum()
-        )
-        total_acumulado_tipos = df_tipo.sum()
-
         percentual_por_tipo = (
-            (df_tipo / total_acumulado_tipos)
-            .round(6)
-            .to_frame(name="%Grupo Tipo")
+            tabela_exportar[["Tipo", coluna_acumulado_tipo]]
+            .drop_duplicates()
+            .set_index("Tipo")
+            .div(tabela_exportar[coluna_acumulado_tipo].sum())
+            .rename(columns={coluna_acumulado_tipo: "%Grupo Tipo"})
         )
     else:
         # Soma total por tipo com base nas colunas numéricas da tabela_exportar_sem_tipo
@@ -1367,7 +1426,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     for col_num, val in enumerate(linha_total):
         header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
         if header == "%Grupo":
-            worksheet.write_number(linha, col_num, 1.0, percent_formatado_totalgeral)  # ✅ 100%
+            worksheet.write_number(linha, col_num, 1.0, totalgeral_format)  # ✅ 100%
         elif header == "% Loja/Grupo":
             worksheet.write(linha, col_num, "", totalgeral_format)
         elif isinstance(val, (int, float)) and not pd.isna(val):
@@ -1515,15 +1574,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 else:
                     worksheet.write(linha, col_num, str(val), subtotal_format)
             linha += 1
-
-
-       
-
-
-
-
-
-
 
 
 worksheet.hide_gridlines(option=2)
