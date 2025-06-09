@@ -1438,10 +1438,16 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
         df_filtrado = pd.concat([df_filtrado, df_acumulado_grupo], ignore_index=True)
 
+
+
+
     # ✅ Cálculo do %Grupo no modo "Por Grupo"
     if modo_visao == "Por Grupo":
         base_col = "Acumulado no Mês (Com Gorjeta)"
-        usar_base = base_col in tabela_exportar_sem_tipo.columns and tabela_exportar_sem_tipo[base_col].sum() > 0
+        usar_base = (
+            base_col in tabela_exportar_sem_tipo.columns and
+            tabela_exportar_sem_tipo[base_col].sum() > 0
+        )
 
         if usar_base:
             soma_por_grupo = tabela_exportar_sem_tipo[
@@ -1460,6 +1466,17 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             total_geral = soma_por_grupo.sum()
             percentual_por_grupo = (soma_por_grupo / total_geral).round(6)
             percentual_por_grupo["TOTAL GERAL"] = 1.0
+
+        # ✅ Garante que a coluna %Grupo exista no DataFrame exportado
+        if "%Grupo" not in tabela_exportar_sem_tipo.columns:
+            tabela_exportar_sem_tipo["%Grupo"] = ""
+
+        # ✅ (Opcional) Move a coluna %Grupo para o final
+        cols = list(tabela_exportar_sem_tipo.columns)
+        if cols[-1] != "%Grupo":
+            cols = [col for col in cols if col != "%Grupo"] + ["%Grupo"]
+            tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols]
+
 
 
 
