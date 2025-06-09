@@ -883,10 +883,10 @@ hoje = pd.to_datetime(pd.Timestamp.now()).tz_localize(None)
 
 mostrar_acumulado = (
     agrupamento == "Dia" and
-    data_inicio.month == hoje.month and
-    data_fim.month == hoje.month and
+    data_max.year == hoje.year and
+    data_max.month == hoje.month and
     data_inicio.year == hoje.year and
-    data_fim.year == hoje.year
+    data_inicio.month == hoje.month
 )
 
 # 🔥 Inicializa acumulados vazios
@@ -1140,19 +1140,17 @@ hoje = datetime.now()
 mes_corrente = hoje.month
 ano_corrente = hoje.year
 
-# ✅ Mostra acumulado SOMENTE se todo o período estiver dentro do mês atual
 mostrar_acumulado = (
     agrupamento == "Dia" and
-    data_inicio.month == mes_corrente and
-    data_inicio.year == ano_corrente and
-    data_fim.month == mes_corrente and
-    data_fim.year == ano_corrente
+    coluna_acumulado in tabela_exportar_sem_tipo.columns and
+    "Ano" in df_filtrado.columns and
+    "Mês Num" in df_filtrado.columns and
+    df_filtrado["Ano"].eq(ano_corrente).any() and
+    df_filtrado["Mês Num"].eq(mes_corrente).any()
 )
 
-# 🔄 Se não deve mostrar, apenas limpa os valores (mantém a estrutura)
-if not mostrar_acumulado:
-    if coluna_acumulado in tabela_exportar_sem_tipo.columns:
-        tabela_exportar_sem_tipo[coluna_acumulado] = ""
+if not mostrar_acumulado and coluna_acumulado in tabela_exportar_sem_tipo.columns:
+    tabela_exportar_sem_tipo.drop(columns=[coluna_acumulado], inplace=True)
 
 
 
