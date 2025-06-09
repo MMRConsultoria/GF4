@@ -1243,12 +1243,18 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     )
 
     if usar_base_tipo:
-        percentual_por_tipo = (
+        df_tipo = (
             tabela_exportar[["Tipo", coluna_acumulado_tipo]]
-            .drop_duplicates()
-            .set_index("Tipo")
-            .div(tabela_exportar[coluna_acumulado_tipo].sum())
-            .rename(columns={coluna_acumulado_tipo: "%Grupo Tipo"})
+            .dropna(subset=["Tipo", coluna_acumulado_tipo])
+            .groupby("Tipo")[coluna_acumulado_tipo]
+            .sum()
+        )
+        total_acumulado_tipos = df_tipo.sum()
+
+        percentual_por_tipo = (
+            (df_tipo / total_acumulado_tipos)
+            .round(6)
+            .to_frame(name="%Grupo Tipo")
         )
     else:
         # Soma total por tipo com base nas colunas numéricas da tabela_exportar_sem_tipo
