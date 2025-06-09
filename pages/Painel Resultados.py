@@ -1152,13 +1152,18 @@ if modo_visao == "Por Loja":
             axis=1
         )
 
-    # 🔄 Aplica %Grupo apenas nas linhas agrupadas
-    linhas_agrupadas = linhas_subtotais | linha_total | linhas_tipos
-    tabela_exportar_sem_tipo["%Grupo"] = np.where(
-        linhas_agrupadas,
-        tabela_exportar_sem_tipo["%Grupo_calc"],
-        ""
-    )
+    # 🔄 Aplica %Grupo apenas nas linhas de agrupamento (Tipo e Total Geral)
+        linhas_agrupadas = (
+            tabela_exportar_sem_tipo["Grupo"].astype(str).str.upper().str.startswith("TIPO:") |
+            tabela_exportar_sem_tipo["Grupo"].astype(str).str.upper().str.contains("TOTAL GERAL")
+        )
+
+        tabela_exportar_sem_tipo["%Grupo"] = np.where(
+            linhas_agrupadas,
+            tabela_exportar_sem_tipo["%Grupo_calc"],
+            ""
+        )
+
 
     # Limpa % Loja/Grupo no Total Geral
     tabela_exportar_sem_tipo.loc[linha_total, "% Loja/Grupo"] = ""
