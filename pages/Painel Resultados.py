@@ -1071,6 +1071,54 @@ tabela_final = tabela_final.loc[:, ~tabela_final.columns.isnull()]
 tabela_final = tabela_final.drop(columns=[None, 'None', 'nan'], errors='ignore')
 
 
+if modo_visao == "Por Grupo":
+    base = "Acumulado no Mês (Com Gorjeta)"
+    usar_base = base in tabela_exportar_sem_tipo.columns and tabela_exportar_sem_tipo[base].sum() > 0
+
+    colunas_valores = [
+        col for col in tabela_exportar_sem_tipo.select_dtypes(include='number').columns
+        if col not in ["Total"]
+    ]
+
+    linhas_tipos = tabela_exportar_sem_tipo["Grupo"].astype(str).str.startswith("Tipo:")
+    linha_total = tabela_exportar_sem_tipo["Grupo"].astype(str).str.contains("Total Geral", case=False, na=False)
+
+    if usar_base:
+        soma_total = tabela_exportar_sem_tipo.loc[~(linhas_tipos | linha_total), base].sum()
+        tabela_exportar_sem_tipo["%Grupo"] = np.where(
+            linhas_tipos | linha_total,
+            tabela_exportar_sem_tipo[base] / soma_total,
+            ""
+        )
+    else:
+        soma_total = tabela_exportar_sem_tipo.loc[~(linhas_tipos | linha_total), colunas_valores].sum().sum()
+        soma_linha = tabela_exportar_sem_tipo.loc[~(linhas_tipos | linha_total), colunas_valores].sum(axis=1)
+        tabela_exportar_sem_tipo["%Grupo"] = np.where(
+            linhas_tipos | linha_total,
+            soma_linha / soma_total,
+            ""
+        )
+
+    # Arredondar e formatar
+    tabela_exportar_sem_tipo["%Grupo"] = pd.to_numeric(tabela_exportar_sem_tipo["%Grupo"], errors="coerce").round(6).fillna("")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 if modo_visao == "Por Loja":
     base = "Acumulado no Mês (Com Gorjeta)"
     usar_base = base in tabela_exportar_sem_tipo.columns and tabela_exportar_sem_tipo[base].sum() > 0
