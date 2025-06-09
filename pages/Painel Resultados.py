@@ -883,10 +883,10 @@ hoje = pd.to_datetime(pd.Timestamp.now()).tz_localize(None)
 
 mostrar_acumulado = (
     agrupamento == "Dia" and
-    data_max.year == hoje.year and
-    data_max.month == hoje.month and
+    data_inicio.month == hoje.month and
+    data_fim.month == hoje.month and
     data_inicio.year == hoje.year and
-    data_inicio.month == hoje.month
+    data_fim.year == hoje.year
 )
 
 # 🔥 Inicializa acumulados vazios
