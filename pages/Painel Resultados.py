@@ -1140,6 +1140,7 @@ hoje = datetime.now()
 mes_corrente = hoje.month
 ano_corrente = hoje.year
 
+# 🔒 Garante que o acumulado só apareça no agrupamento 'Dia'
 mostrar_acumulado = (
     agrupamento == "Dia" and
     coluna_acumulado in tabela_exportar_sem_tipo.columns and
@@ -1148,7 +1149,6 @@ mostrar_acumulado = (
     df_filtrado["Ano"].eq(ano_corrente).any() and
     df_filtrado["Mês Num"].eq(mes_corrente).any()
 )
-
 if not mostrar_acumulado and coluna_acumulado in tabela_exportar_sem_tipo.columns:
     tabela_exportar_sem_tipo.drop(columns=[coluna_acumulado], inplace=True)
 
@@ -1243,12 +1243,18 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     )
 
     if usar_base_tipo:
-        percentual_por_tipo = (
+        df_tipo = (
             tabela_exportar[["Tipo", coluna_acumulado_tipo]]
-            .drop_duplicates()
-            .set_index("Tipo")
-            .div(tabela_exportar[coluna_acumulado_tipo].sum())
-            .rename(columns={coluna_acumulado_tipo: "%Grupo Tipo"})
+            .dropna(subset=["Tipo", coluna_acumulado_tipo])
+            .groupby("Tipo")[coluna_acumulado_tipo]
+            .sum()
+        )
+        total_acumulado_tipos = df_tipo.sum()
+
+        percentual_por_tipo = (
+            (df_tipo / total_acumulado_tipos)
+            .round(6)
+            .to_frame(name="%Grupo Tipo")
         )
     else:
         # Soma total por tipo com base nas colunas numéricas da tabela_exportar_sem_tipo
@@ -1361,7 +1367,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     for col_num, val in enumerate(linha_total):
         header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
         if header == "%Grupo":
-            worksheet.write_number(linha, col_num, 1.0, totalgeral_format)  # ✅ 100%
+            worksheet.write_number(linha, col_num, 1.0, percent_formatado_totalgeral)  # ✅ 100%
         elif header == "% Loja/Grupo":
             worksheet.write(linha, col_num, "", totalgeral_format)
         elif isinstance(val, (int, float)) and not pd.isna(val):
