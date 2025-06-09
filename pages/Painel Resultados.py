@@ -1,4 +1,3 @@
-
 # pages/PainelResultados.py
 import streamlit as st
 st.set_page_config(page_title="Vendas Diarias", layout="wide")  # ✅ Escolha um título só
@@ -1541,14 +1540,17 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                     linha_grupo.append(soma_grupo.get(col, ""))
      
             for col_num, val in enumerate(linha_grupo):
+                header = tabela_exportar_sem_tipo.columns[col_num]
                 if isinstance(val, (int, float)) and not pd.isna(val):
-                    header = tabela_exportar_sem_tipo.columns[col_num]
                     if header in ["%Grupo", "% Loja/Grupo"]:
-                            worksheet.write_number(linha, col_num, val, percent_formatado)
+                        worksheet.write_number(linha, col_num, val, percent_formatado_grupo)
                     else:
-                            worksheet.write_number(linha, col_num, val, grupo_format)
+                        worksheet.write_number(linha, col_num, val, grupo_format)
                 else:
-                    worksheet.write(linha, col_num, str(val), grupo_format)
+                    if header in ["%Grupo", "% Loja/Grupo"]:
+                        worksheet.write(linha, col_num, "", percent_formatado_grupo)
+                    else:
+                        worksheet.write(linha, col_num, str(val), grupo_format)
             linha += 1
 
         elif modo_visao == "Por Loja":
