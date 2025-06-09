@@ -1495,17 +1495,26 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                     linha_grupo.append(f"Lojas: {qtd_lojas}")
                 else:
                     linha_grupo.append(soma_grupo.get(col, ""))
-     
+
             for col_num, val in enumerate(linha_grupo):
-                if isinstance(val, (int, float)) and not pd.isna(val):
-                    header = tabela_exportar_sem_tipo.columns[col_num]
-                    if header in ["%Grupo", "% Loja/Grupo"]:
-                            worksheet.write_number(linha, col_num, val, percent_formatado)
+                header = tabela_exportar_sem_tipo.columns[col_num]
+
+                if header == "%Grupo":
+                    grupo_nome = str(grupo_atual).strip().upper()
+                    valor_percentual = percentual_por_grupo.get(grupo_nome, "")
+                    if valor_percentual != "":
+                        worksheet.write_number(linha, col_num, valor_percentual, percent_formatado)
                     else:
-                            worksheet.write_number(linha, col_num, val, grupo_format)
+                        worksheet.write(linha, col_num, "", grupo_format)
+                elif header == "% Loja/Grupo":
+                    worksheet.write(linha, col_num, "", grupo_format)
+                elif isinstance(val, (int, float)) and not pd.isna(val):
+                    worksheet.write_number(linha, col_num, val, grupo_format)
                 else:
                     worksheet.write(linha, col_num, str(val), grupo_format)
+
             linha += 1
+
 
         elif modo_visao == "Por Loja":
             # ✅ Mantém a escrita linha a linha com cores por grupo
@@ -1535,6 +1544,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 header = tabela_exportar_sem_tipo.columns[col_num]
                 
                 if header == "%Grupo":
+
                     grupo_nome = linha_grupo[0].replace("Subtotal ", "").strip()
                     valor_percentual = percentual_por_grupo.get(grupo_nome, "")
                     if valor_percentual != "":
