@@ -1184,7 +1184,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 
 
-     percent_formatado_totalgeral = workbook.add_format({
+    percent_formatado_totalgeral = workbook.add_format({
     'num_format': '0.00%',
     'align': 'right',
     'valign': 'vcenter',
