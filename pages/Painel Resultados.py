@@ -1184,14 +1184,14 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
 
 
 
-    percent_formatado_totalgeral = workbook.add_format({
-        'num_format': '0.00%',
-        'align': 'right',
-        'valign': 'vcenter',
-        'bg_color': '#A9D08E',  # mesma cor do total geral
-        'border': 1,
-        'bold': True
-})
+     percent_formatado_totalgeral = workbook.add_format({
+    'num_format': '0.00%',
+    'align': 'right',
+    'valign': 'vcenter',
+    'bg_color': '#A9D08E',  # mesma cor do total geral
+    'border': 1,
+    'bold': True
+    })
 
    # ✅ Cabeçalho com estilos e formatações por tipo (corrigido e unificado)
     percentuais = ["%Grupo", "% Loja/Grupo"]
