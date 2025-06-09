@@ -1078,7 +1078,6 @@ if modo_visao == "Por Grupo":
     )
 
     if usar_base:
-        # Agrupa por grupo e soma os valores da coluna base
         soma_por_grupo = tabela_exportar_sem_tipo[
             ~tabela_exportar_sem_tipo["Grupo"].astype(str).str.contains("Total Geral", case=False, na=False)
         ].groupby("Grupo")[base_col].sum()
@@ -1096,42 +1095,17 @@ if modo_visao == "Por Grupo":
         percentual_por_grupo = (soma_por_grupo / total_geral).round(6)
         percentual_por_grupo["TOTAL GERAL"] = 1.0
 
-    # ✅ Garante que a coluna exista no dataframe
-    if "%Grupo" not in tabela_exportar_sem_tipo.columns:
-        tabela_exportar_sem_tipo["%Grupo"] = ""
+    # ✅ Preenche a coluna %Grupo com os valores corretos
+    tabela_exportar_sem_tipo["Grupo_str"] = tabela_exportar_sem_tipo["Grupo"].astype(str).str.strip().str.upper()
+    percentual_por_grupo.index = percentual_por_grupo.index.astype(str).str.strip().str.upper()
+    tabela_exportar_sem_tipo["%Grupo"] = tabela_exportar_sem_tipo["Grupo_str"].map(percentual_por_grupo).fillna("")
+    tabela_exportar_sem_tipo.drop(columns=["Grupo_str"], inplace=True)
 
     # ✅ Reposiciona %Grupo para o final
     cols = list(tabela_exportar_sem_tipo.columns)
     if cols[-1] != "%Grupo":
         cols = [col for col in cols if col != "%Grupo"] + ["%Grupo"]
         tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1574,6 +1548,15 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 else:
                     worksheet.write(linha, col_num, str(val), subtotal_format)
             linha += 1
+
+
+       
+
+
+
+
+
+
 
 
 worksheet.hide_gridlines(option=2)
