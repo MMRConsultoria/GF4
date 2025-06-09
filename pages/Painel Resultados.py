@@ -1255,27 +1255,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             soma_por_tipo / total_geral_tipo
         ).round(6).to_frame(name="%Grupo Tipo")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # 🔥 Subtotal por Tipo (Sempre aparece)
-    for tipo_atual in sorted(tabela_exportar["Tipo"].dropna().unique()):
+tipo_atual in sorted(tabela_exportar["Tipo"].dropna().unique()):
         linhas_tipo = tabela_exportar_sem_tipo[
             (tabela_exportar_sem_tipo["Grupo"].isin(
                 df_empresa[df_empresa["Tipo"] == tipo_atual]["Grupo"].unique()
@@ -1331,7 +1311,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     for col_num, val in enumerate(linha_total):
         header = tabela_exportar_sem_tipo.columns[col_num] if col_num < len(tabela_exportar_sem_tipo.columns) else ""
         if header == "%Grupo":
-            worksheet.write_number(linha, col_num, 1.0, percent_formatado_subtotal)  # ✅ 100%
+             worksheet.write_number(linha, col_num, 1.0, totalgeral_format)  # ✅ usa a mesma cor verde
         elif header == "% Loja/Grupo":
             worksheet.write(linha, col_num, "", totalgeral_format)
         elif isinstance(val, (int, float)) and not pd.isna(val):
