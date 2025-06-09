@@ -1486,6 +1486,13 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             'bg_color': cor, 'border': 1, 'num_format': 'R$ #,##0.00'
         })
 
+        percent_formatado_grupo = workbook.add_format({
+            'bg_color': cor,
+            'border': 1,
+            'num_format': '0.00%'
+        })
+
+
         if modo_visao == "Por Grupo" and agrupamento in ["Dia", "Mês", "Ano"]:
             # ✅ Linha resumida: "GRU - Loja: 12"
             qtd_lojas = lojas_ativas[lojas_ativas["Grupo"] == grupo_atual]["Loja"].nunique()
@@ -1508,7 +1515,7 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                     grupo_nome = str(grupo_atual).strip().upper()
                     valor_percentual = percentual_por_grupo.get(grupo_nome, "")
                     if valor_percentual != "":
-                        worksheet.write_number(linha, col_num, valor_percentual, percent_formatado)
+                        worksheet.write_number(linha, col_num, valor_percentual, percent_formatado_grupo)
                     else:
                         worksheet.write(linha, col_num, "", grupo_format)
                 elif header == "% Loja/Grupo":
