@@ -78,8 +78,7 @@ aba1, aba2 = st.tabs([
 # Aba 1: Graficos Trimestrais
 # ================================
 with aba1:
-    st.subheader("📊 Comparativo Metas vs. Realizado por Loja (Fat.Total)")
-
+    
     # 🔄 Carrega dados da aba "Metas"
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
 
