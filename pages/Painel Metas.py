@@ -98,16 +98,17 @@ with aba1:
 
     df_metas = df_metas.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
     df_metas["Loja Final"] = df_metas["LojaFinal"].fillna(df_metas["Loja"])
+    df_metas["Mês"] = df_metas["Mês"].str.strip().str[:3].str.capitalize()
 
-    # 🎯 Agrupa metas por loja/mês
+    # 🎯 Agrupa metas
     metas_grouped = df_metas.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index()
     metas_grouped = metas_grouped.rename(columns={"Fat.Total": "Meta"})
 
-    # ✅ Usa df_anos como base de realizado
+    # ✅ Realizado
     df_anos["Loja"] = df_anos["Loja"].str.strip()
     df_anos = df_anos.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
     df_anos["Loja Final"] = df_anos["LojaFinal"].fillna(df_anos["Loja"])
-    df_anos["Mês"] = df_anos["Data"].dt.strftime("%b")  # "Jan", "Fev", etc.
+    df_anos["Mês"] = df_anos["Data"].dt.strftime("%b")  # Ex: "Jan"
     df_anos["Ano"] = df_anos["Data"].dt.year
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
 
@@ -119,12 +120,12 @@ with aba1:
     comparativo["% Atingido"] = comparativo["Realizado"] / comparativo["Meta"].replace(0, np.nan)
     comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
 
-    # 📅 Ordena por Ano, Loja, Mês com ordem correta
+    # 🗂️ Ordena corretamente os meses
     ordem_meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
-    comparativo = comparativo.sort_values(["Ano", "Grupo", "Loja Final", "Mês"])  # ✅ ordem corrigida
+    comparativo = comparativo.sort_values(["Ano", "Loja Final", "Mês"])
 
-    # 📊 Exibe na tela
+    # 📊 Exibe
     st.dataframe(
         comparativo.style.format({
             "Meta": "R$ {:,.2f}",
@@ -134,7 +135,6 @@ with aba1:
         }),
         use_container_width=True
     )
-
 
 # ================================
 # Aba 2: Relatorio Analitico
