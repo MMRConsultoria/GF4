@@ -78,7 +78,8 @@ aba1, aba2 = st.tabs([
 # Aba 1: Graficos Trimestrais
 # ================================
 with aba1:
-    
+    st.subheader("📊 Comparativo Metas vs. Realizado por Loja (Fat.Total)")
+
     # 🔄 Carrega dados da aba "Metas"
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
 
@@ -102,42 +103,38 @@ with aba1:
     metas_grouped = df_metas.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index()
     metas_grouped = metas_grouped.rename(columns={"Fat.Total": "Meta"})
 
-    # 🔍 Carrega realizado do painel de resultados (substitua se necessário)
-    # ➕ Aqui você precisa substituir pelo DataFrame real do seu painel, se não tiver `df_realizado` definido ainda
-    st.warning("⚠️ Atenção: substitua `df_realizado` pelo DataFrame real com os dados consolidados.")
-    df_realizado = pd.DataFrame()  # Placeholder
+    # ✅ Usa df_anos como base de realizado
+    df_anos["Loja"] = df_anos["Loja"].str.strip()
+    df_anos = df_anos.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
+    df_anos["Loja Final"] = df_anos["LojaFinal"].fillna(df_anos["Loja"])
+    df_anos["Mês"] = df_anos["Data"].dt.strftime("%b")  # "Jan", "Fev", etc.
+    df_anos["Ano"] = df_anos["Data"].dt.year
+    df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
 
-    if not df_realizado.empty:
-        df_realizado["Loja"] = df_realizado["Loja"].str.strip()
-        df_realizado = df_realizado.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
-        df_realizado["Loja Final"] = df_realizado["LojaFinal"].fillna(df_realizado["Loja"])
-        df_realizado["Fat.Total"] = df_realizado["Fat.Total"].apply(parse_valor)
+    realizado_grouped = df_anos.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index()
+    realizado_grouped = realizado_grouped.rename(columns={"Fat.Total": "Realizado"})
 
-        realizado_grouped = df_realizado.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index()
-        realizado_grouped = realizado_grouped.rename(columns={"Fat.Total": "Realizado"})
+    # 🔗 Junta metas e realizado
+    comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja Final"], how="outer").fillna(0)
+    comparativo["% Atingido"] = comparativo["Realizado"] / comparativo["Meta"].replace(0, np.nan)
+    comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
 
-        # 🔗 Junta metas e realizado
-        comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja Final"], how="outer").fillna(0)
-        comparativo["% Atingido"] = comparativo["Realizado"] / comparativo["Meta"].replace(0, np.nan)
-        comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
+    # 📅 Ordena por Ano, Loja, Mês com ordem correta
+    ordem_meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+    comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
+    comparativo = comparativo.sort_values(["Ano", "Grupo", "Loja Final", "Mês"])  # ✅ ordem corrigida
 
-        # 📅 Ordena por Ano, Loja, Mês com ordem correta
-        ordem_meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
-        comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
-        comparativo = comparativo.sort_values(["Ano", "Loja Final", "Mês"])
+    # 📊 Exibe na tela
+    st.dataframe(
+        comparativo.style.format({
+            "Meta": "R$ {:,.2f}",
+            "Realizado": "R$ {:,.2f}",
+            "Diferença": "R$ {:,.2f}",
+            "% Atingido": "{:.2%}"
+        }),
+        use_container_width=True
+    )
 
-        # 📊 Exibe na tela
-        st.dataframe(
-            comparativo.style.format({
-                "Meta": "R$ {:,.2f}",
-                "Realizado": "R$ {:,.2f}",
-                "Diferença": "R$ {:,.2f}",
-                "% Atingido": "{:.2%}"
-            }),
-            use_container_width=True
-        )
-    else:
-        st.error("❌ Dados de realizado (`df_realizado`) ainda não definidos.")
 
 # ================================
 # Aba 2: Relatorio Analitico
