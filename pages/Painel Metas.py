@@ -60,9 +60,14 @@ aba1, aba2 = st.tabs(["📈 Analise Metas", "📊 Auditoria Metas"])
 # Funções auxiliares
 # ================================
 def parse_valor(val):
-    if isinstance(val, str):
-        return float(val.replace("R$", "").replace(".", "").replace(",", ".").strip())
-    return float(val or 0)
+    if pd.isna(val):
+        return 0.0
+    if isinstance(val, (int, float)):
+        return float(val)
+    try:
+        return float(str(val).replace("R$", "").replace(".", "").replace(",", ".").strip())
+    except:
+        return 0.0
 
 # ================================
 # Aba 1: Análise
