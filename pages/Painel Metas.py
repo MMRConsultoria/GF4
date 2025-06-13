@@ -1,5 +1,7 @@
 # pages/Painel Metas.py
 import streamlit as st
+st.set_page_config(page_title="Vendas Diarias", layout="wide")
+
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -7,9 +9,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 
-st.set_page_config(page_title="Vendas Diarias", layout="wide")
-
-# ❌ Bloqueia o acesso se não estiver logado
+# ❄️ Verifica login
 if not st.session_state.get("acesso_liberado"):
     st.stop()
 
@@ -20,14 +20,17 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
-
-planilha = gc.open("Vendas diarias")
-df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
-df_anos = pd.DataFrame(planilha.worksheet("Fat Sistema Externo").get_all_records())
-df_metas = pd.DataFrame(planilha.worksheet("Metas").get_all_records())
+planilha_empresa = gc.open("Vendas diarias")
 
 # ================================
-# 2. Estilo
+# 2. Carrega dados principais
+# ================================
+df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
+df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
+df_anos.columns = df_anos.columns.str.strip()  # ✅ Remove espaços extras dos nomes de coluna
+
+# ================================
+# 3. Estilo e layout
 # ================================
 st.markdown("""
     <style>
@@ -54,13 +57,10 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# ================================
-# 3. Abas
-# ================================
 aba1, aba2 = st.tabs(["📈 Analise Metas", "📊 Auditoria Metas"])
 
 # ================================
-# Função para normalizar valores
+# Funções auxiliares
 # ================================
 def parse_valor(val):
     if isinstance(val, str):
@@ -68,15 +68,16 @@ def parse_valor(val):
     return float(val or 0)
 
 # ================================
-# Aba 1: Comparativo Metas x Realizado
+# Aba 1: Comparativo
 # ================================
 with aba1:
     st.subheader("📊 Comparativo Metas vs. Realizado por Loja (Fat.Total)")
 
+    df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
+    df_metas.columns = df_metas.columns.str.strip()
     df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
     df_metas["Loja"] = df_metas["Loja"].str.strip()
 
-    # Mapeamento De/Para
     df_depara = df_empresa[["Loja", "De Para Metas"]].drop_duplicates()
     df_depara.columns = ["LojaOriginal", "LojaFinal"]
 
@@ -86,31 +87,21 @@ with aba1:
     metas_grouped = df_metas.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index()
     metas_grouped = metas_grouped.rename(columns={"Fat.Total": "Meta"})
 
-    # ========== Realizado
-    df_anos["Data"] = pd.to_datetime(df_anos["Data"], errors="coerce")
     df_anos["Loja"] = df_anos["Loja"].str.strip()
     df_anos = df_anos.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
     df_anos["Loja Final"] = df_anos["LojaFinal"].fillna(df_anos["Loja"])
-
-    df_anos["Mês"] = df_anos["Data"].dt.strftime("%b")
-    df_anos["Ano"] = df_anos["Data"].dt.year
-    df_anos["Fat.Total"] = df_anos[" Fat.Total "].apply(parse_valor)
-
-    # Grupo
-    grupos = df_empresa[["Loja", "Grupo"]].drop_duplicates()
-    df_anos = df_anos.merge(grupos, on="Loja", how="left")
+    df_anos["Grupo"] = df_anos["Grupo"].str.strip()
+    df_anos["Mês"] = df_anos["Mês"].str.strip().str[:3].str.title()
+    df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
 
     realizado_grouped = df_anos.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index()
     realizado_grouped = realizado_grouped.rename(columns={"Fat.Total": "Realizado"})
 
-    # Comparativo
     comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja Final"], how="outer").fillna(0)
-    comparativo = comparativo.merge(grupos, left_on="Loja Final", right_on="Loja", how="left")
-    comparativo.drop(columns=["Loja"], inplace=True)
-
     comparativo["% Atingido"] = comparativo["Realizado"] / comparativo["Meta"].replace(0, np.nan)
     comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
 
+    comparativo = comparativo.merge(df_empresa[["Loja", "Grupo"]], left_on="Loja Final", right_on="Loja", how="left")
     ordem_meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
     comparativo = comparativo.sort_values(["Ano", "Grupo", "Loja Final", "Mês"])
@@ -126,7 +117,7 @@ with aba1:
     )
 
 # ================================
-# Aba 2: Auditoria
+# Aba 2: Auditoria (placeholder)
 # ================================
 with aba2:
     st.info("em desenvolvimento.")
