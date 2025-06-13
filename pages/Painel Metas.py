@@ -57,13 +57,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Cabeçalho bonito
-st.markdown("""
-    <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
-        <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
-        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório Vendas Diarias</h1>
-    </div>
-""", unsafe_allow_html=True)
 
 # ================================
 # 3. Separação em ABAS
