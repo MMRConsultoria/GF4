@@ -78,43 +78,67 @@ aba1, aba2 = st.tabs([
 # Aba 1: Graficos Trimestrais
 # ================================
 with aba1:
-    #st.header("📊 Comparativo Metas vs Realizado")
+    st.subheader("📊 Comparativo Metas vs. Realizado por Loja (Fat.Total)")
 
-    # Carrega aba de metas
+    # 🔄 Carrega dados da aba "Metas"
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
 
-    # Aplica De Para Metas
-    df_depara = df_empresa[["Loja", "De Para Metas"]].dropna()
-    df_metas = df_metas.merge(df_depara, left_on="Loja", right_on="De Para Metas", how="left")
-    df_metas["Loja Final"] = df_metas["Loja_y"].fillna(df_metas["Loja_x"])
+    # 🧼 Normaliza valores monetários
+    def parse_valor(val):
+        if isinstance(val, str):
+            return float(val.replace("R$", "").replace(".", "").replace(",", ".").strip())
+        return float(val or 0)
 
-    # Agrupa metas
-    df_metas_grouped = df_metas.groupby(["Ano", "Mês", "Loja Final"])["Meta"].sum().reset_index()
+    df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
+    df_metas["Loja"] = df_metas["Loja"].str.strip()
 
-    # Agrupa realizado (substitua df_fat por seu DataFrame real de vendas)
-    df_realizado_grouped = df_fat_sistema_externo.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index()
+    # 🧭 Carrega De/Para de lojas
+    df_depara = df_empresa[["Loja", "De Para Metas"]].drop_duplicates()
+    df_depara.columns = ["LojaOriginal", "LojaFinal"]
 
-    # Aplica De Para também no realizado (se necessário)
-    df_realizado_grouped = df_realizado_grouped.merge(df_depara, left_on="Loja", right_on="Loja", how="left")
-    df_realizado_grouped["Loja Final"] = df_realizado_grouped["De Para Metas"].fillna(df_realizado_grouped["Loja"])
+    df_metas = df_metas.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
+    df_metas["Loja Final"] = df_metas["LojaFinal"].fillna(df_metas["Loja"])
 
-    df_realizado_grouped = df_realizado_grouped.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index()
+    # 🎯 Agrupa metas por loja/mês
+    metas_grouped = df_metas.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index()
+    metas_grouped = metas_grouped.rename(columns={"Fat.Total": "Meta"})
 
-    # Junta metas e realizado
-    df_comp = df_metas_grouped.merge(df_realizado_grouped, on=["Ano", "Mês", "Loja Final"], how="outer")
-    df_comp = df_comp.fillna(0)
-    df_comp["% Atingimento"] = np.where(
-        df_comp["Meta"] > 0,
-        df_comp["Fat.Total"] / df_comp["Meta"],
-        np.nan
-    )
+    # 🔍 Carrega realizado do painel de resultados (substitua se necessário)
+    # ➕ Aqui você precisa substituir pelo DataFrame real do seu painel, se não tiver `df_realizado` definido ainda
+    st.warning("⚠️ Atenção: substitua `df_realizado` pelo DataFrame real com os dados consolidados.")
+    df_realizado = pd.DataFrame()  # Placeholder
 
-    # Exibe tabela
-    st.dataframe(df_comp.style.format({
-        "Meta": "R$ {:,.2f}",
-        "Fat.Total": "R$ {:,.2f}",
-        "% Atingimento": "{:.2%}"
-    }))
+    if not df_realizado.empty:
+        df_realizado["Loja"] = df_realizado["Loja"].str.strip()
+        df_realizado = df_realizado.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
+        df_realizado["Loja Final"] = df_realizado["LojaFinal"].fillna(df_realizado["Loja"])
+        df_realizado["Fat.Total"] = df_realizado["Fat.Total"].apply(parse_valor)
+
+        realizado_grouped = df_realizado.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index()
+        realizado_grouped = realizado_grouped.rename(columns={"Fat.Total": "Realizado"})
+
+        # 🔗 Junta metas e realizado
+        comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja Final"], how="outer").fillna(0)
+        comparativo["% Atingido"] = comparativo["Realizado"] / comparativo["Meta"].replace(0, np.nan)
+        comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
+
+        # 📅 Ordena por Ano, Loja, Mês com ordem correta
+        ordem_meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+        comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
+        comparativo = comparativo.sort_values(["Ano", "Loja Final", "Mês"])
+
+        # 📊 Exibe na tela
+        st.dataframe(
+            comparativo.style.format({
+                "Meta": "R$ {:,.2f}",
+                "Realizado": "R$ {:,.2f}",
+                "Diferença": "R$ {:,.2f}",
+                "% Atingido": "{:.2%}"
+            }),
+            use_container_width=True
+        )
+    else:
+        st.error("❌ Dados de realizado (`df_realizado`) ainda não definidos.")
 
 # ================================
 # Aba 2: Relatorio Analitico
