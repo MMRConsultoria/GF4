@@ -626,9 +626,10 @@ with aba4:
                 df_resultado = df_resultado.reset_index(drop=True)
 
                 # ✅ Salvar no session_state para manter os dados após clique no botão
-                st.session_state.df_resultado = df_resultado        
+                st.session_state.df_resultado = df_resultado            
 
-                
+
+
                 # 🔹 Estilo linha: esconder texto de totais
                 def highlight_total_transparente(row):
                     for valor in row:
@@ -664,26 +665,29 @@ with aba4:
                     use_container_width=True,
                     height=600
                 )
-                # 📥 Botão de download do Excel simples
-                def to_excel_resultado(df):
-                    output = BytesIO()
-                    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                        df.to_excel(writer, index=False, sheet_name="Comparativo")
-                    output.seek(0)
-                    return output
                 
-                excel_bytes = to_excel_resultado(df_resultado)
-                
-                st.download_button(
-                    label="📥 Baixar Excel Simples",
-                    data=excel_bytes,
-                    file_name="comparativo_everest_externo.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
         else:
             st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
 
     except Exception as e:
         st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
+
+     # 📅 Botão de download fora do if botao_atualizar para manter na tela
+    if "df_resultado" in st.session_state:
+        def to_excel_resultado(df):
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+                df.to_excel(writer, index=False, sheet_name="Comparativo")
+            output.seek(0)
+            return output
+
+        excel_bytes = to_excel_resultado(st.session_state.df_resultado)
+
+        st.download_button(
+            label="📅 Baixar Excel Simples",
+            data=excel_bytes,
+            file_name="comparativo_everest_externo.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
                 
