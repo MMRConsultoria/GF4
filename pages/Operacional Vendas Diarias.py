@@ -184,7 +184,7 @@ with aba1:
             # =======================
             # 🔹 Relatório por Vendedor (CiSS)
             # =======================
-            elif "Relatório 100113" in abas:
+            elif "Relatório 100132" in abas:
                 df = pd.read_excel(xls, sheet_name="Relatório 100132")
                 df["Loja"] = df["Código - Nome Empresa"].astype(str).str.split("-", n=1).str[-1].str.strip().str.lower()
                 df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
