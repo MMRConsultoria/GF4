@@ -661,20 +661,10 @@ with aba4:
                     height=600
                 )
 
-           
-                # 📥 Botão de download do comparativo Everest vs Externo (Aba 4)
-                def to_excel_resultado(df):
-                    output = BytesIO()
-                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                        df.to_excel(writer, index=False, sheet_name='Comparativo')
-                    output.seek(0)
-                    return output
+        else:
+            st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
 
-                excel_comp_data = to_excel_resultado(df_resultado)
+    except Exception as e:
+        st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
 
-                st.download_button(
-                    label="📥 Baixar Comparativo em Excel",
-                    data=excel_comp_data,
-                    file_name="comparativo_everest_externo.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+                
