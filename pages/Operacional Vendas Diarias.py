@@ -660,7 +660,22 @@ with aba4:
                     use_container_width=True,
                     height=600
                 )
-
+                # 📥 Botão de download do Excel simples
+                def to_excel_resultado(df):
+                    output = BytesIO()
+                    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+                        df.to_excel(writer, index=False, sheet_name="Comparativo")
+                    output.seek(0)
+                    return output
+                
+                excel_bytes = to_excel_resultado(df_resultado)
+                
+                st.download_button(
+                    label="📥 Baixar Excel Simples",
+                    data=excel_bytes,
+                    file_name="comparativo_everest_externo.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
         else:
             st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
 
