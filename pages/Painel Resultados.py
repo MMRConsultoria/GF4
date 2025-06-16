@@ -1010,9 +1010,7 @@ tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns={
 })
 
 
-# ✅ Garante que "Total" continue após limpeza
-if "Total" in tabela_exportar.columns and "Total" not in tabela_exportar_sem_tipo.columns:
-    tabela_exportar_sem_tipo["Total"] = tabela_exportar["Total"]
+
 
 
 
@@ -1298,7 +1296,10 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     # 🔥 Determina a coluna de identificação (Loja ou Grupo)
     coluna_id = "Loja" if "Loja" in tabela_exportar_sem_tipo.columns else "Grupo"
 
-
+    colunas_corrigidas = [coluna_id, "Lojas"] + [
+        col for col in tabela_exportar_sem_tipo.columns
+        if col not in [coluna_id, "Total"]
+    ] + ["Total"]
 
     # ✅ Percentual por Tipo - com mesma lógica do Grupo
     coluna_acumulado_tipo = "Acumulado no Mês Tipo"
