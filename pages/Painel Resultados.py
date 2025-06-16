@@ -1009,6 +1009,13 @@ tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns={
     "Acumulado no Mês": "Acumulado no Mês (Com Gorjeta)"
 })
 
+
+# ✅ Garante que "Total" continue após limpeza
+if "Total" in tabela_exportar.columns and "Total" not in tabela_exportar_sem_tipo.columns:
+    tabela_exportar_sem_tipo["Total"] = tabela_exportar["Total"]
+
+
+
 # 🔍 Ordenação pela data mais recente
 colunas_data = [col for col in tabela_exportar_sem_tipo.columns if "/" in col]
 
