@@ -625,6 +625,10 @@ with aba4:
                 # 🔹 Resetar índice
                 df_resultado = df_resultado.reset_index(drop=True)
 
+                # ✅ Salvar no session_state para manter os dados após clique no botão
+                st.session_state.df_resultado = df_resultado        
+
+                
                 # 🔹 Estilo linha: esconder texto de totais
                 def highlight_total_transparente(row):
                     for valor in row:
