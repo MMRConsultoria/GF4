@@ -99,22 +99,22 @@ with aba1:
     df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
     df_metas["Loja"] = df_metas["Loja"].str.strip()
 
-    # ---- Normaliza textos nas duas tabelas ----
+    # ---- Normaliza textos ----
     df_metas["Loja_norm"] = df_metas["Loja"].apply(normalizar_texto)
     df_empresa["DePara_norm"] = df_empresa["De Para Metas"].apply(normalizar_texto)
 
-    # ---- Faz o De/Para usando a normalização ----
+    # ---- Merge com de/para com nomes normalizados ----
     df_metas = df_metas.merge(
-        df_empresa[["Loja", "De Para Metas", "DePara_norm"]],
+        df_empresa[["Loja", "DePara_norm"]].rename(columns={"Loja": "Loja_Padronizada"}),
         left_on="Loja_norm",
         right_on="DePara_norm",
         how="left"
     )
 
-    # Se encontrou correspondência, usa o nome padronizado da Tabela Empresa
-    df_metas["Loja Final"] = np.where(df_metas["Loja"].notna(), df_metas["Loja_y"], df_metas["Loja_x"])
+    # Se encontrou correspondência usa o nome oficial da Tabela Empresa, senão mantém nome original da Metas
+    df_metas["Loja Final"] = np.where(df_metas["Loja_Padronizada"].notna(), df_metas["Loja_Padronizada"], df_metas["Loja"])
 
-    df_metas.drop(columns=["Loja_x", "Loja_y", "De Para Metas", "Loja_norm", "DePara_norm"], inplace=True)
+    df_metas.drop(columns=["DePara_norm", "Loja_Padronizada", "Loja_norm"], inplace=True)
     df_metas.rename(columns={"Loja Final": "Loja"}, inplace=True)
 
     # ---- Carrega Realizado ----
