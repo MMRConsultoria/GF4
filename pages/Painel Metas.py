@@ -90,8 +90,6 @@ with aba1:
     df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
     df_anos.columns = df_anos.columns.str.strip()
     df_anos["Loja"] = df_anos["Loja"].str.strip()
-    df_anos = df_anos.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
-    df_anos["Loja Final"] = df_anos["LojaFinal"].fillna(df_anos["Loja"])
     df_anos["Mês"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).strftime("%b"))
     df_anos["Ano"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).year)
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
