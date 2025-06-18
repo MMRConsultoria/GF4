@@ -143,17 +143,24 @@ with aba1:
     df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)]
     df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)]
 
-    # 🔒 Finalmente: agrupamento super blindado simples e funcional:
+    # 🔧 Aqui está o ajuste fundamental:
+    # Antes do groupby, sempre forçamos o dtype correto:
 
-    if df_metas_filtrado.shape[0] == 0:
-        metas_grouped = pd.DataFrame(columns=["Ano", "Mês", "Loja", "Meta"])
-    else:
+    if not df_metas_filtrado.empty:
+        df_metas_filtrado["Ano"] = df_metas_filtrado["Ano"].astype(int)
+        df_metas_filtrado["Mês"] = df_metas_filtrado["Mês"].astype(str)
+        df_metas_filtrado["Loja"] = df_metas_filtrado["Loja"].astype(str)
         metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
-
-    if df_anos_filtrado.shape[0] == 0:
-        realizado_grouped = pd.DataFrame(columns=["Ano", "Mês", "Loja", "Realizado"])
     else:
+        metas_grouped = pd.DataFrame(columns=["Ano", "Mês", "Loja", "Meta"])
+
+    if not df_anos_filtrado.empty:
+        df_anos_filtrado["Ano"] = df_anos_filtrado["Ano"].astype(int)
+        df_anos_filtrado["Mês"] = df_anos_filtrado["Mês"].astype(str)
+        df_anos_filtrado["Loja"] = df_anos_filtrado["Loja"].astype(str)
         realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
+    else:
+        realizado_grouped = pd.DataFrame(columns=["Ano", "Mês", "Loja", "Realizado"])
 
     comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja"], how="outer").fillna(0)
     comparativo["% Atingido"] = comparativo["Realizado"] / comparativo["Meta"].replace(0, np.nan)
