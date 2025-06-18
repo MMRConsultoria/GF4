@@ -53,7 +53,6 @@ def parse_valor(val):
     except:
         return 0.0
 
-# ESSA É A CHAVE MÁGICA DEFINITIVA
 def flatten_cell(x):
     if isinstance(x, list):
         if len(x) == 1:
@@ -146,16 +145,18 @@ with aba1:
     df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)].copy()
     df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)].copy()
 
-    # 🔧 AQUI ENTRA A BLINDAGEM FINAL ESTRUTURAL
-
+    # 🔧 Blindagem estrutural definitiva
     for col in ["Ano", "Mês", "Loja"]:
         df_metas_filtrado[col] = df_metas_filtrado[col].apply(flatten_cell)
-        df_metas_filtrado[col] = pd.Series(list(df_metas_filtrado[col]))  # RECONSTRUÇÃO
-
+        df_metas_filtrado[col] = pd.Series(list(df_metas_filtrado[col]))
         df_anos_filtrado[col] = df_anos_filtrado[col].apply(flatten_cell)
-        df_anos_filtrado[col] = pd.Series(list(df_anos_filtrado[col]))  # RECONSTRUÇÃO
+        df_anos_filtrado[col] = pd.Series(list(df_anos_filtrado[col]))
 
-    # Ajustar os tipos 100% antes do groupby
+    # Reconstrução total do dataframe
+    df_metas_filtrado = pd.DataFrame(df_metas_filtrado.to_dict())
+    df_anos_filtrado = pd.DataFrame(df_anos_filtrado.to_dict())
+
+    # Ajustar tipos
     if not df_metas_filtrado.empty:
         df_metas_filtrado["Ano"] = pd.to_numeric(df_metas_filtrado["Ano"], errors='coerce').fillna(0).astype(int)
         df_metas_filtrado["Mês"] = df_metas_filtrado["Mês"].astype(str)
@@ -180,7 +181,6 @@ with aba1:
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
     comparativo = comparativo.sort_values(["Ano", "Loja", "Mês"])
 
-    # Exibição
     st.dataframe(
         comparativo.style.format({
             "Meta": "R$ {:,.2f}",
