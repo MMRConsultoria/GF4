@@ -75,7 +75,7 @@ def parse_valor(val):
 # Aba 1: Análise
 # ================================
 with aba1:
-    st.subheader("📊 Comparativo Metas vs. Realizado por Loja (Fat.Total)")
+    #st.subheader("📊 Comparativo Metas vs. Realizado por Loja (Fat.Total)")
 
     # --- Metas ---
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
