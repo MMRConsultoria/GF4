@@ -9,6 +9,8 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 from datetime import datetime
+import unicodedata
+import re
 
 # 🔒 Bloqueia o acesso caso o usuário não esteja logado
 if not st.session_state.get("acesso_liberado"):
@@ -24,14 +26,25 @@ gc = gspread.authorize(credentials)
 planilha_empresa = gc.open("Vendas diarias")
 
 # ================================
-# 2. Carrega a Tabela Empresa (base de De/Para)
+# 2. Carrega Tabela Empresa
 # ================================
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
 df_empresa["Loja"] = df_empresa["Loja"].str.strip()
 df_empresa["De Para Metas"] = df_empresa["De Para Metas"].str.strip()
 
 # ================================
-# 3. Estilo e layout
+# 3. Função auxiliar para normalizar textos
+# ================================
+def normalizar_texto(texto):
+    if pd.isna(texto):
+        return ''
+    texto = str(texto).strip().lower()
+    texto = unicodedata.normalize('NFKD', texto).encode('ASCII', 'ignore').decode('utf-8')
+    texto = re.sub(r'\s+', ' ', texto)
+    return texto
+
+# ================================
+# 4. Estilo e layout
 # ================================
 st.markdown("""
     <style>
@@ -59,9 +72,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ================================
-# 4. Abas
+# 5. Abas
 # ================================
-aba1, aba2 = st.tabs(["📈 Analise Metas", "📊 Auditoria Metas"])
+aba1, aba2 = st.tabs(["📈 Análise Metas", "📊 Auditoria Metas"])
 
 # ================================
 # Função auxiliar para tratar valores
@@ -86,38 +99,33 @@ with aba1:
     df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
     df_metas["Loja"] = df_metas["Loja"].str.strip()
 
-    # Aplica De/Para nas Metas
+    # ---- Normaliza textos nas duas tabelas ----
+    df_metas["Loja_norm"] = df_metas["Loja"].apply(normalizar_texto)
+    df_empresa["DePara_norm"] = df_empresa["De Para Metas"].apply(normalizar_texto)
+
+    # ---- Faz o De/Para usando a normalização ----
     df_metas = df_metas.merge(
-        df_empresa[["Loja", "De Para Metas"]],
-        left_on="Loja",
-        right_on="De Para Metas",
+        df_empresa[["Loja", "De Para Metas", "DePara_norm"]],
+        left_on="Loja_norm",
+        right_on="DePara_norm",
         how="left"
     )
-    # Se tiver correspondência, usa o nome padronizado. Se não, mantém o nome original da planilha Metas
-    df_metas["Loja Final"] = np.where(df_metas["Loja_y"].notna(), df_metas["Loja_y"], df_metas["Loja_x"])
-    df_metas.drop(columns=["Loja_x", "Loja_y", "De Para Metas"], inplace=True)
+
+    # Se encontrou correspondência, usa o nome padronizado da Tabela Empresa
+    df_metas["Loja Final"] = np.where(df_metas["Loja"].notna(), df_metas["Loja_y"], df_metas["Loja_x"])
+
+    df_metas.drop(columns=["Loja_x", "Loja_y", "De Para Metas", "Loja_norm", "DePara_norm"], inplace=True)
     df_metas.rename(columns={"Loja Final": "Loja"}, inplace=True)
 
-    # ---- Carrega Realizado (Fat Sistema Externo) ----
+    # ---- Carrega Realizado ----
     df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
     df_anos.columns = df_anos.columns.str.strip()
     df_anos["Loja"] = df_anos["Loja"].str.strip()
-
-    # Aplica De/Para também no realizado
-    df_anos = df_anos.merge(
-        df_empresa[["Loja", "De Para Metas"]],
-        left_on="Loja",
-        right_on="Loja",
-        how="left"
-    )
-    # Aqui como o Fat Sistema Externo já usa o nome correto, só confere se existe na Tabela Empresa
-    df_anos["Loja Final"] = np.where(df_anos["Loja"].notna(), df_anos["Loja"], df_anos["Loja"])
     df_anos["Mês"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).strftime("%b"))
     df_anos["Ano"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).year)
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
-    df_anos.drop(columns=["De Para Metas"], inplace=True)
 
-    # 🔢 Filtros
+    # 🔢 Filtros de período
     mes_atual = datetime.now().strftime("%b")
     ano_atual = datetime.now().year
 
@@ -130,9 +138,9 @@ with aba1:
     df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)]
     df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)]
 
-    # Agrupamentos
+    # Agrupamento
     metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
-    realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado", "Loja Final": "Loja"})
+    realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
 
     comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja"], how="outer").fillna(0)
     comparativo["% Atingido"] = comparativo["Realizado"] / comparativo["Meta"].replace(0, np.nan)
@@ -141,6 +149,7 @@ with aba1:
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
     comparativo = comparativo.sort_values(["Ano", "Loja", "Mês"])
 
+    # Exibição
     st.dataframe(
         comparativo.style.format({
             "Meta": "R$ {:,.2f}",
@@ -152,7 +161,7 @@ with aba1:
     )
 
 # ================================
-# Aba 2: Em desenvolvimento
+# Aba 2: Auditoria (em desenvolvimento)
 # ================================
 with aba2:
-    st.info("em desenvolvimento.")
+    st.info("Em desenvolvimento.")
