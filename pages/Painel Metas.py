@@ -143,30 +143,18 @@ with aba1:
     df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)]
     df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)]
 
-    # 🔒 BLINDAGEM NUCLEAR DO AGRUPAMENTO
+    # 🔒 Finalmente: agrupamento super blindado simples e funcional:
 
-    def is_safe_for_groupby(df, columns):
-        """Verifica se as colunas são 1D e escaláveis"""
-        if df.empty:
-            return False
-        try:
-            return df[columns].applymap(lambda x: not isinstance(x, list)).all().all()
-        except:
-            return False
-
-    # Metas agrupado
-    if is_safe_for_groupby(df_metas_filtrado, ["Ano", "Mês", "Loja"]):
-        metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
-    else:
+    if df_metas_filtrado.shape[0] == 0:
         metas_grouped = pd.DataFrame(columns=["Ano", "Mês", "Loja", "Meta"])
-
-    # Realizado agrupado
-    if is_safe_for_groupby(df_anos_filtrado, ["Ano", "Mês", "Loja"]):
-        realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
     else:
-        realizado_grouped = pd.DataFrame(columns=["Ano", "Mês", "Loja", "Realizado"])
+        metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
 
-    # Faz o comparativo
+    if df_anos_filtrado.shape[0] == 0:
+        realizado_grouped = pd.DataFrame(columns=["Ano", "Mês", "Loja", "Realizado"])
+    else:
+        realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
+
     comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja"], how="outer").fillna(0)
     comparativo["% Atingido"] = comparativo["Realizado"] / comparativo["Meta"].replace(0, np.nan)
     comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
