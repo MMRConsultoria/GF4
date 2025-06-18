@@ -53,13 +53,6 @@ def parse_valor(val):
     except:
         return 0.0
 
-def flatten_cell(x):
-    if isinstance(x, list):
-        if len(x) == 1:
-            return x[0]
-        return str(x)
-    return x
-
 # ================================
 # 4. Estilo e layout
 # ================================
@@ -120,7 +113,6 @@ with aba1:
     df_metas.rename(columns={"Loja Final": "Loja"}, inplace=True)
 
     # Ajusta Ano e Mês
-    df_metas["Ano"] = df_metas["Ano"].astype(str).str.extract(r'(\d{4})')
     df_metas["Ano"] = pd.to_numeric(df_metas["Ano"], errors='coerce').fillna(0).astype(int)
     df_metas["Mês"] = df_metas["Mês"].astype(str).str.strip().str.capitalize()
 
@@ -141,46 +133,25 @@ with aba1:
     ano_selecionado = st.selectbox("Selecione o Ano:", anos_disponiveis, index=anos_disponiveis.index(ano_atual) if ano_atual in anos_disponiveis else 0)
     mes_selecionado = st.selectbox("Selecione o Mês:", ordem_meses, index=ordem_meses.index(mes_atual) if mes_atual in ordem_meses else 0)
 
-    # Filtra com cópia (isso é CRUCIAL!)
-    df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)].copy()
-    df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)].copy()
+    # Filtra já no início os dados de Metas e Realizado para o período
+    df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)]
+    df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)]
 
-    # 🔧 Blindagem estrutural definitiva
-    for col in ["Ano", "Mês", "Loja"]:
-        df_metas_filtrado[col] = df_metas_filtrado[col].apply(flatten_cell)
-        df_metas_filtrado[col] = pd.Series(list(df_metas_filtrado[col]))
-        df_anos_filtrado[col] = df_anos_filtrado[col].apply(flatten_cell)
-        df_anos_filtrado[col] = pd.Series(list(df_anos_filtrado[col]))
+    # Agrupa separado as metas e o realizado
+    metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja"], dropna=False)["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
+    realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja"], dropna=False)["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
 
-    # Reconstrução total do dataframe
-    df_metas_filtrado = pd.DataFrame(df_metas_filtrado.to_dict())
-    df_anos_filtrado = pd.DataFrame(df_anos_filtrado.to_dict())
-
-    # Ajustar tipos
-    if not df_metas_filtrado.empty:
-        df_metas_filtrado["Ano"] = pd.to_numeric(df_metas_filtrado["Ano"], errors='coerce').fillna(0).astype(int)
-        df_metas_filtrado["Mês"] = df_metas_filtrado["Mês"].astype(str)
-        df_metas_filtrado["Loja"] = df_metas_filtrado["Loja"].astype(str)
-        metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
-    else:
-        metas_grouped = pd.DataFrame(columns=["Ano", "Mês", "Loja", "Meta"])
-
-    if not df_anos_filtrado.empty:
-        df_anos_filtrado["Ano"] = pd.to_numeric(df_anos_filtrado["Ano"], errors='coerce').fillna(0).astype(int)
-        df_anos_filtrado["Mês"] = df_anos_filtrado["Mês"].astype(str)
-        df_anos_filtrado["Loja"] = df_anos_filtrado["Loja"].astype(str)
-        realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
-    else:
-        realizado_grouped = pd.DataFrame(columns=["Ano", "Mês", "Loja", "Realizado"])
-
-    # Comparativo final
+    # Faz o merge correto loja por loja (left outer para garantir todas as lojas de metas e realizado)
     comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja"], how="outer").fillna(0)
-    comparativo["% Atingido"] = comparativo["Realizado"] / comparativo["Meta"].replace(0, np.nan)
+
+    # Calcula % atingido e diferença
+    comparativo["% Atingido"] = np.where(comparativo["Meta"] == 0, np.nan, comparativo["Realizado"] / comparativo["Meta"])
     comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
 
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
-    comparativo = comparativo.sort_values(["Ano", "Loja", "Mês"])
+    comparativo = comparativo.sort_values(["Loja"])
 
+    # Exibição
     st.dataframe(
         comparativo.style.format({
             "Meta": "R$ {:,.2f}",
