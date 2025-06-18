@@ -10,6 +10,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import json
 from datetime import datetime
 
+# 🔒 Bloqueia o acesso caso o usuário não esteja logado
 if not st.session_state.get("acesso_liberado"):
     st.stop()
 
@@ -24,7 +25,7 @@ planilha_empresa = gc.open("Vendas diarias")
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
 
 # ================================
-# 2. Estilo e layout
+# 2. Estilo e layout (opcional - seu layout original)
 # ================================
 st.markdown("""
     <style>
@@ -52,7 +53,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ================================
-# Função auxiliar para converter valores
+# Função auxiliar para tratar valores
 # ================================
 def parse_valor(val):
     if pd.isna(val):
@@ -64,7 +65,7 @@ def parse_valor(val):
     except:
         return 0.0
 
-# 🚩 ESSA É A FUNÇÃO BLINDAGEM FINAL
+# Função blindagem para pandas
 def garantir_escalar(x):
     if isinstance(x, list):
         if len(x) == 1:
@@ -82,23 +83,24 @@ aba1, aba2 = st.tabs(["📈 Analise Metas", "📊 Auditoria Metas"])
 # ================================
 with aba1:
 
-    # --- Metas ---
+    # --- METAS ---
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
     df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
     df_metas["Loja"] = df_metas["Loja"].str.strip()
+    df_metas["Ano"] = pd.to_numeric(df_metas["Ano"], errors='coerce').fillna(0).astype(int)
+    df_metas["Mês"] = df_metas["Mês"].astype(str).str.strip().str.capitalize()
 
+    # De-para somente em Metas
     df_depara = df_empresa[["Loja", "De Para Metas"]].drop_duplicates()
     df_depara.columns = ["LojaOriginal", "LojaFinal"]
 
     df_metas = df_metas.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
     df_metas["Loja Final"] = df_metas["LojaFinal"].fillna(df_metas["Loja"])
 
-    # --- Realizado ---
+    # --- REALIZADO (sem de-para) ---
     df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
     df_anos.columns = df_anos.columns.str.strip()
     df_anos["Loja"] = df_anos["Loja"].str.strip()
-    df_anos = df_anos.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
-    df_anos["Loja Final"] = df_anos["LojaFinal"].fillna(df_anos["Loja"])
     df_anos["Mês"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).strftime("%b"))
     df_anos["Ano"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).year)
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
@@ -106,33 +108,54 @@ with aba1:
     # 🔢 Ajuste dos filtros
     mes_atual = datetime.now().strftime("%b")
     ano_atual = datetime.now().year
-
     ordem_meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
     anos_disponiveis = sorted(df_anos["Ano"].unique())
-    ano_selecionado = st.selectbox("Selecione o Ano:", anos_disponiveis, index=anos_disponiveis.index(ano_atual) if ano_atual in anos_disponiveis else 0)
-    mes_selecionado = st.selectbox("Selecione o Mês:", ordem_meses, index=ordem_meses.index(mes_atual) if mes_atual in ordem_meses else 0)
+    ano_selecionado = st.selectbox("Selecione o Ano:", anos_disponiveis, index=anos_disponiveis.index(ano_atual))
+    mes_selecionado = st.selectbox("Selecione o Mês:", ordem_meses, index=ordem_meses.index(mes_atual))
 
-    df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)].copy()
     df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)].copy()
+    df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)].copy()
 
     # 🚩 BLINDAGEM antes do groupby:
     for col in ["Ano", "Mês", "Loja Final"]:
         df_metas_filtrado[col] = df_metas_filtrado[col].apply(garantir_escalar)
+    for col in ["Ano", "Mês", "Loja"]:
         df_anos_filtrado[col] = df_anos_filtrado[col].apply(garantir_escalar)
 
+    # Agrupamentos
     metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
-    realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
+    realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
 
-    comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja Final"], how="outer").fillna(0)
+    # Comparativo - cuidado agora: como os nomes são diferentes nas duas bases, precisamos juntar por outer merge diferente:
+    comparativo = pd.merge(metas_grouped, realizado_grouped, left_on=["Ano", "Mês", "Loja Final"], right_on=["Ano", "Mês", "Loja"], how="outer").fillna(0)
+
     comparativo["% Atingido"] = np.where(comparativo["Meta"] == 0, np.nan, comparativo["Realizado"] / comparativo["Meta"])
     comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
 
+    # Calcula o TOTAL GERAL
+    total_meta = comparativo["Meta"].sum()
+    total_realizado = comparativo["Realizado"].sum()
+    total_diferenca = comparativo["Diferença"].sum()
+
+    linha_total = pd.DataFrame({
+        "Ano": [ano_selecionado],
+        "Mês": [mes_selecionado],
+        "Loja Final": ["TOTAL GERAL"],
+        "Loja": [""],
+        "Meta": [total_meta],
+        "Realizado": [total_realizado],
+        "Diferença": [total_diferenca],
+        "% Atingido": [np.nan]
+    })
+
+    comparativo = pd.concat([linha_total, comparativo], ignore_index=True)
+
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
-    comparativo = comparativo.sort_values(["Ano", "Loja Final", "Mês"])
+    comparativo = comparativo.sort_values(["Loja Final"]).reset_index(drop=True)
 
     st.dataframe(
-        comparativo.style.format({
+        comparativo[["Ano", "Mês", "Loja Final", "Meta", "Realizado", "Diferença", "% Atingido"]].style.format({
             "Meta": "R$ {:,.2f}",
             "Realizado": "R$ {:,.2f}",
             "Diferença": "R$ {:,.2f}",
@@ -140,3 +163,9 @@ with aba1:
         }),
         use_container_width=True
     )
+
+# ================================
+# Aba 2 ainda em desenvolvimento
+# ================================
+with aba2:
+    st.info("Em desenvolvimento.")
