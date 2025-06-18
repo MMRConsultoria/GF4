@@ -12,7 +12,7 @@ from datetime import datetime
 import unicodedata
 import re
 
-# 🔒 Bloqueia o acesso caso o usuário não esteja logado
+# 🔒 Controle de acesso
 if not st.session_state.get("acesso_liberado"):
     st.stop()
 
@@ -46,7 +46,6 @@ def parse_valor(val):
     except:
         return 0.0
 
-# ESSA FUNÇÃO É A CHAVE FINAL
 def garantir_escalar(x):
     if isinstance(x, list):
         if len(x) == 1:
@@ -72,7 +71,7 @@ df_metas["Loja_norm"] = df_metas["Loja"].apply(normalizar_texto)
 df_metas["Ano"] = pd.to_numeric(df_metas["Ano"], errors='coerce').fillna(0).astype(int)
 df_metas["Mês"] = df_metas["Mês"].astype(str).str.strip().str.capitalize()
 
-# Merge com de/para
+# Merge depara
 df_metas = df_metas.merge(
     df_empresa[["Loja", "Loja_norm"]].rename(columns={"Loja": "Loja_Padronizada"}),
     on="Loja_norm", how="left"
@@ -92,7 +91,7 @@ df_realizado["Ano"] = df_realizado["Data"].apply(lambda x: pd.to_datetime(x).yea
 df_realizado["Fat.Total"] = df_realizado["Fat.Total"].apply(parse_valor)
 
 # ================================
-# Início da tela
+# Interface
 # ================================
 mes_atual = datetime.now().strftime("%b")
 ano_atual = datetime.now().year
@@ -102,23 +101,21 @@ anos_disponiveis = sorted(df_realizado["Ano"].unique())
 aba1, aba2 = st.tabs(["📈 Análise Metas", "📊 Auditoria Metas"])
 
 with aba1:
-    ano_selecionado = st.selectbox("Selecione o Ano:", anos_disponiveis, index=anos_disponiveis.index(ano_atual) if ano_atual in anos_disponiveis else 0)
-    mes_selecionado = st.selectbox("Selecione o Mês:", ordem_meses, index=ordem_meses.index(mes_atual) if mes_atual in ordem_meses else 0)
+    ano_selecionado = st.selectbox("Ano:", anos_disponiveis, index=anos_disponiveis.index(ano_atual))
+    mes_selecionado = st.selectbox("Mês:", ordem_meses, index=ordem_meses.index(mes_atual))
 
-    # Filtra já no início
     df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)].copy()
     df_realizado_filtrado = df_realizado[(df_realizado["Ano"] == ano_selecionado) & (df_realizado["Mês"] == mes_selecionado)].copy()
 
-    # 🚩 AQUI GARANTIMOS ESCALAR PURO ANTES DO GROUPBY:
+    # 🚩 Blindagem definitiva:
     for col in ["Ano", "Mês", "Loja"]:
         df_metas_filtrado[col] = df_metas_filtrado[col].apply(garantir_escalar)
         df_realizado_filtrado[col] = df_realizado_filtrado[col].apply(garantir_escalar)
 
-    # Agrupamento
+    # Agrupamentos
     metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
     realizado_grouped = df_realizado_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
 
-    # Merge final loja por loja
     comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja"], how="outer").fillna(0)
 
     comparativo["% Atingido"] = np.where(comparativo["Meta"] == 0, np.nan, comparativo["Realizado"] / comparativo["Meta"])
@@ -127,7 +124,6 @@ with aba1:
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
     comparativo = comparativo.sort_values(["Loja"])
 
-    # Exibição
     st.dataframe(
         comparativo.style.format({
             "Meta": "R$ {:,.2f}",
