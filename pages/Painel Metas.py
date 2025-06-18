@@ -33,7 +33,7 @@ df_empresa["Loja"] = df_empresa["Loja"].str.strip()
 df_empresa["De Para Metas"] = df_empresa["De Para Metas"].str.strip()
 
 # ================================
-# 3. Função auxiliar para normalizar textos
+# 3. Funções auxiliares
 # ================================
 def normalizar_texto(texto):
     if pd.isna(texto):
@@ -43,13 +43,23 @@ def normalizar_texto(texto):
     texto = re.sub(r'\s+', ' ', texto)
     return texto
 
-# ================================
-# Função para forçar valores escalares antes do agrupamento
-# ================================
-def forcar_escalar(val):
-    if isinstance(val, (list, dict, tuple)):
-        return str(val)
-    return val
+def parse_valor(val):
+    if pd.isna(val):
+        return 0.0
+    if isinstance(val, (int, float)):
+        return float(val)
+    try:
+        return float(str(val).replace("R$", "").replace(".", "").replace(",", ".").strip())
+    except:
+        return 0.0
+
+# ⚠ ESSA É A CHAVE MÁGICA!
+def flatten_cell(x):
+    if isinstance(x, list):
+        if len(x) == 1:
+            return x[0]
+        return str(x)
+    return x
 
 # ================================
 # 4. Estilo e layout
@@ -85,33 +95,20 @@ st.markdown("""
 aba1, aba2 = st.tabs(["📈 Análise Metas", "📊 Auditoria Metas"])
 
 # ================================
-# Função auxiliar para tratar valores numéricos
-# ================================
-def parse_valor(val):
-    if pd.isna(val):
-        return 0.0
-    if isinstance(val, (int, float)):
-        return float(val)
-    try:
-        return float(str(val).replace("R$", "").replace(".", "").replace(",", ".").strip())
-    except:
-        return 0.0
-
-# ================================
 # Aba 1: Análise Metas
 # ================================
 with aba1:
 
-    # ---- Carrega Metas ----
+    # --- Carrega Metas ---
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
     df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
     df_metas["Loja"] = df_metas["Loja"].str.strip()
 
-    # ---- Normaliza textos ----
+    # --- Normaliza textos ---
     df_metas["Loja_norm"] = df_metas["Loja"].apply(normalizar_texto)
     df_empresa["DePara_norm"] = df_empresa["De Para Metas"].apply(normalizar_texto)
 
-    # ---- Merge com de/para com nomes normalizados ----
+    # --- Merge com de/para ---
     df_metas = df_metas.merge(
         df_empresa[["Loja", "DePara_norm"]].rename(columns={"Loja": "Loja_Padronizada"}),
         left_on="Loja_norm",
@@ -123,12 +120,12 @@ with aba1:
     df_metas.drop(columns=["DePara_norm", "Loja_Padronizada", "Loja_norm"], inplace=True)
     df_metas.rename(columns={"Loja Final": "Loja"}, inplace=True)
 
-    # Blindagem de Ano e Mês
+    # Ajusta Ano e Mês
     df_metas["Ano"] = df_metas["Ano"].astype(str).str.extract(r'(\d{4})')
     df_metas["Ano"] = pd.to_numeric(df_metas["Ano"], errors='coerce').fillna(0).astype(int)
     df_metas["Mês"] = df_metas["Mês"].astype(str).str.strip().str.capitalize()
 
-    # ---- Carrega Realizado ----
+    # --- Carrega Realizado ---
     df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
     df_anos.columns = df_anos.columns.str.strip()
     df_anos["Loja"] = df_anos["Loja"].str.strip()
@@ -136,7 +133,7 @@ with aba1:
     df_anos["Ano"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).year)
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
 
-    # Filtros de período
+    # Filtros
     mes_atual = datetime.now().strftime("%b")
     ano_atual = datetime.now().year
     ordem_meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
@@ -145,29 +142,34 @@ with aba1:
     ano_selecionado = st.selectbox("Selecione o Ano:", anos_disponiveis, index=anos_disponiveis.index(ano_atual) if ano_atual in anos_disponiveis else 0)
     mes_selecionado = st.selectbox("Selecione o Mês:", ordem_meses, index=ordem_meses.index(mes_atual) if mes_atual in ordem_meses else 0)
 
+    # Filtra com cópia (isso é CRUCIAL!)
     df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)].copy()
     df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)].copy()
 
-    # Aplicar a blindagem final com cópia e forcar_escalar:
+    # 🔧 Aplicar o flatten_cell antes do groupby
 
+    for col in ["Ano", "Mês", "Loja"]:
+        df_metas_filtrado[col] = df_metas_filtrado[col].apply(flatten_cell)
+        df_anos_filtrado[col] = df_anos_filtrado[col].apply(flatten_cell)
+
+    # Ajustar os tipos 100% antes do groupby
     if not df_metas_filtrado.empty:
-        df_metas_filtrado["Ano"] = df_metas_filtrado["Ano"].apply(forcar_escalar).astype(int)
-        df_metas_filtrado["Mês"] = df_metas_filtrado["Mês"].apply(forcar_escalar).astype(str)
-        df_metas_filtrado["Loja"] = df_metas_filtrado["Loja"].apply(forcar_escalar).astype(str)
-
+        df_metas_filtrado["Ano"] = pd.to_numeric(df_metas_filtrado["Ano"], errors='coerce').fillna(0).astype(int)
+        df_metas_filtrado["Mês"] = df_metas_filtrado["Mês"].astype(str)
+        df_metas_filtrado["Loja"] = df_metas_filtrado["Loja"].astype(str)
         metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
     else:
         metas_grouped = pd.DataFrame(columns=["Ano", "Mês", "Loja", "Meta"])
 
     if not df_anos_filtrado.empty:
-        df_anos_filtrado["Ano"] = df_anos_filtrado["Ano"].apply(forcar_escalar).astype(int)
-        df_anos_filtrado["Mês"] = df_anos_filtrado["Mês"].apply(forcar_escalar).astype(str)
-        df_anos_filtrado["Loja"] = df_anos_filtrado["Loja"].apply(forcar_escalar).astype(str)
-
+        df_anos_filtrado["Ano"] = pd.to_numeric(df_anos_filtrado["Ano"], errors='coerce').fillna(0).astype(int)
+        df_anos_filtrado["Mês"] = df_anos_filtrado["Mês"].astype(str)
+        df_anos_filtrado["Loja"] = df_anos_filtrado["Loja"].astype(str)
         realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
     else:
         realizado_grouped = pd.DataFrame(columns=["Ano", "Mês", "Loja", "Realizado"])
 
+    # Comparativo final
     comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja"], how="outer").fillna(0)
     comparativo["% Atingido"] = comparativo["Realizado"] / comparativo["Meta"].replace(0, np.nan)
     comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
@@ -186,8 +188,6 @@ with aba1:
         use_container_width=True
     )
 
-# ================================
-# Aba 2: Auditoria (em desenvolvimento)
-# ================================
+# Aba 2
 with aba2:
     st.info("Em desenvolvimento.")
