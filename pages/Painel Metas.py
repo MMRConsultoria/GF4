@@ -1,4 +1,5 @@
 # pages/Painel Metas.py
+
 import streamlit as st
 st.set_page_config(page_title="Vendas Diarias", layout="wide")
 
@@ -9,7 +10,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 import json
 from datetime import datetime
 
-# 🔒 Bloqueia o acesso caso o usuário não esteja logado
 if not st.session_state.get("acesso_liberado"):
     st.stop()
 
@@ -52,12 +52,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ================================
-# 3. Abas
-# ================================
-aba1, aba2 = st.tabs(["📈 Analise Metas", "📊 Auditoria Metas"])
-
-# ================================
-# Funções auxiliares
+# Função auxiliar para converter valores
 # ================================
 def parse_valor(val):
     if pd.isna(val):
@@ -69,11 +64,23 @@ def parse_valor(val):
     except:
         return 0.0
 
+# 🚩 ESSA É A FUNÇÃO BLINDAGEM FINAL
+def garantir_escalar(x):
+    if isinstance(x, list):
+        if len(x) == 1:
+            return x[0]
+        return str(x)
+    return x
+
+# ================================
+# Abas
+# ================================
+aba1, aba2 = st.tabs(["📈 Analise Metas", "📊 Auditoria Metas"])
+
 # ================================
 # Aba 1: Análise
 # ================================
 with aba1:
-   
 
     # --- Metas ---
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
@@ -90,6 +97,8 @@ with aba1:
     df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
     df_anos.columns = df_anos.columns.str.strip()
     df_anos["Loja"] = df_anos["Loja"].str.strip()
+    df_anos = df_anos.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
+    df_anos["Loja Final"] = df_anos["LojaFinal"].fillna(df_anos["Loja"])
     df_anos["Mês"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).strftime("%b"))
     df_anos["Ano"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).year)
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
@@ -104,46 +113,24 @@ with aba1:
     ano_selecionado = st.selectbox("Selecione o Ano:", anos_disponiveis, index=anos_disponiveis.index(ano_atual) if ano_atual in anos_disponiveis else 0)
     mes_selecionado = st.selectbox("Selecione o Mês:", ordem_meses, index=ordem_meses.index(mes_atual) if mes_atual in ordem_meses else 0)
 
-    df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)]
-    df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)]
+    df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)].copy()
+    df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)].copy()
 
-    metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index()
-    metas_grouped = metas_grouped.rename(columns={"Fat.Total": "Meta"})
+    # 🚩 BLINDAGEM antes do groupby:
+    for col in ["Ano", "Mês", "Loja Final"]:
+        df_metas_filtrado[col] = df_metas_filtrado[col].apply(garantir_escalar)
+        df_anos_filtrado[col] = df_anos_filtrado[col].apply(garantir_escalar)
 
-    realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index()
-    realizado_grouped = realizado_grouped.rename(columns={"Fat.Total": "Realizado"})
+    metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
+    realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
 
     comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja Final"], how="outer").fillna(0)
-    comparativo["% Atingido"] = comparativo["Realizado"] / comparativo["Meta"].replace(0, np.nan)
+    comparativo["% Atingido"] = np.where(comparativo["Meta"] == 0, np.nan, comparativo["Realizado"] / comparativo["Meta"])
     comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
 
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
     comparativo = comparativo.sort_values(["Ano", "Loja Final", "Mês"])
 
-    # Calcula somatórios individuais
-    total_meta = comparativo["Meta"].sum()
-    total_realizado = comparativo["Realizado"].sum()
-    total_diferenca = comparativo["Diferença"].sum()
-    
-    # Cria linha total geral
-    linha_total = pd.DataFrame({
-        "Ano": [ano_selecionado],
-        "Mês": [mes_selecionado],
-        "Loja Final": ["TOTAL GERAL"],
-        "Meta": [total_meta],
-        "Realizado": [total_realizado],
-        "Diferença": [total_diferenca],
-        "% Atingido": [np.nan]  # % não é somado
-    })
-    
-    # Insere linha total no topo
-    comparativo = pd.concat([linha_total, comparativo], ignore_index=True)
-
-
-
-
-
-    
     st.dataframe(
         comparativo.style.format({
             "Meta": "R$ {:,.2f}",
