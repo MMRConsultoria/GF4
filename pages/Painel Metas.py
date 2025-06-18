@@ -143,16 +143,25 @@ with aba1:
     df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)]
     df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)]
 
-    # 🔒 Blindagem brutal no agrupamento
+    # 🔒 BLINDAGEM NUCLEAR DO AGRUPAMENTO
+
+    def is_safe_for_groupby(df, columns):
+        """Verifica se as colunas são 1D e escaláveis"""
+        if df.empty:
+            return False
+        try:
+            return df[columns].applymap(lambda x: not isinstance(x, list)).all().all()
+        except:
+            return False
 
     # Metas agrupado
-    if not df_metas_filtrado.empty and all(col in df_metas_filtrado.columns for col in ["Ano", "Mês", "Loja", "Fat.Total"]):
+    if is_safe_for_groupby(df_metas_filtrado, ["Ano", "Mês", "Loja"]):
         metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
     else:
         metas_grouped = pd.DataFrame(columns=["Ano", "Mês", "Loja", "Meta"])
 
     # Realizado agrupado
-    if not df_anos_filtrado.empty and all(col in df_anos_filtrado.columns for col in ["Ano", "Mês", "Loja", "Fat.Total"]):
+    if is_safe_for_groupby(df_anos_filtrado, ["Ano", "Mês", "Loja"]):
         realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
     else:
         realizado_grouped = pd.DataFrame(columns=["Ano", "Mês", "Loja", "Realizado"])
