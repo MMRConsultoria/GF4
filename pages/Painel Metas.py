@@ -117,6 +117,10 @@ with aba1:
     df_metas.drop(columns=["DePara_norm", "Loja_Padronizada", "Loja_norm"], inplace=True)
     df_metas.rename(columns={"Loja Final": "Loja"}, inplace=True)
 
+    # Ajusta as colunas de Ano e Mês (garante consistência)
+    df_metas["Mês"] = df_metas["Mês"].str.strip()
+    df_metas["Ano"] = pd.to_numeric(df_metas["Ano"], errors='coerce').fillna(0).astype(int)
+
     # ---- Carrega Realizado ----
     df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
     df_anos.columns = df_anos.columns.str.strip()
