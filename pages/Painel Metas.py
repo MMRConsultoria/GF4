@@ -122,6 +122,30 @@ with aba1:
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
     comparativo = comparativo.sort_values(["Ano", "Loja Final", "Mês"])
 
+    # Calcula somatórios individuais
+    total_meta = comparativo["Meta"].sum()
+    total_realizado = comparativo["Realizado"].sum()
+    total_diferenca = comparativo["Diferença"].sum()
+    
+    # Cria linha total geral
+    linha_total = pd.DataFrame({
+        "Ano": [ano_selecionado],
+        "Mês": [mes_selecionado],
+        "Loja Final": ["TOTAL GERAL"],
+        "Meta": [total_meta],
+        "Realizado": [total_realizado],
+        "Diferença": [total_diferenca],
+        "% Atingido": [np.nan]  # % não é somado
+    })
+    
+    # Insere linha total no topo
+    comparativo = pd.concat([linha_total, comparativo], ignore_index=True)
+
+
+
+
+
+    
     st.dataframe(
         comparativo.style.format({
             "Meta": "R$ {:,.2f}",
