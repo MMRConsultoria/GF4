@@ -117,7 +117,7 @@ with aba1:
     df_metas.drop(columns=["DePara_norm", "Loja_Padronizada", "Loja_norm"], inplace=True)
     df_metas.rename(columns={"Loja Final": "Loja"}, inplace=True)
 
-    # 🔧 Blindagem final do Ano e Mês:
+    # 🔧 Blindagem de Ano e Mês
     df_metas["Ano"] = df_metas["Ano"].astype(str).str.extract(r'(\d{4})')
     df_metas["Ano"] = pd.to_numeric(df_metas["Ano"], errors='coerce').fillna(0).astype(int)
     df_metas["Mês"] = df_metas["Mês"].astype(str).str.strip().str.capitalize()
@@ -143,17 +143,21 @@ with aba1:
     df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)]
     df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)]
 
-    # Agrupamentos blindados
-    if not df_metas_filtrado.empty:
+    # 🔒 Blindagem brutal no agrupamento
+
+    # Metas agrupado
+    if not df_metas_filtrado.empty and all(col in df_metas_filtrado.columns for col in ["Ano", "Mês", "Loja", "Fat.Total"]):
         metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
     else:
         metas_grouped = pd.DataFrame(columns=["Ano", "Mês", "Loja", "Meta"])
 
-    if not df_anos_filtrado.empty:
+    # Realizado agrupado
+    if not df_anos_filtrado.empty and all(col in df_anos_filtrado.columns for col in ["Ano", "Mês", "Loja", "Fat.Total"]):
         realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
     else:
         realizado_grouped = pd.DataFrame(columns=["Ano", "Mês", "Loja", "Realizado"])
 
+    # Faz o comparativo
     comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja"], how="outer").fillna(0)
     comparativo["% Atingido"] = comparativo["Realizado"] / comparativo["Meta"].replace(0, np.nan)
     comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
