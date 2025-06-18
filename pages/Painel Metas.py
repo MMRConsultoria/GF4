@@ -44,13 +44,12 @@ def normalizar_texto(texto):
     return texto
 
 # ================================
-# Função para garantir valores escalares nas colunas de agrupamento
+# Função para forçar valores escalares antes do agrupamento
 # ================================
 def forcar_escalar(val):
     if isinstance(val, (list, dict, tuple)):
         return str(val)
-    else:
-        return val
+    return val
 
 # ================================
 # 4. Estilo e layout
@@ -146,10 +145,10 @@ with aba1:
     ano_selecionado = st.selectbox("Selecione o Ano:", anos_disponiveis, index=anos_disponiveis.index(ano_atual) if ano_atual in anos_disponiveis else 0)
     mes_selecionado = st.selectbox("Selecione o Mês:", ordem_meses, index=ordem_meses.index(mes_atual) if mes_atual in ordem_meses else 0)
 
-    df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)]
-    df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)]
+    df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)].copy()
+    df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)].copy()
 
-    # Aplicar a blindagem com forcar_escalar antes do groupby:
+    # Aplicar a blindagem final com cópia e forcar_escalar:
 
     if not df_metas_filtrado.empty:
         df_metas_filtrado["Ano"] = df_metas_filtrado["Ano"].apply(forcar_escalar).astype(int)
