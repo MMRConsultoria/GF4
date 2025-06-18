@@ -102,6 +102,29 @@ with aba1:
     realizado_grouped = df_anos.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index()
     realizado_grouped = realizado_grouped.rename(columns={"Fat.Total": "Realizado"})
 
+
+    # ==== FILTROS DE PERÍODO ====
+    anos_disponiveis = sorted(df_anos["Ano"].unique())
+    meses_disponiveis = ordem_meses
+    
+    ano_selecionado = st.selectbox("Selecione o Ano:", anos_disponiveis, index=len(anos_disponiveis)-1)
+    mes_selecionado = st.selectbox("Selecione o Mês:", meses_disponiveis)
+    
+    # Aplica o filtro no dataframe de realizado
+    df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)]
+    
+    # Agora refaz o agrupamento com o filtro aplicado
+    realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index()
+    realizado_grouped = realizado_grouped.rename(columns={"Fat.Total": "Realizado"})
+
+
+
+
+
+
+
+
+    
     # --- Comparativo ---
     comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja Final"], how="outer").fillna(0)
     comparativo["% Atingido"] = comparativo["Realizado"] / comparativo["Meta"].replace(0, np.nan)
