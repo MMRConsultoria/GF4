@@ -85,7 +85,12 @@ with aba1:
     # --- Metas ---
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
     df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
-    df_metas["Loja"] = df_metas["Loja"].str.strip()
+
+    # Ajuste para pegar o nome correto da coluna de loja
+    df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip()
+
+    # Remove linhas onde Loja está vazia (devido à fórmula retornar "")
+    df_metas = df_metas[df_metas["Loja"] != ""]
 
     df_depara = df_empresa[["Loja", "De Para Metas"]].drop_duplicates()
     df_depara.columns = ["LojaOriginal", "LojaFinal"]
@@ -103,7 +108,7 @@ with aba1:
     df_anos["Ano"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).year)
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
 
-    # 🔢 Ajuste dos filtros
+    # 🔣 Ajuste dos filtros
     mes_atual = datetime.now().strftime("%b")
     ano_atual = datetime.now().year
 
