@@ -159,7 +159,28 @@ with aba1:
         "Diferença": [total_diferenca]
     })
 
-    comparativo_final = pd.concat([linha_total, comparativo], ignore_index=True)
+    # Calcular subtotais por grupo
+    subtotais = []
+    for grupo, dados in comparativo.groupby("Grupo"):
+        soma_meta = dados["Meta"].sum()
+        soma_realizado = dados["Realizado"].sum()
+        soma_diferenca = dados["Diferença"].sum()
+        perc_atingido = soma_realizado / soma_meta if soma_meta != 0 else 0
+        perc_falta = max(0, 1 - perc_atingido)
+        linha_subtotal = pd.DataFrame({
+            "Ano": [""],
+            "Mês": [""],
+            "Grupo": [grupo],
+            "Loja Final": ["SUBTOTAL " + grupo],
+            "Meta": [soma_meta],
+            "Realizado": [soma_realizado],
+            "% Atingido": [perc_atingido],
+            "% Falta Atingir": [perc_falta],
+            "Diferença": [soma_diferenca]
+        })
+        subtotais.append(linha_subtotal)
+
+    comparativo_final = pd.concat([linha_total, comparativo] + subtotais, ignore_index=True)
 
     st.dataframe(
         comparativo_final.style.format({
