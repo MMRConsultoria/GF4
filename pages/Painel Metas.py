@@ -129,9 +129,7 @@ with aba1:
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
     comparativo = comparativo.sort_values(["Tipo", "Grupo", "Loja"])
 
-    resultado_final = []
-    total_lojas_geral = comparativo["Loja"].nunique()
-
+    tipo_subtotais = []
     for tipo, dados_tipo in comparativo.groupby("Tipo"):
         soma_meta_tipo = dados_tipo["Meta"].sum()
         soma_realizado_tipo = dados_tipo["Realizado"].sum()
@@ -147,26 +145,28 @@ with aba1:
             "% Atingido": [perc_atingido_tipo], "% Falta Atingir": [perc_falta_tipo],
             "Diferença": [soma_diferenca_tipo]
         })
+        tipo_subtotais.append(linha_tipo)
 
-        resultado_final.append(linha_tipo)
+    resultado_final = []
+    total_lojas_geral = comparativo["Loja"].nunique()
 
-        for grupo, dados_grupo in dados_tipo.groupby("Grupo"):
-            resultado_final.append(dados_grupo)
-            soma_meta_grupo = dados_grupo["Meta"].sum()
-            soma_realizado_grupo = dados_grupo["Realizado"].sum()
-            soma_diferenca_grupo = dados_grupo["Diferença"].sum()
-            perc_atingido_grupo = soma_realizado_grupo / soma_meta_grupo if soma_meta_grupo != 0 else 0
-            perc_falta_grupo = max(0, 1 - perc_atingido_grupo)
-            qtde_lojas_grupo = dados_grupo["Loja"].nunique()
+    for grupo, dados_grupo in comparativo.groupby("Grupo"):
+        resultado_final.append(dados_grupo)
+        soma_meta_grupo = dados_grupo["Meta"].sum()
+        soma_realizado_grupo = dados_grupo["Realizado"].sum()
+        soma_diferenca_grupo = dados_grupo["Diferença"].sum()
+        perc_atingido_grupo = soma_realizado_grupo / soma_meta_grupo if soma_meta_grupo != 0 else 0
+        perc_falta_grupo = max(0, 1 - perc_atingido_grupo)
+        qtde_lojas_grupo = dados_grupo["Loja"].nunique()
 
-            linha_subtotal = pd.DataFrame({
-                "Ano": [""], "Mês": [""], "Grupo": [grupo],
-                "Loja": [f"{grupo} - Lojas: {qtde_lojas_grupo:02}"],
-                "Meta": [soma_meta_grupo], "Realizado": [soma_realizado_grupo],
-                "% Atingido": [perc_atingido_grupo], "% Falta Atingir": [perc_falta_grupo],
-                "Diferença": [soma_diferenca_grupo]
-            })
-            resultado_final.append(linha_subtotal)
+        linha_subtotal = pd.DataFrame({
+            "Ano": [""], "Mês": [""], "Grupo": [grupo],
+            "Loja": [f"{grupo} - Lojas: {qtde_lojas_grupo:02}"],
+            "Meta": [soma_meta_grupo], "Realizado": [soma_realizado_grupo],
+            "% Atingido": [perc_atingido_grupo], "% Falta Atingir": [perc_falta_grupo],
+            "Diferença": [soma_diferenca_grupo]
+        })
+        resultado_final.append(linha_subtotal)
 
     total_meta = comparativo["Meta"].sum()
     total_realizado = comparativo["Realizado"].sum()
@@ -182,7 +182,7 @@ with aba1:
         "Diferença": [total_diferenca]
     })
 
-    comparativo_final = pd.concat(resultado_final + [linha_total], ignore_index=True)
+    comparativo_final = pd.concat([linha_total] + tipo_subtotais + resultado_final, ignore_index=True)
 
     def formatar_linha(row):
         if "TOTAL GERAL" in row["Loja"]:
