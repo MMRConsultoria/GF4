@@ -92,20 +92,11 @@ with aba1:
 
     df_metas = df_metas[df_metas["Loja"] != ""]
 
-    df_depara = df_empresa[["Loja", "De Para Metas"]].drop_duplicates()
-    df_depara["Loja"] = df_depara["Loja"].astype(str).str.strip().str.upper()
-    df_depara.columns = ["LojaOriginal", "LojaFinal"]
-
-    #df_metas = df_metas.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
-    #df_metas["Loja Final"] = df_metas["LojaFinal"].fillna(df_metas["Loja"])
-
     # --- Realizado ---
     df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
     df_anos.columns = df_anos.columns.str.strip()
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.upper()
     df_anos["Grupo"] = df_anos["Grupo"].astype(str).str.strip().str.upper()
-    df_anos = df_anos.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
-    df_anos["Loja Final"] = df_anos["LojaFinal"].fillna(df_anos["Loja"])
     df_anos["Mês"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).strftime("%b"))
     df_anos["Ano"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).year)
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
@@ -122,20 +113,20 @@ with aba1:
     df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)].copy()
     df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)].copy()
 
-    for col in ["Ano", "Mês", "Loja Final", "Grupo"]:
+    for col in ["Ano", "Mês", "Loja", "Grupo"]:
         df_metas_filtrado[col] = df_metas_filtrado[col].apply(garantir_escalar)
         df_anos_filtrado[col] = df_anos_filtrado[col].apply(garantir_escalar)
 
-    metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja Final", "Grupo"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
-    realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja Final", "Grupo"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
+    metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja", "Grupo"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
+    realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja", "Grupo"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
 
-    comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja Final", "Grupo"], how="outer").fillna(0)
+    comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja", "Grupo"], how="outer").fillna(0)
     comparativo["% Atingido"] = np.where(comparativo["Meta"] == 0, 0, comparativo["Realizado"] / comparativo["Meta"])
     comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
     comparativo["% Falta Atingir"] = np.maximum(0, 1 - comparativo["% Atingido"])
 
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
-    comparativo = comparativo.sort_values(["Ano", "Grupo", "Loja Final", "Mês"])
+    comparativo = comparativo.sort_values(["Ano", "Grupo", "Loja", "Mês"])
 
     total_meta = comparativo["Meta"].sum()
     total_realizado = comparativo["Realizado"].sum()
@@ -153,13 +144,13 @@ with aba1:
         soma_diferenca = dados["Diferença"].sum()
         perc_atingido = soma_realizado / soma_meta if soma_meta != 0 else 0
         perc_falta = max(0, 1 - perc_atingido)
-        qtde_lojas = dados["Loja Final"].nunique()
+        qtde_lojas = dados["Loja"].nunique()
         total_lojas_geral += qtde_lojas
         linha_subtotal = pd.DataFrame({
             "Ano": [""],
             "Mês": [""],
             "Grupo": [grupo],
-            "Loja Final": [f"{grupo} - Lojas: {qtde_lojas:02}"],
+            "Loja": [f"{grupo} - Lojas: {qtde_lojas:02}"],
             "Meta": [soma_meta],
             "Realizado": [soma_realizado],
             "% Atingido": [perc_atingido],
@@ -172,7 +163,7 @@ with aba1:
         "Ano": [""],
         "Mês": [""],
         "Grupo": [""],
-        "Loja Final": [f"TOTAL GERAL - Lojas: {total_lojas_geral:02}"],
+        "Loja": [f"TOTAL GERAL - Lojas: {total_lojas_geral:02}"],
         "Meta": [total_meta],
         "Realizado": [total_realizado],
         "% Atingido": [percentual_total],
@@ -181,7 +172,6 @@ with aba1:
     })
 
     comparativo_final = pd.concat([linha_total] + resultado_final, ignore_index=True)
-    comparativo_final = comparativo_final.rename(columns={"Loja Final": "Loja"})
 
     def formatar_linha(row):
         if "TOTAL GERAL" in row["Loja"]:
