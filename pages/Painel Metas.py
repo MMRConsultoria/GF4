@@ -88,6 +88,7 @@ with aba1:
 
     # Ajuste para pegar o nome correto da coluna de loja e normalizar
     df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
+    df_metas["Grupo"] = df_metas["Grupo"].astype(str).str.strip().str.upper()
 
     # Remove linhas onde Loja está vazia (devido à fórmula retornar "")
     df_metas = df_metas[df_metas["Loja"] != ""]
@@ -103,6 +104,7 @@ with aba1:
     df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
     df_anos.columns = df_anos.columns.str.strip()
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.upper()
+    df_anos["Grupo"] = df_anos["Grupo"].astype(str).str.strip().str.upper()
     df_anos = df_anos.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
     df_anos["Loja Final"] = df_anos["LojaFinal"].fillna(df_anos["Loja"])
     df_anos["Mês"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).strftime("%b"))
@@ -123,19 +125,19 @@ with aba1:
     df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)].copy()
 
     # 🚩 BLINDAGEM antes do groupby:
-    for col in ["Ano", "Mês", "Loja Final"]:
+    for col in ["Ano", "Mês", "Loja Final", "Grupo"]:
         df_metas_filtrado[col] = df_metas_filtrado[col].apply(garantir_escalar)
         df_anos_filtrado[col] = df_anos_filtrado[col].apply(garantir_escalar)
 
-    metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
-    realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja Final"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
+    metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja Final", "Grupo"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
+    realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja Final", "Grupo"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
 
-    comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja Final"], how="outer").fillna(0)
+    comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja Final", "Grupo"], how="outer").fillna(0)
     comparativo["% Atingido"] = np.where(comparativo["Meta"] == 0, np.nan, comparativo["Realizado"] / comparativo["Meta"])
     comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
 
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
-    comparativo = comparativo.sort_values(["Ano", "Loja Final", "Mês"])
+    comparativo = comparativo.sort_values(["Ano", "Grupo", "Loja Final", "Mês"])
 
     # Calcular totais gerais
     total_meta = comparativo["Meta"].sum()
@@ -146,6 +148,7 @@ with aba1:
     linha_total = pd.DataFrame({
         "Ano": [""],
         "Mês": [""],
+        "Grupo": [""],
         "Loja Final": ["TOTAL GERAL"],
         "Meta": [total_meta],
         "Realizado": [total_realizado],
