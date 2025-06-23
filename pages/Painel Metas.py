@@ -24,6 +24,10 @@ gc = gspread.authorize(credentials)
 planilha_empresa = gc.open("Vendas diarias")
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
 
+# Padronizar Tabela Empresa
+for col in ["Loja", "Grupo", "Tipo"]:
+    df_empresa[col] = df_empresa[col].astype(str).str.strip().str.upper()
+
 # ================================
 # 2. Estilo e layout
 # ================================
@@ -78,18 +82,13 @@ def garantir_escalar(x):
 # ================================
 aba1, aba2 = st.tabs(["📈 Analise Metas", "📊 Auditoria Metas"])
 
-# ================================
-# Aba 1: Análise
-# ================================
 with aba1:
 
     # --- Metas ---
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
     df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
-
     df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
     df_metas["Grupo"] = df_metas["Grupo"].astype(str).str.strip().str.upper()
-
     df_metas = df_metas[df_metas["Loja"] != ""]
 
     # --- Realizado ---
@@ -97,14 +96,16 @@ with aba1:
     df_anos.columns = df_anos.columns.str.strip()
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.upper()
     df_anos["Grupo"] = df_anos["Grupo"].astype(str).str.strip().str.upper()
-    df_anos["Mês"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x, dayfirst=True).strftime("%b"))
-    df_anos["Ano"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x, dayfirst=True).year)
-
+    df_anos["Data"] = pd.to_datetime(df_anos["Data"], dayfirst=True)
+    df_anos["Mês"] = df_anos["Data"].dt.strftime("%b")
+    df_anos["Ano"] = df_anos["Data"].dt.year
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
+
+    # Adiciona Tipo no df_anos via merge
+    df_anos = df_anos.merge(df_empresa[["Loja", "Grupo", "Tipo"]], on=["Loja", "Grupo"], how="left")
 
     mes_atual = datetime.now().strftime("%b")
     ano_atual = datetime.now().year
-
     ordem_meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
     anos_disponiveis = sorted(df_anos["Ano"].unique())
@@ -119,15 +120,53 @@ with aba1:
         df_anos_filtrado[col] = df_anos_filtrado[col].apply(garantir_escalar)
 
     metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja", "Grupo"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
-    realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja", "Grupo"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
+    realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja", "Grupo", "Tipo"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
 
     comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja", "Grupo"], how="outer").fillna(0)
     comparativo["% Atingido"] = np.where(comparativo["Meta"] == 0, 0, comparativo["Realizado"] / comparativo["Meta"])
     comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
     comparativo["% Falta Atingir"] = np.maximum(0, 1 - comparativo["% Atingido"])
-
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
-    comparativo = comparativo.sort_values(["Ano", "Grupo", "Loja", "Mês"])
+    comparativo = comparativo.sort_values(["Tipo", "Grupo", "Loja"])
+
+    resultado_final = []
+    total_lojas_geral = comparativo["Loja"].nunique()
+
+    for tipo, dados_tipo in comparativo.groupby("Tipo"):
+        soma_meta_tipo = dados_tipo["Meta"].sum()
+        soma_realizado_tipo = dados_tipo["Realizado"].sum()
+        soma_diferenca_tipo = dados_tipo["Diferença"].sum()
+        perc_atingido_tipo = soma_realizado_tipo / soma_meta_tipo if soma_meta_tipo != 0 else 0
+        perc_falta_tipo = max(0, 1 - perc_atingido_tipo)
+        qtde_lojas_tipo = dados_tipo["Loja"].nunique()
+
+        linha_tipo = pd.DataFrame({
+            "Ano": [""], "Mês": [""], "Grupo": [""],
+            "Loja": [f"Tipo: {tipo} - Lojas: {qtde_lojas_tipo:02}"],
+            "Meta": [soma_meta_tipo], "Realizado": [soma_realizado_tipo],
+            "% Atingido": [perc_atingido_tipo], "% Falta Atingir": [perc_falta_tipo],
+            "Diferença": [soma_diferenca_tipo]
+        })
+
+        resultado_final.append(linha_tipo)
+
+        for grupo, dados_grupo in dados_tipo.groupby("Grupo"):
+            resultado_final.append(dados_grupo)
+            soma_meta_grupo = dados_grupo["Meta"].sum()
+            soma_realizado_grupo = dados_grupo["Realizado"].sum()
+            soma_diferenca_grupo = dados_grupo["Diferença"].sum()
+            perc_atingido_grupo = soma_realizado_grupo / soma_meta_grupo if soma_meta_grupo != 0 else 0
+            perc_falta_grupo = max(0, 1 - perc_atingido_grupo)
+            qtde_lojas_grupo = dados_grupo["Loja"].nunique()
+
+            linha_subtotal = pd.DataFrame({
+                "Ano": [""], "Mês": [""], "Grupo": [grupo],
+                "Loja": [f"{grupo} - Lojas: {qtde_lojas_grupo:02}"],
+                "Meta": [soma_meta_grupo], "Realizado": [soma_realizado_grupo],
+                "% Atingido": [perc_atingido_grupo], "% Falta Atingir": [perc_falta_grupo],
+                "Diferença": [soma_diferenca_grupo]
+            })
+            resultado_final.append(linha_subtotal)
 
     total_meta = comparativo["Meta"].sum()
     total_realizado = comparativo["Realizado"].sum()
@@ -135,48 +174,21 @@ with aba1:
     percentual_total = total_realizado / total_meta if total_meta != 0 else 0
     percentual_falta_total = max(0, 1 - percentual_total)
 
-    total_lojas_geral = 0
-
-    resultado_final = []
-    for grupo, dados in comparativo.groupby("Grupo"):
-        resultado_final.append(dados)
-        soma_meta = dados["Meta"].sum()
-        soma_realizado = dados["Realizado"].sum()
-        soma_diferenca = dados["Diferença"].sum()
-        perc_atingido = soma_realizado / soma_meta if soma_meta != 0 else 0
-        perc_falta = max(0, 1 - perc_atingido)
-        qtde_lojas = dados["Loja"].nunique()
-        total_lojas_geral += qtde_lojas
-        linha_subtotal = pd.DataFrame({
-            "Ano": [""],
-            "Mês": [""],
-            "Grupo": [grupo],
-            "Loja": [f"{grupo} - Lojas: {qtde_lojas:02}"],
-            "Meta": [soma_meta],
-            "Realizado": [soma_realizado],
-            "% Atingido": [perc_atingido],
-            "% Falta Atingir": [perc_falta],
-            "Diferença": [soma_diferenca]
-        })
-        resultado_final.append(linha_subtotal)
-
     linha_total = pd.DataFrame({
-        "Ano": [""],
-        "Mês": [""],
-        "Grupo": [""],
+        "Ano": [""], "Mês": [""], "Grupo": [""],
         "Loja": [f"TOTAL GERAL - Lojas: {total_lojas_geral:02}"],
-        "Meta": [total_meta],
-        "Realizado": [total_realizado],
-        "% Atingido": [percentual_total],
-        "% Falta Atingir": [percentual_falta_total],
+        "Meta": [total_meta], "Realizado": [total_realizado],
+        "% Atingido": [percentual_total], "% Falta Atingir": [percentual_falta_total],
         "Diferença": [total_diferenca]
     })
 
-    comparativo_final = pd.concat([linha_total] + resultado_final, ignore_index=True)
+    comparativo_final = pd.concat(resultado_final + [linha_total], ignore_index=True)
 
     def formatar_linha(row):
         if "TOTAL GERAL" in row["Loja"]:
             return ['background-color: #0366d6; color: white'] * len(row)
+        elif "Tipo:" in row["Loja"]:
+            return ['background-color: #FFE699'] * len(row)
         elif "Lojas:" in row["Loja"]:
             return ['background-color: #d0e6f7'] * len(row)
         else:
@@ -185,17 +197,13 @@ with aba1:
     st.dataframe(
         comparativo_final.style
             .format({
-                "Meta": "R$ {:,.2f}",
-                "Realizado": "R$ {:,.2f}",
-                "Diferença": "R$ {:,.2f}",
-                "% Atingido": "{:.2%}",
-                "% Falta Atingir": "{:.2%}"
+                "Meta": "R$ {:,.2f}", "Realizado": "R$ {:,.2f}", "Diferença": "R$ {:,.2f}",
+                "% Atingido": "{:.2%}", "% Falta Atingir": "{:.2%}"
             })
             .apply(formatar_linha, axis=1),
         use_container_width=True
     )
 
-    # Exportação para Excel
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         comparativo_final.to_excel(writer, index=False, sheet_name='Metas')
