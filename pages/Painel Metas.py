@@ -159,9 +159,10 @@ with aba1:
         "Diferença": [total_diferenca]
     })
 
-    # Calcular subtotais por grupo
-    subtotais = []
+    # Inserir subtotais logo após cada grupo
+    resultado_final = []
     for grupo, dados in comparativo.groupby("Grupo"):
+        resultado_final.append(dados)
         soma_meta = dados["Meta"].sum()
         soma_realizado = dados["Realizado"].sum()
         soma_diferenca = dados["Diferença"].sum()
@@ -178,9 +179,9 @@ with aba1:
             "% Falta Atingir": [perc_falta],
             "Diferença": [soma_diferenca]
         })
-        subtotais.append(linha_subtotal)
+        resultado_final.append(linha_subtotal)
 
-    comparativo_final = pd.concat([linha_total, comparativo] + subtotais, ignore_index=True)
+    comparativo_final = pd.concat([linha_total] + resultado_final, ignore_index=True)
 
     st.dataframe(
         comparativo_final.style.format({
