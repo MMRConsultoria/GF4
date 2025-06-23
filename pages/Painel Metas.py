@@ -9,7 +9,6 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 from datetime import datetime
-import io
 
 if not st.session_state.get("acesso_liberado"):
     st.stop()
@@ -65,6 +64,8 @@ def parse_valor(val):
     except:
         return 0.0
 
+# Função auxiliar de blindagem
+
 def garantir_escalar(x):
     if isinstance(x, list):
         if len(x) == 1:
@@ -82,11 +83,13 @@ aba1, aba2 = st.tabs(["📈 Analise Metas", "📊 Auditoria Metas"])
 # ================================
 with aba1:
 
+    # --- Metas ---
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
     df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
 
     df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
     df_metas["Grupo"] = df_metas["Grupo"].astype(str).str.strip().str.upper()
+
     df_metas = df_metas[df_metas["Loja"] != ""]
 
     df_depara = df_empresa[["Loja", "De Para Metas"]].drop_duplicates()
@@ -96,15 +99,15 @@ with aba1:
     df_metas = df_metas.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
     df_metas["Loja Final"] = df_metas["LojaFinal"].fillna(df_metas["Loja"])
 
+    # --- Realizado ---
     df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
     df_anos.columns = df_anos.columns.str.strip()
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.upper()
     df_anos["Grupo"] = df_anos["Grupo"].astype(str).str.strip().str.upper()
     df_anos = df_anos.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
     df_anos["Loja Final"] = df_anos["LojaFinal"].fillna(df_anos["Loja"])
-    df_anos["Data"] = pd.to_datetime(df_anos["Data"], errors='coerce')
-    df_anos["Mês"] = df_anos["Data"].dt.strftime("%b")
-    df_anos["Ano"] = df_anos["Data"].dt.year
+    df_anos["Mês"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).strftime("%b"))
+    df_anos["Ano"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).year)
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
 
     mes_atual = datetime.now().strftime("%b")
@@ -112,7 +115,7 @@ with aba1:
 
     ordem_meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
-    anos_disponiveis = sorted(df_anos["Ano"].dropna().unique())
+    anos_disponiveis = sorted(df_anos["Ano"].unique())
     ano_selecionado = st.selectbox("Selecione o Ano:", anos_disponiveis, index=anos_disponiveis.index(ano_atual) if ano_atual in anos_disponiveis else 0)
     mes_selecionado = st.selectbox("Selecione o Mês:", ordem_meses, index=ordem_meses.index(mes_atual) if mes_atual in ordem_meses else 0)
 
@@ -139,13 +142,12 @@ with aba1:
     total_diferenca = comparativo["Diferença"].sum()
     percentual_total = total_realizado / total_meta if total_meta != 0 else 0
     percentual_falta_total = max(0, 1 - percentual_total)
-    qtde_total_lojas = comparativo["Loja Final"].nunique()
 
     linha_total = pd.DataFrame({
         "Ano": [""],
         "Mês": [""],
         "Grupo": [""],
-        "Loja Final": [f"TOTAL GERAL - Lojas: {qtde_total_lojas:02}"],
+        "Loja Final": ["TOTAL GERAL"],
         "Meta": [total_meta],
         "Realizado": [total_realizado],
         "% Atingido": [percentual_total],
@@ -198,12 +200,11 @@ with aba1:
             .apply(formatar_linha, axis=1),
         use_container_width=True
     )
-
     # Exportação para Excel
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         comparativo_final.to_excel(writer, index=False, sheet_name='Metas')
-    
+  
     output.seek(0)
 
     st.download_button(
