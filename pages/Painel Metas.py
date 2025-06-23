@@ -96,8 +96,8 @@ with aba1:
     df_depara["Loja"] = df_depara["Loja"].astype(str).str.strip().str.upper()
     df_depara.columns = ["LojaOriginal", "LojaFinal"]
 
-    df_metas = df_metas.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
-    df_metas["Loja Final"] = df_metas["LojaFinal"].fillna(df_metas["Loja"])
+    #df_metas = df_metas.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
+    #df_metas["Loja Final"] = df_metas["LojaFinal"].fillna(df_metas["Loja"])
 
     # --- Realizado ---
     df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
