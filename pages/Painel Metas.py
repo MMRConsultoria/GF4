@@ -9,6 +9,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 from datetime import datetime
+import io
 
 if not st.session_state.get("acesso_liberado"):
     st.stop()
