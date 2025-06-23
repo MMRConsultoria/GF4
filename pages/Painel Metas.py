@@ -144,17 +144,20 @@ with aba1:
     percentual_total = total_realizado / total_meta if total_meta != 0 else 0
     percentual_falta_total = max(0, 1 - percentual_total)
 
+    qtde_total_lojas = comparativo["Loja Final"].nunique()
+
     linha_total = pd.DataFrame({
         "Ano": [""],
         "Mês": [""],
         "Grupo": [""],
-        "Loja Final": ["TOTAL GERAL"],
+        "Loja Final": [f"TOTAL GERAL - Lojas: {qtde_total_lojas:02}"],
         "Meta": [total_meta],
         "Realizado": [total_realizado],
         "% Atingido": [percentual_total],
         "% Falta Atingir": [percentual_falta_total],
         "Diferença": [total_diferenca]
     })
+
 
     resultado_final = []
     for grupo, dados in comparativo.groupby("Grupo"):
