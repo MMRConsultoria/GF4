@@ -133,8 +133,9 @@ with aba1:
     realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja Final", "Grupo"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
 
     comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja Final", "Grupo"], how="outer").fillna(0)
-    comparativo["% Atingido"] = np.where(comparativo["Meta"] == 0, np.nan, comparativo["Realizado"] / comparativo["Meta"])
+    comparativo["% Atingido"] = np.where(comparativo["Meta"] == 0, 0, comparativo["Realizado"] / comparativo["Meta"])
     comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
+    comparativo["% Falta Atingir"] = np.maximum(0, 1 - comparativo["% Atingido"])
 
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
     comparativo = comparativo.sort_values(["Ano", "Grupo", "Loja Final", "Mês"])
@@ -143,7 +144,8 @@ with aba1:
     total_meta = comparativo["Meta"].sum()
     total_realizado = comparativo["Realizado"].sum()
     total_diferenca = comparativo["Diferença"].sum()
-    percentual_total = total_realizado / total_meta if total_meta != 0 else np.nan
+    percentual_total = total_realizado / total_meta if total_meta != 0 else 0
+    percentual_falta_total = max(0, 1 - percentual_total)
 
     linha_total = pd.DataFrame({
         "Ano": [""],
@@ -153,6 +155,7 @@ with aba1:
         "Meta": [total_meta],
         "Realizado": [total_realizado],
         "% Atingido": [percentual_total],
+        "% Falta Atingir": [percentual_falta_total],
         "Diferença": [total_diferenca]
     })
 
@@ -163,7 +166,8 @@ with aba1:
             "Meta": "R$ {:,.2f}",
             "Realizado": "R$ {:,.2f}",
             "Diferença": "R$ {:,.2f}",
-            "% Atingido": "{:.2%}"
+            "% Atingido": "{:.2%}",
+            "% Falta Atingir": "{:.2%}"
         }),
         use_container_width=True
     )
