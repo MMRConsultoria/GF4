@@ -97,8 +97,9 @@ with aba1:
     df_anos.columns = df_anos.columns.str.strip()
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.upper()
     df_anos["Grupo"] = df_anos["Grupo"].astype(str).str.strip().str.upper()
-    df_anos["Mês"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).strftime("%b"))
-    df_anos["Ano"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).year)
+    df_anos["Mês"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x, dayfirst=True).strftime("%b"))
+    df_anos["Ano"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x, dayfirst=True).year)
+
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
 
     mes_atual = datetime.now().strftime("%b")
