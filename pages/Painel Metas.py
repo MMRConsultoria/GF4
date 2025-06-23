@@ -182,7 +182,7 @@ with aba1:
         "Diferença": [total_diferenca]
     })
 
-    comparativo_final = pd.concat([linha_total] + tipo_subtotais + resultado_final, ignore_index=True)
+    comparativo_final = pd.concat(tipo_subtotais + [linha_total] + resultado_final, ignore_index=True)
 
     def formatar_linha(row):
         if "TOTAL GERAL" in row["Loja"]:
