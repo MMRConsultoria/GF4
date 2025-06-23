@@ -137,8 +137,26 @@ with aba1:
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
     comparativo = comparativo.sort_values(["Ano", "Loja Final", "Mês"])
 
+    # Calcular totais gerais
+    total_meta = comparativo["Meta"].sum()
+    total_realizado = comparativo["Realizado"].sum()
+    total_diferenca = comparativo["Diferença"].sum()
+    percentual_total = total_realizado / total_meta if total_meta != 0 else np.nan
+
+    linha_total = pd.DataFrame({
+        "Ano": [""],
+        "Mês": [""],
+        "Loja Final": ["TOTAL GERAL"],
+        "Meta": [total_meta],
+        "Realizado": [total_realizado],
+        "% Atingido": [percentual_total],
+        "Diferença": [total_diferenca]
+    })
+
+    comparativo_final = pd.concat([linha_total, comparativo], ignore_index=True)
+
     st.dataframe(
-        comparativo.style.format({
+        comparativo_final.style.format({
             "Meta": "R$ {:,.2f}",
             "Realizado": "R$ {:,.2f}",
             "Diferença": "R$ {:,.2f}",
