@@ -9,6 +9,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 from datetime import datetime
+import io
 
 if not st.session_state.get("acesso_liberado"):
     st.stop()
@@ -64,8 +65,6 @@ def parse_valor(val):
     except:
         return 0.0
 
-# Função auxiliar de blindagem
-
 def garantir_escalar(x):
     if isinstance(x, list):
         if len(x) == 1:
@@ -83,13 +82,11 @@ aba1, aba2 = st.tabs(["📈 Analise Metas", "📊 Auditoria Metas"])
 # ================================
 with aba1:
 
-    # --- Metas ---
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
     df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
 
     df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
     df_metas["Grupo"] = df_metas["Grupo"].astype(str).str.strip().str.upper()
-
     df_metas = df_metas[df_metas["Loja"] != ""]
 
     df_depara = df_empresa[["Loja", "De Para Metas"]].drop_duplicates()
@@ -99,15 +96,15 @@ with aba1:
     df_metas = df_metas.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
     df_metas["Loja Final"] = df_metas["LojaFinal"].fillna(df_metas["Loja"])
 
-    # --- Realizado ---
     df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
     df_anos.columns = df_anos.columns.str.strip()
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.upper()
     df_anos["Grupo"] = df_anos["Grupo"].astype(str).str.strip().str.upper()
     df_anos = df_anos.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
     df_anos["Loja Final"] = df_anos["LojaFinal"].fillna(df_anos["Loja"])
-    df_anos["Mês"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).strftime("%b"))
-    df_anos["Ano"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).year)
+    df_anos["Data"] = pd.to_datetime(df_anos["Data"], errors='coerce')
+    df_anos["Mês"] = df_anos["Data"].dt.strftime("%b")
+    df_anos["Ano"] = df_anos["Data"].dt.year
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
 
     mes_atual = datetime.now().strftime("%b")
@@ -115,7 +112,7 @@ with aba1:
 
     ordem_meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
-    anos_disponiveis = sorted(df_anos["Ano"].unique())
+    anos_disponiveis = sorted(df_anos["Ano"].dropna().unique())
     ano_selecionado = st.selectbox("Selecione o Ano:", anos_disponiveis, index=anos_disponiveis.index(ano_atual) if ano_atual in anos_disponiveis else 0)
     mes_selecionado = st.selectbox("Selecione o Mês:", ordem_meses, index=ordem_meses.index(mes_atual) if mes_atual in ordem_meses else 0)
 
@@ -200,4 +197,18 @@ with aba1:
             })
             .apply(formatar_linha, axis=1),
         use_container_width=True
+    )
+
+    # Exportação para Excel
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        comparativo_final.to_excel(writer, index=False, sheet_name='Metas')
+        writer.save()
+    output.seek(0)
+
+    st.download_button(
+        label="📥 Baixar Excel",
+        data=output,
+        file_name=f"Relatorio_Metas_{ano_selecionado}_{mes_selecionado}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
