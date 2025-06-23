@@ -86,13 +86,14 @@ with aba1:
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
     df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
 
-    # Ajuste para pegar o nome correto da coluna de loja
-    df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip()
+    # Ajuste para pegar o nome correto da coluna de loja e normalizar
+    df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
 
     # Remove linhas onde Loja está vazia (devido à fórmula retornar "")
     df_metas = df_metas[df_metas["Loja"] != ""]
 
     df_depara = df_empresa[["Loja", "De Para Metas"]].drop_duplicates()
+    df_depara["Loja"] = df_depara["Loja"].astype(str).str.strip().str.upper()
     df_depara.columns = ["LojaOriginal", "LojaFinal"]
 
     df_metas = df_metas.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
@@ -101,7 +102,7 @@ with aba1:
     # --- Realizado ---
     df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
     df_anos.columns = df_anos.columns.str.strip()
-    df_anos["Loja"] = df_anos["Loja"].str.strip()
+    df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.upper()
     df_anos = df_anos.merge(df_depara, left_on="Loja", right_on="LojaOriginal", how="left")
     df_anos["Loja Final"] = df_anos["LojaFinal"].fillna(df_anos["Loja"])
     df_anos["Mês"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).strftime("%b"))
