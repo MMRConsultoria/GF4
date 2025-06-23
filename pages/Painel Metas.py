@@ -203,7 +203,7 @@ with aba1:
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         comparativo_final.to_excel(writer, index=False, sheet_name='Metas')
-        writer.save()
+    
     output.seek(0)
 
     st.download_button(
