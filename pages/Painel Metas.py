@@ -64,7 +64,8 @@ def parse_valor(val):
     except:
         return 0.0
 
-# 🚩 ESSA É A FUNÇÃO BLINDAGEM FINAL
+# Função auxiliar de blindagem
+
 def garantir_escalar(x):
     if isinstance(x, list):
         if len(x) == 1:
@@ -86,11 +87,9 @@ with aba1:
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
     df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
 
-    # Ajuste para pegar o nome correto da coluna de loja e normalizar
     df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
     df_metas["Grupo"] = df_metas["Grupo"].astype(str).str.strip().str.upper()
 
-    # Remove linhas onde Loja está vazia (devido à fórmula retornar "")
     df_metas = df_metas[df_metas["Loja"] != ""]
 
     df_depara = df_empresa[["Loja", "De Para Metas"]].drop_duplicates()
@@ -111,7 +110,6 @@ with aba1:
     df_anos["Ano"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).year)
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
 
-    # Ajuste dos filtros
     mes_atual = datetime.now().strftime("%b")
     ano_atual = datetime.now().year
 
@@ -124,7 +122,6 @@ with aba1:
     df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)].copy()
     df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)].copy()
 
-    # BLINDAGEM antes do groupby
     for col in ["Ano", "Mês", "Loja Final", "Grupo"]:
         df_metas_filtrado[col] = df_metas_filtrado[col].apply(garantir_escalar)
         df_anos_filtrado[col] = df_anos_filtrado[col].apply(garantir_escalar)
@@ -140,7 +137,6 @@ with aba1:
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
     comparativo = comparativo.sort_values(["Ano", "Grupo", "Loja Final", "Mês"])
 
-    # Calcular totais gerais
     total_meta = comparativo["Meta"].sum()
     total_realizado = comparativo["Realizado"].sum()
     total_diferenca = comparativo["Diferença"].sum()
@@ -159,7 +155,6 @@ with aba1:
         "Diferença": [total_diferenca]
     })
 
-    # Inserir subtotais logo após cada grupo
     resultado_final = []
     for grupo, dados in comparativo.groupby("Grupo"):
         resultado_final.append(dados)
@@ -168,11 +163,12 @@ with aba1:
         soma_diferenca = dados["Diferença"].sum()
         perc_atingido = soma_realizado / soma_meta if soma_meta != 0 else 0
         perc_falta = max(0, 1 - perc_atingido)
+        qtde_lojas = dados["Loja Final"].nunique()
         linha_subtotal = pd.DataFrame({
             "Ano": [""],
             "Mês": [""],
             "Grupo": [grupo],
-            "Loja Final": ["SUBTOTAL " + grupo],
+            "Loja Final": [f"{grupo} - Lojas: {qtde_lojas:02}"],
             "Meta": [soma_meta],
             "Realizado": [soma_realizado],
             "% Atingido": [perc_atingido],
@@ -187,7 +183,7 @@ with aba1:
     def formatar_linha(row):
         if "TOTAL GERAL" in row["Loja"]:
             return ['background-color: #0366d6; color: white'] * len(row)
-        elif "SUBTOTAL" in row["Loja"]:
+        elif "Lojas:" in row["Loja"]:
             return ['background-color: #d0e6f7'] * len(row)
         else:
             return [''] * len(row)
