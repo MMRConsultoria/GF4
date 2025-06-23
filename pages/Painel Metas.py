@@ -66,7 +66,6 @@ def parse_valor(val):
         return 0.0
 
 # Função auxiliar de blindagem
-
 def garantir_escalar(x):
     if isinstance(x, list):
         if len(x) == 1:
@@ -144,20 +143,7 @@ with aba1:
     percentual_total = total_realizado / total_meta if total_meta != 0 else 0
     percentual_falta_total = max(0, 1 - percentual_total)
 
-    qtde_total_lojas = comparativo["Loja Final"].nunique()
-
-    linha_total = pd.DataFrame({
-        "Ano": [""],
-        "Mês": [""],
-        "Grupo": [""],
-        "Loja Final": [f"TOTAL GERAL - Lojas: {qtde_total_lojas:02}"],
-        "Meta": [total_meta],
-        "Realizado": [total_realizado],
-        "% Atingido": [percentual_total],
-        "% Falta Atingir": [percentual_falta_total],
-        "Diferença": [total_diferenca]
-    })
-
+    total_lojas_geral = 0
 
     resultado_final = []
     for grupo, dados in comparativo.groupby("Grupo"):
@@ -168,6 +154,7 @@ with aba1:
         perc_atingido = soma_realizado / soma_meta if soma_meta != 0 else 0
         perc_falta = max(0, 1 - perc_atingido)
         qtde_lojas = dados["Loja Final"].nunique()
+        total_lojas_geral += qtde_lojas
         linha_subtotal = pd.DataFrame({
             "Ano": [""],
             "Mês": [""],
@@ -180,6 +167,18 @@ with aba1:
             "Diferença": [soma_diferenca]
         })
         resultado_final.append(linha_subtotal)
+
+    linha_total = pd.DataFrame({
+        "Ano": [""],
+        "Mês": [""],
+        "Grupo": [""],
+        "Loja Final": [f"TOTAL GERAL - Lojas: {total_lojas_geral:02}"],
+        "Meta": [total_meta],
+        "Realizado": [total_realizado],
+        "% Atingido": [percentual_total],
+        "% Falta Atingir": [percentual_falta_total],
+        "Diferença": [total_diferenca]
+    })
 
     comparativo_final = pd.concat([linha_total] + resultado_final, ignore_index=True)
     comparativo_final = comparativo_final.rename(columns={"Loja Final": "Loja"})
@@ -204,11 +203,11 @@ with aba1:
             .apply(formatar_linha, axis=1),
         use_container_width=True
     )
+
     # Exportação para Excel
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         comparativo_final.to_excel(writer, index=False, sheet_name='Metas')
-  
     output.seek(0)
 
     st.download_button(
