@@ -111,7 +111,7 @@ with aba1:
     df_anos["Ano"] = df_anos["Data"].apply(lambda x: pd.to_datetime(x).year)
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
 
-    # 🔣 Ajuste dos filtros
+    # Ajuste dos filtros
     mes_atual = datetime.now().strftime("%b")
     ano_atual = datetime.now().year
 
@@ -124,7 +124,7 @@ with aba1:
     df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)].copy()
     df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)].copy()
 
-    # 🚩 BLINDAGEM antes do groupby:
+    # BLINDAGEM antes do groupby
     for col in ["Ano", "Mês", "Loja Final", "Grupo"]:
         df_metas_filtrado[col] = df_metas_filtrado[col].apply(garantir_escalar)
         df_anos_filtrado[col] = df_anos_filtrado[col].apply(garantir_escalar)
@@ -182,14 +182,25 @@ with aba1:
         resultado_final.append(linha_subtotal)
 
     comparativo_final = pd.concat([linha_total] + resultado_final, ignore_index=True)
+    comparativo_final = comparativo_final.rename(columns={"Loja Final": "Loja"})
+
+    def formatar_linha(row):
+        if "TOTAL GERAL" in row["Loja"]:
+            return ['background-color: #0366d6; color: white'] * len(row)
+        elif "SUBTOTAL" in row["Loja"]:
+            return ['background-color: #d0e6f7'] * len(row)
+        else:
+            return [''] * len(row)
 
     st.dataframe(
-        comparativo_final.style.format({
-            "Meta": "R$ {:,.2f}",
-            "Realizado": "R$ {:,.2f}",
-            "Diferença": "R$ {:,.2f}",
-            "% Atingido": "{:.2%}",
-            "% Falta Atingir": "{:.2%}"
-        }),
+        comparativo_final.style
+            .format({
+                "Meta": "R$ {:,.2f}",
+                "Realizado": "R$ {:,.2f}",
+                "Diferença": "R$ {:,.2f}",
+                "% Atingido": "{:.2%}",
+                "% Falta Atingir": "{:.2%}"
+            })
+            .apply(formatar_linha, axis=1),
         use_container_width=True
     )
