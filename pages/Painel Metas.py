@@ -187,7 +187,7 @@ with aba1:
         })
     
     # Definimos a ordem de prioridade dos tipos
-    ordem_tipo = {"AIRPORTS": 1, "AIRPORTS - KOPP": 2, "ON-PRIMISSE": 3, "OUTROS": 4}
+    ordem_tipo = {"AIRPORTS": 1, "AIRPORTS - KOPP": 2, "ON-PREMISE": 3, "OUTROS": 4}
 
 
     # Normaliza o tipo (garantir comparação segura)
