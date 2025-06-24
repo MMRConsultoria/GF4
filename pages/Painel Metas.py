@@ -190,7 +190,7 @@ with aba1:
     ordem_tipo = {"AIRPORTS": 1, "AIRPORTS-KOPP": 2, "ON-PRIMISSE": 3, "OUTROS": 4}
     
     # Ordenamos os grupos com base no tipo
-    subtotais_aux = sorted(subtotais_aux, key=lambda x: (ordem_tipo.get(x["tipo"], 99), x["grupo"]))
+    subtotais_aux = sorted(subtotais_aux, key=lambda x: (ordem_tipo.get(x["tipo"], 4), x["grupo"]))
     
     # Agora, com os grupos já ordenados, montamos o resultado final
     for subtotal in subtotais_aux:
