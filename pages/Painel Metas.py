@@ -69,6 +69,19 @@ def parse_valor(val):
     except:
         return 0.0
 
+
+# Função auxiliar para tratar datas misturadas (string e número serial):
+def tratar_data(val):
+    try:
+        val_str = str(val).strip()
+        if val_str.replace('.', '', 1).isdigit():
+            return pd.Timestamp('1899-12-30') + pd.to_timedelta(float(val), unit='D')
+        else:
+            return pd.to_datetime(val_str, dayfirst=True, errors='coerce')
+    except:
+        return pd.NaT
+
+
 # Função auxiliar de blindagem
 def garantir_escalar(x):
     if isinstance(x, list):
