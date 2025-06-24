@@ -633,12 +633,12 @@ with aba4:
                     "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]
                 
-                # 🔧 Ajuste finais
                 colunas_texto = ["Nome (Everest)", "Nome (Externo)"]
                 df_resultado[colunas_texto] = df_resultado[colunas_texto].fillna("")
                 df_resultado = df_resultado.reset_index(drop=True)
                 
                 st.session_state.df_resultado = df_resultado
+
 
 
                 
