@@ -147,30 +147,9 @@ with aba1:
     comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja", "Grupo"], how="outer").fillna(0)
     comparativo["% Atingido"] = np.where(comparativo["Meta"] == 0, 0, comparativo["Realizado"] / comparativo["Meta"])
     comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
-
-    # Criar peso de ordenação por Tipo
-    def classificar_tipo(tipo):
-        if tipo == 'AIRPORTS':
-            return 1
-        elif tipo == 'ONPRIMESSE':
-            return 2
-        else:
-            return 3
-    
-    comparativo["Ordem_Tipo"] = comparativo["Tipo"].apply(classificar_tipo)
-    
-    # Ordena por Grupo, depois Tipo personalizado, depois Realizado descrescente
-    comparativo = comparativo.sort_values(
-        by=["Grupo", "Ordem_Tipo", "Realizado"],
-        ascending=[True, True, False]
-    )
-
-
-
-    
     comparativo["% Falta Atingir"] = np.maximum(0, 1 - comparativo["% Atingido"])
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
-   #comparativo = comparativo.sort_values(["Tipo", "Grupo", "Loja"])
+    comparativo = comparativo.sort_values(["Tipo", "Grupo", "Loja"])
 
     tipo_subtotais = []
     for tipo, dados_tipo in comparativo.groupby("Tipo"):
