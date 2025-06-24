@@ -596,13 +596,49 @@ with aba4:
 
                 df_comp = pd.merge(ev, ex, on=["Data", "Codigo"], how="outer", suffixes=("_Everest", "_Externo"))
 
+                # 🔄 Comparação
                 df_comp["Valor Bruto Iguais"] = df_comp["Valor Bruto (Everest)"] == df_comp["Valor Bruto (Externo)"]
                 df_comp["Valor Real Iguais"] = df_comp["Valor Real (Everest)"] == df_comp["Valor Real (Externo)"]
-
-                df_diff = df_comp[~(df_comp["Valor Bruto Iguais"] & df_comp["Valor Real Iguais"])].copy()
-
-                # 🔥 Filtro para ignorar as diferenças do grupo Kopp
-                df_diff = df_diff[~df_diff["Nome Loja Sistema Externo"].str.contains("kop", case=False, na=False)]
+                
+                # 🔄 Criar coluna auxiliar só para lógica interna
+                df_comp["_Tem_Diferenca"] = ~(df_comp["Valor Bruto Iguais"] & df_comp["Valor Real Iguais"])
+                
+                # 🔥 Filtro para ignorar as diferenças do grupo Kopp (apenas nas diferenças)
+                df_comp["_Ignorar_Kopp"] = df_comp["Nome Loja Sistema Externo"].str.contains("kop", case=False, na=False)
+                df_comp_filtrado = df_comp[~(df_comp["_Tem_Diferenca"] & df_comp["_Ignorar_Kopp"])].copy()
+                
+                # 🔧 Filtro no Streamlit
+                opcao = st.radio("Filtro de diferenças:", ["Todas", "Somente com diferenças", "Somente sem diferenças"])
+                
+                if opcao == "Todas":
+                    df_resultado = df_comp_filtrado.copy()
+                elif opcao == "Somente com diferenças":
+                    df_resultado = df_comp_filtrado[df_comp_filtrado["_Tem_Diferenca"]].copy()
+                else:
+                    df_resultado = df_comp_filtrado[~df_comp_filtrado["_Tem_Diferenca"]].copy()
+                
+                # 🔧 Remover as colunas auxiliares antes de exibir
+                df_resultado = df_resultado.drop(columns=["Valor Bruto Iguais", "Valor Real Iguais", "_Tem_Diferenca", "_Ignorar_Kopp"], errors='ignore')
+                
+                # 🔧 Ajuste de colunas para exibição
+                df_resultado = df_resultado[[
+                    "Data",
+                    "Nome Loja Everest", "Codigo", "Valor Bruto (Everest)", "Valor Real (Everest)",
+                    "Nome Loja Sistema Externo", "Valor Bruto (Externo)", "Valor Real (Externo)"
+                ]].sort_values("Data")
+                
+                df_resultado.columns = [
+                    "Data",
+                    "Nome (Everest)", "Código", "Valor Bruto (Everest)", "Valor Real (Everest)",
+                    "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
+                ]
+                
+                # 🔧 Ajuste finais
+                colunas_texto = ["Nome (Everest)", "Nome (Externo)"]
+                df_resultado[colunas_texto] = df_resultado[colunas_texto].fillna("")
+                df_resultado = df_resultado.reset_index(drop=True)
+                
+                st.session_state.df_resultado = df_resultado
 
 
                 
