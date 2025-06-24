@@ -187,7 +187,7 @@ with aba1:
         })
     
     # Definimos a ordem de prioridade dos tipos
-    ordem_tipo = {"AIRPORTS": 1, "ONPRIMESSE": 2, "OUTROS": 3}
+    ordem_tipo = {"AIRPORTS": 1, "AIRPORTS-KOPP": 2 "ONPRIMESSE": 3, "OUTROS": 4}
     
     # Ordenamos os grupos com base no tipo
     subtotais_aux = sorted(subtotais_aux, key=lambda x: (ordem_tipo.get(x["tipo"], 3), x["grupo"]))
