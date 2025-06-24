@@ -532,21 +532,18 @@ with aba4:
                 if not datas_validas.empty:
                     min_data = datas_validas.min().date()
                     max_data_planilha = datas_validas.max().date()
-                    hoje = date.today()
-                    max_data = max(max_data_planilha, hoje)
-                    sugestao_data = max_data
-
-                    with st.form(key="comparativo_form"):
-                        data_range = st.date_input(
-                            label="Selecione o intervalo de datas:",
-                            value=(sugestao_data, sugestao_data),
-                            min_value=min_data,
-                            max_value=max_data
-                        )
-                        botao_atualizar = st.form_submit_button("🔄 Atualizar Dados")
-
-            if botao_atualizar and isinstance(data_range, tuple) and len(data_range) == 2:
-                data_inicio, data_fim = data_range
+                    sugestao_data = max_data_planilha
+                
+                    data_range = st.date_input(
+                        label="Selecione o intervalo de datas:",
+                        value=(sugestao_data, sugestao_data),
+                        min_value=min_data,
+                        max_value=max_data_planilha
+                    )
+                
+                    if isinstance(data_range, tuple) and len(data_range) == 2:
+                        data_inicio, data_fim = data_range
+                        # Aqui já segue direto o processamento normal
 
 
            
