@@ -180,15 +180,25 @@ with aba1:
         perc_atingido_grupo = soma_realizado_grupo / soma_meta_grupo if soma_meta_grupo != 0 else 0
         perc_falta_grupo = max(0, 1 - perc_atingido_grupo)
         qtde_lojas_grupo = dados_grupo["Loja"].nunique()
-
+    
+        # ✅ Recupera o Tipo do primeiro registro (se existir), senão coloca 0
+        tipo_subtotal = dados_grupo["Tipo"].dropna().unique()
+        if len(tipo_subtotal) == 1:
+            tipo_str = tipo_subtotal[0]
+        else:
+            tipo_str = "0"
+    
         linha_subtotal = pd.DataFrame({
             "Ano": [""], "Mês": [""], "Grupo": [grupo],
-            "Loja": [f"{grupo} - Lojas: {qtde_lojas_grupo:02}"],
+            "Loja": [f"{grupo} - {tipo_str} - Lojas: {qtde_lojas_grupo:02}"],
             "Meta": [soma_meta_grupo], "Realizado": [soma_realizado_grupo],
             "% Atingido": [perc_atingido_grupo], "% Falta Atingir": [perc_falta_grupo],
             "Diferença": [soma_diferenca_grupo]
         })
         resultado_final.append(linha_subtotal)
+
+
+    
 
     total_meta = comparativo["Meta"].sum()
     total_realizado = comparativo["Realizado"].sum()
