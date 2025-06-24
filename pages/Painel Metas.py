@@ -148,9 +148,29 @@ with aba1:
     comparativo["% Atingido"] = np.where(comparativo["Meta"] == 0, 0, comparativo["Realizado"] / comparativo["Meta"])
     comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
     comparativo["% Falta Atingir"] = np.maximum(0, 1 - comparativo["% Atingido"])
+    
+    # Cria o peso de ordenação do Tipo
+    ordem_tipo = {
+        'AIRPORTS': 1,
+        'ONPRIMESSE': 2,
+        'BARES': 3
+    }
+    
+    # Adiciona coluna auxiliar de ordenação
+    comparativo['Ordem_Tipo'] = comparativo['Tipo'].map(ordem_tipo)
+    
+    # Ordena as lojas
+    comparativo = comparativo.sort_values(
+        by=['Grupo', 'Ordem_Tipo', 'Realizado'],
+        ascending=[True, True, False]
+    )
+    
+    
+    
+    
+    
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
-    comparativo = comparativo.sort_values(["Tipo", "Grupo", "Loja"])
-
+  
     tipo_subtotais = []
     for tipo, dados_tipo in comparativo.groupby("Tipo"):
         soma_meta_tipo = dados_tipo["Meta"].sum()
