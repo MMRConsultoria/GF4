@@ -96,8 +96,17 @@ with aba1:
     df_anos.columns = df_anos.columns.str.strip()
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.upper()
     df_anos["Grupo"] = df_anos["Grupo"].astype(str).str.strip().str.upper()
-    df_anos["Data"] = pd.to_datetime(df_anos["Data"], dayfirst=True)
-    df_anos["Mês"] = df_anos["Data"].dt.strftime("%b")
+   # Já com data tratada e blindada:
+    df_anos["Data"] = df_anos["Data"].apply(tratar_data)
+    df_anos = df_anos.dropna(subset=["Data"])
+    
+    # Agora o mapeamento correto do mês em português:
+    meses_map = {
+        1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr',
+        5: 'Mai', 6: 'Jun', 7: 'Jul', 8: 'Ago',
+        9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'
+    }
+    df_anos["Mês"] = df_anos["Data"].dt.month.map(meses_map)
     df_anos["Ano"] = df_anos["Data"].dt.year
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
 
