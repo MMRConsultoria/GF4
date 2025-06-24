@@ -156,38 +156,77 @@ with aba1:
         })
         tipo_subtotais.append(linha_tipo)
 
+    # (até aqui seu código é igual, vamos direto no ponto de alteração)
+    
+    # ✅ Aqui começa o bloco do resultado_final com a ordenação por Tipo
     resultado_final = []
     total_lojas_geral = comparativo["Loja"].nunique()
-
+    
+    # Primeiro, criamos uma lista auxiliar com os subtotais incluindo o tipo já capturado
+    subtotais_aux = []
     for grupo, dados_grupo in comparativo.groupby("Grupo"):
-        resultado_final.append(dados_grupo)
         soma_meta_grupo = dados_grupo["Meta"].sum()
         soma_realizado_grupo = dados_grupo["Realizado"].sum()
         soma_diferenca_grupo = dados_grupo["Diferença"].sum()
         perc_atingido_grupo = soma_realizado_grupo / soma_meta_grupo if soma_meta_grupo != 0 else 0
         perc_falta_grupo = max(0, 1 - perc_atingido_grupo)
         qtde_lojas_grupo = dados_grupo["Loja"].nunique()
+        
         tipo_grupo = df_empresa[df_empresa["Grupo"] == grupo]["Tipo"].dropna().unique()
-        tipo_str = tipo_grupo[0] if len(tipo_grupo) == 1 else "0"
-
+        tipo_str = tipo_grupo[0] if len(tipo_grupo) == 1 else "OUTROS"
+    
+        subtotais_aux.append({
+            "grupo": grupo,
+            "tipo": tipo_str,
+            "qtde_lojas": qtde_lojas_grupo,
+            "meta": soma_meta_grupo,
+            "realizado": soma_realizado_grupo,
+            "diferenca": soma_diferenca_grupo,
+            "perc_atingido": perc_atingido_grupo,
+            "perc_falta": perc_falta_grupo
+        })
+    
+    # Definimos a ordem de prioridade dos tipos
+    ordem_tipo = {"AIRPORTS": 1, "ONPRIMESSE": 2, "OUTROS": 3}
+    
+    # Ordenamos os grupos com base no tipo
+    subtotais_aux = sorted(subtotais_aux, key=lambda x: (ordem_tipo.get(x["tipo"], 3), x["grupo"]))
+    
+    # Agora, com os grupos já ordenados, montamos o resultado final
+    for subtotal in subtotais_aux:
+        grupo = subtotal["grupo"]
+        tipo_str = subtotal["tipo"]
+        qtde_lojas_grupo = subtotal["qtde_lojas"]
+    
+        dados_grupo = comparativo[comparativo["Grupo"] == grupo]
+        resultado_final.append(dados_grupo)
+    
         linha_subtotal = pd.DataFrame({
-            "Ano": [""], "Mês": [""], "Grupo": [grupo], "Loja": [f"{grupo} - Lojas: {qtde_lojas_grupo:02}"],
-            "Meta": [soma_meta_grupo], "Realizado": [soma_realizado_grupo], "% Atingido": [perc_atingido_grupo], "% Falta Atingir": [perc_falta_grupo], "Diferença": [soma_diferenca_grupo], "Tipo": [tipo_str]
+            "Ano": [""], "Mês": [""], "Grupo": [grupo],
+            "Loja": [f"{grupo} - Lojas: {qtde_lojas_grupo:02}"],
+            "Meta": [subtotal["meta"]], "Realizado": [subtotal["realizado"]],
+            "% Atingido": [subtotal["perc_atingido"]], "% Falta Atingir": [subtotal["perc_falta"]],
+            "Diferença": [subtotal["diferenca"]], "Tipo": [tipo_str]
         })
         resultado_final.append(linha_subtotal)
-
+    
+    # ✅ Total Geral continua exatamente igual ao seu
     total_meta = comparativo["Meta"].sum()
     total_realizado = comparativo["Realizado"].sum()
     total_diferenca = comparativo["Diferença"].sum()
     percentual_total = total_realizado / total_meta if total_meta != 0 else 0
     percentual_falta_total = max(0, 1 - percentual_total)
-
+    
     linha_total = pd.DataFrame({
         "Ano": [""], "Mês": [""], "Grupo": [""], "Loja": [f"TOTAL GERAL - Lojas: {total_lojas_geral:02}"],
-        "Meta": [total_meta], "Realizado": [total_realizado], "% Atingido": [percentual_total], "% Falta Atingir": [percentual_falta_total], "Diferença": [total_diferenca], "Tipo": [""]
+        "Meta": [total_meta], "Realizado": [total_realizado],
+        "% Atingido": [percentual_total], "% Falta Atingir": [percentual_falta_total],
+        "Diferença": [total_diferenca], "Tipo": [""]
     })
-
+    
+    # ✅ Monta o comparativo final preservando o seu restante
     comparativo_final = pd.concat(tipo_subtotais + [linha_total] + resultado_final, ignore_index=True)
+
 
     def formatar_linha(row):
         if "TOTAL GERAL" in row["Loja"]:
