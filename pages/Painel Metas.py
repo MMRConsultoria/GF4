@@ -1,5 +1,3 @@
-# pages/Painel Metas.py
-
 import streamlit as st
 st.set_page_config(page_title="Vendas Diarias", layout="wide")
 
@@ -14,9 +12,7 @@ import io
 if not st.session_state.get("acesso_liberado"):
     st.stop()
 
-# ================================
-# 1. Conexão com Google Sheets
-# ================================
+# Conexão com Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
@@ -25,22 +21,17 @@ planilha_empresa = gc.open("Vendas diarias")
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
 
 # Padronizar Tabela Empresa
-for col in ["Loja", "Grupo", "Tipo"]:
-    df_empresa[col] = df_empresa[col].astype(str).str.strip().str.upper()
+df_empresa[["Loja", "Grupo", "Tipo"]] = df_empresa[["Loja", "Grupo", "Tipo"]].astype(str).apply(lambda x: x.str.strip().str.upper())
 
-# ================================
-# 2. Estilo e layout
-# ================================
+# Estilo e layout
 st.markdown("""
     <style>
     .stApp { background-color: #f9f9f9; }
-    div[data-baseweb="tab-list"] { margin-top: 20px; }
     button[data-baseweb="tab"] {
         background-color: #f0f2f6;
         border-radius: 10px;
         padding: 10px 20px;
         margin-right: 10px;
-        transition: all 0.3s ease;
         font-size: 16px;
         font-weight: 600;
     }
@@ -52,13 +43,10 @@ st.markdown("""
 st.markdown("""
     <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
         <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
-        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório Metas Mensais</h1>
+        <h1 style='margin: 0; font-size: 2.4rem;'>Relatório Metas Mensais</h1>
     </div>
 """, unsafe_allow_html=True)
 
-# ================================
-# Função auxiliar para converter valores
-# ================================
 def parse_valor(val):
     if pd.isna(val):
         return 0.0
@@ -69,8 +57,6 @@ def parse_valor(val):
     except:
         return 0.0
 
-
-# Função auxiliar para tratar datas misturadas (string e número serial):
 def tratar_data(val):
     try:
         val_str = str(val).strip()
@@ -81,49 +67,33 @@ def tratar_data(val):
     except:
         return pd.NaT
 
-
-# Função auxiliar de blindagem
 def garantir_escalar(x):
     if isinstance(x, list):
-        if len(x) == 1:
-            return x[0]
-        return str(x)
+        return x[0] if len(x) == 1 else str(x)
     return x
 
-# ================================
-# Abas
-# ================================
 aba1, aba2 = st.tabs(["📈 Analise Metas", "📊 Auditoria Metas"])
 
 with aba1:
-
-    # --- Metas ---
+    # Metas
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
     df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
     df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
     df_metas["Grupo"] = df_metas["Grupo"].astype(str).str.strip().str.upper()
     df_metas = df_metas[df_metas["Loja"] != ""]
 
-    # --- Realizado ---
+    # Realizado
     df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
     df_anos.columns = df_anos.columns.str.strip()
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.upper()
     df_anos["Grupo"] = df_anos["Grupo"].astype(str).str.strip().str.upper()
-   # Já com data tratada e blindada:
     df_anos["Data"] = df_anos["Data"].apply(tratar_data)
     df_anos = df_anos.dropna(subset=["Data"])
-    
-    # Agora o mapeamento correto do mês em português:
-    meses_map = {
-        1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr',
-        5: 'Mai', 6: 'Jun', 7: 'Jul', 8: 'Ago',
-        9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'
-    }
+    meses_map = {1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr', 5: 'Mai', 6: 'Jun', 7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'}
     df_anos["Mês"] = df_anos["Data"].dt.month.map(meses_map)
     df_anos["Ano"] = df_anos["Data"].dt.year
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
 
-    # Adiciona Tipo no df_anos via merge
     df_anos = df_anos.merge(df_empresa[["Loja", "Grupo", "Tipo"]], on=["Loja", "Grupo"], how="left")
 
     mes_atual = datetime.now().strftime("%b")
@@ -163,6 +133,7 @@ with aba1:
         linha_tipo = pd.DataFrame({
             "Ano": [""], "Mês": [""], "Grupo": [""],
             "Loja": [f"Tipo: {tipo} - Lojas: {qtde_lojas_tipo:02}"],
+            "Tipo": [tipo],
             "Meta": [soma_meta_tipo], "Realizado": [soma_realizado_tipo],
             "% Atingido": [perc_atingido_tipo], "% Falta Atingir": [perc_falta_tipo],
             "Diferença": [soma_diferenca_tipo]
@@ -180,25 +151,24 @@ with aba1:
         perc_atingido_grupo = soma_realizado_grupo / soma_meta_grupo if soma_meta_grupo != 0 else 0
         perc_falta_grupo = max(0, 1 - perc_atingido_grupo)
         qtde_lojas_grupo = dados_grupo["Loja"].nunique()
-    
-        # ✅ Recupera o Tipo do primeiro registro (se existir), senão coloca 0
-        tipo_subtotal = dados_grupo["Tipo"].dropna().unique()
-        if len(tipo_subtotal) == 1:
-            tipo_str = tipo_subtotal[0]
+
+        tipo_grupo = df_empresa.loc[df_empresa["Grupo"] == grupo, "Tipo"].dropna().unique()
+        if len(tipo_grupo) == 1:
+            tipo_str = tipo_grupo[0]
+        elif len(tipo_grupo) > 1:
+            tipo_str = "VÁRIOS"
         else:
             tipo_str = "0"
-    
+
         linha_subtotal = pd.DataFrame({
             "Ano": [""], "Mês": [""], "Grupo": [grupo],
-            "Loja": [f"{grupo} - {tipo_str} - Lojas: {qtde_lojas_grupo:02}"],
+            "Loja": [f"{grupo} - Lojas: {qtde_lojas_grupo:02}"],
+            "Tipo": [tipo_str],
             "Meta": [soma_meta_grupo], "Realizado": [soma_realizado_grupo],
             "% Atingido": [perc_atingido_grupo], "% Falta Atingir": [perc_falta_grupo],
             "Diferença": [soma_diferenca_grupo]
         })
         resultado_final.append(linha_subtotal)
-
-
-    
 
     total_meta = comparativo["Meta"].sum()
     total_realizado = comparativo["Realizado"].sum()
@@ -208,7 +178,7 @@ with aba1:
 
     linha_total = pd.DataFrame({
         "Ano": [""], "Mês": [""], "Grupo": [""],
-        "Loja": [f"TOTAL GERAL - Lojas: {total_lojas_geral:02}"],
+        "Loja": [f"TOTAL GERAL - Lojas: {total_lojas_geral:02}"], "Tipo": [""],
         "Meta": [total_meta], "Realizado": [total_realizado],
         "% Atingido": [percentual_total], "% Falta Atingir": [percentual_falta_total],
         "Diferença": [total_diferenca]
