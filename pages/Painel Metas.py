@@ -91,14 +91,27 @@ with aba1:
     df_metas["Grupo"] = df_metas["Grupo"].astype(str).str.strip().str.upper()
     df_metas = df_metas[df_metas["Loja"] != ""]
 
-    # --- Realizado ---
+   # --- Realizado ---
     df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
     df_anos.columns = df_anos.columns.str.strip()
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.upper()
     df_anos["Grupo"] = df_anos["Grupo"].astype(str).str.strip().str.upper()
-    df_anos["Data"] = pd.to_datetime(df_anos["Data"], dayfirst=True)
+    
+    # Blindagem correta da coluna Data
+    def tratar_data(val):
+        try:
+            if isinstance(val, (int, float)):
+                return pd.Timestamp('1899-12-30') + pd.to_timedelta(val, unit='D')
+            else:
+                return pd.to_datetime(val, dayfirst=True, errors='coerce')
+        except:
+            return pd.NaT
+    
+    df_anos["Data"] = df_anos["Data"].apply(tratar_data)
+    df_anos = df_anos.dropna(subset=["Data"])
     df_anos["Mês"] = df_anos["Data"].dt.strftime("%b")
     df_anos["Ano"] = df_anos["Data"].dt.year
+    
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
 
     # Adiciona Tipo no df_anos via merge
