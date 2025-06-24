@@ -667,17 +667,14 @@ with aba4:
 
 
                 # 🔹 Estilo linha: esconder texto de totais
-                def highlight_total_transparente(row):
-                    for valor in row:
-                        try:
-                            texto = str(valor).strip().lower()
-                            if "total" in texto or "subtotal" in texto:
-                                return ["color: transparent"] * len(row)
-                        except:
-                            continue
-                    return ["color: black"] * len(row)
-
-                # 🔹 Estilo colunas: destacar por origem
+                # 🔹 Estilo linha: destacar se tiver diferença (em vermelho)
+                def highlight_diferenca(row):
+                    if (row["Valor Bruto (Everest)"] != row["Valor Bruto (Externo)"]) or (row["Valor Real (Everest)"] != row["Valor Real (Externo)"]):
+                        return ["background-color: #ff9999"] * len(row)  # vermelho claro
+                    else:
+                        return [""] * len(row)
+                
+                # 🔹 Estilo colunas: manter azul e rosa padrão
                 def destacar_colunas_por_origem(col):
                     if "Everest" in col:
                         return "background-color: #e6f2ff"
@@ -685,11 +682,11 @@ with aba4:
                         return "background-color: #fff5e6"
                     else:
                         return ""
-
+                
                 # 🔹 Aplicar estilos
                 st.dataframe(
                     df_resultado.style
-                        .apply(highlight_total_transparente, axis=1)
+                        .apply(highlight_diferenca, axis=1)
                         .set_properties(subset=["Valor Bruto (Everest)", "Valor Real (Everest)"], **{"background-color": "#e6f2ff"})
                         .set_properties(subset=["Valor Bruto (Externo)", "Valor Real (Externo)"], **{"background-color": "#fff5e6"})
                         .format({
@@ -701,6 +698,7 @@ with aba4:
                     use_container_width=True,
                     height=600
                 )
+
                 
         else:
             st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
