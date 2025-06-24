@@ -123,12 +123,6 @@ with aba1:
     df_anos["Ano"] = df_anos["Data"].dt.year
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
 
-
-    st.write("Quantidade de linhas no dataframe completo:", len(df_anos))
-    st.write("Datas únicas presentes:", df_anos["Data"].dt.strftime("%Y-%m-%d").unique())
-
-    
-
     # Adiciona Tipo no df_anos via merge
     df_anos = df_anos.merge(df_empresa[["Loja", "Grupo", "Tipo"]], on=["Loja", "Grupo"], how="left")
 
