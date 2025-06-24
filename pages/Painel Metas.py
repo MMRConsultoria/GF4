@@ -206,6 +206,33 @@ with aba1:
 
     comparativo_final = pd.concat(tipo_subtotais + [linha_total] + resultado_final, ignore_index=True)
 
+    # Separa as linhas de lojas normais (que não são subtotal nem total)
+    linhas_lojas = comparativo_final[~comparativo_final['Loja'].str.contains('Lojas:|TOTAL GERAL', na=False)].copy()
+    
+    # Cria o peso de ordenação do Tipo
+    ordem_tipo = {
+        'AIRPORTS': 1,
+        'ONPRIMESSE': 2,
+        'BARES': 3
+    }
+    
+    # Adiciona coluna auxiliar de ordenação
+    linhas_lojas['Ordem_Tipo'] = linhas_lojas['Tipo'].map(ordem_tipo)
+    
+    # Ordena por Grupo, depois Tipo, depois Realizado decrescente
+    linhas_lojas = linhas_lojas.sort_values(
+        by=['Grupo', 'Ordem_Tipo', 'Realizado'],
+        ascending=[True, True, False]
+    )
+    
+    # Agora junta com os subtotais e total
+    outras_linhas = comparativo_final[comparativo_final['Loja'].str.contains('Lojas:|TOTAL GERAL', na=False)]
+    comparativo_final_ordenado = pd.concat([outras_linhas, linhas_lojas], ignore_index=True)
+
+
+
+    
+
     def formatar_linha(row):
         if "TOTAL GERAL" in row["Loja"]:
             return ['background-color: #0366d6; color: white'] * len(row)
@@ -217,14 +244,20 @@ with aba1:
             return [''] * len(row)
 
     st.dataframe(
-        comparativo_final.style
+        comparativo_final_ordenado.style
             .format({
-                "Meta": "R$ {:,.2f}", "Realizado": "R$ {:,.2f}", "Diferença": "R$ {:,.2f}",
-                "% Atingido": "{:.2%}", "% Falta Atingir": "{:.2%}"
+                "Meta": "R$ {:,.2f}",
+                "Realizado": "R$ {:,.2f}",
+                "Diferença": "R$ {:,.2f}",
+                "% Atingido": "{:.2%}",
+                "% Falta Atingir": "{:.2%}"
             })
             .apply(formatar_linha, axis=1),
         use_container_width=True
-    )
+    )    
+
+
+    
 
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
