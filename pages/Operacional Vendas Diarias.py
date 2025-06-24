@@ -687,11 +687,28 @@ with aba4:
                         return ""
 
                 # 🔹 Aplicar estilos
+                # 🔹 Estilo linha: destacar se tiver diferença
+                def highlight_diferenca(row):
+                    if (row["Valor Bruto (Everest)"] != row["Valor Bruto (Externo)"]) or (row["Valor Real (Everest)"] != row["Valor Real (Externo)"]):
+                        return ["background-color: #ffff99"] * len(row)
+                    else:
+                        return [""] * len(row)
+                
+                # 🔹 Estilo colunas: cores mais fortes
+                def destacar_colunas_forte(col):
+                    if "Everest" in col:
+                        return "background-color: #0074cc; color: white"
+                    elif "Externo" in col:
+                        return "background-color: #cc3366; color: white"
+                    else:
+                        return ""
+                
+                # 🔹 Aplicar estilos
                 st.dataframe(
                     df_resultado.style
-                        .apply(highlight_total_transparente, axis=1)
-                        .set_properties(subset=["Valor Bruto (Everest)", "Valor Real (Everest)"], **{"background-color": "#e6f2ff"})
-                        .set_properties(subset=["Valor Bruto (Externo)", "Valor Real (Externo)"], **{"background-color": "#fff5e6"})
+                        .apply(highlight_diferenca, axis=1)
+                        .set_properties(subset=["Valor Bruto (Everest)", "Valor Real (Everest)"], **{"background-color": "#0074cc", "color": "white"})
+                        .set_properties(subset=["Valor Bruto (Externo)", "Valor Real (Externo)"], **{"background-color": "#cc3366", "color": "white"})
                         .format({
                             "Valor Bruto (Everest)": "R$ {:,.2f}",
                             "Valor Real (Everest)": "R$ {:,.2f}",
@@ -701,6 +718,7 @@ with aba4:
                     use_container_width=True,
                     height=600
                 )
+
                 
         else:
             st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
