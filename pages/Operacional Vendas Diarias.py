@@ -642,27 +642,27 @@ with aba4:
 
 
                 
-                df_resultado = df_diff[[
-                    "Data",
-                    "Nome Loja Everest", "Codigo", "Valor Bruto (Everest)", "Valor Real (Everest)",
-                    "Nome Loja Sistema Externo", "Valor Bruto (Externo)", "Valor Real (Externo)"
-                ]].sort_values("Data")
+              #  df_resultado = df_diff[[
+              #      "Data",
+              #      "Nome Loja Everest", "Codigo", "Valor Bruto (Everest)", "Valor Real (Everest)",
+              #      "Nome Loja Sistema Externo", "Valor Bruto (Externo)", "Valor Real (Externo)"
+              #  ]].sort_values("Data")
 
-                df_resultado.columns = [
-                    "Data",
-                    "Nome (Everest)", "Código", "Valor Bruto (Everest)", "Valor Real (Everest)",
-                    "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
-                ]
+              #  df_resultado.columns = [
+              #      "Data",
+              #      "Nome (Everest)", "Código", "Valor Bruto (Everest)", "Valor Real (Everest)",
+              #      "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
+              #  ]
 
                 # 🔹 Substituir None por string vazia só nas colunas de texto
-                colunas_texto = ["Nome (Everest)", "Nome (Externo)"]
-                df_resultado[colunas_texto] = df_resultado[colunas_texto].fillna("")
+              #  colunas_texto = ["Nome (Everest)", "Nome (Externo)"]
+              #  df_resultado[colunas_texto] = df_resultado[colunas_texto].fillna("")
 
                 # 🔹 Resetar índice
-                df_resultado = df_resultado.reset_index(drop=True)
+              #  df_resultado = df_resultado.reset_index(drop=True)
 
                 # ✅ Salvar no session_state para manter os dados após clique no botão
-                st.session_state.df_resultado = df_resultado            
+              #  st.session_state.df_resultado = df_resultado            
 
 
 
