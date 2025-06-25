@@ -88,6 +88,14 @@ def garantir_escalar(x):
         return str(x)
     return x
 
+def formatar_moeda_br(val):
+    if pd.isna(val):
+        return ""
+    return f"R$ {val:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
+
+
+
+
 # ================================
 # Abas
 # ================================
