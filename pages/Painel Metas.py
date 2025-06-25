@@ -265,13 +265,14 @@ with aba1:
         "Mês": [""], 
         "Grupo": [""],
         "Loja": [f"🎯 Meta Desejável até {ultima_data_realizado}"],
-        "Meta": [""],
-        "Realizado": [""],
+        "Meta": [np.nan],
+        "Realizado": [np.nan],
         "% Atingido": [percentual_meta_desejavel],
-        "% Falta Atingir": [""],
-        "Diferença": [""],
+        "% Falta Atingir": [np.nan],
+        "Diferença": [np.nan],
         "Tipo": [""]
     })
+
 
 
 
