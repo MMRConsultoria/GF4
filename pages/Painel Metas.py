@@ -145,8 +145,6 @@ with aba1:
     # Agora sim pega a última data correta já do mês filtrado
     ultima_data_realizado_dt = df_anos_filtrado["Data"].max()
     ultima_data_realizado = ultima_data_realizado_dt.strftime("%d/%m/%Y")
-
-    col_realizado_nome = f"Realizado até {ultima_data_realizado}"
     
     # Calcula o percentual desejável até a última data
     dias_do_mes = calendar.monthrange(ano_selecionado, ordem_meses.index(mes_selecionado) + 1)[1]
@@ -165,21 +163,17 @@ with aba1:
 
     metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja", "Grupo"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
     realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja", "Grupo", "Tipo"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
-    
+
     comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja", "Grupo"], how="outer").fillna(0)
-    
-    comparativo.rename(columns={"Realizado": col_realizado_nome}, inplace=True)
-    
-    comparativo["% Atingido"] = np.where(comparativo["Meta"] == 0, 0, comparativo[col_realizado_nome] / comparativo["Meta"])
-    comparativo["Diferença"] = comparativo[col_realizado_nome] - comparativo["Meta"]
+    comparativo["% Atingido"] = np.where(comparativo["Meta"] == 0, 0, comparativo["Realizado"] / comparativo["Meta"])
+    comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
     comparativo["% Falta Atingir"] = np.maximum(0, 1 - comparativo["% Atingido"])
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
-
 
     tipo_subtotais = []
     for tipo, dados_tipo in comparativo.groupby("Tipo"):
         soma_meta_tipo = dados_tipo["Meta"].sum()
-        soma_realizado_tipo = dados_tipo[col_realizado_nome].sum()
+        soma_realizado_tipo = dados_tipo["Realizado"].sum()
         soma_diferenca_tipo = dados_tipo["Diferença"].sum()
         perc_atingido_tipo = soma_realizado_tipo / soma_meta_tipo if soma_meta_tipo != 0 else 0
         perc_falta_tipo = max(0, 1 - perc_atingido_tipo)
@@ -194,15 +188,14 @@ with aba1:
     # (até aqui seu código é igual, vamos direto no ponto de alteração)
     
     # ✅ Aqui começa o bloco do resultado_final com a ordenação por Tipo
-    # ✅ Aqui começa o bloco do resultado_final com a ordenação por Tipo
-    resultado_final = pd.DataFrame()   # <<< alterado aqui
+    resultado_final = []
     total_lojas_geral = comparativo["Loja"].nunique()
     
     # Primeiro, criamos uma lista auxiliar com os subtotais incluindo o tipo já capturado
     subtotais_aux = []
     for grupo, dados_grupo in comparativo.groupby("Grupo"):
         soma_meta_grupo = dados_grupo["Meta"].sum()
-        soma_realizado_grupo = dados_grupo[col_realizado_nome].sum()
+        soma_realizado_grupo = dados_grupo["Realizado"].sum()
         soma_diferenca_grupo = dados_grupo["Diferença"].sum()
         perc_atingido_grupo = soma_realizado_grupo / soma_meta_grupo if soma_meta_grupo != 0 else 0
         perc_falta_grupo = max(0, 1 - perc_atingido_grupo)
@@ -224,10 +217,12 @@ with aba1:
     
     # Definimos a ordem de prioridade dos tipos
     ordem_tipo = {"AIRPORTS": 1, "AIRPORTS - KOPP": 2, "ON-PREMISE": 3, "OUTROS": 4}
-    
+
+
     # Normaliza o tipo (garantir comparação segura)
     for item in subtotais_aux:
         item["tipo"] = str(item["tipo"]).strip().upper()
+
     
     # Ordenamos os grupos com base no tipo
     subtotais_aux = sorted(subtotais_aux, key=lambda x: (ordem_tipo.get(x["tipo"], 99), x["grupo"]))
@@ -239,26 +234,20 @@ with aba1:
         qtde_lojas_grupo = subtotal["qtde_lojas"]
     
         dados_grupo = comparativo[comparativo["Grupo"] == grupo]
-    
-        resultado_final = pd.concat([resultado_final, dados_grupo.copy()], ignore_index=True)
+        resultado_final.append(dados_grupo)
     
         linha_subtotal = pd.DataFrame({
             "Ano": [""], "Mês": [""], "Grupo": [grupo],
             "Loja": [f"{grupo} - Lojas: {qtde_lojas_grupo:02}"],
-            "Meta": [subtotal["meta"]], 
-            col_realizado_nome: [subtotal["realizado"]],
-            "% Atingido": [subtotal["perc_atingido"]], 
-            "% Falta Atingir": [subtotal["perc_falta"]],
-            "Diferença": [subtotal["diferenca"]], 
-            "Tipo": [tipo_str]
+            "Meta": [subtotal["meta"]], "Realizado": [subtotal["realizado"]],
+            "% Atingido": [subtotal["perc_atingido"]], "% Falta Atingir": [subtotal["perc_falta"]],
+            "Diferença": [subtotal["diferenca"]], "Tipo": [tipo_str]
         })
-    
-        resultado_final = pd.concat([resultado_final, linha_subtotal], ignore_index=True)
-
+        resultado_final.append(linha_subtotal)
     
     # ✅ Total Geral continua exatamente igual ao seu
     total_meta = comparativo["Meta"].sum()
-    total_realizado = comparativo[col_realizado_nome].sum()
+    total_realizado = comparativo["Realizado"].sum()
     total_diferenca = comparativo["Diferença"].sum()
     percentual_total = total_realizado / total_meta if total_meta != 0 else 0
     percentual_falta_total = max(0, 1 - percentual_total)
@@ -277,13 +266,15 @@ with aba1:
         "Grupo": [""],
         "Loja": [f"🎯 Meta Desejável até {ultima_data_realizado}"],
         "Meta": [np.nan],
-        col_realizado_nome: [np.nan],
+        "Realizado": [np.nan],
         "% Atingido": [percentual_meta_desejavel],
         "% Falta Atingir": [np.nan],
         "Diferença": [np.nan],
         "Tipo": [""]
     })
-    
+
+
+
 
 
 
@@ -294,18 +285,15 @@ with aba1:
 
     
     # ✅ Monta o comparativo final preservando o seu restante
-    comparativo_final = pd.concat([linha_meta_desejavel] + tipo_subtotais + [linha_total, resultado_final], ignore_index=True)
+    comparativo_final = pd.concat([linha_meta_desejavel] + tipo_subtotais + [linha_total] + resultado_final, ignore_index=True)
     # ✅ Ajusta o nome da coluna "Realizado"
     comparativo_final.rename(columns={"Realizado": f"Realizado até {ultima_data_realizado}"}, inplace=True)
 
-    # Cria a lista de colunas a converter
-    colunas_numericas = ["Meta", col_realizado_nome, "Diferença", "% Atingido", "% Falta Atingir"]
-    
-    # Faz a conversão de cada uma
-    for col in colunas_numericas:
+    # Ajusta os tipos para garantir float e evitar None no Styler
+    for col in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença", "% Atingido", "% Falta Atingir"]:
         comparativo_final[col] = pd.to_numeric(comparativo_final[col], errors='coerce')
+       
 
-    
     def formatar_linha(row):
         if "Meta Desejável" in row["Loja"]:
             return ['background-color: #FF6666; color: white'] * len(row)
