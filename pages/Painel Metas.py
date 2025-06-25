@@ -346,3 +346,100 @@ with aba1:
         file_name=f"Relatorio_Metas_{ano_selecionado}_{mes_selecionado}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+# ================================
+with aba2:
+# ================================    
+    st.header("Painel de Gráficos Semanais")
+
+    # ================================
+    # Prepara dados semanais
+    # ================================
+    df_anos['Semana'] = df_anos['Data'].dt.isocalendar().week
+
+    # Filtros básicos
+    grupos_disponiveis = df_anos['Grupo'].unique().tolist()
+    grupos_disponiveis.sort()
+    grupo_selecionado = st.selectbox("Selecione o Grupo:", grupos_disponiveis)
+
+    operacoes_disponiveis = df_empresa['Tipo'].unique().tolist()
+    operacoes_disponiveis.sort()
+    operacao_selecionada = st.selectbox("Selecione a Operação:", operacoes_disponiveis)
+
+    meses_disponiveis = ordem_meses
+    mes_selecionado_grafico = st.selectbox("Selecione o Mês:", meses_disponiveis)
+
+    # Filtro aplicado
+    df_filtrado = df_anos[
+        (df_anos['Grupo'] == grupo_selecionado) & 
+        (df_anos['Tipo'] == operacao_selecionada) &
+        (df_anos['Mês'] == mes_selecionado_grafico)
+    ]
+
+    # Agrupa por semana
+    vendas_semana = df_filtrado.groupby('Semana')['Fat.Total'].sum().reset_index()
+
+    # ================================
+    # Gráfico de barras (Vendas por Semana)
+    # ================================
+    import plotly.graph_objects as go
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=vendas_semana['Semana'],
+        y=vendas_semana['Fat.Total'],
+        marker_color='green',
+        name='Faturamento'
+    ))
+
+    fig.update_layout(title="Vendas por Semana",
+                      xaxis_title="Semana do Ano",
+                      yaxis_title="Faturamento",
+                      height=400)
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+    # ================================
+    # Ritmo Ideal (Velocímetro)
+    # ================================
+    ritmo_real = vendas_semana['Fat.Total'].sum()
+    meta_total = df_metas[df_metas['Grupo'] == grupo_selecionado]['Fat.Total'].sum()
+
+    percentual = (ritmo_real / meta_total) * 100 if meta_total > 0 else 0
+
+    fig_gauge = go.Figure(go.Indicator(
+        mode = "gauge+number",
+        value = percentual,
+        domain = {'x': [0, 1], 'y': [0, 1]},
+        title = {'text': "Ritmo Ideal (%)"},
+        gauge = {
+            'axis': {'range': [0, 100]},
+            'bar': {'color': "darkblue"},
+            'steps' : [
+                {'range': [0, 50], 'color': "red"},
+                {'range': [50, 75], 'color': "yellow"},
+                {'range': [75, 100], 'color': "green"}
+            ]
+        }
+    ))
+
+    st.plotly_chart(fig_gauge, use_container_width=True)
+
+    # ================================
+    # Índice de Crescimento (Barras horizontais)
+    # ================================
+    # Exemplo básico de crescimento por loja (apenas estrutura inicial)
+    crescimento_df = df_filtrado.groupby('Loja')['Fat.Total'].sum().reset_index()
+    crescimento_df['Crescimento'] = (crescimento_df['Fat.Total'] / crescimento_df['Fat.Total'].mean()) * 100
+
+    fig_crescimento = go.Figure(go.Bar(
+        x=crescimento_df['Crescimento'],
+        y=crescimento_df['Loja'],
+        orientation='h',
+        marker_color='green'
+    ))
+
+    fig_crescimento.update_layout(title="Índice de Crescimento",
+                                   xaxis_title="% Crescimento",
+                                   height=400)
+
+    st.plotly_chart(fig_crescimento, use_container_width=True)
