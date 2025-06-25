@@ -118,8 +118,7 @@ with aba1:
     df_anos["Data"] = df_anos["Data"].apply(tratar_data)
     df_anos = df_anos.dropna(subset=["Data"])
 
-    # ✅ Pega a última data
-    ultima_data_realizado = df_anos["Data"].max().strftime("%d/%m/%Y")
+  
 
     meses_map = {1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr', 5: 'Mai', 6: 'Jun', 7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'}
     df_anos["Mês"] = df_anos["Data"].dt.month.map(meses_map)
@@ -288,15 +287,7 @@ with aba1:
     comparativo_final.rename(columns={"Realizado": f"Realizado até {ultima_data_realizado}"}, inplace=True)
 
 
-    def formatar_linha(row):
-        if "TOTAL GERAL" in row["Loja"]:
-            return ['background-color: #0366d6; color: white'] * len(row)
-        elif "Tipo:" in row["Loja"]:
-            return ['background-color: #FFE699'] * len(row)
-        elif "Lojas:" in row["Loja"]:
-            return ['background-color: #d0e6f7'] * len(row)
-        else:
-            return [''] * len(row)
+   
 
     def formatar_linha(row):
         if "Meta Desejável" in row["Loja"]:
