@@ -289,8 +289,10 @@ with aba1:
     # ✅ Ajusta o nome da coluna "Realizado"
     comparativo_final.rename(columns={"Realizado": f"Realizado até {ultima_data_realizado}"}, inplace=True)
 
-
-   
+    # Ajusta os tipos para garantir float e evitar None no Styler
+    for col in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença", "% Atingido", "% Falta Atingir"]:
+        comparativo_final[col] = pd.to_numeric(comparativo_final[col], errors='coerce')
+       
 
     def formatar_linha(row):
         if "Meta Desejável" in row["Loja"]:
