@@ -294,7 +294,7 @@ with aba1:
 
     
     # ✅ Monta o comparativo final preservando o seu restante
-    comparativo_final = pd.concat([linha_meta_desejavel] + tipo_subtotais + [linha_total] + resultado_final, ignore_index=True)
+    comparativo_final = pd.concat([linha_meta_desejavel] + tipo_subtotais + [linha_total, resultado_final], ignore_index=True)
     # ✅ Ajusta o nome da coluna "Realizado"
     comparativo_final.rename(columns={"Realizado": f"Realizado até {ultima_data_realizado}"}, inplace=True)
 
