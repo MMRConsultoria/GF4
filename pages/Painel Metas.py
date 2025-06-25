@@ -145,6 +145,8 @@ with aba1:
     # Agora sim pega a última data correta já do mês filtrado
     ultima_data_realizado_dt = df_anos_filtrado["Data"].max()
     ultima_data_realizado = ultima_data_realizado_dt.strftime("%d/%m/%Y")
+
+    col_realizado_nome = f"Realizado até {ultima_data_realizado}"
     
     # Calcula o percentual desejável até a última data
     dias_do_mes = calendar.monthrange(ano_selecionado, ordem_meses.index(mes_selecionado) + 1)[1]
