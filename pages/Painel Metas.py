@@ -110,6 +110,9 @@ with aba1:
     df_anos["Data"] = df_anos["Data"].apply(tratar_data)
     df_anos = df_anos.dropna(subset=["Data"])
 
+    # ✅ Pega a última data
+    ultima_data_realizado = df_anos["Data"].max().strftime("%d/%m/%Y")
+
     meses_map = {1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr', 5: 'Mai', 6: 'Jun', 7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'}
     df_anos["Mês"] = df_anos["Data"].dt.month.map(meses_map)
     df_anos["Ano"] = df_anos["Data"].dt.year
@@ -244,6 +247,11 @@ with aba1:
         else:
             return [''] * len(row)
 
+    # ✅ Exibe a data de realizado antes da tabela
+    st.markdown(f"**Última data de realizado carregada:** {ultima_data_realizado}")
+    
+    
+    
     st.dataframe(
         comparativo_final.style
             .format({
