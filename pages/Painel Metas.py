@@ -266,13 +266,12 @@ with aba1:
         "Grupo": [""],
         "Loja": [f"🎯 Meta Desejável até {ultima_data_realizado}"],
         "Meta": [np.nan],
-        "Realizado": [np.nan],
+        col_realizado_nome: [np.nan],
         "% Atingido": [percentual_meta_desejavel],
         "% Falta Atingir": [np.nan],
         "Diferença": [np.nan],
         "Tipo": [""]
     })
-
 
 
 
