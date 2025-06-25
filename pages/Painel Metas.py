@@ -265,9 +265,9 @@ with aba1:
     st.dataframe(
         comparativo_final.style
             .format({
-                "Meta": "R$ {:,.2f}", 
-                f"Realizado até {ultima_data_realizado}": "R$ {:,.2f}", 
-                "Diferença": "R$ {:,.2f}", 
+                "Meta": formatar_moeda_br, 
+                f"Realizado até {ultima_data_realizado}": formatar_moeda_br, 
+                "Diferença": formatar_moeda_br, 
                 "% Atingido": "{:.2%}", 
                 "% Falta Atingir": "{:.2%}"
             })
