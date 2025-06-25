@@ -257,12 +257,15 @@ with aba1:
     st.dataframe(
         comparativo_final.style
             .format({
-                "Meta": "R$ {:,.2f}", "Realizado": "R$ {:,.2f}", "Diferença": "R$ {:,.2f}", "% Atingido": "{:.2%}", "% Falta Atingir": "{:.2%}"
+                "Meta": "R$ {:,.2f}", 
+                f"Realizado até {ultima_data_realizado}": "R$ {:,.2f}", 
+                "Diferença": "R$ {:,.2f}", 
+                "% Atingido": "{:.2%}", 
+                "% Falta Atingir": "{:.2%}"
             })
             .apply(formatar_linha, axis=1),
         use_container_width=True
     )
-
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         comparativo_final.to_excel(writer, index=False, sheet_name='Metas')
