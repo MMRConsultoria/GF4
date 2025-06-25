@@ -10,7 +10,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 import json
 from datetime import datetime
 import io
-import calendar
 
 if not st.session_state.get("acesso_liberado"):
     st.stop()
@@ -30,9 +29,36 @@ for col in ["Loja", "Grupo", "Tipo"]:
     df_empresa[col] = df_empresa[col].astype(str).str.strip().str.upper()
 
 # ================================
-# Funções auxiliares
+# 2. Estilo e layout
 # ================================
+st.markdown("""
+    <style>
+    .stApp { background-color: #f9f9f9; }
+    div[data-baseweb="tab-list"] { margin-top: 20px; }
+    button[data-baseweb="tab"] {
+        background-color: #f0f2f6;
+        border-radius: 10px;
+        padding: 10px 20px;
+        margin-right: 10px;
+        transition: all 0.3s ease;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    button[data-baseweb="tab"]:hover { background-color: #dce0ea; color: black; }
+    button[data-baseweb="tab"][aria-selected="true"] { background-color: #0366d6; color: white; }
+    </style>
+""", unsafe_allow_html=True)
 
+st.markdown("""
+    <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
+        <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
+        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório Metas Mensais</h1>
+    </div>
+""", unsafe_allow_html=True)
+
+# ================================
+# Função auxiliar para converter valores
+# ================================
 def parse_valor(val):
     if pd.isna(val):
         return 0.0
@@ -42,6 +68,8 @@ def parse_valor(val):
         return float(str(val).replace("R$", "").replace(".", "").replace(",", ".").strip())
     except:
         return 0.0
+
+# Função auxiliar para tratar datas misturadas
 
 def tratar_data(val):
     try:
@@ -61,9 +89,12 @@ def garantir_escalar(x):
     return x
 
 def formatar_moeda_br(val):
-    if pd.isna(val) or val == "":
+    if pd.isna(val):
         return ""
     return f"R$ {val:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
+
+
+
 
 # ================================
 # Abas
@@ -71,6 +102,7 @@ def formatar_moeda_br(val):
 aba1, aba2 = st.tabs(["📈 Analise Metas", "📊 Auditoria Metas"])
 
 with aba1:
+
     # --- Metas ---
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
     df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
@@ -86,14 +118,14 @@ with aba1:
     df_anos["Data"] = df_anos["Data"].apply(tratar_data)
     df_anos = df_anos.dropna(subset=["Data"])
 
-    # Pega a última data
-    ultima_data_realizado_dt = df_anos["Data"].max()
-    ultima_data_realizado = ultima_data_realizado_dt.strftime("%d/%m/%Y")
+    # ✅ Pega a última data
+    ultima_data_realizado = df_anos["Data"].max().strftime("%d/%m/%Y")
 
     meses_map = {1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr', 5: 'Mai', 6: 'Jun', 7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'}
     df_anos["Mês"] = df_anos["Data"].dt.month.map(meses_map)
     df_anos["Ano"] = df_anos["Data"].dt.year
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
+
     df_anos = df_anos.merge(df_empresa[["Loja", "Grupo", "Tipo"]], on=["Loja", "Grupo"], how="left")
 
     mes_atual = datetime.now().strftime("%b")
@@ -135,8 +167,13 @@ with aba1:
         })
         tipo_subtotais.append(linha_tipo)
 
+    # (até aqui seu código é igual, vamos direto no ponto de alteração)
+    
+    # ✅ Aqui começa o bloco do resultado_final com a ordenação por Tipo
     resultado_final = []
     total_lojas_geral = comparativo["Loja"].nunique()
+    
+    # Primeiro, criamos uma lista auxiliar com os subtotais incluindo o tipo já capturado
     subtotais_aux = []
     for grupo, dados_grupo in comparativo.groupby("Grupo"):
         soma_meta_grupo = dados_grupo["Meta"].sum()
@@ -145,56 +182,73 @@ with aba1:
         perc_atingido_grupo = soma_realizado_grupo / soma_meta_grupo if soma_meta_grupo != 0 else 0
         perc_falta_grupo = max(0, 1 - perc_atingido_grupo)
         qtde_lojas_grupo = dados_grupo["Loja"].nunique()
+        
         tipo_grupo = df_empresa[df_empresa["Grupo"] == grupo]["Tipo"].dropna().unique()
         tipo_str = tipo_grupo[0] if len(tipo_grupo) == 1 else "OUTROS"
-        subtotais_aux.append({"grupo": grupo, "tipo": tipo_str, "qtde_lojas": qtde_lojas_grupo,
-                               "meta": soma_meta_grupo, "realizado": soma_realizado_grupo, "diferenca": soma_diferenca_grupo,
-                               "perc_atingido": perc_atingido_grupo, "perc_falta": perc_falta_grupo})
-
+    
+        subtotais_aux.append({
+            "grupo": grupo,
+            "tipo": tipo_str,
+            "qtde_lojas": qtde_lojas_grupo,
+            "meta": soma_meta_grupo,
+            "realizado": soma_realizado_grupo,
+            "diferenca": soma_diferenca_grupo,
+            "perc_atingido": perc_atingido_grupo,
+            "perc_falta": perc_falta_grupo
+        })
+    
+    # Definimos a ordem de prioridade dos tipos
     ordem_tipo = {"AIRPORTS": 1, "AIRPORTS - KOPP": 2, "ON-PREMISE": 3, "OUTROS": 4}
+
+
+    # Normaliza o tipo (garantir comparação segura)
     for item in subtotais_aux:
         item["tipo"] = str(item["tipo"]).strip().upper()
-    subtotais_aux = sorted(subtotais_aux, key=lambda x: (ordem_tipo.get(x["tipo"], 99), x["grupo"]))
 
+    
+    # Ordenamos os grupos com base no tipo
+    subtotais_aux = sorted(subtotais_aux, key=lambda x: (ordem_tipo.get(x["tipo"], 99), x["grupo"]))
+    
+    # Agora, com os grupos já ordenados, montamos o resultado final
     for subtotal in subtotais_aux:
         grupo = subtotal["grupo"]
         tipo_str = subtotal["tipo"]
         qtde_lojas_grupo = subtotal["qtde_lojas"]
+    
         dados_grupo = comparativo[comparativo["Grupo"] == grupo]
         resultado_final.append(dados_grupo)
+    
         linha_subtotal = pd.DataFrame({
-            "Ano": [""], "Mês": [""], "Grupo": [grupo], "Loja": [f"{grupo} - Lojas: {qtde_lojas_grupo:02}"],
-            "Meta": [subtotal["meta"]], "Realizado": [subtotal["realizado"]], "% Atingido": [subtotal["perc_atingido"]], "% Falta Atingir": [subtotal["perc_falta"]], "Diferença": [subtotal["diferenca"]], "Tipo": [tipo_str]
+            "Ano": [""], "Mês": [""], "Grupo": [grupo],
+            "Loja": [f"{grupo} - Lojas: {qtde_lojas_grupo:02}"],
+            "Meta": [subtotal["meta"]], "Realizado": [subtotal["realizado"]],
+            "% Atingido": [subtotal["perc_atingido"]], "% Falta Atingir": [subtotal["perc_falta"]],
+            "Diferença": [subtotal["diferenca"]], "Tipo": [tipo_str]
         })
         resultado_final.append(linha_subtotal)
-
+    
+    # ✅ Total Geral continua exatamente igual ao seu
     total_meta = comparativo["Meta"].sum()
     total_realizado = comparativo["Realizado"].sum()
     total_diferenca = comparativo["Diferença"].sum()
     percentual_total = total_realizado / total_meta if total_meta != 0 else 0
     percentual_falta_total = max(0, 1 - percentual_total)
-
+    
     linha_total = pd.DataFrame({
         "Ano": [""], "Mês": [""], "Grupo": [""], "Loja": [f"TOTAL GERAL - Lojas: {total_lojas_geral:02}"],
-        "Meta": [total_meta], "Realizado": [total_realizado], "% Atingido": [percentual_total], "% Falta Atingir": [percentual_falta_total], "Diferença": [total_diferenca], "Tipo": [""]
+        "Meta": [total_meta], "Realizado": [total_realizado],
+        "% Atingido": [percentual_total], "% Falta Atingir": [percentual_falta_total],
+        "Diferença": [total_diferenca], "Tipo": [""]
     })
-
-    dias_do_mes = calendar.monthrange(ano_selecionado, ordem_meses.index(mes_selecionado) + 1)[1]
-    dias_corridos = ultima_data_realizado_dt.day
-    meta_desejavel_geral = total_meta * dias_corridos / dias_do_mes
-
-    linha_meta_desejavel = pd.DataFrame({
-        "Ano": [""], "Mês": [""], "Grupo": [""], "Loja": [f"🎯 Meta Desejável até {ultima_data_realizado}"],
-        "Meta": [meta_desejavel_geral], "Realizado": [""], "% Atingido": [""], "% Falta Atingir": [""], "Diferença": [""], "Tipo": [""]
-    })
-
-    comparativo_final = pd.concat([linha_meta_desejavel] + tipo_subtotais + [linha_total] + resultado_final, ignore_index=True)
+    
+    # ✅ Monta o comparativo final preservando o seu restante
+    comparativo_final = pd.concat(tipo_subtotais + [linha_total] + resultado_final, ignore_index=True)
+    # ✅ Ajusta o nome da coluna "Realizado"
     comparativo_final.rename(columns={"Realizado": f"Realizado até {ultima_data_realizado}"}, inplace=True)
 
+
     def formatar_linha(row):
-        if "Meta Desejável" in row["Loja"]:
-            return ['background-color: #FF6666; color: white'] * len(row)
-        elif "TOTAL GERAL" in row["Loja"]:
+        if "TOTAL GERAL" in row["Loja"]:
             return ['background-color: #0366d6; color: white'] * len(row)
         elif "Tipo:" in row["Loja"]:
             return ['background-color: #FFE699'] * len(row)
@@ -203,18 +257,23 @@ with aba1:
         else:
             return [''] * len(row)
 
+    # ✅ Exibe a data de realizado antes da tabela
+    st.markdown(f"**Última data realizada:** {ultima_data_realizado}")
+    
+    
+    
     st.dataframe(
         comparativo_final.style
             .format({
-                "Meta": formatar_moeda_br,
-                f"Realizado até {ultima_data_realizado}": formatar_moeda_br,
-                "Diferença": formatar_moeda_br,
-                "% Atingido": "{:.2%}", "% Falta Atingir": "{:.2%}"
+                "Meta": formatar_moeda_br, 
+                f"Realizado até {ultima_data_realizado}": formatar_moeda_br, 
+                "Diferença": formatar_moeda_br, 
+                "% Atingido": "{:.2%}", 
+                "% Falta Atingir": "{:.2%}"
             })
             .apply(formatar_linha, axis=1),
         use_container_width=True
     )
-
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         comparativo_final.to_excel(writer, index=False, sheet_name='Metas')
