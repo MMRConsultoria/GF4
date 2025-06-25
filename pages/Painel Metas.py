@@ -272,8 +272,7 @@ with aba1:
         "Diferença": [np.nan],
         "Tipo": [""]
     })
-
-
+    
 
 
 
