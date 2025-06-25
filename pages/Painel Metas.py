@@ -349,97 +349,91 @@ with aba1:
 # ================================
 with aba2:
 # ================================    
-    st.header("Painel de Gráficos Semanais")
 
-    # ================================
-    # Prepara dados semanais
-    # ================================
-    df_anos['Semana'] = df_anos['Data'].dt.isocalendar().week
+    st.markdown("## Painel Gráfico Semanal")
 
-    # Filtros básicos
-    grupos_disponiveis = df_anos['Grupo'].unique().tolist()
-    grupos_disponiveis.sort()
-    grupo_selecionado = st.selectbox("Selecione o Grupo:", grupos_disponiveis)
+    # --- Preparação dos dados (exemplo)
+    # Aqui você vai ajustar conforme sua base real
+    # Vou simular dados para o esqueleto
 
-    operacoes_disponiveis = df_empresa['Tipo'].unique().tolist()
-    operacoes_disponiveis.sort()
-    operacao_selecionada = st.selectbox("Selecione a Operação:", operacoes_disponiveis)
+    semanas = [22, 23, 24, 25, 26]
+    faturamento = [0.7, 5.1, 5.2, 5.4, 0.9]
+    ideal = [3.3, 3.4, 3.4, 3.5, 3.4]
 
-    meses_disponiveis = ordem_meses
-    mes_selecionado_grafico = st.selectbox("Selecione o Mês:", meses_disponiveis)
+    cores_colunas = ["red" if fat < ideal[i] else "green" for i, fat in enumerate(faturamento)]
 
-    # Filtro aplicado
-    df_filtrado = df_anos[
-        (df_anos['Grupo'] == grupo_selecionado) & 
-        (df_anos['Tipo'] == operacao_selecionada) &
-        (df_anos['Mês'] == mes_selecionado_grafico)
-    ]
-
-    # Agrupa por semana
-    vendas_semana = df_filtrado.groupby('Semana')['Fat.Total'].sum().reset_index()
-
-    # ================================
-    # Gráfico de barras (Vendas por Semana)
-    # ================================
     import plotly.graph_objects as go
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=vendas_semana['Semana'],
-        y=vendas_semana['Fat.Total'],
-        marker_color='green',
-        name='Faturamento'
-    ))
+    fig.add_trace(go.Bar(x=semanas, y=faturamento, marker_color=cores_colunas, name="Faturamento"))
+    fig.add_trace(go.Scatter(x=semanas, y=ideal, mode="lines+markers", name="Meta Ideal", line=dict(color="black")))
 
-    fig.update_layout(title="Vendas por Semana",
-                      xaxis_title="Semana do Ano",
-                      yaxis_title="Faturamento",
-                      height=400)
-    
+    fig.update_layout(
+        title="Venda por Semana",
+        xaxis_title="Semana Ano",
+        yaxis_title="Faturamento 2025 (Mi)",
+        height=500
+    )
     st.plotly_chart(fig, use_container_width=True)
 
-    # ================================
-    # Ritmo Ideal (Velocímetro)
-    # ================================
-    ritmo_real = vendas_semana['Fat.Total'].sum()
-    meta_total = df_metas[df_metas['Grupo'] == grupo_selecionado]['Fat.Total'].sum()
-
-    percentual = (ritmo_real / meta_total) * 100 if meta_total > 0 else 0
+    # --- Velocímetro (gauge)
+    ritmo_real = 71.4  # Exemplo (você vai calcular real depois)
 
     fig_gauge = go.Figure(go.Indicator(
-        mode = "gauge+number",
-        value = percentual,
-        domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': "Ritmo Ideal (%)"},
-        gauge = {
+        mode="gauge+number",
+        value=ritmo_real,
+        number={'suffix': "%"},
+        gauge={
             'axis': {'range': [0, 100]},
-            'bar': {'color': "darkblue"},
-            'steps' : [
-                {'range': [0, 50], 'color': "red"},
-                {'range': [50, 75], 'color': "yellow"},
-                {'range': [75, 100], 'color': "green"}
-            ]
+            'bar': {'color': "red"},
+            'steps': [
+                {'range': [0, 70], 'color': "#ffcccc"},
+                {'range': [70, 100], 'color': "#ccffcc"}
+            ],
         }
     ))
+    fig_gauge.update_layout(height=300, margin=dict(t=30, b=30, l=30, r=30), title="Ritmo Ideal")
+    st.plotly_chart(fig_gauge, use_container_width=False)
 
-    st.plotly_chart(fig_gauge, use_container_width=True)
+    # --- Tabelinha de operações
+    st.markdown("### Operação")
+    operacao_df = pd.DataFrame({
+        "Operação": ["GF4 - BSB", "GF4 - CFN", "GF4 - CGH", "GF4 - CWB"],
+        "2024": [4, 4, 2, 2],
+        "2025": [4, 4, 7, 7]
+    })
+    st.dataframe(operacao_df, use_container_width=True)
 
-    # ================================
-    # Índice de Crescimento (Barras horizontais)
-    # ================================
-    # Exemplo básico de crescimento por loja (apenas estrutura inicial)
-    crescimento_df = df_filtrado.groupby('Loja')['Fat.Total'].sum().reset_index()
-    crescimento_df['Crescimento'] = (crescimento_df['Fat.Total'] / crescimento_df['Fat.Total'].mean()) * 100
+    # --- Índice de Crescimento
+    st.markdown("### Índice de Crescimento")
+    crescimento_df = pd.DataFrame({
+        "Operação": ["GF4 - GYN", "GF4 - CWB", "GF4 - VCP", "GF4 - GRU", "GF4 - VIX", "GF4 - REC"],
+        "Crescimento": [395.8, 140.5, 6.6, -2.1, -9.5, -10.4]
+    })
 
-    fig_crescimento = go.Figure(go.Bar(
-        x=crescimento_df['Crescimento'],
-        y=crescimento_df['Loja'],
-        orientation='h',
-        marker_color='green'
+    fig_cresc = go.Figure(go.Bar(
+        x=crescimento_df["Crescimento"],
+        y=crescimento_df["Operação"],
+        orientation="h",
+        marker_color=["green" if x > 0 else "red" for x in crescimento_df["Crescimento"]]
     ))
+    fig_cresc.update_layout(height=300)
+    st.plotly_chart(fig_cresc, use_container_width=True)
 
-    fig_crescimento.update_layout(title="Índice de Crescimento",
-                                   xaxis_title="% Crescimento",
-                                   height=400)
+    # --- Participação Faturamento
+    st.markdown("### Participação Faturamento")
+    participacao_df = pd.DataFrame({
+        "Operação": ["GF4 - GRU", "GF4 - VCP", "GF4 - BSB", "GF4 - VIX", "GF4 - CWB", "GF4 - CFN", "GF4 - GYN", "GF4 - FLN"],
+        "% Participação": [55.5, 8.7, 6.9, 5.4, 4.7, 4.5, 3.1, 2.5]
+    })
 
-    st.plotly_chart(fig_crescimento, use_container_width=True)
+    fig_part = go.Figure(go.Bar(
+        x=participacao_df["% Participação"],
+        y=participacao_df["Operação"],
+        orientation="h",
+        marker_color="green"
+    ))
+    fig_part.update_layout(height=300)
+    st.plotly_chart(fig_part, use_container_width=True)
+    
+       
