@@ -235,6 +235,8 @@ with aba1:
     
     # ✅ Monta o comparativo final preservando o seu restante
     comparativo_final = pd.concat(tipo_subtotais + [linha_total] + resultado_final, ignore_index=True)
+    # ✅ Ajusta o nome da coluna "Realizado"
+    comparativo_final.rename(columns={"Realizado": f"Realizado até {ultima_data_realizado}"}, inplace=True)
 
 
     def formatar_linha(row):
@@ -248,7 +250,7 @@ with aba1:
             return [''] * len(row)
 
     # ✅ Exibe a data de realizado antes da tabela
-    st.markdown(f"**Última data de realizado carregada:** {ultima_data_realizado}")
+    st.markdown(f"**Última data realizada:** {ultima_data_realizado}")
     
     
     
