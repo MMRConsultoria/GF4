@@ -139,6 +139,23 @@ with aba1:
     df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)].copy()
     df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)].copy()
 
+    import calendar
+    
+    # Agora sim pega a última data correta já do mês filtrado
+    ultima_data_realizado_dt = df_anos_filtrado["Data"].max()
+    ultima_data_realizado = ultima_data_realizado_dt.strftime("%d/%m/%Y")
+    
+    # Calcula o percentual desejável até a última data
+    dias_do_mes = calendar.monthrange(ano_selecionado, ordem_meses.index(mes_selecionado) + 1)[1]
+    dias_corridos = ultima_data_realizado_dt.day
+    percentual_meta_desejavel = dias_corridos / dias_do_mes
+
+
+
+
+
+    
+
     for col in ["Ano", "Mês", "Loja", "Grupo"]:
         df_metas_filtrado[col] = df_metas_filtrado[col].apply(garantir_escalar)
         df_anos_filtrado[col] = df_anos_filtrado[col].apply(garantir_escalar)
@@ -240,9 +257,33 @@ with aba1:
         "% Atingido": [percentual_total], "% Falta Atingir": [percentual_falta_total],
         "Diferença": [total_diferenca], "Tipo": [""]
     })
+
+    # Cria a linha única da Meta Desejável
+    linha_meta_desejavel = pd.DataFrame({
+        "Ano": [""], 
+        "Mês": [""], 
+        "Grupo": [""],
+        "Loja": [f"🎯 Meta Desejável até {ultima_data_realizado}"],
+        "Meta": [""],
+        "Realizado": [""],
+        "% Atingido": [percentual_meta_desejavel],
+        "% Falta Atingir": [""],
+        "Diferença": [""],
+        "Tipo": [""]
+    })
+
+
+
+
+
+
+
+
+
+
     
     # ✅ Monta o comparativo final preservando o seu restante
-    comparativo_final = pd.concat(tipo_subtotais + [linha_total] + resultado_final, ignore_index=True)
+    comparativo_final = pd.concat([linha_meta_desejavel] + tipo_subtotais + [linha_total] + resultado_final, ignore_index=True)
     # ✅ Ajusta o nome da coluna "Realizado"
     comparativo_final.rename(columns={"Realizado": f"Realizado até {ultima_data_realizado}"}, inplace=True)
 
@@ -256,6 +297,20 @@ with aba1:
             return ['background-color: #d0e6f7'] * len(row)
         else:
             return [''] * len(row)
+
+    def formatar_linha(row):
+        if "Meta Desejável" in row["Loja"]:
+            return ['background-color: #FF6666; color: white'] * len(row)
+        elif "TOTAL GERAL" in row["Loja"]:
+            return ['background-color: #0366d6; color: white'] * len(row)
+        elif "Tipo:" in row["Loja"]:
+            return ['background-color: #FFE699'] * len(row)
+        elif "Lojas:" in row["Loja"]:
+            return ['background-color: #d0e6f7'] * len(row)
+        else:
+            return [''] * len(row)
+    
+        
 
     # ✅ Exibe a data de realizado antes da tabela
     st.markdown(f"**Última data realizada:** {ultima_data_realizado}")
