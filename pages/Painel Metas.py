@@ -165,12 +165,16 @@ with aba1:
 
     metas_grouped = df_metas_filtrado.groupby(["Ano", "Mês", "Loja", "Grupo"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Meta"})
     realizado_grouped = df_anos_filtrado.groupby(["Ano", "Mês", "Loja", "Grupo", "Tipo"])["Fat.Total"].sum().reset_index().rename(columns={"Fat.Total": "Realizado"})
-
+    
     comparativo = pd.merge(metas_grouped, realizado_grouped, on=["Ano", "Mês", "Loja", "Grupo"], how="outer").fillna(0)
-    comparativo["% Atingido"] = np.where(comparativo["Meta"] == 0, 0, comparativo["Realizado"] / comparativo["Meta"])
-    comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
+    
+    comparativo.rename(columns={"Realizado": col_realizado_nome}, inplace=True)
+    
+    comparativo["% Atingido"] = np.where(comparativo["Meta"] == 0, 0, comparativo[col_realizado_nome] / comparativo["Meta"])
+    comparativo["Diferença"] = comparativo[col_realizado_nome] - comparativo["Meta"]
     comparativo["% Falta Atingir"] = np.maximum(0, 1 - comparativo["% Atingido"])
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
+
 
     tipo_subtotais = []
     for tipo, dados_tipo in comparativo.groupby("Tipo"):
