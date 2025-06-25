@@ -179,7 +179,7 @@ with aba1:
     tipo_subtotais = []
     for tipo, dados_tipo in comparativo.groupby("Tipo"):
         soma_meta_tipo = dados_tipo["Meta"].sum()
-        soma_realizado_tipo = dados_tipo["Realizado"].sum()
+        soma_realizado_tipo = dados_tipo[col_realizado_nome].sum()
         soma_diferenca_tipo = dados_tipo["Diferença"].sum()
         perc_atingido_tipo = soma_realizado_tipo / soma_meta_tipo if soma_meta_tipo != 0 else 0
         perc_falta_tipo = max(0, 1 - perc_atingido_tipo)
@@ -201,7 +201,7 @@ with aba1:
     subtotais_aux = []
     for grupo, dados_grupo in comparativo.groupby("Grupo"):
         soma_meta_grupo = dados_grupo["Meta"].sum()
-        soma_realizado_grupo = dados_grupo["Realizado"].sum()
+        soma_realizado_grupo = dados_grupo[col_realizado_nome].sum()
         soma_diferenca_grupo = dados_grupo["Diferença"].sum()
         perc_atingido_grupo = soma_realizado_grupo / soma_meta_grupo if soma_meta_grupo != 0 else 0
         perc_falta_grupo = max(0, 1 - perc_atingido_grupo)
@@ -253,7 +253,7 @@ with aba1:
     
     # ✅ Total Geral continua exatamente igual ao seu
     total_meta = comparativo["Meta"].sum()
-    total_realizado = comparativo["Realizado"].sum()
+    total_realizado = comparativo[col_realizado_nome].sum()
     total_diferenca = comparativo["Diferença"].sum()
     percentual_total = total_realizado / total_meta if total_meta != 0 else 0
     percentual_falta_total = max(0, 1 - percentual_total)
