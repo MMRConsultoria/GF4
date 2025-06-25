@@ -296,7 +296,12 @@ with aba1:
 
     def formatar_linha(row):
         if "Meta Desejável" in row["Loja"]:
-            return ['background-color: #FF6666; color: white'] * len(row)
+            estilo = ['background-color: #FF6666; color: white'] * len(row)
+            # Agora para cada célula, se for None/NaN, deixamos a fonte invisível (fundo vermelho continua)
+            for idx, val in enumerate(row):
+                if pd.isna(val) or val is None:
+                    estilo[idx] = 'background-color: #FF6666; color: #FF6666'
+            return estilo
         elif "TOTAL GERAL" in row["Loja"]:
             return ['background-color: #0366d6; color: white'] * len(row)
         elif "Tipo:" in row["Loja"]:
@@ -305,8 +310,8 @@ with aba1:
             return ['background-color: #d0e6f7'] * len(row)
         else:
             return [''] * len(row)
-    
         
+            
 
     # ✅ Exibe a data de realizado antes da tabela
     st.markdown(f"**Última data realizada:** {ultima_data_realizado}")
