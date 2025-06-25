@@ -293,8 +293,7 @@ with aba1:
     for col in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença", "% Atingido", "% Falta Atingir"]:
         comparativo_final[col] = pd.to_numeric(comparativo_final[col], errors='coerce')
        
-
-   def formatar_linha(row):
+    def formatar_linha(row):
         estilo = []
         for idx, val in enumerate(row):
             if "Meta Desejável" in row["Loja"]:
@@ -311,6 +310,8 @@ with aba1:
             else:
                 estilo.append('')
         return estilo
+
+       
 
 
         
