@@ -294,11 +294,11 @@ with aba1:
         comparativo_final[col] = pd.to_numeric(comparativo_final[col], errors='coerce')
        
 
-    def formatar_linha(row):
+   def formatar_linha(row):
         estilo = []
         for idx, val in enumerate(row):
             if "Meta Desejável" in row["Loja"]:
-                if str(val) in [None, "None", "nan", "NaN", ""]:
+                if val == 'None':
                     estilo.append('background-color: #FF6666; color: #FF6666')
                 else:
                     estilo.append('background-color: #FF6666; color: white')
@@ -311,6 +311,7 @@ with aba1:
             else:
                 estilo.append('')
         return estilo
+
 
         
             
