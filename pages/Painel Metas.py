@@ -295,21 +295,23 @@ with aba1:
        
 
     def formatar_linha(row):
-        if "Meta Desejável" in row["Loja"]:
-            estilo = ['background-color: #FF6666; color: white'] * len(row)
-            # Agora para cada célula, se for None/NaN, deixamos a fonte invisível (fundo vermelho continua)
-            for idx, val in enumerate(row):
-                if pd.isna(val) or val is None:
-                    estilo[idx] = 'background-color: #FF6666; color: #FF6666'
-            return estilo
-        elif "TOTAL GERAL" in row["Loja"]:
-            return ['background-color: #0366d6; color: white'] * len(row)
-        elif "Tipo:" in row["Loja"]:
-            return ['background-color: #FFE699'] * len(row)
-        elif "Lojas:" in row["Loja"]:
-            return ['background-color: #d0e6f7'] * len(row)
-        else:
-            return [''] * len(row)
+        estilo = []
+        for idx, val in enumerate(row):
+            if "Meta Desejável" in row["Loja"]:
+                if str(val) in [None, "None", "nan", "NaN", ""]:
+                    estilo.append('background-color: #FF6666; color: #FF6666')
+                else:
+                    estilo.append('background-color: #FF6666; color: white')
+            elif "TOTAL GERAL" in row["Loja"]:
+                estilo.append('background-color: #0366d6; color: white')
+            elif "Tipo:" in row["Loja"]:
+                estilo.append('background-color: #FFE699')
+            elif "Lojas:" in row["Loja"]:
+                estilo.append('background-color: #d0e6f7')
+            else:
+                estilo.append('')
+        return estilo
+
         
             
 
