@@ -319,7 +319,7 @@ with aba1:
                 "Diferença": formatar_moeda_br, 
                 "% Atingido": "{:.2%}", 
                 "% Falta Atingir": "{:.2%}"
-            })
+            }, na_rep="")
             .apply(formatar_linha, axis=1),
         use_container_width=True
     )
