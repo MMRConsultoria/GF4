@@ -194,7 +194,8 @@ with aba1:
     # (até aqui seu código é igual, vamos direto no ponto de alteração)
     
     # ✅ Aqui começa o bloco do resultado_final com a ordenação por Tipo
-    resultado_final = []
+    # ✅ Aqui começa o bloco do resultado_final com a ordenação por Tipo
+    resultado_final = pd.DataFrame()   # <<< alterado aqui
     total_lojas_geral = comparativo["Loja"].nunique()
     
     # Primeiro, criamos uma lista auxiliar com os subtotais incluindo o tipo já capturado
@@ -223,12 +224,10 @@ with aba1:
     
     # Definimos a ordem de prioridade dos tipos
     ordem_tipo = {"AIRPORTS": 1, "AIRPORTS - KOPP": 2, "ON-PREMISE": 3, "OUTROS": 4}
-
-
+    
     # Normaliza o tipo (garantir comparação segura)
     for item in subtotais_aux:
         item["tipo"] = str(item["tipo"]).strip().upper()
-
     
     # Ordenamos os grupos com base no tipo
     subtotais_aux = sorted(subtotais_aux, key=lambda x: (ordem_tipo.get(x["tipo"], 99), x["grupo"]))
@@ -240,16 +239,22 @@ with aba1:
         qtde_lojas_grupo = subtotal["qtde_lojas"]
     
         dados_grupo = comparativo[comparativo["Grupo"] == grupo]
-        resultado_final.append(dados_grupo)
+    
+        resultado_final = pd.concat([resultado_final, dados_grupo.copy()], ignore_index=True)
     
         linha_subtotal = pd.DataFrame({
             "Ano": [""], "Mês": [""], "Grupo": [grupo],
             "Loja": [f"{grupo} - Lojas: {qtde_lojas_grupo:02}"],
-            "Meta": [subtotal["meta"]], "Realizado": [subtotal["realizado"]],
-            "% Atingido": [subtotal["perc_atingido"]], "% Falta Atingir": [subtotal["perc_falta"]],
-            "Diferença": [subtotal["diferenca"]], "Tipo": [tipo_str]
+            "Meta": [subtotal["meta"]], 
+            col_realizado_nome: [subtotal["realizado"]],
+            "% Atingido": [subtotal["perc_atingido"]], 
+            "% Falta Atingir": [subtotal["perc_falta"]],
+            "Diferença": [subtotal["diferenca"]], 
+            "Tipo": [tipo_str]
         })
-        resultado_final.append(linha_subtotal)
+    
+        resultado_final = pd.concat([resultado_final, linha_subtotal], ignore_index=True)
+
     
     # ✅ Total Geral continua exatamente igual ao seu
     total_meta = comparativo["Meta"].sum()
