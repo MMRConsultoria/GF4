@@ -90,9 +90,10 @@ def garantir_escalar(x):
 
 def formatar_moeda_br(val):
     try:
-        if val == "" or pd.isna(val):
+        if val in [None, np.nan, "None", "nan", "NaN", ""]:
             return ""
-        return f"R$ {float(val):,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
+        val_float = float(val)
+        return f"R$ {val_float:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
     except:
         return ""
 
