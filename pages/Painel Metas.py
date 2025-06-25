@@ -30,34 +30,6 @@ for col in ["Loja", "Grupo", "Tipo"]:
     df_empresa[col] = df_empresa[col].astype(str).str.strip().str.upper()
 
 # ================================
-# 2. Estilo e layout
-# ================================
-st.markdown("""
-    <style>
-    .stApp { background-color: #f9f9f9; }
-    div[data-baseweb="tab-list"] { margin-top: 20px; }
-    button[data-baseweb="tab"] {
-        background-color: #f0f2f6;
-        border-radius: 10px;
-        padding: 10px 20px;
-        margin-right: 10px;
-        transition: all 0.3s ease;
-        font-size: 16px;
-        font-weight: 600;
-    }
-    button[data-baseweb="tab"]:hover { background-color: #dce0ea; color: black; }
-    button[data-baseweb="tab"][aria-selected="true"] { background-color: #0366d6; color: white; }
-    </style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-    <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
-        <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
-        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório Metas Mensais</h1>
-    </div>
-""", unsafe_allow_html=True)
-
-# ================================
 # Funções auxiliares
 # ================================
 
@@ -99,7 +71,6 @@ def formatar_moeda_br(val):
 aba1, aba2 = st.tabs(["📈 Analise Metas", "📊 Auditoria Metas"])
 
 with aba1:
-
     # --- Metas ---
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
     df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
@@ -208,7 +179,6 @@ with aba1:
         "Meta": [total_meta], "Realizado": [total_realizado], "% Atingido": [percentual_total], "% Falta Atingir": [percentual_falta_total], "Diferença": [total_diferenca], "Tipo": [""]
     })
 
-    # Calcula a linha de meta desejável
     dias_do_mes = calendar.monthrange(ano_selecionado, ordem_meses.index(mes_selecionado) + 1)[1]
     dias_corridos = ultima_data_realizado_dt.day
     meta_desejavel_geral = total_meta * dias_corridos / dias_do_mes
@@ -253,4 +223,6 @@ with aba1:
     st.download_button(
         label="📥 Baixar Excel",
         data=output,
-        file_name=f"Relatorio_Metas_{ano_selecionado}_{mes_sele
+        file_name=f"Relatorio_Metas_{ano_selecionado}_{mes_selecionado}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
