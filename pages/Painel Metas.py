@@ -480,7 +480,9 @@ with aba1:
                 
                     else:
                         fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
-
+                # ✅ NOVO else → cobre qualquer outra coluna
+                else:
+                    fmt = workbook.add_format(estilo_linha)
                
             
                 # Escreve a célula
