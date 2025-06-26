@@ -325,12 +325,7 @@ with aba1:
                 estilo.append("background-color: #FFE699;")
             elif "Lojas:" in str(row["Loja"]):
                 estilo.append("background-color: #d0e6f7;")
-            elif (
-                coluna == "% Atingido"
-                and not pd.isna(atingido)
-                and modo_visao == "Por Grupo"
-                and "Lojas:" in str(row["Loja"])
-            ):
+            elif coluna == "% Atingido" and not pd.isna(atingido):
                 if atingido >= desejavel:
                     estilo.append("background-color: #c6efce;")  # verde claro
                 else:
