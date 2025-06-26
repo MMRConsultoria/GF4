@@ -293,21 +293,26 @@ with aba1:
     # Ajusta os tipos para garantir float e evitar None no Styler
     for col in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença", "% Atingido", "% Falta Atingir"]:
         comparativo_final[col] = pd.to_numeric(comparativo_final[col], errors='coerce')
-       
+
+
+
+    # Alternância de cor por grupo (bloco)
+    grupos_unicos = comparativo_final["Grupo"].dropna().unique()
+    cores_blocos = ["#fff9f0", "#f9fbf0"]
+    mapa_cor_por_grupo = {
+        grupo: cores_blocos[i % len(cores_blocos)]
+        for i, grupo in enumerate(sorted(grupos_unicos))
+    }
     
     def formatar_linha(row):
         estilo = []
-        linha = row.name  # para alternar cor por grupo
-        cor_pastel_1 = "#fff9f0"  # cor da imagem 1
-        cor_pastel_2 = "#f9fbf0"  # cor da imagem 2
-        cor_base = cor_pastel_1 if linha % 2 == 0 else cor_pastel_2
+        grupo = row["Grupo"]
+        cor_base = mapa_cor_por_grupo.get(grupo, "#ffffff")  # branco se não encontrado
     
         atingido = row["% Atingido"]
         desejavel = percentual_meta_desejavel
     
         for coluna in row.index:
-            estilo_base = f"background-color: {cor_base};"
-    
             if "Meta Desejável" in str(row["Loja"]):
                 estilo.append("background-color: #FF6666; color: white;")
             elif "TOTAL GERAL" in str(row["Loja"]):
@@ -318,20 +323,12 @@ with aba1:
                 estilo.append("background-color: #d0e6f7;")
             elif coluna == "% Atingido" and not pd.isna(atingido):
                 if atingido >= desejavel:
-                    estilo.append(f"background-color: #c6efce;")  # verde claro
+                    estilo.append("background-color: #c6efce;")  # verde claro
                 else:
-                    estilo.append(f"background-color: #ffc7ce;")  # vermelho claro
+                    estilo.append("background-color: #ffc7ce;")  # vermelho claro
             else:
-                estilo.append(estilo_base)
-        
+                estilo.append(f"background-color: {cor_base};")
         return estilo
-
-    
-           
-
-
-        
-            
 
     # ✅ Exibe a data de realizado antes da tabela
     st.markdown(f"**Última data realizada:** {ultima_data_realizado}")
