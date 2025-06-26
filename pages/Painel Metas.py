@@ -600,6 +600,3 @@ with aba2:
     st.plotly_chart(fig_part, use_container_width=True)
     
        
-
-    
-       
