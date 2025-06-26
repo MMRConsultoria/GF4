@@ -460,19 +460,21 @@ with aba1:
     
                 elif col_name == "% Atingido":
                     if (
-                        "Lojas:" in loja_valor
-                        and not loja_valor.startswith("Tipo:")
+                        "Lojas:" in loja_valor 
+                        and not loja_valor.startswith("Tipo:") 
                         and not "TOTAL GERAL" in loja_valor
+                        and modo_visao == "Por Grupo"  # ✅ Só aplica cor se modo for Grupo
                     ):
+                        # Só aplica cor verde/vermelha para subtotal por grupo
                         if not pd.isna(atingido):
                             cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
                             fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
                         else:
                             fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
                     else:
+                        # Para "Tipo:" ou "TOTAL GERAL" ou modo Loja, mantém estilo da linha
                         fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
-                else:
-                    fmt = workbook.add_format(estilo_linha)
+
     
                 # Escreve número ou texto
                 if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
