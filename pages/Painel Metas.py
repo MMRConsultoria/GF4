@@ -388,15 +388,79 @@ with aba1:
     
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        comparativo_final.to_excel(writer, index=False, sheet_name='Metas')
+        dados_exibir.to_excel(writer, index=False, sheet_name="Metas")
+        workbook = writer.book
+        worksheet = writer.sheets["Metas"]
+    
+        # Formatos
+        header_format = workbook.add_format({
+            'bold': True,
+            'bg_color': '#0366d6',
+            'font_color': 'white',
+            'border': 1
+        })
+    
+        moeda_format = workbook.add_format({'num_format': 'R$ #,##0.00', 'border': 1})
+        percentual_format = workbook.add_format({'num_format': '0.00%', 'border': 1})
+        normal_format = workbook.add_format({'border': 1})
+    
+        verde_claro = workbook.add_format({'bg_color': '#c6efce', 'border': 1})
+        vermelho_claro = workbook.add_format({'bg_color': '#ffc7ce', 'border': 1})
+        meta_format = workbook.add_format({'bg_color': '#FF6666', 'font_color': 'white', 'border': 1})
+        subtotal_format = workbook.add_format({'bg_color': '#d0e6f7', 'border': 1})
+        total_format = workbook.add_format({'bg_color': '#0366d6', 'font_color': 'white', 'border': 1})
+        tipo_format = workbook.add_format({'bg_color': '#FFE699', 'border': 1})
+    
+        # Cabeçalho
+        for col_num, value in enumerate(dados_exibir.columns):
+            worksheet.write(0, col_num, value, header_format)
+    
+        # Aplicar formatação linha por linha
+        for row_num, row in dados_exibir.iterrows():
+            linha_excel = row_num + 1  # 1 porque o cabeçalho é a linha 0
+    
+            loja_valor = str(row["Loja"])
+            grupo_valor = row.get("Grupo", "")
+            atingido = row.get("% Atingido", None)
+    
+            # Definir formato base
+            if "Meta Desejável" in loja_valor:
+                row_format = meta_format
+            elif "TOTAL GERAL" in loja_valor:
+                row_format = total_format
+            elif "Tipo:" in loja_valor:
+                row_format = tipo_format
+            elif "Lojas:" in loja_valor:
+                row_format = subtotal_format
+            else:
+                row_format = normal_format
+    
+            for col_num, col_name in enumerate(dados_exibir.columns):
+                val = row[col_name]
+    
+                # Formatação por tipo de coluna
+                if col_name in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença"]:
+                    fmt = moeda_format
+                elif col_name in ["% Atingido", "% Falta Atingir"]:
+                    if "Meta Desejável" in loja_valor:
+                        fmt = row_format
+                    elif col_name == "% Atingido" and not pd.isna(atingido):
+                        fmt = verde_claro if atingido >= percentual_meta_desejavel else vermelho_claro
+                    else:
+                        fmt = percentual_format
+                else:
+                    fmt = row_format
+    
+                worksheet.write(linha_excel, col_num, val, fmt)
+    
     output.seek(0)
-
     st.download_button(
-        label="📥 Baixar Excel",
+        label="📥 Baixar Excel com Formatação",
         data=output,
         file_name=f"Relatorio_Metas_{ano_selecionado}_{mes_selecionado}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 # ================================
 with aba2:
 # ================================    
