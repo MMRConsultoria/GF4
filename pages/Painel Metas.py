@@ -362,19 +362,27 @@ with aba1:
     else:
         dados_exibir = comparativo_final.copy()
 
-    gb = GridOptionsBuilder.from_dataframe(dados_exibir)
-    gb.configure_default_column(cellStyle={'textAlign': 'center'})
-    grid_options = gb.build()
-    
-    AgGrid(
-        dados_exibir,
-        gridOptions=grid_options,
-        fit_columns_on_grid_load=True,
-        enable_enterprise_modules=False,
-        theme="alpine",  # Outras opções: "streamlit", "balham", "material"
-        height=600
+    st.dataframe(
+        dados_exibir.style
+            .format({
+                "Meta": formatar_moeda_br, 
+                f"Realizado até {ultima_data_realizado}": formatar_moeda_br, 
+                "Diferença": formatar_moeda_br, 
+                "% Atingido": "{:.2%}", 
+                "% Falta Atingir": "{:.2%}"
+            }, na_rep="")
+            .set_table_styles([
+                {
+                    'selector': 'thead th',
+                    'props': [('background-color', '#dbeeff'),  # azul pastel claro
+                              ('color', 'black'),
+                              ('font-weight', 'bold')]
+                }
+            ])
+            .apply(formatar_linha, axis=1),
+        use_container_width=True
     )
-
+ 
 
 
     
