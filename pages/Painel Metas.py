@@ -414,7 +414,7 @@ with aba1:
         # Cabeçalho
         for col_num, value in enumerate(dados_exibir.columns):
             worksheet.write(0, col_num, value, header_format)
-    
+        linha_excel = 1  # Começa após o cabeçalho (linha 0)
         for row_num, row in dados_exibir.iterrows():
             linha_excel += 1
             loja_valor = str(row["Loja"])
