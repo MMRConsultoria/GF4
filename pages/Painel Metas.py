@@ -415,42 +415,50 @@ with aba1:
         for col_num, value in enumerate(dados_exibir.columns):
             worksheet.write(0, col_num, value, header_format)
     
-        # Aplicar formatação linha por linha
         for row_num, row in dados_exibir.iterrows():
-            linha_excel = row_num + 1  # 1 porque o cabeçalho é a linha 0
-    
+            linha_excel += 1
             loja_valor = str(row["Loja"])
-            grupo_valor = row.get("Grupo", "")
-            atingido = row.get("% Atingido", None)
-    
-            # Definir formato base
+            grupo_valor = str(row["Grupo"])
+            atingido = row["% Atingido"]
+            
+            # 1. Identifica o estilo de linha
             if "Meta Desejável" in loja_valor:
-                row_format = meta_format
+                fmt_linha = meta_desejavel_format
             elif "TOTAL GERAL" in loja_valor:
-                row_format = total_format
+                fmt_linha = total_geral_format
             elif "Tipo:" in loja_valor:
-                row_format = tipo_format
+                fmt_linha = tipo_format
             elif "Lojas:" in loja_valor:
-                row_format = subtotal_format
+                fmt_linha = subtotal_format
             else:
-                row_format = normal_format
-    
+                # Alterna cor por grupo
+                cor = grupo_cores.get(grupo_valor, cor_grupo1)
+                fmt_linha = workbook.add_format({
+                    'bg_color': cor,
+                    'font_color': 'black',
+                    'border': 1
+                })
+        
+            # 2. Escreve célula por célula
             for col_num, col_name in enumerate(dados_exibir.columns):
                 val = row[col_name]
-    
-                # Formatação por tipo de coluna
+                
+                # Escolhe formatação especial
                 if col_name in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença"]:
-                    fmt = moeda_format
+                    fmt = workbook.add_format({**fmt_linha.properties, **moeda_format.properties})
                 elif col_name in ["% Atingido", "% Falta Atingir"]:
-                    if "Meta Desejável" in loja_valor:
-                        fmt = row_format
-                    elif col_name == "% Atingido" and not pd.isna(atingido):
-                        fmt = verde_claro if atingido >= percentual_meta_desejavel else vermelho_claro
+                    if "Lojas:" in loja_valor:  # Subtotal por grupo
+                        if col_name == "% Atingido" and not pd.isna(atingido):
+                            cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
+                            fmt = workbook.add_format({**fmt_linha.properties, 'bg_color': cor, 'num_format': '0.00%'})
+                        else:
+                            fmt = workbook.add_format({**fmt_linha.properties, 'num_format': '0.00%'})
                     else:
-                        fmt = percentual_format
+                        fmt = workbook.add_format({**fmt_linha.properties, 'num_format': '0.00%'})
                 else:
-                    fmt = row_format
-    
+                    fmt = fmt_linha
+                
+                # Escreve com o tipo certo
                 if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
                     worksheet.write_number(linha_excel, col_num, val, fmt)
                 else:
