@@ -450,37 +450,38 @@ with aba1:
                 estilo_linha = estilos_especiais["Lojas:"]
             else:
                 estilo_linha = {'bg_color': grupo_cores.get(grupo_valor, cor_grupo1), 'font_color': 'black', 'border': 1}
-    
             for col_num, col_name in enumerate(dados_excel.columns):
                 val = row[col_name]
-    
-                # Formatações
+            
                 if col_name in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença"]:
                     fmt = workbook.add_format({**estilo_linha, **moeda_format_dict})
-    
+            
                 elif col_name == "% Atingido":
                     if (
                         "Lojas:" in loja_valor 
                         and not loja_valor.startswith("Tipo:") 
                         and not "TOTAL GERAL" in loja_valor
-                        and modo_visao == "Por Grupo"  # ✅ Só aplica cor se modo for Grupo
+                        and modo_visao == "Por Grupo"
                     ):
-                        # Só aplica cor verde/vermelha para subtotal por grupo
                         if not pd.isna(atingido):
                             cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
                             fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
                         else:
                             fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
                     else:
-                        # Para "Tipo:" ou "TOTAL GERAL" ou modo Loja, mantém estilo da linha
                         fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
-
-    
-                # Escreve número ou texto
+            
+                else:
+                    # ✅ fallback para garantir que fmt sempre existe
+                    fmt = workbook.add_format(estilo_linha)
+            
+                # Escreve a célula
                 if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
                     worksheet.write_number(linha_excel, col_num, val, fmt)
                 else:
                     worksheet.write(linha_excel, col_num, str(val), fmt)
+
+
     
             linha_excel += 1  # Importante: estava fora do loop anteriormente
     
