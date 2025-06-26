@@ -294,29 +294,63 @@ with aba1:
     for col in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença", "% Atingido", "% Falta Atingir"]:
         comparativo_final[col] = pd.to_numeric(comparativo_final[col], errors='coerce')
        
+    # Define as cores alternadas para os blocos de grupo
+    # Define as cores alternadas para os blocos de grupo
+    cores_grupo = ["#e6f2ff", "#e6ffe6", "#f3e6ff", "#fff5e6", "#ffe6f0", "#f9fbe7"]
+    
+    # Cria um mapeamento de grupo para cor
+    grupos_unicos = comparativo_final["Grupo"].dropna().unique()
+    cores_por_grupo = {grupo: cores_grupo[i % len(cores_grupo)] for i, grupo in enumerate(grupos_unicos)}
+    
     def formatar_linha(row):
         estilo = []
+        cor_fundo = ""
+        
+        loja_info = str(row.get("Loja", ""))
+        grupo_info = row.get("Grupo", "")
+    
+        # Define a cor do grupo (alternando cores pastéis)
+        if grupo_info in cores_por_grupo:
+            cor_fundo = cores_por_grupo[grupo_info]
+    
         for col in row.index:
             val = row[col]
-            if "Meta Desejável" in str(row["Loja"]):
+            
+            # Estilo Meta Desejável
+            if "Meta Desejável" in loja_info:
                 if pd.isna(val):
                     estilo.append("background-color: #FF6666; color: #FF6666")
                 else:
                     estilo.append("background-color: #FF6666; color: white")
-            elif "TOTAL GERAL" in str(row["Loja"]):
+            
+            # Estilo Total Geral
+            elif "TOTAL GERAL" in loja_info:
                 estilo.append("background-color: #0366d6; color: white")
-            elif "Tipo:" in str(row["Loja"]):
+            
+            # Estilo Subtotal por Tipo
+            elif "Tipo:" in loja_info:
                 estilo.append("background-color: #FFE699")
-            elif "Lojas:" in str(row["Loja"]):
+            
+            # Estilo Subtotal por Grupo
+            elif "Lojas:" in loja_info:
                 estilo.append("background-color: #d0e6f7")
+            
+            # Estilo especial para % Atingido
             elif col == "% Atingido" and pd.notna(val):
-                cor = "#c6efce" if val >= percentual_meta_desejavel else "#ffc7ce"  # verde claro ou vermelho claro
+                cor = "#c6efce" if val >= percentual_meta_desejavel else "#ffc7ce"
                 estilo.append(f"background-color: {cor}; color: black")
+            
+            # Linhas de dados regulares
+            elif cor_fundo:
+                estilo.append(f"background-color: {cor_fundo}")
+            
             else:
                 estilo.append("")
+        
         return estilo
-
-       
+    
+    
+           
 
 
         
