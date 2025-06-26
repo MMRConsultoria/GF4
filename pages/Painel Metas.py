@@ -362,6 +362,12 @@ with aba1:
     else:
         dados_exibir = comparativo_final.copy()
 
+    # ✅ Remover prefixo "Tipo: " só das linhas com ele
+    mask_tipo = comparativo_final["Loja"].str.startswith("Tipo:")
+    comparativo_final.loc[mask_tipo, "Loja"] = comparativo_final.loc[mask_tipo, "Loja"].str.replace("Tipo: ", "", regex=False)
+    
+
+    
     st.dataframe(
         dados_exibir.style
             .format({
