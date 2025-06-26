@@ -385,106 +385,86 @@ with aba1:
  
 
 
-    
+        
     output = io.BytesIO()
+    
     # Alternância de cores entre grupos
     cor_grupo1 = "#fff6eb"
     cor_grupo2 = "#f8faec"
     grupo_cores = {}
-    
-    # Para rastrear qual cor aplicar
     cor_atual = cor_grupo1
     ultimo_grupo = None
-        
+    
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         dados_exibir.to_excel(writer, index=False, sheet_name="Metas")
         workbook = writer.book
         worksheet = writer.sheets["Metas"]
     
-        # Formatos
-        header_format = workbook.add_format({
-            'bold': True,
-            'bg_color': '#0366d6',
-            'font_color': 'white',
-            'border': 1
-        })
+        # Formatos fixos
+        header_format = workbook.add_format({'bold': True, 'bg_color': '#0366d6', 'font_color': 'white', 'border': 1})
+        moeda_format_dict = {'num_format': 'R$ #,##0.00', 'border': 1}
+        percentual_format_dict = {'num_format': '0.00%', 'border': 1}
     
-        moeda_format = workbook.add_format({'num_format': 'R$ #,##0.00', 'border': 1})
-        percentual_format = workbook.add_format({'num_format': '0.00%', 'border': 1})
-        normal_format = workbook.add_format({'border': 1})
-    
-        verde_claro = workbook.add_format({'bg_color': '#c6efce', 'border': 1})
-        vermelho_claro = workbook.add_format({'bg_color': '#ffc7ce', 'border': 1})
-        meta_format = workbook.add_format({'bg_color': '#FF6666', 'font_color': 'white', 'border': 1})
-        subtotal_format = workbook.add_format({'bg_color': '#d0e6f7', 'border': 1})
-        total_format = workbook.add_format({'bg_color': '#0366d6', 'font_color': 'white', 'border': 1})
-        tipo_format = workbook.add_format({'bg_color': '#FFE699', 'border': 1})
-
-
-        meta_desejavel_format = workbook.add_format({'bg_color': '#FF6666', 'font_color': 'white', 'border': 1})
-        total_geral_format = workbook.add_format({'bg_color': '#0366d6', 'font_color': 'white', 'border': 1})
+        # Dicionários de estilos por tipo de linha
+        estilos_especiais = {
+            "Meta Desejável": {'bg_color': '#FF6666', 'font_color': 'white', 'border': 1},
+            "TOTAL GERAL": {'bg_color': '#0366d6', 'font_color': 'white', 'border': 1},
+            "Tipo:": {'bg_color': '#FFE699', 'border': 1},
+            "Lojas:": {'bg_color': '#d0e6f7', 'border': 1},
+        }
     
         # Cabeçalho
         for col_num, value in enumerate(dados_exibir.columns):
             worksheet.write(0, col_num, value, header_format)
-        linha_excel = 1  # Começa após o cabeçalho (linha 0)
-        for row_num, row in dados_exibir.iterrows():
+    
+        linha_excel = 1
+        for _, row in dados_exibir.iterrows():
             linha_excel += 1
             loja_valor = str(row["Loja"])
             grupo_valor = str(row["Grupo"])
             atingido = row["% Atingido"]
-
-            # Alterna cor por grupo (muda a cada novo grupo)
+    
+            # Alternância de cores por grupo
             if grupo_valor != ultimo_grupo and "Lojas:" not in loja_valor and "Tipo:" not in loja_valor:
                 cor_atual = cor_grupo2 if cor_atual == cor_grupo1 else cor_grupo1
                 ultimo_grupo = grupo_valor
-            
             grupo_cores[grupo_valor] = cor_atual
-            
-            # 1. Identifica o estilo de linha
+    
+            # Determina o estilo da linha
             if "Meta Desejável" in loja_valor:
-                fmt_linha = meta_desejavel_format
+                estilo_linha = estilos_especiais["Meta Desejável"]
             elif "TOTAL GERAL" in loja_valor:
-                fmt_linha = total_geral_format
+                estilo_linha = estilos_especiais["TOTAL GERAL"]
             elif "Tipo:" in loja_valor:
-                fmt_linha = tipo_format
+                estilo_linha = estilos_especiais["Tipo:"]
             elif "Lojas:" in loja_valor:
-                fmt_linha = subtotal_format
+                estilo_linha = estilos_especiais["Lojas:"]
             else:
-                # Alterna cor por grupo
-                cor = grupo_cores.get(grupo_valor, cor_grupo1)
-                fmt_linha = workbook.add_format({
-                    'bg_color': cor,
-                    'font_color': 'black',
-                    'border': 1
-                })
-        
-            # 2. Escreve célula por célula
+                estilo_linha = {'bg_color': grupo_cores.get(grupo_valor, cor_grupo1), 'font_color': 'black', 'border': 1}
+    
             for col_num, col_name in enumerate(dados_exibir.columns):
                 val = row[col_name]
-                
-                # Escolhe formatação especial
+    
+                # Escolhe o formato apropriado
                 if col_name in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença"]:
-                    fmt = workbook.add_format({**fmt_linha.properties, **moeda_format.properties})
+                    fmt = workbook.add_format({**estilo_linha, **moeda_format_dict})
                 elif col_name in ["% Atingido", "% Falta Atingir"]:
-                    if "Lojas:" in loja_valor:  # Subtotal por grupo
-                        if col_name == "% Atingido" and not pd.isna(atingido):
-                            cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
-                            fmt = workbook.add_format({**fmt_linha.properties, 'bg_color': cor, 'num_format': '0.00%'})
-                        else:
-                            fmt = workbook.add_format({**fmt_linha.properties, 'num_format': '0.00%'})
+                    if "Lojas:" in loja_valor and col_name == "% Atingido" and not pd.isna(atingido):
+                        cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
+                        fmt = workbook.add_format({'bg_color': cor, 'font_color': 'black', **percentual_format_dict})
                     else:
-                        fmt = workbook.add_format({**fmt_linha.properties, 'num_format': '0.00%'})
+                        fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
                 else:
-                    fmt = fmt_linha
-                
-                # Escreve com o tipo certo
+                    fmt = workbook.add_format(estilo_linha)
+    
+                # Escreve na célula
                 if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
                     worksheet.write_number(linha_excel, col_num, val, fmt)
                 else:
                     worksheet.write(linha_excel, col_num, str(val), fmt)
     
     output.seek(0)
+
     st.download_button(
         label="📥 Baixar Excel com Formatação",
         data=output,
