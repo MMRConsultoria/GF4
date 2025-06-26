@@ -350,10 +350,10 @@ with aba1:
    
     
     # ✅ Exibe a data de realizado antes da tabela
-    # ✅ Exibe a data de realizado antes da tabela
     st.markdown(f"**Última data realizada:** {ultima_data_realizado}")
     
-    # Define os dados que serão exibidos
+    
+    
     if modo_visao == "Por Grupo":
         dados_exibir = comparativo_final[
             comparativo_final["Loja"].astype(str).str.contains("Lojas:") |
@@ -361,30 +361,9 @@ with aba1:
         ]
     else:
         dados_exibir = comparativo_final.copy()
-    
-    # 👉 Cria uma coluna auxiliar só para identificação de tipo
-    dados_exibir["eh_tipo"] = dados_exibir["Loja"].astype(str).str.startswith("Tipo:")
-    
-    # Cópia apenas para exibição visual (remove "Tipo: ")
-    dados_exibir_tela = dados_exibir.copy()
-    dados_exibir_tela["Loja"] = dados_exibir_tela["Loja"].str.replace("Tipo: ", "", regex=False)
-    
-    # Função de formatação por linha
-    def formatar_linha(row):
-        if row.get("Loja", "").startswith("Meta Desejável"):
-            return ['background-color: #FF6666; color: white'] * len(row)
-        elif row.get("Loja", "").startswith("TOTAL GERAL"):
-            return ['background-color: #0366d6; color: white'] * len(row)
-        elif row.get("eh_tipo", False):  # 👉 mantém o fundo amarelo para "Tipo"
-            return ['background-color: #FFE699'] * len(row)
-        elif "Lojas:" in str(row.get("Loja", "")):
-            return ['background-color: #d0e6f7'] * len(row)
-        else:
-            return [''] * len(row)
-    
-    # Exibe a tabela com formatação e "Tipo:" removido
+
     st.dataframe(
-        dados_exibir_tela.style
+        dados_exibir.style
             .format({
                 "Meta": formatar_moeda_br, 
                 f"Realizado até {ultima_data_realizado}": formatar_moeda_br, 
@@ -395,7 +374,7 @@ with aba1:
             .set_table_styles([
                 {
                     'selector': 'thead th',
-                    'props': [('background-color', '#dbeeff'),
+                    'props': [('background-color', '#dbeeff'),  # azul pastel claro
                               ('color', 'black'),
                               ('font-weight', 'bold')]
                 }
@@ -403,7 +382,6 @@ with aba1:
             .apply(formatar_linha, axis=1),
         use_container_width=True
     )
-
  
     # 🔍 Remove colunas indesejadas apenas do Excel
     colunas_para_remover = ["Tipo", "% Falta Atingir"]
@@ -472,46 +450,42 @@ with aba1:
                 estilo_linha = estilos_especiais["Lojas:"]
             else:
                 estilo_linha = {'bg_color': grupo_cores.get(grupo_valor, cor_grupo1), 'font_color': 'black', 'border': 1}
-    
             for col_num, col_name in enumerate(dados_excel.columns):
                 val = row[col_name]
-    
+            
                 if col_name in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença"]:
                     fmt = workbook.add_format({**estilo_linha, **moeda_format_dict})
-    
+            
                 elif col_name == "% Atingido":
-                    is_tipo = loja_valor.startswith("Tipo:")
-                    is_totalgeral = "TOTAL GERAL" in loja_valor
-                    is_meta_desejavel = "Meta Desejável" in loja_valor
-                    is_subtotal = "Lojas:" in loja_valor and not is_tipo and not is_totalgeral
-    
-                    if is_meta_desejavel or is_tipo or is_totalgeral:
-                        fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
-    
-                    elif modo_visao == "Por Loja":
-                        if not is_subtotal:
+                    if (
+                        "Lojas:" in loja_valor 
+                        and not loja_valor.startswith("Tipo:") 
+                        and not "TOTAL GERAL" in loja_valor
+                        and modo_visao == "Por Grupo"
+                    ):
+                        if not pd.isna(atingido):
                             cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
                             fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
                         else:
                             fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
-    
-                    elif modo_visao == "Por Grupo":
-                        cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
-                        fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
-    
                     else:
                         fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
-    
+            
                 else:
+                    # ✅ fallback para garantir que fmt sempre existe
                     fmt = workbook.add_format(estilo_linha)
-    
+            
+                # Escreve a célula
                 if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
                     worksheet.write_number(linha_excel, col_num, val, fmt)
                 else:
                     worksheet.write(linha_excel, col_num, str(val), fmt)
+
+
     
-            linha_excel += 1
+            linha_excel += 1  # Importante: estava fora do loop anteriormente
     
+    # Fora do bloco `with`, após o salvamento completo
     output.seek(0)
     
     st.download_button(
@@ -519,8 +493,10 @@ with aba1:
         data=output,
         file_name=f"Relatorio_Metas_{ano_selecionado}_{mes_selecionado}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key=f"download_excel_{ano_selecionado}_{mes_selecionado}"
+        key=f"download_excel_{ano_selecionado}_{mes_selecionado}"  # ✅ evita duplicidade
     )
+
+    
 
 
 # ================================
