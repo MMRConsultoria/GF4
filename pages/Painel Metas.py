@@ -378,6 +378,11 @@ with aba1:
     else:
         dados_exibir = comparativo_final.copy()
 
+
+    # ✅ Remove "Tipo: " diretamente da coluna Loja
+    dados_exibir["Loja"] = dados_exibir["Loja"].str.replace("Tipo: ", "", regex=False)
+
+
     st.dataframe(
         dados_exibir.style
             .format({
