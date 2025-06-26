@@ -456,21 +456,24 @@ with aba1:
             # Escreve célula a célula
             for col_num, col_name in enumerate(dados_excel.columns):
                 val = row[col_name]
-    
+            
                 if col_name in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença"]:
-                    fmt = workbook.add_format({
-                        **estilo_linha,
-                        **moeda_format_dict
-                    })
+                    fmt = workbook.add_format({**estilo_linha, **moeda_format_dict})
+            
                 elif col_name == "% Atingido":
-                    if "Lojas:" in loja_valor and not pd.isna(atingido):
-                        cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
-                        fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
+                    if "Lojas:" in loja_valor and not loja_valor.startswith("Tipo:"):  # Subtotal de grupo
+                        if not pd.isna(atingido):
+                            cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
+                            fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
+                        else:
+                            fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
                     else:
+                        # Subtotais do tipo e qualquer outra linha -> mantém o fundo original
                         fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
+            
                 else:
                     fmt = workbook.add_format(estilo_linha)
-    
+            
                 # Escreve número ou texto
                 if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
                     worksheet.write_number(linha_excel, col_num, val, fmt)
