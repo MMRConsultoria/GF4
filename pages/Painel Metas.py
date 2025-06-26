@@ -450,26 +450,38 @@ with aba1:
             else:
                 estilo_linha = {'bg_color': grupo_cores.get(grupo_valor, cor_grupo1), 'font_color': 'black', 'border': 1}
     
+           # 2. Escreve célula por célula
             for col_num, col_name in enumerate(dados_exibir.columns):
                 val = row[col_name]
-    
-                # Escolhe o formato apropriado
+            
+                # Escolhe formatação especial
                 if col_name in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença"]:
-                    fmt = workbook.add_format({**estilo_linha, **moeda_format_dict})
+                    bg_color = fmt_linha.bg_color if hasattr(fmt_linha, "bg_color") else "#FFFFFF"
+                    fmt = workbook.add_format({
+                        'bg_color': bg_color,
+                        'font_color': 'black',
+                        'num_format': 'R$ #,##0.00',
+                        'border': 1
+                    })
                 elif col_name in ["% Atingido", "% Falta Atingir"]:
-                    if "Lojas:" in loja_valor:  # Só aplica cor se for subtotal por grupo
+                    if "Lojas:" in loja_valor:  # Subtotal por grupo
                         if col_name == "% Atingido" and not pd.isna(atingido):
                             cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
-                            fmt = workbook.add_format({**estilo_linha, 'bg_color': cor, 'num_format': '0.00%'})
+                            fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
                         else:
-                            fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
+                            fmt = percentual_format
                     else:
-                        fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
-                # Escreve na célula
+                        fmt = percentual_format
+                else:
+                    # ✅ Garantia de fallback se nenhuma condição acima entrar
+                    fmt = fmt_linha if 'fmt_linha' in locals() else normal_format
+            
+                # Escreve com o tipo certo
                 if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
                     worksheet.write_number(linha_excel, col_num, val, fmt)
                 else:
                     worksheet.write(linha_excel, col_num, str(val), fmt)
+
     
     output.seek(0)
 
