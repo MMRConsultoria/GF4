@@ -323,35 +323,44 @@ with aba1:
     
         atingido = row["% Atingido"]
         desejavel = percentual_meta_desejavel
+        loja_valor = str(row["Loja"])
     
         for coluna in row.index:
-            if "Meta Desejável" in str(row["Loja"]):
+            if "Meta Desejável" in loja_valor:
                 estilo.append("background-color: #FF6666; color: white;")
-            elif "TOTAL GERAL" in str(row["Loja"]):
+    
+            elif "TOTAL GERAL" in loja_valor:
                 estilo.append("background-color: #0366d6; color: white;")
-            elif row.get("eh_tipo", False):
+    
+            elif "Lojas:" in loja_valor and row["Grupo"] == "":
+                # 👉 Subtotal por tipo (Grupo vazio)
                 estilo.append("background-color: #FFE699;")
-            elif "Lojas:" in str(row["Loja"]):
-                # 💡 Aqui aplicamos verde/vermelho apenas no modo de grupo e na coluna % Atingido
+    
+            elif "Lojas:" in loja_valor:
+                # 👉 Subtotal por grupo (Grupo preenchido)
                 if (
                     coluna == "% Atingido"
                     and not pd.isna(atingido)
                     and modo_visao == "Por Grupo"
                 ):
                     if atingido >= desejavel:
-                        estilo.append("background-color: #c6efce;")  # verde claro
+                        estilo.append("background-color: #c6efce;")
                     else:
-                        estilo.append("background-color: #ffc7ce;")  # vermelho claro
+                        estilo.append("background-color: #ffc7ce;")
                 else:
                     estilo.append("background-color: #d0e6f7;")
+    
             elif coluna == "% Atingido" and not pd.isna(atingido):
                 if atingido >= desejavel:
-                    estilo.append("background-color: #c6efce;")  # verde claro
+                    estilo.append("background-color: #c6efce;")
                 else:
-                    estilo.append("background-color: #ffc7ce;")  # vermelho claro
+                    estilo.append("background-color: #ffc7ce;")
+    
             else:
                 estilo.append(f"background-color: {cor_base};")
+    
         return estilo
+
 
 
    
