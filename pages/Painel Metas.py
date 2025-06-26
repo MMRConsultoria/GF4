@@ -352,7 +352,9 @@ with aba1:
     # ✅ Exibe a data de realizado antes da tabela
     st.markdown(f"**Última data realizada:** {ultima_data_realizado}")
     
-    
+    # ✅ Remover prefixo "Tipo: " só das linhas com ele
+    mask_tipo = comparativo_final["Loja"].str.startswith("Tipo:")
+    comparativo_final.loc[mask_tipo, "Loja"] = comparativo_final.loc[mask_tipo, "Loja"].str.replace("Tipo: ", "", regex=False)
     
     if modo_visao == "Por Grupo":
         dados_exibir = comparativo_final[
@@ -362,9 +364,7 @@ with aba1:
     else:
         dados_exibir = comparativo_final.copy()
 
-    # ✅ Remover prefixo "Tipo: " só das linhas com ele
-    mask_tipo = comparativo_final["Loja"].str.startswith("Tipo:")
-    comparativo_final.loc[mask_tipo, "Loja"] = comparativo_final.loc[mask_tipo, "Loja"].str.replace("Tipo: ", "", regex=False)
+   
     
 
     
