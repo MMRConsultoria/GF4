@@ -361,9 +361,16 @@ with aba1:
         ]
     else:
         dados_exibir = comparativo_final.copy()
+    dados_exibir_tela = dados_exibir.copy()
+    dados_exibir_tela["Loja"] = dados_exibir_tela["Loja"].str.replace("Tipo: ", "", regex=False)
+    
+ 
+    # 🔍 Remove colunas indesejadas apenas do Excel
+    colunas_para_remover = ["Tipo", "% Falta Atingir"]
+    dados_exportar_excel = dados_exibir.drop(columns=[col for col in colunas_para_remover if col in dados_exibir.columns])
 
     st.dataframe(
-        dados_exibir.style
+        dados_exibir_tela.style
             .format({
                 "Meta": formatar_moeda_br, 
                 f"Realizado até {ultima_data_realizado}": formatar_moeda_br, 
@@ -374,18 +381,13 @@ with aba1:
             .set_table_styles([
                 {
                     'selector': 'thead th',
-                    'props': [('background-color', '#dbeeff'),  # azul pastel claro
-                              ('color', 'black'),
-                              ('font-weight', 'bold')]
+                    'props': [('background-color', '#dbeeff'), ('color', 'black'), ('font-weight', 'bold')]
                 }
             ])
             .apply(formatar_linha, axis=1),
         use_container_width=True
     )
- 
-    # 🔍 Remove colunas indesejadas apenas do Excel
-    colunas_para_remover = ["Tipo", "% Falta Atingir"]
-    dados_exportar_excel = dados_exibir.drop(columns=[col for col in colunas_para_remover if col in dados_exibir.columns])
+        
     
     output = io.BytesIO()
 
