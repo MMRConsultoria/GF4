@@ -492,6 +492,7 @@ with aba1:
                     data=output,
                     file_name=f"Relatorio_Metas_{ano_selecionado}_{mes_selecionado}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    key="download_excel_metas"
                 )
 
 
