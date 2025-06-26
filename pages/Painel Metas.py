@@ -383,7 +383,11 @@ with aba1:
         use_container_width=True
     )
  
-
+    # 🔍 Remove colunas indesejadas apenas do Excel
+    colunas_para_remover = ["Tipo", "% Falta Atingir"]
+    dados_exportar_excel = dados_exibir.drop(columns=[col for col in colunas_para_remover if col in dados_exibir.columns])
+    
+    
     output = io.BytesIO()
     
     # Alternância de cores entre grupos
@@ -400,7 +404,7 @@ with aba1:
     dados_exibir = dados_exibir.fillna("")
     
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        dados_exibir.to_excel(writer, index=False, sheet_name="Metas")
+        dados_exportar_excel.to_excel(writer, index=False, sheet_name="Metas")
         workbook = writer.book
         worksheet = writer.sheets["Metas"]
     
@@ -420,11 +424,11 @@ with aba1:
         }
     
         # Cabeçalho
-        for col_num, value in enumerate(dados_exibir.columns):
+        for col_num, value in enumerate(dados_exportar_excel.columns):
             worksheet.write(0, col_num, value, header_format)
     
         linha_excel = 1
-        for _, row in dados_exibir.iterrows():
+        for _, row in dados_exportar_excel.iterrows():
             linha_excel += 1
             loja_valor = str(row["Loja"])
             grupo_valor = str(row["Grupo"])
