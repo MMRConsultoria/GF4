@@ -370,9 +370,18 @@ with aba1:
                 "% Atingido": "{:.2%}", 
                 "% Falta Atingir": "{:.2%}"
             }, na_rep="")
+            .set_table_styles([
+                {
+                    'selector': 'thead th',
+                    'props': [('background-color', '#dbeeff'),  # azul pastel claro
+                              ('color', 'black'),
+                              ('font-weight', 'bold')]
+                }
+            ])
             .apply(formatar_linha, axis=1),
         use_container_width=True
     )
+
 
 
     
