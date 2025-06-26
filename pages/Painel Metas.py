@@ -171,8 +171,7 @@ with aba1:
     comparativo["Diferença"] = comparativo["Realizado"] - comparativo["Meta"]
     comparativo["% Falta Atingir"] = np.maximum(0, 1 - comparativo["% Atingido"])
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
-    comparativo["eh_tipo"] = False
-    
+
     tipo_subtotais = []
     for tipo, dados_tipo in comparativo.groupby("Tipo"):
         soma_meta_tipo = dados_tipo["Meta"].sum()
@@ -184,9 +183,7 @@ with aba1:
 
         linha_tipo = pd.DataFrame({
             "Ano": [""], "Mês": [""], "Grupo": [""], "Loja": [f"{tipo} - Lojas: {qtde_lojas_tipo:02}"],
-            "Meta": [soma_meta_tipo], "Realizado": [soma_realizado_tipo], "% Atingido": [perc_atingido_tipo],
-            "% Falta Atingir": [perc_falta_tipo], "Diferença": [soma_diferenca_tipo], "Tipo": [tipo],
-            "eh_tipo": [True]
+            "Meta": [soma_meta_tipo], "Realizado": [soma_realizado_tipo], "% Atingido": [perc_atingido_tipo], "% Falta Atingir": [perc_falta_tipo], "Diferença": [soma_diferenca_tipo], "Tipo": [tipo]
         })
         tipo_subtotais.append(linha_tipo)
 
@@ -251,7 +248,6 @@ with aba1:
         resultado_final.append(linha_subtotal)
     
     # ✅ Total Geral continua exatamente igual ao seu
-    # ✅ Total Geral
     total_meta = comparativo["Meta"].sum()
     total_realizado = comparativo["Realizado"].sum()
     total_diferenca = comparativo["Diferença"].sum()
@@ -259,14 +255,13 @@ with aba1:
     percentual_falta_total = max(0, 1 - percentual_total)
     
     linha_total = pd.DataFrame({
-        "Ano": [""], "Mês": [""], "Grupo": [""], 
-        "Loja": [f"TOTAL GERAL - Lojas: {total_lojas_geral:02}"],
+        "Ano": [""], "Mês": [""], "Grupo": [""], "Loja": [f"TOTAL GERAL - Lojas: {total_lojas_geral:02}"],
         "Meta": [total_meta], "Realizado": [total_realizado],
         "% Atingido": [percentual_total], "% Falta Atingir": [percentual_falta_total],
         "Diferença": [total_diferenca], "Tipo": [""]
     })
-    
-    # 🎯 Linha da Meta Desejável
+
+    # Cria a linha única da Meta Desejável
     linha_meta_desejavel = pd.DataFrame({
         "Ano": [""], 
         "Mês": [""], 
@@ -279,22 +274,20 @@ with aba1:
         "Diferença": [np.nan],
         "Tipo": [""]
     })
-    
-    # ✅ Substitui "Tipo: xxx - Lojas: YY" por "xxx - Lojas: YY"
-    for df in tipo_subtotais:
-        df["Loja"] = df["Loja"].str.replace("Tipo: ", "", regex=False)
-    
-    # ✅ Monta o DataFrame final
-    comparativo_final = pd.concat(
-        [linha_meta_desejavel] + tipo_subtotais + [linha_total] + resultado_final,
-        ignore_index=True
-    )
+
+
+
+
+
+
 
 
 
 
 
     
+    # ✅ Monta o comparativo final preservando o seu restante
+    comparativo_final = pd.concat([linha_meta_desejavel] + tipo_subtotais + [linha_total] + resultado_final, ignore_index=True)
     # ✅ Ajusta o nome da coluna "Realizado"
     comparativo_final.rename(columns={"Realizado": f"Realizado até {ultima_data_realizado}"}, inplace=True)
 
@@ -323,44 +316,35 @@ with aba1:
     
         atingido = row["% Atingido"]
         desejavel = percentual_meta_desejavel
-        loja_valor = str(row["Loja"])
     
         for coluna in row.index:
-            if "Meta Desejável" in loja_valor:
+            if "Meta Desejável" in str(row["Loja"]):
                 estilo.append("background-color: #FF6666; color: white;")
-    
-            elif "TOTAL GERAL" in loja_valor:
+            elif "TOTAL GERAL" in str(row["Loja"]):
                 estilo.append("background-color: #0366d6; color: white;")
-    
-            elif "Lojas:" in loja_valor and row["Grupo"] == "":
-                # 👉 Subtotal por tipo (Grupo vazio)
+            elif "Tipo:" in str(row["Loja"]):
                 estilo.append("background-color: #FFE699;")
-    
-            elif "Lojas:" in loja_valor:
-                # 👉 Subtotal por grupo (Grupo preenchido)
+            elif "Lojas:" in str(row["Loja"]):
+                # 💡 Aqui aplicamos verde/vermelho apenas no modo de grupo e na coluna % Atingido
                 if (
                     coluna == "% Atingido"
                     and not pd.isna(atingido)
                     and modo_visao == "Por Grupo"
                 ):
                     if atingido >= desejavel:
-                        estilo.append("background-color: #c6efce;")
+                        estilo.append("background-color: #c6efce;")  # verde claro
                     else:
-                        estilo.append("background-color: #ffc7ce;")
+                        estilo.append("background-color: #ffc7ce;")  # vermelho claro
                 else:
                     estilo.append("background-color: #d0e6f7;")
-    
             elif coluna == "% Atingido" and not pd.isna(atingido):
                 if atingido >= desejavel:
-                    estilo.append("background-color: #c6efce;")
+                    estilo.append("background-color: #c6efce;")  # verde claro
                 else:
-                    estilo.append("background-color: #ffc7ce;")
-    
+                    estilo.append("background-color: #ffc7ce;")  # vermelho claro
             else:
                 estilo.append(f"background-color: {cor_base};")
-    
         return estilo
-
 
 
    
@@ -377,11 +361,6 @@ with aba1:
         ]
     else:
         dados_exibir = comparativo_final.copy()
-
-
-    # ✅ Remove "Tipo: " diretamente da coluna Loja
-    dados_exibir["Loja"] = dados_exibir["Loja"].str.replace("Tipo: ", "", regex=False)
-
 
     st.dataframe(
         dados_exibir.style
