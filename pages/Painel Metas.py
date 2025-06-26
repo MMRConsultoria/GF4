@@ -370,7 +370,7 @@ with aba1:
     dados_exportar_excel = dados_exibir.drop(columns=[col for col in colunas_para_remover if col in dados_exibir.columns])
 
     st.dataframe(
-        dados_exibir_tela.style
+        dados_exibir_visual.style
             .format({
                 "Meta": formatar_moeda_br, 
                 f"Realizado até {ultima_data_realizado}": formatar_moeda_br, 
