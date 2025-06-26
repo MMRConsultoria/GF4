@@ -310,12 +310,11 @@ with aba1:
             elif "Lojas:" in str(row["Loja"]):
                 estilo.append("background-color: #d0e6f7")
             elif col == "% Atingido" and pd.notna(val):
-                cor = "green" if val >= percentual_meta_desejavel else "red"
-                estilo.append(f"color: {cor}")
+                cor = "#c6efce" if val >= percentual_meta_desejavel else "#ffc7ce"  # verde claro ou vermelho claro
+                estilo.append(f"background-color: {cor}; color: black")
             else:
                 estilo.append("")
         return estilo
-
 
        
 
