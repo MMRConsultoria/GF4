@@ -330,13 +330,22 @@ with aba1:
                 estilo.append(f"background-color: {cor_base};")
         return estilo
 
+    # 🔄 Filtro para alternar entre visão por Loja ou por Grupo
+    modo_visao = st.radio("🔍 Visão dos Dados:", ["Por Loja", "Por Grupo"], horizontal=True)
+    
     # ✅ Exibe a data de realizado antes da tabela
     st.markdown(f"**Última data realizada:** {ultima_data_realizado}")
     
     
     
+    # 👁️ Filtra a visualização de acordo com a escolha
+    if modo_visao == "Por Grupo":
+        dados_exibir = comparativo_final[comparativo_final["Loja"].astype(str).str.contains("Lojas:")]
+    else:
+        dados_exibir = comparativo_final.copy()
+    
     st.dataframe(
-        comparativo_final.style
+        dados_exibir.style
             .format({
                 "Meta": formatar_moeda_br, 
                 f"Realizado até {ultima_data_realizado}": formatar_moeda_br, 
@@ -347,6 +356,9 @@ with aba1:
             .apply(formatar_linha, axis=1),
         use_container_width=True
     )
+
+
+    
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         comparativo_final.to_excel(writer, index=False, sheet_name='Metas')
