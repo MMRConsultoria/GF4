@@ -296,21 +296,26 @@ with aba1:
        
     def formatar_linha(row):
         estilo = []
-        for idx, val in enumerate(row):
-            if "Meta Desejável" in row["Loja"]:
-                if val == 'None':
-                    estilo.append('background-color: #FF6666; color: #FF6666')
+        for col in row.index:
+            val = row[col]
+            if "Meta Desejável" in str(row["Loja"]):
+                if pd.isna(val):
+                    estilo.append("background-color: #FF6666; color: #FF6666")
                 else:
-                    estilo.append('background-color: #FF6666; color: white')
-            elif "TOTAL GERAL" in row["Loja"]:
-                estilo.append('background-color: #0366d6; color: white')
-            elif "Tipo:" in row["Loja"]:
-                estilo.append('background-color: #FFE699')
-            elif "Lojas:" in row["Loja"]:
-                estilo.append('background-color: #d0e6f7')
+                    estilo.append("background-color: #FF6666; color: white")
+            elif "TOTAL GERAL" in str(row["Loja"]):
+                estilo.append("background-color: #0366d6; color: white")
+            elif "Tipo:" in str(row["Loja"]):
+                estilo.append("background-color: #FFE699")
+            elif "Lojas:" in str(row["Loja"]):
+                estilo.append("background-color: #d0e6f7")
+            elif col == "% Atingido" and pd.notna(val):
+                cor = "green" if val >= percentual_meta_desejavel else "red"
+                estilo.append(f"color: {cor}")
             else:
-                estilo.append('')
+                estilo.append("")
         return estilo
+
 
        
 
