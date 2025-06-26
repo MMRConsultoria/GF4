@@ -450,52 +450,46 @@ with aba1:
                 estilo_linha = estilos_especiais["Lojas:"]
             else:
                 estilo_linha = {'bg_color': grupo_cores.get(grupo_valor, cor_grupo1), 'font_color': 'black', 'border': 1}
+    
             for col_num, col_name in enumerate(dados_excel.columns):
                 val = row[col_name]
-            
+    
                 if col_name in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença"]:
                     fmt = workbook.add_format({**estilo_linha, **moeda_format_dict})
+    
                 elif col_name == "% Atingido":
                     is_tipo = loja_valor.startswith("Tipo:")
                     is_totalgeral = "TOTAL GERAL" in loja_valor
                     is_meta_desejavel = "Meta Desejável" in loja_valor
                     is_subtotal = "Lojas:" in loja_valor and not is_tipo and not is_totalgeral
-                
-                    # Linhas especiais nunca recebem cor verde/vermelha
+    
                     if is_meta_desejavel or is_tipo or is_totalgeral:
                         fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
-                
-                    # Filtro por Loja → só lojas normais recebem cor
-                    elif filtro_selecionado == "Por Loja":
+    
+                    elif modo_visao == "Por Loja":
                         if not is_subtotal:
                             cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
                             fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
                         else:
                             fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
-                
-                    # Filtro por Grupo → subtotais e lojas recebem cor
-                    elif filtro_selecionado == "Por Grupo":
+    
+                    elif modo_visao == "Por Grupo":
                         cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
                         fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
-                
+    
                     else:
                         fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
-                # ✅ NOVO else → cobre qualquer outra coluna
+    
                 else:
                     fmt = workbook.add_format(estilo_linha)
-               
-            
-                # Escreve a célula
+    
                 if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
                     worksheet.write_number(linha_excel, col_num, val, fmt)
                 else:
                     worksheet.write(linha_excel, col_num, str(val), fmt)
-
-
     
-            linha_excel += 1  # Importante: estava fora do loop anteriormente
+            linha_excel += 1
     
-    # Fora do bloco `with`, após o salvamento completo
     output.seek(0)
     
     st.download_button(
@@ -503,10 +497,8 @@ with aba1:
         data=output,
         file_name=f"Relatorio_Metas_{ano_selecionado}_{mes_selecionado}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key=f"download_excel_{ano_selecionado}_{mes_selecionado}"  # ✅ evita duplicidade
+        key=f"download_excel_{ano_selecionado}_{mes_selecionado}"
     )
-
-    
 
 
 # ================================
