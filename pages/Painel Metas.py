@@ -455,25 +455,33 @@ with aba1:
             
                 if col_name in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença"]:
                     fmt = workbook.add_format({**estilo_linha, **moeda_format_dict})
-            
                 elif col_name == "% Atingido":
-                    if (
-                        "Lojas:" in loja_valor 
-                        and not loja_valor.startswith("Tipo:") 
-                        and not "TOTAL GERAL" in loja_valor
-                        and modo_visao == "Por Grupo"
-                    ):
-                        if not pd.isna(atingido):
+                    is_tipo = loja_valor.startswith("Tipo:")
+                    is_totalgeral = "TOTAL GERAL" in loja_valor
+                    is_meta_desejavel = "Meta Desejável" in loja_valor
+                    is_subtotal = "Lojas:" in loja_valor and not is_tipo and not is_totalgeral
+                
+                    # Linhas especiais nunca recebem cor verde/vermelha
+                    if is_meta_desejavel or is_tipo or is_totalgeral:
+                        fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
+                
+                    # Filtro por Loja → só lojas normais recebem cor
+                    elif filtro_selecionado == "Por Loja":
+                        if not is_subtotal:
                             cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
                             fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
                         else:
                             fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
+                
+                    # Filtro por Grupo → subtotais e lojas recebem cor
+                    elif filtro_selecionado == "Por Grupo":
+                        cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
+                        fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
+                
                     else:
                         fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
-            
-                else:
-                    # ✅ fallback para garantir que fmt sempre existe
-                    fmt = workbook.add_format(estilo_linha)
+
+               
             
                 # Escreve a célula
                 if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
