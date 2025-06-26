@@ -451,7 +451,10 @@ with aba1:
                 else:
                     fmt = row_format
     
-                worksheet.write(linha_excel, col_num, val, fmt)
+                if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
+                    worksheet.write_number(linha_excel, col_num, val, fmt)
+                else:
+                    worksheet.write(linha_excel, col_num, str(val), fmt)
     
     output.seek(0)
     st.download_button(
