@@ -394,6 +394,14 @@ with aba1:
     grupo_cores = {}
     cor_atual = cor_grupo1
     ultimo_grupo = None
+
+
+    # Remove linhas duplicadas da "Meta Desejável"
+    dados_exibir = dados_exibir.drop_duplicates(subset=["Loja"], keep="first")
+    
+    # Substitui NaN por string vazia para evitar 'nan' no Excel
+    dados_exibir = dados_exibir.fillna("")
+
     
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         dados_exibir.to_excel(writer, index=False, sheet_name="Metas")
@@ -449,14 +457,14 @@ with aba1:
                 if col_name in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença"]:
                     fmt = workbook.add_format({**estilo_linha, **moeda_format_dict})
                 elif col_name in ["% Atingido", "% Falta Atingir"]:
-                    if "Lojas:" in loja_valor and col_name == "% Atingido" and not pd.isna(atingido):
-                        cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
-                        fmt = workbook.add_format({'bg_color': cor, 'font_color': 'black', **percentual_format_dict})
+                    if "Lojas:" in loja_valor:  # Só aplica cor se for subtotal por grupo
+                        if col_name == "% Atingido" and not pd.isna(atingido):
+                            cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
+                            fmt = workbook.add_format({**estilo_linha, 'bg_color': cor, 'num_format': '0.00%'})
+                        else:
+                            fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
                     else:
                         fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
-                else:
-                    fmt = workbook.add_format(estilo_linha)
-    
                 # Escreve na célula
                 if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
                     worksheet.write_number(linha_excel, col_num, val, fmt)
