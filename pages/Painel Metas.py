@@ -454,47 +454,50 @@ with aba1:
                 estilo_linha = {'bg_color': grupo_cores.get(grupo_valor, cor_grupo1), 'font_color': 'black', 'border': 1}
     
             # Escreve célula a célula
-            for col_num, col_name in enumerate(dados_excel.columns):
-                val = row[col_name]
-            
-                if col_name in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença"]:
-                    fmt = workbook.add_format({**estilo_linha, **moeda_format_dict})
-            
-                elif col_name == "% Atingido":
-                    if (
-                        "Lojas:" in loja_valor 
-                        and not loja_valor.startswith("Tipo:") 
-                        and not "TOTAL GERAL" in loja_valor
-                    ):
-                        # Só aplica cor verde/vermelha para subtotal por grupo
-                        if not pd.isna(atingido):
-                            cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
-                            fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
-                        else:
-                            fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
+        for col_num, col_name in enumerate(dados_excel.columns):
+          
+            val = row[col_name]
+        
+            if col_name in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença"]:
+                fmt = workbook.add_format({**estilo_linha, **moeda_format_dict})
+        
+            elif col_name == "% Atingido":
+                if (
+                    "Lojas:" in loja_valor 
+                    and not loja_valor.startswith("Tipo:") 
+                    and not "TOTAL GERAL" in loja_valor
+                ):
+                    # Só aplica cor verde/vermelha para subtotal por grupo
+                    if not pd.isna(atingido):
+                        cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
+                        fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
                     else:
-                        # Para "Tipo:" e "TOTAL GERAL", mantém o estilo da linha
                         fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
-            
                 else:
-                    fmt = workbook.add_format(estilo_linha)
-            
-                # Escreve número ou texto
-                if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
-                    worksheet.write_number(linha_excel, col_num, val, fmt)
-                else:
-                    worksheet.write(linha_excel, col_num, str(val), fmt)
-                
-                output.seek(0)
-                
-                st.download_button(
-                    label="📥 Baixar Excel com Formatação",
-                    data=output,
-                    file_name=f"Relatorio_Metas_{ano_selecionado}_{mes_selecionado}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    key="download_excel_metas"
-                )
+                    # Para "Tipo:" e "TOTAL GERAL", mantém o estilo da linha
+                    fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
+        
+            else:
+                fmt = workbook.add_format(estilo_linha)
+        
+            # Escreve número ou texto
+            if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
+                worksheet.write_number(linha_excel, col_num, val, fmt)
+            else:
+                worksheet.write(linha_excel, col_num, str(val), fmt)
 
+        # após sair do `for` linha_excel...
+        output.seek(0)
+        
+        st.download_button(
+            label="📥 Baixar Excel com Formatação",
+            data=output,
+            file_name=f"Relatorio_Metas_{ano_selecionado}_{mes_selecionado}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key=f"download_excel_{ano_selecionado}_{mes_selecionado}"  # ✅ chave única
+        )
+                        
+               
 
 
 # ================================
