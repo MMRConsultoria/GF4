@@ -387,6 +387,15 @@ with aba1:
 
     
     output = io.BytesIO()
+    # Alternância de cores entre grupos
+    cor_grupo1 = "#fff6eb"
+    cor_grupo2 = "#f8faec"
+    grupo_cores = {}
+    
+    # Para rastrear qual cor aplicar
+    cor_atual = cor_grupo1
+    ultimo_grupo = None
+        
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         dados_exibir.to_excel(writer, index=False, sheet_name="Metas")
         workbook = writer.book
@@ -410,6 +419,10 @@ with aba1:
         subtotal_format = workbook.add_format({'bg_color': '#d0e6f7', 'border': 1})
         total_format = workbook.add_format({'bg_color': '#0366d6', 'font_color': 'white', 'border': 1})
         tipo_format = workbook.add_format({'bg_color': '#FFE699', 'border': 1})
+
+
+        meta_desejavel_format = workbook.add_format({'bg_color': '#FF6666', 'font_color': 'white', 'border': 1})
+        total_geral_format = workbook.add_format({'bg_color': '#0366d6', 'font_color': 'white', 'border': 1})
     
         # Cabeçalho
         for col_num, value in enumerate(dados_exibir.columns):
@@ -420,6 +433,13 @@ with aba1:
             loja_valor = str(row["Loja"])
             grupo_valor = str(row["Grupo"])
             atingido = row["% Atingido"]
+
+            # Alterna cor por grupo (muda a cada novo grupo)
+            if grupo_valor != ultimo_grupo and "Lojas:" not in loja_valor and "Tipo:" not in loja_valor:
+                cor_atual = cor_grupo2 if cor_atual == cor_grupo1 else cor_grupo1
+                ultimo_grupo = grupo_valor
+            
+            grupo_cores[grupo_valor] = cor_atual
             
             # 1. Identifica o estilo de linha
             if "Meta Desejável" in loja_valor:
