@@ -324,7 +324,18 @@ with aba1:
             elif "Tipo:" in str(row["Loja"]):
                 estilo.append("background-color: #FFE699;")
             elif "Lojas:" in str(row["Loja"]):
-                estilo.append("background-color: #d0e6f7;")
+                # 💡 Aqui aplicamos verde/vermelho apenas no modo de grupo e na coluna % Atingido
+                if (
+                    coluna == "% Atingido"
+                    and not pd.isna(atingido)
+                    and modo_visao == "Por Grupo"
+                ):
+                    if atingido >= desejavel:
+                        estilo.append("background-color: #c6efce;")  # verde claro
+                    else:
+                        estilo.append("background-color: #ffc7ce;")  # vermelho claro
+                else:
+                    estilo.append("background-color: #d0e6f7;")
             elif coluna == "% Atingido" and not pd.isna(atingido):
                 if atingido >= desejavel:
                     estilo.append("background-color: #c6efce;")  # verde claro
@@ -333,6 +344,7 @@ with aba1:
             else:
                 estilo.append(f"background-color: {cor_base};")
         return estilo
+
 
    
     
