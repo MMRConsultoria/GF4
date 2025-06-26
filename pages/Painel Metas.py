@@ -350,10 +350,10 @@ with aba1:
    
     
     # ✅ Exibe a data de realizado antes da tabela
+    # ✅ Exibe a data de realizado antes da tabela
     st.markdown(f"**Última data realizada:** {ultima_data_realizado}")
     
-    
-    
+    # Define os dados que serão exibidos
     if modo_visao == "Por Grupo":
         dados_exibir = comparativo_final[
             comparativo_final["Loja"].astype(str).str.contains("Lojas:") |
@@ -361,10 +361,26 @@ with aba1:
         ]
     else:
         dados_exibir = comparativo_final.copy()
-
-
+    
+    # 👉 Cria uma coluna auxiliar só para identificação de tipo
+    dados_exibir["eh_tipo"] = dados_exibir["Loja"].astype(str).str.startswith("Tipo:")
+    
+    # Cópia apenas para exibição visual (remove "Tipo: ")
     dados_exibir_tela = dados_exibir.copy()
     dados_exibir_tela["Loja"] = dados_exibir_tela["Loja"].str.replace("Tipo: ", "", regex=False)
+    
+    # Função de formatação por linha
+    def formatar_linha(row):
+        if row.get("Loja", "").startswith("Meta Desejável"):
+            return ['background-color: #FF6666; color: white'] * len(row)
+        elif row.get("Loja", "").startswith("TOTAL GERAL"):
+            return ['background-color: #0366d6; color: white'] * len(row)
+        elif row.get("eh_tipo", False):  # 👉 mantém o fundo amarelo para "Tipo"
+            return ['background-color: #FFE699'] * len(row)
+        elif "Lojas:" in str(row.get("Loja", "")):
+            return ['background-color: #d0e6f7'] * len(row)
+        else:
+            return [''] * len(row)
     
     # Exibe a tabela com formatação e "Tipo:" removido
     st.dataframe(
@@ -387,6 +403,7 @@ with aba1:
             .apply(formatar_linha, axis=1),
         use_container_width=True
     )
+
  
     # 🔍 Remove colunas indesejadas apenas do Excel
     colunas_para_remover = ["Tipo", "% Falta Atingir"]
