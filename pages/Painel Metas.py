@@ -303,44 +303,46 @@ with aba1:
         grupo: cores_blocos[i % len(cores_blocos)]
         for i, grupo in enumerate(sorted(grupos_unicos))
     }
+
+    
+    modo_visao = st.radio("🔍 Visão dos Dados:", ["Por Loja", "Por Grupo"], horizontal=True)
+        
     
     def formatar_linha(row):
         estilo = []
-        grupo = row["Grupo"]
-        cor_base = mapa_cor_por_grupo.get(grupo, "#ffffff")  # branco se não encontrado
+        atingido_col = "% Atingido"
+        atingido_val = row.get(atingido_col, None)
+        is_subtotal_grupo = "Lojas:" in str(row.get("Loja", "")) and "Tipo:" not in str(row.get("Loja", ""))
     
-        atingido = row["% Atingido"]
-        desejavel = percentual_meta_desejavel
-    
-        for coluna in row.index:
-            if "Meta Desejável" in str(row["Loja"]):
-                estilo.append("background-color: #FF6666; color: white;")
-            elif "TOTAL GERAL" in str(row["Loja"]):
-                estilo.append("background-color: #0366d6; color: white;")
-            elif "Tipo:" in str(row["Loja"]):
-                estilo.append("background-color: #FFE699;")
-            elif "Lojas:" in str(row["Loja"]):
-                estilo.append("background-color: #d0e6f7;")
-            elif coluna == "% Atingido" and not pd.isna(atingido):
-                if atingido >= desejavel:
-                    estilo.append("background-color: #c6efce;")  # verde claro
+        for idx, val in enumerate(row):
+            if "Meta Desejável" in row["Loja"]:
+                estilo.append('background-color: #FF6666; color: black')
+            elif "TOTAL GERAL" in row["Loja"]:
+                estilo.append('background-color: #0366d6; color: white')
+            elif "Tipo:" in row["Loja"]:
+                estilo.append('background-color: #FFE699; color: black')
+            elif is_subtotal_grupo and modo_visao == "Por Grupo":
+                # Cor da linha conforme % Atingido para subtotais de grupo
+                if atingido_val >= percentual_meta_desejavel:
+                    estilo.append('background-color: #c6efce; color: black')  # Verde claro
                 else:
-                    estilo.append("background-color: #ffc7ce;")  # vermelho claro
+                    estilo.append('background-color: #ffc7ce; color: black')  # Vermelho claro
             else:
-                estilo.append(f"background-color: {cor_base};")
+                estilo.append('')
         return estilo
 
-    # 🔄 Filtro para alternar entre visão por Loja ou por Grupo
-    modo_visao = st.radio("🔍 Visão dos Dados:", ["Por Loja", "Por Grupo"], horizontal=True)
+   
     
     # ✅ Exibe a data de realizado antes da tabela
     st.markdown(f"**Última data realizada:** {ultima_data_realizado}")
     
     
     
-    # 👁️ Filtra a visualização de acordo com a escolha
     if modo_visao == "Por Grupo":
-        dados_exibir = comparativo_final[comparativo_final["Loja"].astype(str).str.contains("Lojas:")]
+        dados_exibir = comparativo_final[
+            comparativo_final["Loja"].astype(str).str.contains("Lojas:") |
+            comparativo_final["Loja"].astype(str).str.contains("Meta Desejável")
+        ]
     else:
         dados_exibir = comparativo_final.copy()
     
