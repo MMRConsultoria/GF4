@@ -384,8 +384,6 @@ with aba1:
     )
  
 
-
-        
     output = io.BytesIO()
     
     # Alternância de cores entre grupos
@@ -394,14 +392,12 @@ with aba1:
     grupo_cores = {}
     cor_atual = cor_grupo1
     ultimo_grupo = None
-
-
+    
     # Remove linhas duplicadas da "Meta Desejável"
     dados_exibir = dados_exibir.drop_duplicates(subset=["Loja"], keep="first")
     
     # Substitui NaN por string vazia para evitar 'nan' no Excel
     dados_exibir = dados_exibir.fillna("")
-
     
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         dados_exibir.to_excel(writer, index=False, sheet_name="Metas")
@@ -412,6 +408,8 @@ with aba1:
         header_format = workbook.add_format({'bold': True, 'bg_color': '#0366d6', 'font_color': 'white', 'border': 1})
         moeda_format_dict = {'num_format': 'R$ #,##0.00', 'border': 1}
         percentual_format_dict = {'num_format': '0.00%', 'border': 1}
+        percentual_format = workbook.add_format(percentual_format_dict)
+        normal_format = workbook.add_format({'border': 1})
     
         # Dicionários de estilos por tipo de linha
         estilos_especiais = {
@@ -450,13 +448,12 @@ with aba1:
             else:
                 estilo_linha = {'bg_color': grupo_cores.get(grupo_valor, cor_grupo1), 'font_color': 'black', 'border': 1}
     
-           # 2. Escreve célula por célula
+            # Escreve célula por célula
             for col_num, col_name in enumerate(dados_exibir.columns):
                 val = row[col_name]
-            
-                # Escolhe formatação especial
+    
                 if col_name in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença"]:
-                    bg_color = fmt_linha.bg_color if hasattr(fmt_linha, "bg_color") else "#FFFFFF"
+                    bg_color = estilo_linha.get("bg_color", "#FFFFFF")
                     fmt = workbook.add_format({
                         'bg_color': bg_color,
                         'font_color': 'black',
@@ -464,33 +461,28 @@ with aba1:
                         'border': 1
                     })
                 elif col_name in ["% Atingido", "% Falta Atingir"]:
-                    if "Lojas:" in loja_valor:  # Subtotal por grupo
-                        if col_name == "% Atingido" and not pd.isna(atingido):
-                            cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
-                            fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
-                        else:
-                            fmt = percentual_format
+                    if "Lojas:" in loja_valor and col_name == "% Atingido" and isinstance(atingido, (int, float)):
+                        cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
+                        fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
                     else:
                         fmt = percentual_format
                 else:
-                    # ✅ Garantia de fallback se nenhuma condição acima entrar
-                    fmt = fmt_linha if 'fmt_linha' in locals() else normal_format
-            
-                # Escreve com o tipo certo
+                    fmt = workbook.add_format(estilo_linha)
+    
+                # Escreve valor com o tipo certo
                 if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
                     worksheet.write_number(linha_excel, col_num, val, fmt)
                 else:
                     worksheet.write(linha_excel, col_num, str(val), fmt)
-
     
     output.seek(0)
-
     st.download_button(
         label="📥 Baixar Excel",
         data=output,
         file_name=f"Relatorio_Metas_{ano_selecionado}_{mes_selecionado}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 # ================================
 with aba2:
