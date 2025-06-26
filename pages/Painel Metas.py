@@ -361,8 +361,8 @@ with aba1:
         ]
     else:
         dados_exibir = comparativo_final.copy()
-    dados_exibir_tela = dados_exibir.copy()
-    dados_exibir_tela["Loja"] = dados_exibir_tela["Loja"].str.replace("Tipo: ", "", regex=False)
+    dados_exibir_visual = dados_exibir.copy()
+    dados_exibir_visual["Loja"] = dados_exibir_visual["Loja"].str.replace("Tipo: ", "", regex=False)
     
  
     # 🔍 Remove colunas indesejadas apenas do Excel
