@@ -182,7 +182,7 @@ with aba1:
         qtde_lojas_tipo = dados_tipo["Loja"].nunique()
 
         linha_tipo = pd.DataFrame({
-            "Ano": [""], "Mês": [""], "Grupo": [""], "Loja": [f"Tipo: {tipo} - Lojas: {qtde_lojas_tipo:02}"],
+            "Ano": [""], "Mês": [""], "Grupo": [""], "Loja": [f"{tipo} - Lojas: {qtde_lojas_tipo:02}"],
             "Meta": [soma_meta_tipo], "Realizado": [soma_realizado_tipo], "% Atingido": [perc_atingido_tipo], "% Falta Atingir": [perc_falta_tipo], "Diferença": [soma_diferenca_tipo], "Tipo": [tipo]
         })
         tipo_subtotais.append(linha_tipo)
