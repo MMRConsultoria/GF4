@@ -362,8 +362,13 @@ with aba1:
     else:
         dados_exibir = comparativo_final.copy()
 
+
+    dados_exibir_tela = dados_exibir.copy()
+    dados_exibir_tela["Loja"] = dados_exibir_tela["Loja"].str.replace("Tipo: ", "", regex=False)
+    
+    # Exibe a tabela com formatação e "Tipo:" removido
     st.dataframe(
-        dados_exibir.style
+        dados_exibir_tela.style
             .format({
                 "Meta": formatar_moeda_br, 
                 f"Realizado até {ultima_data_realizado}": formatar_moeda_br, 
@@ -374,7 +379,7 @@ with aba1:
             .set_table_styles([
                 {
                     'selector': 'thead th',
-                    'props': [('background-color', '#dbeeff'),  # azul pastel claro
+                    'props': [('background-color', '#dbeeff'),
                               ('color', 'black'),
                               ('font-weight', 'bold')]
                 }
