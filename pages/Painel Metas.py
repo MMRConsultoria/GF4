@@ -342,12 +342,12 @@ with aba1:
     
     
     if modo_visao == "Por Grupo":
-        comparativo_final_filtrado = comparativo_final[
+        dados_exibir = comparativo_final[
             comparativo_final["Loja"].astype(str).str.contains("Lojas:") |
             comparativo_final["Loja"].astype(str).str.contains("Meta Desejável")
         ]
     else:
-        comparativo_final_filtrado = comparativo_final
+        dados_exibir = comparativo_final.copy()
 
     st.dataframe(
         dados_exibir.style
