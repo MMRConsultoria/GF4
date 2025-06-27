@@ -182,8 +182,12 @@ with aba1:
         qtde_lojas_tipo = dados_tipo["Loja"].nunique()
 
         linha_tipo = pd.DataFrame({
-            "Ano": [""], "Mês": [""], "Grupo": [""], "Loja": [f"Tipo: {tipo} - Lojas: {qtde_lojas_tipo:02}"],
-            "Meta": [soma_meta_tipo], "Realizado": [soma_realizado_tipo], "% Atingido": [perc_atingido_tipo], "% Falta Atingir": [perc_falta_tipo], "Diferença": [soma_diferenca_tipo], "Tipo": [tipo]
+            "Ano": [""], "Mês": [""], "Grupo": [""],
+            "Loja": [f"{tipo} - Lojas: {qtde_lojas_tipo:02}"],  # 🔄 sem "Tipo:"
+            "Meta": [soma_meta_tipo], "Realizado": [soma_realizado_tipo],
+            "% Atingido": [perc_atingido_tipo], "% Falta Atingir": [perc_falta_tipo],
+            "Diferença": [soma_diferenca_tipo], "Tipo": [tipo],
+            "eh_tipo": [True]  # ✅ nova flag
         })
         tipo_subtotais.append(linha_tipo)
 
@@ -243,7 +247,7 @@ with aba1:
             "Loja": [f"{grupo} - Lojas: {qtde_lojas_grupo:02}"],
             "Meta": [subtotal["meta"]], "Realizado": [subtotal["realizado"]],
             "% Atingido": [subtotal["perc_atingido"]], "% Falta Atingir": [subtotal["perc_falta"]],
-            "Diferença": [subtotal["diferenca"]], "Tipo": [tipo_str]
+            "Diferença": [subtotal["diferenca"]], "Tipo": [tipo_str],"eh_tipo": [False]
         })
         resultado_final.append(linha_subtotal)
     
@@ -258,7 +262,7 @@ with aba1:
         "Ano": [""], "Mês": [""], "Grupo": [""], "Loja": [f"TOTAL GERAL - Lojas: {total_lojas_geral:02}"],
         "Meta": [total_meta], "Realizado": [total_realizado],
         "% Atingido": [percentual_total], "% Falta Atingir": [percentual_falta_total],
-        "Diferença": [total_diferenca], "Tipo": [""]
+        "Diferença": [total_diferenca], "Tipo": [""],"eh_tipo": [False]
     })
 
     # Cria a linha única da Meta Desejável
@@ -272,7 +276,8 @@ with aba1:
         "% Atingido": [percentual_meta_desejavel],
         "% Falta Atingir": [np.nan],
         "Diferença": [np.nan],
-        "Tipo": [""]
+        "Tipo": [""],
+        "eh_tipo": [False]
     })
 
 
@@ -322,7 +327,7 @@ with aba1:
                 estilo.append("background-color: #FF6666; color: white;")
             elif "TOTAL GERAL" in str(row["Loja"]):
                 estilo.append("background-color: #0366d6; color: white;")
-            elif "Tipo:" in str(row["Loja"]):
+            elif row.get("eh_tipo", False):
                 estilo.append("background-color: #FFE699;")
             elif "Lojas:" in str(row["Loja"]):
                 loja_valor = str(row["Loja"])
@@ -438,7 +443,7 @@ with aba1:
                 estilo_linha = estilos_especiais["Meta Desejável"]
             elif "TOTAL GERAL" in loja_valor:
                 estilo_linha = estilos_especiais["TOTAL GERAL"]
-            elif loja_valor.startswith("Tipo:"):
+            elif row.get("eh_tipo", False):
                 estilo_linha = estilos_especiais["Tipo:"]
             elif "Lojas:" in loja_valor:
                 estilo_linha = estilos_especiais["Lojas:"]
@@ -452,7 +457,7 @@ with aba1:
                     fmt = workbook.add_format({**estilo_linha, **moeda_format_dict})
     
                 elif col_name == "% Atingido":
-                    is_tipo = loja_valor.startswith("Tipo:")
+                    is_tipo = row.get("eh_tipo", False)
                     is_totalgeral = "TOTAL GERAL" in loja_valor
                     is_meta_desejavel = "Meta Desejável" in loja_valor
                     is_subtotal = "Lojas:" in loja_valor and not is_tipo and not is_totalgeral
