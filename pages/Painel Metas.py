@@ -329,12 +329,11 @@ with aba1:
                 estilo.append("background-color: #0366d6; color: white;")
             elif row.get("eh_tipo", False):
                 estilo.append("background-color: #FFE699;")
+            elif row.get("eh_tipo", False):
+                estilo.append("background-color: #FFE699;")  # amarelo (subtotal tipo)
             elif "Lojas:" in str(row["Loja"]):
-                loja_valor = str(row["Loja"])
-                if loja_valor.startswith("Tipo:"):
-                    estilo.append("background-color: #FFE699;")  # amarelo (subtotal tipo)
-                else:
-                    estilo.append("background-color: #fce4d6;")  # laranja claro (subtotal grupo)
+                estilo.append("background-color: #fce4d6;")  # laranja claro (subtotal grupo)
+
 
             elif coluna == "% Atingido" and not pd.isna(atingido):
                 if atingido >= desejavel:
