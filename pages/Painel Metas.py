@@ -316,46 +316,32 @@ with aba1:
     
     def formatar_linha(row):
         estilo = []
+        grupo = row["Grupo"]
+        cor_base = mapa_cor_por_grupo.get(grupo, "#ffffff")  # branco se não encontrado
     
-        grupo = row.get("Grupo", "")
-        loja_valor = str(row.get("Loja", ""))
-        cor_base = mapa_cor_por_grupo.get(grupo, "#ffffff")
-    
-        atingido = row.get("% Atingido", None)
+        atingido = row["% Atingido"]
         desejavel = percentual_meta_desejavel
     
-        # 🔍 Detecta o tipo de linha
-        is_tipo = row.get("eh_tipo", False)
-        is_totalgeral = "TOTAL GERAL" in loja_valor
-        is_meta_desejavel = "Meta Desejável" in loja_valor
-        is_subtotal_grupo = "Lojas:" in loja_valor and not is_tipo and not is_totalgeral
-    
-        # 🔧 Determina a cor base da linha inteira
-        if is_meta_desejavel:
-            cor_linha = "#FF6666"
-            cor_texto = "white"
-        elif is_totalgeral:
-            cor_linha = "#0366d6"
-            cor_texto = "white"
-        elif is_tipo:
-            cor_linha = "#FFE699"
-            cor_texto = "black"
-        elif is_subtotal_grupo:
-            cor_linha = "#fce4d6"
-            cor_texto = "black"
-        else:
-            cor_linha = cor_base
-            cor_texto = "black"
-    
         for coluna in row.index:
-            if coluna == "% Atingido" and not pd.isna(atingido) and not is_totalgeral and not is_meta_desejavel and not is_tipo:
+            if "Meta Desejável" in str(row["Loja"]):
+                estilo.append("background-color: #FF6666; color: white;")
+            elif "TOTAL GERAL" in str(row["Loja"]):
+                estilo.append("background-color: #0366d6; color: white;")
+            elif row.get("eh_tipo", False):
+                estilo.append("background-color: #FFE699;")
+            elif row.get("eh_tipo", False):
+                estilo.append("background-color: #FFE699;")  # amarelo (subtotal tipo)
+            elif "Lojas:" in str(row["Loja"]):
+                estilo.append("background-color: #fce4d6;")  # laranja claro (subtotal grupo)
+
+
+            elif coluna == "% Atingido" and not pd.isna(atingido):
                 if atingido >= desejavel:
                     estilo.append("background-color: #c6efce;")  # verde claro
                 else:
                     estilo.append("background-color: #ffc7ce;")  # vermelho claro
             else:
-                estilo.append(f"background-color: {cor_linha}; color: {cor_texto};")
-    
+                estilo.append(f"background-color: {cor_base};")
         return estilo
 
 
