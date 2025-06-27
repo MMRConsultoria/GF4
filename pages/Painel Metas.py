@@ -322,28 +322,31 @@ with aba1:
         atingido = row["% Atingido"]
         desejavel = percentual_meta_desejavel
     
+        # 🔍 Definimos o tipo da linha apenas uma vez
+        loja_valor = str(row["Loja"])
+        is_tipo = row.get("eh_tipo", False)
+        is_totalgeral = "TOTAL GERAL" in loja_valor
+        is_meta_desejavel = "Meta Desejável" in loja_valor
+        is_subtotal_grupo = "Lojas:" in loja_valor and not is_tipo and not is_totalgeral
+    
         for coluna in row.index:
-            if "Meta Desejável" in str(row["Loja"]):
-                estilo.append("background-color: #FF6666; color: white;")
-            elif "TOTAL GERAL" in str(row["Loja"]):
-                estilo.append("background-color: #0366d6; color: white;")
-            elif row.get("eh_tipo", False):
-                estilo.append("background-color: #FFE699;")
-            elif row.get("eh_tipo", False):
-                estilo.append("background-color: #FFE699;")  # amarelo (subtotal tipo)
-            elif "Lojas:" in str(row["Loja"]):
-                estilo.append("background-color: #fce4d6;")  # laranja claro (subtotal grupo)
-
-
+            if is_meta_desejavel:
+                estilo.append("background-color: #FF6666; color: white;")  # vermelho
+            elif is_totalgeral:
+                estilo.append("background-color: #0366d6; color: white;")  # azul
+            elif is_tipo:
+                estilo.append("background-color: #FFE699;")  # amarelo (subtotal por tipo)
+            elif is_subtotal_grupo:
+                estilo.append("background-color: #fce4d6;")  # laranja claro (subtotal por grupo)
             elif coluna == "% Atingido" and not pd.isna(atingido):
                 if atingido >= desejavel:
                     estilo.append("background-color: #c6efce;")  # verde claro
                 else:
                     estilo.append("background-color: #ffc7ce;")  # vermelho claro
             else:
-                estilo.append(f"background-color: {cor_base};")
+                estilo.append(f"background-color: {cor_base};")  # cor do grupo
+    
         return estilo
-
 
    
     
