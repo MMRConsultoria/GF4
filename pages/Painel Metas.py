@@ -326,7 +326,7 @@ with aba1:
                 estilo.append("background-color: #FFE699;")
 
             elif "Lojas:" in str(row["Loja"]):
-                estilo.append("background-color: #cce7fc; color: black;")  # <-- ALTERADO AQUI
+                estilo.append("background-color: white; color: black;")  # <-- ALTERADO AQUI
             elif "Lojas:" in str(row["Loja"]):
                 # 💡 Aqui aplicamos verde/vermelho apenas no modo de grupo e na coluna % Atingido
                 if (
