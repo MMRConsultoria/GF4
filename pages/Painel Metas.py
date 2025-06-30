@@ -465,22 +465,23 @@ with aba1:
                     fmt = workbook.add_format({**estilo_linha, **moeda_format_dict})
     
                 elif col_name == "% Atingido":
-                    is_tipo = loja_valor.startswith("Tipo:")
-                    is_totalgeral = "TOTAL GERAL" in loja_valor
-                    is_meta_desejavel = "Meta Desejável" in loja_valor
-                    is_subtotal = "Lojas:" in loja_valor and not is_tipo and not is_totalgeral
+                    if "META DESEJÁVEL" in loja_valor.upper():
+                        fmt = workbook.add_format({
+                            'bg_color': estilo_linha['bg_color'], 'font_color': 'black',
+                            'bold': True, 'num_format': '0.00%', 'border': 1
+                        })
+                    elif atingido >= percentual_meta_desejavel:
+                        fmt = workbook.add_format({
+                            'bg_color': estilo_linha['bg_color'], 'font_color': 'green',
+                            'bold': True, 'num_format': '0.00%', 'border': 1
+                        })
+                    else:
+                        fmt = workbook.add_format({
+                            'bg_color': estilo_linha['bg_color'], 'font_color': 'red',
+                            'bold': True, 'num_format': '0.00%', 'border': 1
+                        })
     
-                    # Linhas especiais nunca recebem cor verde/vermelha
-                    if is_meta_desejavel or is_tipo or is_totalgeral:
-                        fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
-    
-                    # Filtro por Loja → só linhas normais recebem cor
-                    elif modo_visao == "Por Loja":
-                        if not is_subtotal:
-                            cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
-                            fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
-                        else:
-                            fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
+                   
     
                     # Filtro por Grupo → subtotais e lojas recebem cor
                     elif modo_visao == "Por Grupo":
