@@ -266,7 +266,7 @@ with aba1:
         "Ano": [""], 
         "Mês": [""], 
         "Grupo": [""],
-        "Loja": [f"META DESEJAVEL ATÉ {ultima_data_realizado}"],
+        "Loja": [f"META DESEJÁVEL ATÉ {ultima_data_realizado}"],
         "Meta": [np.nan],
         "Realizado": [np.nan],
         "% Atingido": [percentual_meta_desejavel],
