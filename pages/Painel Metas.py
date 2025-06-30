@@ -312,22 +312,21 @@ with aba1:
     def formatar_linha(row):
         estilo = []
         loja_valor = str(row["Loja"])
+        loja_valor_upper = loja_valor.upper()
         atingido = row["% Atingido"]
     
-        # decide o fundo da linha como estava antes
-        if "META DESEJÁVEL" in loja_valor:
+        if "META DESEJÁVEL" in loja_valor_upper:
             fundo = "#FF6666"
-        elif "TOTAL GERAL" in loja_valor:
+        elif "TOTAL GERAL" in loja_valor_upper:
             fundo = "#0366d6"
-        elif "Tipo:" in loja_valor:
-            fundo = "#FFE699"
-        elif "Lojas:" in loja_valor:
-            fundo = "#cce7fc"
+        elif "- LOJAS:" in loja_valor_upper:
+            fundo = "#f9f9f9"  # bem clarinho, quase branco para subtotal do tipo
+        elif "LOJAS:" in loja_valor_upper:
+            fundo = "#cce7fc"  # azul claro, continua para subtotal do grupo
         else:
-            fundo = "white"  # linhas das lojas ficam fundo branco
+            fundo = "white"
     
         for coluna in row.index:
-            # AGORA: em todas as linhas, destaca a fonte do % Atingido
             if coluna == "% Atingido" and not pd.isna(atingido):
                 if atingido >= percentual_meta_desejavel:
                     estilo.append(f"background-color: {fundo}; color: green; font-weight: bold; font-size: 1.1em;")
@@ -335,7 +334,7 @@ with aba1:
                     estilo.append(f"background-color: {fundo}; color: red; font-weight: bold; font-size: 1.1em;")
             else:
                 estilo.append(f"background-color: {fundo}; color: black;")
-        return estilo
+        return estilo 
 
     
     # ✅ Exibe a data de realizado antes da tabela
