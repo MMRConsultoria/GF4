@@ -177,7 +177,7 @@ if uploaded_file:
                 )
             
                     
-            col1, col2 = st.columns(2)
+            
 
             # 🔎 Período processado com fonte menor
             col1.markdown(f"""
