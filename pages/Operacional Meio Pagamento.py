@@ -179,19 +179,14 @@ if uploaded_file:
                     
             
 
-            # 🔎 Período processado com fonte menor
+           
+            # 🔎 Período e valor com fonte menor
+            col1, col2 = st.columns(2)
+            
             col1.markdown(f"""
                 <div style='font-size:1.2rem;'>
                     📅 <strong>Período processado</strong><br>
                     {periodo_min} até {periodo_max}
-                </div>
-            """, unsafe_allow_html=True)
-            
-            # 💰 Valor total com fonte menor
-            col2.markdown(f"""
-                <div style='font-size:1.2rem;'>
-                    💰 <strong>Valor total</strong><br>
-                    <span style='color:green;'>R$ {df['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")}</span>
                 </div>
             """, unsafe_allow_html=True)
             
@@ -201,20 +196,28 @@ if uploaded_file:
                     f"⚠️ {len(meios_nao_cadastrados)} meio(s) de pagamento não localizado(s). "
                     f"Cadastre na Tabela Meio Pagamento e reprocessar!"
                 )
-
-
+            
+            valor_total_formatado = f"R$ {df['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            col2.markdown(f"""
+                <div style='font-size:1.2rem;'>
+                    💰 <strong>Valor total</strong><br>
+                    <span style='color:green;'>{valor_total_formatado}</span>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # ⚠️ Alerta das lojas sem código Everest
             lojas_sem_codigo = df[df["Código Everest"].isna()]["Loja"].unique()
             if len(lojas_sem_codigo) > 0:
                 st.warning(
                     f"⚠️ Lojas sem código Everest cadastrado: {', '.join(lojas_sem_codigo)}\n\n"
                     "🔗 Atualize os dados na [planilha de empresas](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit)"
                 )
-
+            
             st.success("✅ Relatório de faturamento por meio de pagamento gerado com sucesso!")
-
+            
             output = BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
                 df.to_excel(writer, index=False, sheet_name="FaturamentoPorMeio")
             output.seek(0)
-
+            
             st.download_button("📥 Baixar relatório", data=output, file_name="FaturamentoPorMeio_transformado.xlsx")
