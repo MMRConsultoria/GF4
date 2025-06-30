@@ -324,8 +324,7 @@ with aba1:
         elif "Lojas:" in loja_valor:
             fundo = "#cce7fc"
         else:
-            grupo = row["Grupo"]
-            fundo = mapa_cor_por_grupo.get(grupo, "#ffffff")  # continua usando cor do grupo
+            fundo = "white"  # linhas das lojas ficam fundo branco
     
         for coluna in row.index:
             # AGORA: em todas as linhas, destaca a fonte do % Atingido
