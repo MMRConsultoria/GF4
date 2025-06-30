@@ -497,7 +497,7 @@ with aba1:
     output.seek(0)
     
     st.download_button(
-        label="📥 Baixar Excel com Formatação",
+        label="📥 Baixar Excel",
         data=output,
         file_name=f"Relatorio_Metas_{ano_selecionado}_{mes_selecionado}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
