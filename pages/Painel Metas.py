@@ -447,9 +447,9 @@ with aba1:
         for col_num, value in enumerate(dados_excel.columns):
             worksheet.write(0, col_num, value, center_format)
 
-       # Cabeçalho
-            for col_num, value in enumerate(dados_excel.columns):
-                worksheet.write(0, col_num, value, header_format)
+        # Cabeçalho
+        for col_num, value in enumerate(dados_excel.columns):
+            worksheet.write(0, col_num, value, header_format)
            
             linha_excel = 1
             for _, row in dados_excel.iterrows():
