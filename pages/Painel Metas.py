@@ -236,6 +236,12 @@ with aba1:
         qtde_lojas_grupo = subtotal["qtde_lojas"]
     
         dados_grupo = comparativo[comparativo["Grupo"] == grupo]
+
+        # pega o Ano e Mês do grupo para inserir no subtotal
+        ano_grupo = dados_grupo["Ano"].iloc[0] if not dados_grupo.empty else ""
+        mes_grupo = dados_grupo["Mês"].iloc[0] if not dados_grupo.empty else ""
+        
+        
         resultado_final.append(dados_grupo)
     
         linha_subtotal = pd.DataFrame({
