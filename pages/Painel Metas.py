@@ -356,7 +356,7 @@ with aba1:
     if modo_visao == "Por Grupo":
         dados_exibir = comparativo_final[
             comparativo_final["Loja"].astype(str).str.contains("Lojas:") |
-            comparativo_final["Loja"].astype(str).str.contains("Meta Desejável")
+            comparativo_final["Loja"].astype(str).str.contains("META DESEJÁVEL")
         ]
     else:
         dados_exibir = comparativo_final.copy()
