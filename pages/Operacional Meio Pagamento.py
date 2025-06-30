@@ -170,15 +170,6 @@ if uploaded_file:
             meios_usados = df["Meio de Pagamento"].astype(str).str.strip().str.lower().unique()
             meios_nao_cadastrados = [m for m in meios_usados if m not in meios_cadastrados]
             
-            if meios_nao_cadastrados:
-                st.warning(
-                    f"⚠️ {len(meios_nao_cadastrados)} meio(s) de pagamento não localizado(s). "
-                    f"Cadastre na Tabela Meio Pagamento e reprocessar!"
-                )
-            
-                    
-            
-
            
             # 🔎 Período e valor com fonte menor
             col1, col2 = st.columns(2)
