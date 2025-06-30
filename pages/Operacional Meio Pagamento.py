@@ -173,7 +173,7 @@ if uploaded_file:
            
             # 🔎 Período e valor com fonte menor
             col1, col2 = st.columns(2)
-            
+
             col1.markdown(f"""
                 <div style='font-size:1.2rem;'>
                     📅 <strong>Período processado</strong><br>
@@ -181,12 +181,13 @@ if uploaded_file:
                 </div>
             """, unsafe_allow_html=True)
             
-            # ⚠️ Aviso dos meios de pagamento não cadastrados logo abaixo da data
             if meios_nao_cadastrados:
-                col1.warning(
-                    f"⚠️ {len(meios_nao_cadastrados)} meio(s) de pagamento não localizado(s). "
-                    f"Cadastre na Tabela Meio Pagamento e reprocessar!"
-                )
+                col1.markdown(f"""
+                    <div style='color:#856404; font-size:0.95rem; margin-top:5px;'>
+                        ⚠️ {len(meios_nao_cadastrados)} meio(s) de pagamento não localizado(s). 
+                        Cadastre na Tabela Meio Pagamento e reprocessar!
+                    </div>
+                """, unsafe_allow_html=True)
             
             valor_total_formatado = f"R$ {df['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             col2.markdown(f"""
@@ -196,13 +197,15 @@ if uploaded_file:
                 </div>
             """, unsafe_allow_html=True)
             
-            # ⚠️ Alerta das lojas sem código Everest
-            lojas_sem_codigo = df[df["Código Everest"].isna()]["Loja"].unique()
             if len(lojas_sem_codigo) > 0:
-                st.warning(
-                    f"⚠️ Lojas sem código Everest cadastrado: {', '.join(lojas_sem_codigo)}\n\n"
-                    "🔗 Atualize os dados na [planilha de empresas](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit)"
-                )
+                st.markdown(f"""
+                    <div style='color:#856404; font-size:0.95rem; margin-top:5px;'>
+                        ⚠️ Lojas sem código Everest cadastrado: {', '.join(lojas_sem_codigo)}<br>
+                        🔗 <a href="https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit" target="_blank" style="color:#0d6efd;">
+                            Atualize os dados na planilha de empresas
+                        </a>
+                    </div>
+                """, unsafe_allow_html=True)
             
             st.success("✅ Relatório de faturamento por meio de pagamento gerado com sucesso!")
             
