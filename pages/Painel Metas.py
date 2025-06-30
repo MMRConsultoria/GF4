@@ -314,8 +314,10 @@ with aba1:
         loja_valor = str(row["Loja"])
         atingido = row["% Atingido"]
     
-        # decide a cor de fundo da linha (como já faz normalmente)
-        if "Meta Desejável" in loja_valor:
+        # decide se é uma linha normal de loja
+        if all(x not in loja_valor for x in ["Meta Desejável", "TOTAL GERAL", "Tipo:", "Lojas:"]):
+            fundo = "white"
+        elif "Meta Desejável" in loja_valor:
             fundo = "#FF6666"
         elif "TOTAL GERAL" in loja_valor:
             fundo = "#0366d6"
@@ -324,21 +326,20 @@ with aba1:
         elif "Lojas:" in loja_valor:
             fundo = "#cce7fc"
         else:
-            grupo = row["Grupo"]
-            fundo = mapa_cor_por_grupo.get(grupo, "#ffffff")  # mantém cor normal do grupo
+            fundo = "white"
     
         for coluna in row.index:
-            if coluna == "% Atingido" and not pd.isna(atingido):
+            # só as lojas normais ganham verde/vermelho no % Atingido
+            if coluna == "% Atingido" and not pd.isna(atingido) and fundo == "white":
                 if atingido >= percentual_meta_desejavel:
-                    estilo.append(f"background-color: {fundo}; color: green; font-weight: bold;")
+                    estilo.append("background-color: #c6efce; color: black;")
                 else:
-                    estilo.append(f"background-color: {fundo}; color: red; font-weight: bold;")
+                    estilo.append("background-color: #ffc7ce; color: black;")
             else:
                 estilo.append(f"background-color: {fundo}; color: black;")
         return estilo
     
-
-   
+       
     
     # ✅ Exibe a data de realizado antes da tabela
     st.markdown(f"**Última data realizada:** {ultima_data_realizado}")
