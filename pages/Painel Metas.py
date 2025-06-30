@@ -316,25 +316,37 @@ with aba1:
         atingido = row["% Atingido"]
     
         if "META DESEJÁVEL" in loja_valor_upper:
-            fundo = "#FADBD8"
+            fundo = "#FF6666"  # vermelho clarinho
+            meta_desejavel_linha = True
         elif "TOTAL GERAL" in loja_valor_upper:
             fundo = "#0366d6"
+            meta_desejavel_linha = False
         elif "- LOJAS:" in loja_valor_upper and not row["Grupo"]:
-            fundo = "#f9f9f9"  # subtotal tipo bem clarinho
+            fundo = "#f9f9f9"
+            meta_desejavel_linha = False
         elif "LOJAS:" in loja_valor_upper:
-            fundo = "#cce7fc"  # subtotal grupo azul claro
+            fundo = "#cce7fc"
+            meta_desejavel_linha = False
         else:
-            fundo = "white"  # dados da loja
+            fundo = "white"
+            meta_desejavel_linha = False
     
         for coluna in row.index:
             if coluna == "% Atingido" and not pd.isna(atingido):
-                if atingido >= percentual_meta_desejavel:
+                if meta_desejavel_linha:
+                    # para linha meta desejável sempre fonte preta negrito
+                    estilo.append(f"background-color: {fundo}; color: black; font-weight: bold; font-size: 1.1em;")
+                elif atingido >= percentual_meta_desejavel:
                     estilo.append(f"background-color: {fundo}; color: green; font-weight: bold; font-size: 1.1em;")
                 else:
                     estilo.append(f"background-color: {fundo}; color: red; font-weight: bold; font-size: 1.1em;")
             else:
-                estilo.append(f"background-color: {fundo}; color: black;")
+                if meta_desejavel_linha:
+                    estilo.append(f"background-color: {fundo}; color: black; font-weight: bold;")
+                else:
+                    estilo.append(f"background-color: {fundo}; color: black;")
         return estilo
+
 
     # ✅ Exibe a data de realizado antes da tabela
     st.markdown(f"**Última data realizada:** {ultima_data_realizado}")
