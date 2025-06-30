@@ -46,7 +46,7 @@ st.markdown("""
         font-weight: 600;
     }
     button[data-baseweb="tab"]:hover { background-color: #dce0ea; color: black; }
-    button[data-baseweb="tab"][aria-selected="true"] { background-color: #0366d6; color: white; }
+    button[data-baseweb="tab"][aria-selected="true"] { background-color: #0366d6; color: black; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -319,14 +319,14 @@ with aba1:
     
         for coluna in row.index:
             if "Meta Desejável" in str(row["Loja"]):
-                estilo.append("background-color: #FF6666; color: white;")
+                estilo.append("background-color: #FF6666; color: black;")
             elif "TOTAL GERAL" in str(row["Loja"]):
-                estilo.append("background-color: #0366d6; color: white;")
+                estilo.append("background-color: #0366d6; color: black;")
             elif "Tipo:" in str(row["Loja"]):
                 estilo.append("background-color: #FFE699;")
 
             elif "Lojas:" in str(row["Loja"]):
-                estilo.append("background-color: #cce7fc; color: white;")  # <-- ALTERADO AQUI
+                estilo.append("background-color: #cce7fc; color: black;")  # <-- ALTERADO AQUI
             elif "Lojas:" in str(row["Loja"]):
                 # 💡 Aqui aplicamos verde/vermelho apenas no modo de grupo e na coluna % Atingido
                 if (
@@ -414,14 +414,14 @@ with aba1:
         worksheet = writer.sheets["Metas"]
     
         # Formatos
-        header_format = workbook.add_format({'bold': True, 'bg_color': '#0366d6', 'font_color': 'white', 'border': 1})
+        header_format = workbook.add_format({'bold': True, 'bg_color': '#0366d6', 'font_color': 'black', 'border': 1})
         moeda_format_dict = {'num_format': 'R$ #,##0.00', 'border': 1}
         percentual_format_dict = {'num_format': '0.00%', 'border': 1}
         normal_format = workbook.add_format({'border': 1})
     
         estilos_especiais = {
-            "Meta Desejável": {'bg_color': '#FF6666', 'font_color': 'white', 'border': 1},
-            "TOTAL GERAL": {'bg_color': '#0366d6', 'font_color': 'white', 'border': 1},
+            "Meta Desejável": {'bg_color': '#FF6666', 'font_color': 'black', 'border': 1},
+            "TOTAL GERAL": {'bg_color': '#0366d6', 'font_color': 'black', 'border': 1},
             "Tipo:": {'bg_color': '#FFE699', 'border': 1},
             "Lojas:": {'bg_color': '#d0e6f7', 'border': 1},
         }
