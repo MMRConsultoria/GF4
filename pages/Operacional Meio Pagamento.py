@@ -7,7 +7,7 @@ from io import BytesIO
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-st.set_page_config(page_title="Relatório de Faturamento", layout="wide")
+st.set_page_config(page_title="Relatório Meio Pagamento", layout="wide")
 
 # 🔒 Bloqueia o acesso caso o usuário não esteja logado
 if not st.session_state.get("acesso_liberado"):
@@ -44,7 +44,7 @@ if uploaded_file:
 
         if len(abas_disponiveis) == 1:
             aba_escolhida = abas_disponiveis[0]
-            st.info(f"📝 Arquivo possui apenas uma aba: **{aba_escolhida}**. Usando ela automaticamente.")
+            #st.info(f"📝 Arquivo possui apenas uma aba: **{aba_escolhida}**. Usando ela automaticamente.")
         else:
             aba_escolhida = st.selectbox("Escolha a aba para processar", abas_disponiveis)
 
