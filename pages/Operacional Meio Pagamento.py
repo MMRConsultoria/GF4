@@ -7,20 +7,21 @@ from io import BytesIO
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-st.set_page_config(page_title="Relatório Meio Pagamento", layout="wide")
+st.set_page_config(page_title="Relatório Vendas Diarias", layout="wide")
 
 # 🔒 Bloqueia o acesso caso o usuário não esteja logado
 if not st.session_state.get("acesso_liberado"):
     st.stop()
 
+# 🔥 Título com ícone
 st.markdown("""
     <div style='display: flex; align-items: center; gap: 10px;'>
         <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
-        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório de Faturamento</h1>
+        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório Vendas Diarias</h1>
     </div>
 """, unsafe_allow_html=True)
 
-# Conexão com Google Sheets
+# Conexão Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
@@ -28,10 +29,17 @@ gc = gspread.authorize(credentials)
 planilha = gc.open("Vendas diarias")
 df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
 
-# Cria as abas
-tab1, tab2 = st.tabs(["📥 Upload Relatório", "🔄 Atualizar Google Sheets"])
+# ✅ Menu superior estilo abas (mas com radio horizontal)
+opcao = st.radio(
+    "",
+    ["📥 Upload e Processamento", "🔄 Atualizar Google Sheets", "📝 Auditar integração Everest"],
+    horizontal=True
+)
 
-with tab1:
+# -----------------------
+# 📥 UPLOAD E PROCESSAMENTO
+# -----------------------
+if opcao == "📥 Upload e Processamento":
     uploaded_file = st.file_uploader(
         label="📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de faturamento",
         type=["xlsx", "xlsm"],
@@ -153,6 +161,14 @@ with tab1:
                     output.seek(0)
                     st.download_button("📥 Baixar relatório", data=output, file_name="FaturamentoPorMeio_transformado.xlsx")
 
-with tab2:
-    st.markdown("🚀 Aqui ficará sua funcionalidade para atualizar dados no Google Sheets.")
-    # Aqui você poderá colocar botões, formulários, ou chamadas para atualizar dados
+# ------------------------
+# 🔄 ATUALIZAR GOOGLE SHEETS
+# ------------------------
+elif opcao == "🔄 Atualizar Google Sheets":
+    st.info("🚀 Aqui ficará sua funcionalidade para atualizar dados no Google Sheets.")
+
+# ------------------------
+# 📝 AUDITAR INTEGRAÇÃO EVEREST
+# ------------------------
+elif opcao == "📝 Auditar integração Everest":
+    st.info("🔍 Aqui você poderá auditar a integração com o Everest.")
