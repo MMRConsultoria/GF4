@@ -245,7 +245,7 @@ with aba1:
         resultado_final.append(dados_grupo)
     
         linha_subtotal = pd.DataFrame({
-            "Ano": [""], "Mês": [""], "Grupo": [grupo],
+            "Ano": [ano_grupo], "Mês": [mes_grupo], "Grupo": [grupo],
             "Loja": [f"{grupo} - Lojas: {qtde_lojas_grupo:02}"],
             "Meta": [subtotal["meta"]], "Realizado": [subtotal["realizado"]],
             "% Atingido": [subtotal["perc_atingido"]], "% Falta Atingir": [subtotal["perc_falta"]],
