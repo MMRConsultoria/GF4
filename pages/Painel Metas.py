@@ -311,43 +311,34 @@ with aba1:
     
     def formatar_linha(row):
         estilo = []
-        grupo = row["Grupo"]
-        cor_base = mapa_cor_por_grupo.get(grupo, "#ffffff")  # branco se não encontrado
-    
+        loja_valor = str(row["Loja"])
         atingido = row["% Atingido"]
-        desejavel = percentual_meta_desejavel
+    
+        # decide se é uma linha normal de loja
+        if all(x not in loja_valor for x in ["Meta Desejável", "TOTAL GERAL", "Tipo:", "Lojas:"]):
+            fundo = "white"
+        elif "Meta Desejável" in loja_valor:
+            fundo = "#FF6666"
+        elif "TOTAL GERAL" in loja_valor:
+            fundo = "#0366d6"
+        elif "Tipo:" in loja_valor:
+            fundo = "#FFE699"
+        elif "Lojas:" in loja_valor:
+            fundo = "#cce7fc"
+        else:
+            fundo = "white"
     
         for coluna in row.index:
-            if "Meta Desejável" in str(row["Loja"]):
-                estilo.append("background-color: #FF6666; color: black;")
-            elif "TOTAL GERAL" in str(row["Loja"]):
-                estilo.append("background-color: #0366d6; color: black;")
-            elif "Tipo:" in str(row["Loja"]):
-                estilo.append("background-color: #FFE699;")
-
-            elif "Lojas:" in str(row["Loja"]):
-                estilo.append("background-color: white; color: black;")  # <-- ALTERADO AQUI
-            elif "Lojas:" in str(row["Loja"]):
-                # 💡 Aqui aplicamos verde/vermelho apenas no modo de grupo e na coluna % Atingido
-                if (
-                    coluna == "% Atingido"
-                    and not pd.isna(atingido)
-                    and modo_visao == "Por Grupo"
-                ):
-                    if atingido >= desejavel:
-                        estilo.append("background-color: #c6efce;")  # verde claro
-                    else:
-                        estilo.append("background-color: #ffc7ce;")  # vermelho claro
+            # só as lojas normais ganham verde/vermelho no % Atingido
+            if coluna == "% Atingido" and not pd.isna(atingido) and fundo == "white":
+                if atingido >= percentual_meta_desejavel:
+                    estilo.append("background-color: #c6efce; color: black;")
                 else:
-                    estilo.append("background-color: #d0e6f7;")
-            elif coluna == "% Atingido" and not pd.isna(atingido):
-                if atingido >= desejavel:
-                    estilo.append("background-color: #c6efce;")  # verde claro
-                else:
-                    estilo.append("background-color: #ffc7ce;")  # vermelho claro
+                    estilo.append("background-color: #ffc7ce; color: black;")
             else:
-                estilo.append(f"background-color: {cor_base};")
+                estilo.append(f"background-color: {fundo}; color: black;")
         return estilo
+
 
 
    
