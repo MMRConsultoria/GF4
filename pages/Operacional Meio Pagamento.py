@@ -178,8 +178,30 @@ if uploaded_file:
             
                     
             col1, col2 = st.columns(2)
-            col1.metric("📅 Período processado", f"{periodo_min} até {periodo_max}")
-            col2.metric("💰 Valor total", f"R$ {df['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+            # 🔎 Período processado com fonte menor
+            col1.markdown(f"""
+                <div style='font-size:1.2rem;'>
+                    📅 <strong>Período processado</strong><br>
+                    {periodo_min} até {periodo_max}
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # 💰 Valor total com fonte menor
+            col2.markdown(f"""
+                <div style='font-size:1.2rem;'>
+                    💰 <strong>Valor total</strong><br>
+                    <span style='color:green;'>R$ {df['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")}</span>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # ⚠️ Aviso dos meios de pagamento não cadastrados logo abaixo da data
+            if meios_nao_cadastrados:
+                col1.warning(
+                    f"⚠️ {len(meios_nao_cadastrados)} meio(s) de pagamento não localizado(s). "
+                    f"Cadastre na Tabela Meio Pagamento e reprocessar!"
+                )
+
 
             lojas_sem_codigo = df[df["Código Everest"].isna()]["Loja"].unique()
             if len(lojas_sem_codigo) > 0:
