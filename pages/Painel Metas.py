@@ -460,10 +460,10 @@ with aba1:
     
             for col_num, col_name in enumerate(dados_excel.columns):
                 val = row[col_name]
-    
+            
                 if col_name in ["Meta", f"Realizado até {ultima_data_realizado}", "Diferença"]:
                     fmt = workbook.add_format({**estilo_linha, **moeda_format_dict})
-    
+            
                 elif col_name == "% Atingido":
                     if "META DESEJÁVEL" in loja_valor.upper():
                         fmt = workbook.add_format({
@@ -480,7 +480,16 @@ with aba1:
                             'bg_color': estilo_linha['bg_color'], 'font_color': 'red',
                             'bold': True, 'num_format': '0.00%', 'border': 1
                         })
-    
+                else:
+                    # as demais colunas seguem o estilo da linha normalmente
+                    fmt = workbook.add_format(estilo_linha)
+            
+                # Escreve a célula
+                if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
+                    worksheet.write_number(linha_excel, col_num, val, fmt)
+                else:
+                    worksheet.write(linha_excel, col_num, str(val), fmt)
+
                    
     
                    
