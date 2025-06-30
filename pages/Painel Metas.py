@@ -315,7 +315,7 @@ with aba1:
         atingido = row["% Atingido"]
     
         # decide o fundo da linha como estava antes
-        if "Meta Desejável" in loja_valor:
+        if "META DESEJÁVEL" in loja_valor:
             fundo = "#FF6666"
         elif "TOTAL GERAL" in loja_valor:
             fundo = "#0366d6"
