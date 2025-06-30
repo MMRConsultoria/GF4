@@ -27,15 +27,15 @@ df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_r
 # 2. Upload do arquivo Excel
 # ================================
 st.title("📈 Faturamento por Meio de Pagamento")
-uploaded_file = st.file_uploader("Carregue o Excel (FaturamentoPorMeioPgto)", type=["xls", "xlsx"])
+
+uploaded_file = st.file_uploader("Carregue o arquivo Excel", type=["xls", "xlsx"])
 
 if uploaded_file:
     xls = pd.ExcelFile(uploaded_file)
-    if "FaturamentoPorMeioPgto" not in xls.sheet_names:
-        st.error("❌ A aba 'FaturamentoPorMeioPgto' não foi encontrada.")
-        st.stop()
+    abas_disponiveis = xls.sheet_names
+    aba_selecionada = st.selectbox("Escolha a aba para processar", abas_disponiveis)
 
-    df_raw = pd.read_excel(xls, sheet_name="FaturamentoPorMeioPgto")
+    df_raw = pd.read_excel(xls, sheet_name=aba_selecionada)
     df_raw.columns = df_raw.columns.str.strip()
 
     # 🔧 Ajuste da Data
@@ -58,7 +58,6 @@ if uploaded_file:
                     df_final["Meio"].astype(str) + \
                     df_final["Valor"].astype(str)
 
-    # 🔍 Preview
     st.session_state.df_final_meio = df_final
     st.success("✅ Dados carregados e coluna K criada para deduplicação.")
     st.dataframe(df_final.head(), use_container_width=True)
@@ -79,14 +78,18 @@ if uploaded_file:
     )
 
 # ================================
-# 3. Atualizar Google Sheets - ABA correta
+# 3. Atualizar Google Sheets - escolha da aba
 # ================================
-st.header("📤 Atualizar Google Sheets - Faturamento Meio Pagamento")
+st.header("📤 Atualizar Google Sheets")
 
 if "df_final_meio" in st.session_state:
     df_final = st.session_state.df_final_meio.copy()
 
-    aba_destino = planilha_empresa.worksheet("Faturamento Meio Pagamento")
+    # Listar abas existentes para escolher destino
+    abas_destino = [ws.title for ws in planilha_empresa.worksheets()]
+    aba_destino_nome = st.selectbox("Escolha a aba do Google Sheets para enviar os dados", abas_destino)
+
+    aba_destino = planilha_empresa.worksheet(aba_destino_nome)
     dados_existentes = aba_destino.get_all_values()
 
     # Criar conjunto de chaves existentes pela coluna K (11ª coluna)
@@ -107,7 +110,7 @@ if "df_final_meio" in st.session_state:
             if novos_dados:
                 inicio = len(dados_existentes) + 1
                 aba_destino.update(f"A{inicio}", novos_dados)
-                st.success(f"✅ {len(novos_dados)} registro(s) enviados com sucesso!")
+                st.success(f"✅ {len(novos_dados)} registro(s) enviados com sucesso para a aba '{aba_destino_nome}'!")
             else:
                 st.info("✅ Nenhum novo registro para enviar (tudo já está no Google Sheets).")
             if duplicados:
