@@ -453,7 +453,7 @@ with aba1:
             elif "- LOJAS:" in loja_valor.upper() and not row["Grupo"]:
                 estilo_linha = {'bg_color': '#f9f9f9', 'font_color': 'black', 'border': 1}  # subtotal tipo
             elif "LOJAS:" in loja_valor.upper():
-                estilo_linha = {'bg_color': '#f5f5f5', 'font_color': 'black', 'border': 1}  # subtotal grupo
+                estilo_linha = {'bg_color': '#e0e0e0', 'font_color': 'black', 'border': 1}  # subtotal grupo
             else:
                 estilo_linha = {'bg_color': '#ffffff', 'font_color': 'black', 'border': 1}  # loja normal
 
