@@ -330,9 +330,9 @@ with aba1:
             # AGORA: em todas as linhas, destaca a fonte do % Atingido
             if coluna == "% Atingido" and not pd.isna(atingido):
                 if atingido >= percentual_meta_desejavel:
-                    estilo.append(f"background-color: {fundo}; color: green; font-weight: bold;")
+                    estilo.append(f"background-color: {fundo}; color: green; font-weight: bold; font-size: 1.1em;")
                 else:
-                    estilo.append(f"background-color: {fundo}; color: red; font-weight: bold;")
+                    estilo.append(f"background-color: {fundo}; color: red; font-weight: bold; font-size: 1.1em;")
             else:
                 estilo.append(f"background-color: {fundo}; color: black;")
         return estilo
