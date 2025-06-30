@@ -429,8 +429,8 @@ with aba1:
         }
     
         # Cabeçalho
-        for col_num, value in enumerate(dados_excel.columns):
-            worksheet.write(0, col_num, value, header_format)
+        # for col_num, value in enumerate(dados_excel.columns):
+        #     worksheet.write(0, col_num, value, header_format)
         
         # Ajusta altura do cabeçalho
         worksheet.set_row(0, 27)
