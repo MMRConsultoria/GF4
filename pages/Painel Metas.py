@@ -437,11 +437,11 @@ with aba1:
         
         # Ajusta largura das colunas
         worksheet.set_column('A:C', 7)
-        worksheet.set_column('D', 29)
-        worksheet.set_column('E', 15)
-        worksheet.set_column('F', 22)
-        worksheet.set_column('G', 10)
-        worksheet.set_column('H', 15)
+        worksheet.set_column('D:D', 29)
+        worksheet.set_column('E:E', 15)
+        worksheet.set_column('F:F', 22)
+        worksheet.set_column('G:G', 10)
+        worksheet.set_column('H:H', 15)
        
         
         # Centraliza o cabeçalho
