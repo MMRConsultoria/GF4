@@ -319,7 +319,7 @@ with aba1:
             fundo = "#FF6666"  # vermelho clarinho
             meta_desejavel_linha = True
         elif "TOTAL GERAL" in loja_valor_upper:
-            fundo = "#0366d6"
+            fundo = "#99c7f3"
             meta_desejavel_linha = False
         elif "- LOJAS:" in loja_valor_upper and not row["Grupo"]:
             fundo = "#f9f9f9"
