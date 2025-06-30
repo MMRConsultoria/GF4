@@ -40,7 +40,15 @@ uploaded_file = st.file_uploader(
 if uploaded_file:
     try:
         xls = pd.ExcelFile(uploaded_file)
-        df_raw = pd.read_excel(xls, sheet_name="FaturamentoPorMeioDePagamento", header=None)
+        abas_disponiveis = xls.sheet_names
+
+        if len(abas_disponiveis) == 1:
+            aba_escolhida = abas_disponiveis[0]
+            st.info(f"📝 Arquivo possui apenas uma aba: **{aba_escolhida}**. Usando ela automaticamente.")
+        else:
+            aba_escolhida = st.selectbox("Escolha a aba para processar", abas_disponiveis)
+
+        df_raw = pd.read_excel(xls, sheet_name=aba_escolhida, header=None)
 
         # 🔥 Remove linhas com "total" ou "subtotal" na coluna B
         df_raw = df_raw[~df_raw.iloc[:, 1].astype(str).str.lower().str.contains("total|subtotal", na=False)]
