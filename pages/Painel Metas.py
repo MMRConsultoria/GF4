@@ -429,10 +429,22 @@ with aba1:
         }
     
         # Cabeçalho
-        for col_num, value in enumerate(dados_excel.columns):
-            worksheet.write(0, col_num, value, header_format)
-            worksheet.set_column(col_num, col_num, 15)  # ou 20, ajusta a largura
+            for col_num, value in enumerate(dados_excel.columns):
+                worksheet.write(0, col_num, value, header_format)
             
+            # Ajusta altura do cabeçalho
+            worksheet.set_row(0, 27)
+            
+            # Ajusta largura das colunas
+            worksheet.set_column('A:C', 7)
+            worksheet.set_column('D:E', 15)
+            worksheet.set_column('F:F', None, None, {'hidden': False})  # F auto
+            
+            # Centraliza o cabeçalho
+            center_format = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'bold': True, 'bg_color': '#0366d6', 'border': 1})
+            for col_num, value in enumerate(dados_excel.columns):
+                worksheet.write(0, col_num, value, center_format)
+
         linha_excel = 1
         for _, row in dados_excel.iterrows():
             loja_valor = str(row["Loja"])
