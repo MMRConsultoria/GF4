@@ -331,7 +331,7 @@ with aba1:
             fundo = "#f9f9f9"
             meta_desejavel_linha = False
         elif "LOJAS:" in loja_valor_upper:
-            fundo = "#fdfdfd"
+            fundo = "#f9f9f9"
             meta_desejavel_linha = False
         else:
             fundo = "white"
