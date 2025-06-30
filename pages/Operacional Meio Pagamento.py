@@ -162,6 +162,23 @@ if uploaded_file:
                 "Valor (R$)", "Mês", "Ano"
             ]]
 
+            # 🔎 Buscar meios de pagamento cadastrados no Google Sheets
+            df_meios_pgto = pd.DataFrame(planilha.worksheet("Tabela Meio Pagamento").get_all_records())
+            meios_cadastrados = df_meios_pgto["Meio de Pagamento"].astype(str).str.strip().str.lower().unique()
+            
+            # 🔍 Verificar se todos os meios usados no relatório estão cadastrados
+            meios_usados = df["Meio de Pagamento"].astype(str).str.strip().str.lower().unique()
+            meios_nao_cadastrados = [m for m in meios_usados if m not in meios_cadastrados]
+            
+            if meios_nao_cadastrados:
+                st.warning(
+                    f"⚠️ Atenção: Os seguintes meios de pagamento não estão cadastrados na planilha "
+                    f"'Tabela Meio Pagamento': {', '.join(meios_nao_cadastrados)}\n\n"
+                    f"✍️ Favor cadastrar esses meios na aba 'Tabela Meio Pagamento' do Google Sheets."
+                )
+
+
+            
             col1, col2 = st.columns(2)
             col1.metric("📅 Período processado", f"{periodo_min} até {periodo_max}")
             col2.metric("💰 Valor total", f"R$ {df['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
