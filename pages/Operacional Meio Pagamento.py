@@ -1,32 +1,34 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from io import BytesIO
+import re
 import json
-from datetime import datetime
+from io import BytesIO
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-st.set_page_config(page_title="Faturamento por Meio de Pagamento", layout="wide")
+st.set_page_config(page_title="Relatório de Faturamento", layout="wide")
 
 # 🔒 Bloqueia o acesso caso o usuário não esteja logado
 if not st.session_state.get("acesso_liberado"):
     st.stop()
 
-# ================================
-# 1. Conexão com Google Sheets
-# ================================
+
+
+st.markdown("""
+    <div style='display: flex; align-items: center; gap: 10px;'>
+        <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
+        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório de Faturamento</h1>
+    </div>
+""", unsafe_allow_html=True)
+
+# Conexão com Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
-planilha_empresa = gc.open("Vendas diarias")
-df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
-
-# ================================
-# 2. Upload do arquivo Excel
-# ================================
-st.title("📈 Faturamento por Meio de Pagamento")
+planilha = gc.open("Vendas diarias")
+df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
 
 # Upload do arquivo Excel
 uploaded_file = st.file_uploader(
