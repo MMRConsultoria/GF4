@@ -428,9 +428,7 @@ with aba1:
             "Lojas:": {'bg_color': '#d0e6f7', 'border': 1},
         }
     
-        # Cabeçalho
-        # for col_num, value in enumerate(dados_excel.columns):
-        #     worksheet.write(0, col_num, value, header_format)
+       
         
         # Ajusta altura do cabeçalho
         worksheet.set_row(0, 27)
@@ -449,9 +447,13 @@ with aba1:
         for col_num, value in enumerate(dados_excel.columns):
             worksheet.write(0, col_num, value, center_format)
 
-
-        linha_excel = 1
-        for _, row in dados_excel.iterrows():
+       # Cabeçalho
+            for col_num, value in enumerate(dados_excel.columns):
+                worksheet.write(0, col_num, value, header_format)
+           
+            linha_excel = 1
+            for _, row in dados_excel.iterrows():
+                
             loja_valor = str(row["Loja"])
             grupo_valor = str(row["Grupo"])
             atingido = row.get("% Atingido", "")
