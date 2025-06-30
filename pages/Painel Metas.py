@@ -483,17 +483,7 @@ with aba1:
     
                    
     
-                    # Filtro por Grupo → subtotais e lojas recebem cor
-                    elif modo_visao == "Por Grupo":
-                        cor = "#c6efce" if atingido >= percentual_meta_desejavel else "#ffc7ce"
-                        fmt = workbook.add_format({'bg_color': cor, 'num_format': '0.00%', 'border': 1})
-    
-                    else:
-                        fmt = workbook.add_format({**estilo_linha, **percentual_format_dict})
-    
-                else:
-                    fmt = workbook.add_format(estilo_linha)
-    
+                   
                 # Escreve a célula
                 if isinstance(val, (int, float, np.integer, np.floating)) and not pd.isna(val):
                     worksheet.write_number(linha_excel, col_num, val, fmt)
