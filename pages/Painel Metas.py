@@ -316,7 +316,7 @@ with aba1:
         atingido = row["% Atingido"]
     
         if "META DESEJÁVEL" in loja_valor_upper:
-            fundo = "#FF6666"
+            fundo = "#FADBD8"
         elif "TOTAL GERAL" in loja_valor_upper:
             fundo = "#0366d6"
         elif "- LOJAS:" in loja_valor_upper and not row["Grupo"]:
