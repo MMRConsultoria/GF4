@@ -453,8 +453,8 @@ with aba1:
             worksheet.write(0, col_num, value, center_format)
 
            
-            linha_excel = 1
-            for _, row in dados_excel.iterrows():
+        linha_excel = 1
+        for _, row in dados_excel.iterrows():
                 
             loja_valor = str(row["Loja"])
             grupo_valor = str(row["Grupo"])
