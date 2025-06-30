@@ -127,20 +127,27 @@ if uploaded_file:
 
             col1, col2 = st.columns(2)
             col1.markdown(f"<div style='font-size:1.2rem;'>📅 <strong>Período processado</strong><br>{periodo_min} até {periodo_max}</div>", unsafe_allow_html=True)
-
+            
+            tem_erros = False
+            
             if len(meios_nao_cadastrados) > 0:
+                tem_erros = True
                 col1.markdown(f"<div style='color:#856404; font-size:0.95rem; margin-top:5px;'>⚠️ {len(meios_nao_cadastrados)} meio(s) de pagamento não localizado(s). Cadastre na Tabela Meio Pagamento e reprocessar!</div>", unsafe_allow_html=True)
-
+            
             valor_total_formatado = f"R$ {df['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             col2.markdown(f"<div style='font-size:1.2rem;'>💰 <strong>Valor total</strong><br><span style='color:green;'>{valor_total_formatado}</span></div>", unsafe_allow_html=True)
-
+            
             if len(lojas_sem_codigo) > 0:
+                tem_erros = True
                 st.markdown(f"<div style='color:#856404; font-size:0.95rem; margin-top:5px;'>⚠️ Lojas sem código Everest cadastrado: {', '.join(lojas_sem_codigo)}<br>🔗 <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit' target='_blank' style='color:#0d6efd;'>Atualize os dados na planilha de empresas</a></div>", unsafe_allow_html=True)
-
-            st.success("✅ Relatório de faturamento por meio de pagamento gerado com sucesso!")
-
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df.to_excel(writer, index=False, sheet_name="FaturamentoPorMeio")
-            output.seek(0)
-            st.download_button("📥 Baixar relatório", data=output, file_name="FaturamentoPorMeio_transformado.xlsx")
+            
+            # ✅ Só mostra mensagem de sucesso e botão Excel se NÃO houver erros
+            if not tem_erros:
+                st.success("✅ Relatório de faturamento por meio de pagamento gerado com sucesso!")
+            
+                output = BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    df.to_excel(writer, index=False, sheet_name="FaturamentoPorMeio")
+                output.seek(0)
+                st.download_button("📥 Baixar relatório", data=output, file_name="FaturamentoPorMeio_transformado.xlsx")
+            
