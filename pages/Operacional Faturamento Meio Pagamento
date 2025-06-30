@@ -1,175 +1,116 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import re
-import json
 from io import BytesIO
+import json
+from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-st.set_page_config(page_title="Relatório de Faturamento", layout="wide")
+st.set_page_config(page_title="Faturamento por Meio de Pagamento", layout="wide")
 
 # 🔒 Bloqueia o acesso caso o usuário não esteja logado
 if not st.session_state.get("acesso_liberado"):
     st.stop()
 
-
-
-st.markdown("""
-    <div style='display: flex; align-items: center; gap: 10px;'>
-        <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
-        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório de Faturamento</h1>
-    </div>
-""", unsafe_allow_html=True)
-
-# Conexão com Google Sheets
+# ================================
+# 1. Conexão com Google Sheets
+# ================================
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
-planilha = gc.open("Vendas diarias")
-df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
+planilha_empresa = gc.open("Vendas diarias")
+df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
 
-# Upload do arquivo Excel
-uploaded_file = st.file_uploader(
-    label="📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de faturamento",
-    type=["xlsx", "xlsm"],
-    help="Somente arquivos .xlsx ou .xlsm. Tamanho máximo: 200MB."
-)
+# ================================
+# 2. Upload do arquivo Excel
+# ================================
+st.title("📈 Faturamento por Meio de Pagamento")
+uploaded_file = st.file_uploader("Carregue o Excel (FaturamentoPorMeioPgto)", type=["xls", "xlsx"])
 
 if uploaded_file:
-    try:
-        xls = pd.ExcelFile(uploaded_file)
-        df_raw = pd.read_excel(xls, sheet_name="FaturamentoPorMeioDePagamento", header=None)
+    xls = pd.ExcelFile(uploaded_file)
+    if "FaturamentoPorMeioPgto" not in xls.sheet_names:
+        st.error("❌ A aba 'FaturamentoPorMeioPgto' não foi encontrada.")
+        st.stop()
 
-        # 🔥 Remove linhas com "total" ou "subtotal" na coluna B
-        df_raw = df_raw[~df_raw.iloc[:, 1].astype(str).str.lower().str.contains("total|subtotal", na=False)]
+    df_raw = pd.read_excel(xls, sheet_name="FaturamentoPorMeioPgto")
+    df_raw.columns = df_raw.columns.str.strip()
 
-    except Exception as e:
-        st.error(f"❌ Não foi possível ler o arquivo enviado. Detalhes: {e}")
+    # 🔧 Ajuste da Data
+    if "Data" in df_raw.columns:
+        df_raw["Data"] = pd.to_datetime(df_raw["Data"], dayfirst=True, errors="coerce")
+        ultima_data = df_raw["Data"].dropna().max()
+        st.markdown(f"📅 Última data carregada: **{ultima_data.strftime('%d/%m/%Y')}**" if pd.notnull(ultima_data) else "⚠️ Nenhuma data válida encontrada")
     else:
-        if str(df_raw.iloc[0, 1]).strip().lower() != "faturamento diário por meio de pagamento":
-            st.error("❌ A célula B1 deve conter 'Faturamento diário por meio de pagamento'.")
-            st.stop()
+        st.error("⚠️ Coluna 'Data' não encontrada.")
+        st.stop()
 
-        linha_inicio_dados = 5
-        blocos = []
-        col = 3
-        loja_atual = None
+    # 🔗 Merge com Tabela Empresa
+    df_raw["Loja"] = df_raw["Loja"].astype(str).str.strip().str.lower()
+    df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
+    df_final = pd.merge(df_raw, df_empresa, on="Loja", how="left")
 
-        while col < df_raw.shape[1]:
-            valor_linha4 = str(df_raw.iloc[3, col]).strip()
-            match = re.match(r"^\d+\s*-\s*(.+)$", valor_linha4)
-            if match:
-                loja_atual = match.group(1).strip().lower()
+    # ✅ Criar coluna K = Data + Loja + Meio + Valor
+    df_final["K"] = df_final["Data"].dt.strftime("%Y-%m-%d") + \
+                    df_final["Loja"].astype(str) + \
+                    df_final["Meio"].astype(str) + \
+                    df_final["Valor"].astype(str)
 
-            meio_pgto = str(df_raw.iloc[4, col]).strip()
-            if not loja_atual or not meio_pgto or meio_pgto.lower() in ["nan", ""]:
-                col += 1
-                continue
+    # 🔍 Preview
+    st.session_state.df_final_meio = df_final
+    st.success("✅ Dados carregados e coluna K criada para deduplicação.")
+    st.dataframe(df_final.head(), use_container_width=True)
 
-            linha3 = str(df_raw.iloc[2, col]).strip().lower()
-            linha5 = meio_pgto.lower()
+    # 📥 Download local
+    def to_excel(df):
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Faturamento Meio')
+        output.seek(0)
+        return output
 
-            if any(palavra in texto for texto in [linha3, valor_linha4.lower(), linha5] for palavra in ["total", "serv/tx", "total real"]):
-                col += 1
-                continue
+    st.download_button(
+        label="📥 Baixar Excel Gerado",
+        data=to_excel(df_final),
+        file_name="faturamento_meio.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
-            try:
-                df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()
-                df_temp.columns = ["Data", "Valor (R$)"]
-                df_temp = df_temp[~df_temp["Data"].astype(str).str.lower().str.contains("total|subtotal")]
-                df_temp.insert(1, "Meio de Pagamento", meio_pgto)
-                df_temp.insert(2, "Loja", loja_atual)
-                blocos.append(df_temp)
-            except Exception as e:
-                st.warning(f"⚠️ Erro ao processar coluna {col}: {e}")
+# ================================
+# 3. Atualizar Google Sheets - ABA correta
+# ================================
+st.header("📤 Atualizar Google Sheets - Faturamento Meio Pagamento")
 
-            col += 1
+if "df_final_meio" in st.session_state:
+    df_final = st.session_state.df_final_meio.copy()
 
-        if not blocos:
-            st.error("❌ Nenhum dado válido encontrado na planilha.")
+    aba_destino = planilha_empresa.worksheet("Faturamento Meio Pagamento")
+    dados_existentes = aba_destino.get_all_values()
+
+    # Criar conjunto de chaves existentes pela coluna K (11ª coluna)
+    set_existentes = set([linha[10] for linha in dados_existentes[1:] if len(linha) > 10])
+
+    novos_dados = []
+    duplicados = []
+    for linha in df_final.fillna("").values.tolist():
+        chave_k = linha[10]  # coluna K
+        if chave_k not in set_existentes:
+            novos_dados.append(linha)
+            set_existentes.add(chave_k)
         else:
-            df = pd.concat(blocos, ignore_index=True)
-            df = df.dropna(how="any")
-            df = df[~df["Data"].astype(str).str.lower().str.contains("total|subtotal")]
+            duplicados.append(linha)
 
-            # Converte e trata datas
-            df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
-            df = df[df["Data"].notna()]
-
-            # Tradução de dia da semana
-            dias_semana = {
-                'Monday': 'segunda-feira',
-                'Tuesday': 'terça-feira',
-                'Wednesday': 'quarta-feira',
-                'Thursday': 'quinta-feira',
-                'Friday': 'sexta-feira',
-                'Saturday': 'sábado',
-                'Sunday': 'domingo'
-            }
-            df["Dia da Semana"] = df["Data"].dt.day_name().map(dias_semana)
-
-            # Ordena
-            df = df.sort_values(by=["Data", "Loja"])
-
-            # Salva período ANTES de formatar data
-            periodo_min = df["Data"].min().strftime("%d/%m/%Y")
-            periodo_max = df["Data"].max().strftime("%d/%m/%Y")
-
-            # Formata data para exibição
-            df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
-
-            # Padroniza nome da loja
-            df["Loja"] = (
-                df["Loja"]
-                .astype(str)
-                .str.strip()
-                .str.replace(r"^\d+\s*-\s*", "", regex=True)
-                .str.lower()
-            )
-            df_empresa["Loja"] = (
-                df_empresa["Loja"]
-                .astype(str)
-                .str.strip()
-                .str.lower()
-            )
-
-            df = pd.merge(df, df_empresa, on="Loja", how="left")
-
-            for col in ["Código Everest", "Grupo", "Código Grupo Everest"]:
-                if col not in df.columns:
-                    df[col] = np.nan
-
-            # Mês e ano
-            df["Mês"] = pd.to_datetime(df["Data"], dayfirst=True).dt.month.map({
-                1: 'jan', 2: 'fev', 3: 'mar', 4: 'abr', 5: 'mai', 6: 'jun',
-                7: 'jul', 8: 'ago', 9: 'set', 10: 'out', 11: 'nov', 12: 'dez'
-            })
-            df["Ano"] = pd.to_datetime(df["Data"], dayfirst=True).dt.year
-
-            df = df[[
-                "Data", "Dia da Semana", "Meio de Pagamento", "Loja",
-                "Código Everest", "Grupo", "Código Grupo Everest",
-                "Valor (R$)", "Mês", "Ano"
-            ]]
-
-            col1, col2 = st.columns(2)
-            col1.metric("📅 Período processado", f"{periodo_min} até {periodo_max}")
-            col2.metric("💰 Valor total", f"R$ {df['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
-            lojas_sem_codigo = df[df["Código Everest"].isna()]["Loja"].unique()
-            if len(lojas_sem_codigo) > 0:
-                st.warning(
-                    f"⚠️ Lojas sem código Everest cadastrado: {', '.join(lojas_sem_codigo)}\n\n"
-                    "🔗 Atualize os dados na [planilha de empresas](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit)"
-                )
-
-            st.success("✅ Relatório de faturamento por meio de pagamento gerado com sucesso!")
-
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df.to_excel(writer, index=False, sheet_name="FaturamentoPorMeio")
-            output.seek(0)
-
-            st.download_button("📥 Baixar relatório", data=output, file_name="FaturamentoPorMeio_transformado.xlsx")
+    if st.button("📥 Enviar dados ao Google Sheets"):
+        with st.spinner("🔄 Enviando dados para o Google Sheets..."):
+            if novos_dados:
+                inicio = len(dados_existentes) + 1
+                aba_destino.update(f"A{inicio}", novos_dados)
+                st.success(f"✅ {len(novos_dados)} registro(s) enviados com sucesso!")
+            else:
+                st.info("✅ Nenhum novo registro para enviar (tudo já está no Google Sheets).")
+            if duplicados:
+                st.warning(f"⚠️ {len(duplicados)} registro(s) duplicados não foram enviados.")
+else:
+    st.info("⚠️ Primeiro faça o upload do arquivo acima para preparar os dados.")
