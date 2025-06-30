@@ -438,7 +438,10 @@ with aba1:
         # Ajusta largura das colunas
         worksheet.set_column('A:C', 7)
         worksheet.set_column('D:E', 15)
-        worksheet.set_column('F:F', None, None, {'hidden': False})  # F auto
+        worksheet.set_column('F', 22)
+        worksheet.set_column('G', 10)
+        worksheet.set_column('H', 15)
+       
         
         # Centraliza o cabeçalho
         center_format = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'bold': True, 'bg_color': '#0366d6', 'border': 1})
