@@ -445,16 +445,18 @@ with aba1:
             grupo_cores[grupo_valor] = cor_atual
     
             # Estilo da linha
-            if "Meta Desejável" in loja_valor:
-                estilo_linha = estilos_especiais["Meta Desejável"]
-            elif "TOTAL GERAL" in loja_valor:
-                estilo_linha = estilos_especiais["TOTAL GERAL"]
-            elif loja_valor.startswith("Tipo:"):
-                estilo_linha = estilos_especiais["Tipo:"]
-            elif "Lojas:" in loja_valor:
-                estilo_linha = estilos_especiais["Lojas:"]
+            # Decide estilo conforme mesmo critério do Styler
+            if "META DESEJÁVEL" in loja_valor.upper():
+                estilo_linha = {'bg_color': '#FFE5E5', 'font_color': 'black', 'border': 1}
+            elif "TOTAL GERAL" in loja_valor.upper():
+                estilo_linha = {'bg_color': '#cce7fc', 'font_color': 'black', 'border': 1}
+            elif "- LOJAS:" in loja_valor.upper() and not row["Grupo"]:
+                estilo_linha = {'bg_color': '#f9f9f9', 'font_color': 'black', 'border': 1}  # subtotal tipo
+            elif "LOJAS:" in loja_valor.upper():
+                estilo_linha = {'bg_color': '#f5f5f5', 'font_color': 'black', 'border': 1}  # subtotal grupo
             else:
-                estilo_linha = {'bg_color': grupo_cores.get(grupo_valor, cor_grupo1), 'font_color': 'black', 'border': 1}
+                estilo_linha = {'bg_color': '#ffffff', 'font_color': 'black', 'border': 1}  # loja normal
+
     
             for col_num, col_name in enumerate(dados_excel.columns):
                 val = row[col_name]
