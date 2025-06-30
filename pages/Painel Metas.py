@@ -319,12 +319,12 @@ with aba1:
             fundo = "#FF6666"
         elif "TOTAL GERAL" in loja_valor_upper:
             fundo = "#0366d6"
-        elif "- LOJAS:" in loja_valor_upper:
-            fundo = "#f9f9f9"  # bem clarinho, quase branco para subtotal do tipo
+        elif "- LOJAS:" in loja_valor_upper and not row["Grupo"]:
+            fundo = "#f9f9f9"  # subtotal tipo bem clarinho
         elif "LOJAS:" in loja_valor_upper:
-            fundo = "#cce7fc"  # azul claro, continua para subtotal do grupo
+            fundo = "#cce7fc"  # subtotal grupo azul claro
         else:
-            fundo = "white"
+            fundo = "white"  # dados da loja
     
         for coluna in row.index:
             if coluna == "% Atingido" and not pd.isna(atingido):
@@ -334,9 +334,8 @@ with aba1:
                     estilo.append(f"background-color: {fundo}; color: red; font-weight: bold; font-size: 1.1em;")
             else:
                 estilo.append(f"background-color: {fundo}; color: black;")
-        return estilo 
+        return estilo
 
-    
     # ✅ Exibe a data de realizado antes da tabela
     st.markdown(f"**Última data realizada:** {ultima_data_realizado}")
     
