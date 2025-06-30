@@ -440,16 +440,17 @@ with aba1:
         worksheet.set_column('F:F', 22)
         worksheet.set_column('G:G', 10)
         worksheet.set_column('H:H', 15)
-       
         
-        # Centraliza o cabeçalho
-        center_format = workbook.add_format({'align': 'center', 'valign': 'vcenter', 'bold': True, 'bg_color': '#0366d6', 'border': 1})
+        # Centraliza e formata o cabeçalho
+        center_format = workbook.add_format({
+            'align': 'center',
+            'valign': 'vcenter',
+            'bold': True,
+            'bg_color': '#0366d6',
+            'border': 1
+        })
         for col_num, value in enumerate(dados_excel.columns):
             worksheet.write(0, col_num, value, center_format)
-
-        # Cabeçalho
-        for col_num, value in enumerate(dados_excel.columns):
-            worksheet.write(0, col_num, value, header_format)
            
             linha_excel = 1
             for _, row in dados_excel.iterrows():
