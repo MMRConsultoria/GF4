@@ -431,7 +431,8 @@ with aba1:
         # Cabeçalho
         for col_num, value in enumerate(dados_excel.columns):
             worksheet.write(0, col_num, value, header_format)
-    
+            worksheet.set_column(col_num, col_num, 15)  # ou 20, ajusta a largura
+            
         linha_excel = 1
         for _, row in dados_excel.iterrows():
             loja_valor = str(row["Loja"])
