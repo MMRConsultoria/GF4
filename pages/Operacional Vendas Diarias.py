@@ -274,26 +274,26 @@ with aba1:
             else:
                 st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
 
-        except Exception as e:
-            st.error(f"❌ Erro ao processar o arquivo: {e}")
-            # 📥 Botão de Download do Excel diretamente na Aba 1
-            if 'df_vendas_diarias' in st.session_state:
-                def to_excel(df):
-                    output = BytesIO()
-                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                        df.to_excel(writer, index=False, sheet_name='Faturamento Servico')
-                    output.seek(0)
-                    return output
-        
-                excel_data = to_excel(st.session_state.df_final)
-        
-                st.download_button(
-                    label="📥 Baixar Relatório Excel",
-                    data=excel_data,
-                    file_name="faturamento_servico.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-
+           # except Exception as e:
+           #     st.error(f"❌ Erro ao processar o arquivo: {e}")
+                # 📥 Botão de Download do Excel diretamente na Aba 1
+                if 'df_vendas_diarias' in st.session_state:
+                    def to_excel(df):
+                        output = BytesIO()
+                        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                            df.to_excel(writer, index=False, sheet_name='Faturamento Servico')
+                        output.seek(0)
+                        return output
+            
+                    excel_data = to_excel(st.session_state.df_vendas_diarias)
+            
+                    st.download_button(
+                        label="📥 Baixar Relatório Excel",
+                        data=excel_data,
+                        file_name="faturamento_servico.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+    
 
 # =======================================
 # Atualizar Google Sheets (Evitar duplicação)
