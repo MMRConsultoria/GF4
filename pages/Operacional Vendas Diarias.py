@@ -238,7 +238,7 @@ with aba1:
             ]
             df_final = df_final[colunas_finais]
 
-            st.session_state.df_final = df_final
+            st.session_state.df_vendas_diarias = df_final
             st.session_state.atualizou_google = False
 
             datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
@@ -277,7 +277,7 @@ with aba1:
         except Exception as e:
             st.error(f"❌ Erro ao processar o arquivo: {e}")
             # 📥 Botão de Download do Excel diretamente na Aba 1
-            if 'df_final' in st.session_state:
+            if 'df_vendas_diarias' in st.session_state:
                 def to_excel(df):
                     output = BytesIO()
                     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -309,8 +309,8 @@ with aba3:
  
     #st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
 
-    if 'df_final' in st.session_state:
-        df_final = st.session_state.df_final.copy()
+    if 'df_vendas_diarias' in st.session_state:
+        df_final = st.session_state.df_vendas_diarias.copy()
 
        # Verifica se há lojas sem código Everest
         lojas_nao_cadastradas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
