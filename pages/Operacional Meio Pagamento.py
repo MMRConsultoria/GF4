@@ -184,7 +184,6 @@ with tab1:
                         <br>✏️ Atualize a tabela clicando 
                         <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU' target='_blank'><strong>aqui</strong></a>.
                         """, unsafe_allow_html=True)
-
 # ======================
 # 🔄 Aba 2
 # ======================
