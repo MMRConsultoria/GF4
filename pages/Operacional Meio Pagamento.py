@@ -7,7 +7,7 @@ from io import BytesIO
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-st.set_page_config(page_title="Relatório Vendas Diarias", layout="wide")
+st.set_page_config(page_title="Meio de Pagamento", layout="wide")
 
 # 🔥 CSS para estilizar as abas igual ao seu modelo
 st.markdown("""
