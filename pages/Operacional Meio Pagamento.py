@@ -215,7 +215,7 @@ with tab2:
 
         aba_destino = gc.open("Vendas diarias").worksheet("Faturamento Meio Pagamento")
         valores_existentes = aba_destino.get_all_values()
-        dados_existentes = set([linha[9] for linha in valores_existentes[1:] if len(linha) > 10])
+        dados_existentes = set([linha[10] for linha in valores_existentes[1:] if len(linha) > 10])
 
         novos_dados, duplicados = [], []
         for linha in df_final.fillna("").values.tolist():
