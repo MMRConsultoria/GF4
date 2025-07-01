@@ -132,13 +132,9 @@ with aba1:
 
     if uploaded_file:
         try:
-            # 🔹 Carregar o arquivo
             xls = pd.ExcelFile(uploaded_file)
             abas = xls.sheet_names
 
-            # =======================
-            # 🔹 Faturamento Multi-Loja
-            # =======================
             if "FaturamentoDiarioPorLoja" in abas:
                 df_raw = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None)
                 texto_b1 = str(df_raw.iloc[0, 1]).strip().lower()
@@ -181,9 +177,6 @@ with aba1:
                     "Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket", "Mês", "Ano"
                 ])
 
-            # =======================
-            # 🔹 Relatório por Vendedor (CiSS)
-            # =======================
             elif "Relatório 100132" in abas:
                 df = pd.read_excel(xls, sheet_name="Relatório 100132")
                 df["Loja"] = df["Código - Nome Empresa"].astype(str).str.split("-", n=1).str[-1].str.strip().str.lower()
@@ -208,7 +201,6 @@ with aba1:
                 st.error("❌ O arquivo enviado não contém uma aba reconhecida. Esperado: 'FaturamentoDiarioPorLoja' ou 'Relatório 100113'.")
                 st.stop()
 
-            # ✅ Continuidade para ambos os formatos
             dias_traducao = {
                 "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
                 "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
@@ -244,7 +236,7 @@ with aba1:
             datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
             if not datas_validas.empty:
                 data_inicial = datas_validas.min().strftime("%d/%m/%Y")
-                data_final = datas_validas.max().strftime("%d/%m/%Y")
+                data_final_str = datas_validas.max().strftime("%d/%m/%Y")
                 valor_total = df_final["Fat.Total"].sum().round(2)
                 valor_total_formatado = f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
@@ -252,7 +244,7 @@ with aba1:
                 with col1:
                     st.markdown(f"""
                         <div style='font-size:24px; font-weight: bold; margin-bottom:10px;'>🗓️ Período processado</div>
-                        <div style='font-size:30px; color:#000;'>{data_inicial} até {data_final}</div>
+                        <div style='font-size:30px; color:#000;'>{data_inicial} até {data_final_str}</div>
                     """, unsafe_allow_html=True)
                 with col2:
                     st.markdown(f"""
@@ -273,23 +265,26 @@ with aba1:
                 st.markdown(mensagem, unsafe_allow_html=True)
             else:
                 st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
-            
-                # 📥 Botão de Download do Excel só aparece se não tiver empresas pendentes
+
                 def to_excel(df):
                     output = BytesIO()
                     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                         df.to_excel(writer, index=False, sheet_name='Faturamento Servico')
                     output.seek(0)
                     return output
-            
+
                 excel_data = to_excel(df_final)
-            
+
                 st.download_button(
                     label="📥 Baixar Relatório Excel",
                     data=excel_data,
                     file_name="faturamento_servico.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
+
+        except Exception as e:
+            st.error(f"❌ Erro ao processar o arquivo: {e}")
+
 
 
 
