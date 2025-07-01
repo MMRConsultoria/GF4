@@ -273,8 +273,7 @@ with aba1:
                 st.markdown(mensagem, unsafe_allow_html=True)
             else:
                 st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
-
-           
+            
                 # 📥 Botão de Download do Excel diretamente na Aba 1
                 if 'df_vendas_diarias' in st.session_state:
                     def to_excel(df):
@@ -292,7 +291,7 @@ with aba1:
                         file_name="faturamento_servico.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
-    
+                
 
 # =======================================
 # Atualizar Google Sheets (Evitar duplicação)
