@@ -93,12 +93,14 @@ with tab1:
 
                 meio_pgto = str(df_raw.iloc[4, col]).strip()
                 if not loja_atual or not meio_pgto or meio_pgto.lower() in ["nan", ""]:
-                    col += 1; continue
+                    col += 1
+                    continue
 
                 linha3 = str(df_raw.iloc[2, col]).strip().lower()
                 linha5 = meio_pgto.lower()
                 if any(p in t for t in [linha3, valor_linha4.lower(), linha5] for p in ["total", "serv/tx", "total real"]):
-                    col += 1; continue
+                    col += 1
+                    continue
 
                 try:
                     df_temp = df_raw.iloc[linha_inicio_dados:, [2, col]].copy()
@@ -114,42 +116,63 @@ with tab1:
             if not blocos:
                 st.error("❌ Nenhum dado válido encontrado.")
             else:
-                df = pd.concat(blocos, ignore_index=True).dropna()
-                df = df[~df["Data"].astype(str).str.lower().str.contains("total|subtotal")]
-                df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
-                df = df[df["Data"].notna()]
+                df_meio_pagamento = pd.concat(blocos, ignore_index=True).dropna()
+                df_meio_pagamento = df_meio_pagamento[~df_meio_pagamento["Data"].astype(str).str.lower().str.contains("total|subtotal")]
+                df_meio_pagamento["Data"] = pd.to_datetime(df_meio_pagamento["Data"], dayfirst=True, errors="coerce")
+                df_meio_pagamento = df_meio_pagamento[df_meio_pagamento["Data"].notna()]
                 dias_semana = {'Monday': 'segunda-feira','Tuesday': 'terça-feira','Wednesday': 'quarta-feira',
                                'Thursday': 'quinta-feira','Friday': 'sexta-feira','Saturday': 'sábado','Sunday': 'domingo'}
-                df["Dia da Semana"] = df["Data"].dt.day_name().map(dias_semana)
-                df = df.sort_values(by=["Data", "Loja"])
-                periodo_min = df["Data"].min().strftime("%d/%m/%Y")
-                periodo_max = df["Data"].max().strftime("%d/%m/%Y")
-                df["Data"] = df["Data"].dt.strftime("%d/%m/%Y")
+                df_meio_pagamento["Dia da Semana"] = df_meio_pagamento["Data"].dt.day_name().map(dias_semana)
+                df_meio_pagamento = df_meio_pagamento.sort_values(by=["Data", "Loja"])
+                periodo_min = df_meio_pagamento["Data"].min().strftime("%d/%m/%Y")
+                periodo_max = df_meio_pagamento["Data"].max().strftime("%d/%m/%Y")
+                df_meio_pagamento["Data"] = df_meio_pagamento["Data"].dt.strftime("%d/%m/%Y")
 
-                df["Loja"] = df["Loja"].str.strip().str.replace(r"^\d+\s*-\s*", "", regex=True).str.lower()
+                df_meio_pagamento["Loja"] = df_meio_pagamento["Loja"].str.strip().str.replace(r"^\d+\s*-\s*", "", regex=True).str.lower()
                 df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.lower()
-                df = pd.merge(df, df_empresa, on="Loja", how="left")
+                df_meio_pagamento = pd.merge(df_meio_pagamento, df_empresa, on="Loja", how="left")
 
-                df["Mês"] = pd.to_datetime(df["Data"], dayfirst=True).dt.month.map({
+                df_meio_pagamento["Mês"] = pd.to_datetime(df_meio_pagamento["Data"], dayfirst=True).dt.month.map({
                     1:'jan',2:'fev',3:'mar',4:'abr',5:'mai',6:'jun',7:'jul',8:'ago',9:'set',10:'out',11:'nov',12:'dez'})
-                df["Ano"] = pd.to_datetime(df["Data"], dayfirst=True).dt.year
+                df_meio_pagamento["Ano"] = pd.to_datetime(df_meio_pagamento["Data"], dayfirst=True).dt.year
 
-                df = df[["Data","Dia da Semana","Meio de Pagamento","Loja","Código Everest","Grupo","Código Grupo Everest","Valor (R$)","Mês","Ano"]]
+                df_meio_pagamento = df_meio_pagamento[[
+                    "Data","Dia da Semana","Meio de Pagamento","Loja","Código Everest",
+                    "Grupo","Código Grupo Everest","Valor (R$)","Mês","Ano"
+                ]]
 
-                # Salvar no session state
-                st.session_state.df_final = df
+                st.session_state.df_meio_pagamento = df_meio_pagamento
 
                 col1, col2 = st.columns(2)
                 col1.markdown(f"<div style='font-size:1.2rem;'>📅 Período processado<br>{periodo_min} até {periodo_max}</div>", unsafe_allow_html=True)
-                valor_total = f"R$ {df['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                valor_total = f"R$ {df_meio_pagamento['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                 col2.markdown(f"<div style='font-size:1.2rem;'>💰 Valor total<br><span style='color:green;'>{valor_total}</span></div>", unsafe_allow_html=True)
 
-                output = BytesIO()
-                with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    df.to_excel(writer, index=False, sheet_name="FaturamentoPorMeio")
-                output.seek(0)
+                # Só permite download se todas lojas estiverem cadastradas
+                empresas_nao_localizadas = df_meio_pagamento[df_meio_pagamento["Código Everest"].isna()]["Loja"].unique()
+                if len(empresas_nao_localizadas) > 0:
+                    empresas_nao_localizadas_str = "<br>".join(empresas_nao_localizadas)
+                    mensagem = f"""
+                    ⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s), cadastre e reprocesse novamente!<br>
+                    {empresas_nao_localizadas_str}
+                    <br>✏️ Atualize a tabela clicando 
+                    <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU' target='_blank'><strong>aqui</strong></a>.
+                    """
+                    st.markdown(mensagem, unsafe_allow_html=True)
+                else:
+                    st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
 
-                st.download_button("📥 Baixar relatório Excel", data=output, file_name="FaturamentoPorMeio.xlsx")
+                    output = BytesIO()
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                        df_meio_pagamento.to_excel(writer, index=False, sheet_name="FaturamentoPorMeio")
+                    output.seek(0)
+
+                    st.download_button(
+                        "📥 Baixar relatório Excel",
+                        data=output,
+                        file_name="FaturamentoPorMeio.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
 
 # ======================
 # 🔄 Aba 2
