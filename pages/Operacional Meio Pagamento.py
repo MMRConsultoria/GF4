@@ -13,23 +13,12 @@ st.set_page_config(page_title="Relatório Vendas Diarias", layout="wide")
 if not st.session_state.get("acesso_liberado"):
     st.stop()
 
-# 🎨 Estilizar abas
+# 🔥 Título com ícone
 st.markdown("""
-    <style>
-    .stApp { background-color: #f9f9f9; }
-    div[data-baseweb="tab-list"] { margin-top: 20px; }
-    button[data-baseweb="tab"] {
-        background-color: #f0f2f6;
-        border-radius: 10px;
-        padding: 10px 20px;
-        margin-right: 10px;
-        transition: all 0.3s ease;
-        font-size: 16px;
-        font-weight: 600;
-    }
-    button[data-baseweb="tab"]:hover { background-color: #dce0ea; color: black; }
-    button[data-baseweb="tab"][aria-selected="true"] { background-color: #0366d6; color: white; }
-    </style>
+    <div style='display: flex; align-items: center; gap: 10px;'>
+        <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
+        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório Vendas Diarias</h1>
+    </div>
 """, unsafe_allow_html=True)
 
 # Conexão Google Sheets
