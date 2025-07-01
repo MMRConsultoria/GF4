@@ -169,7 +169,7 @@ with tab1:
                     col1.markdown(f"""
                         <div style='color:#856404; font-size:0.95rem; margin-top:5px;'>
                         ⚠️ {len(meios_nao_cadastrados)} meio(s) de pagamento não localizado(s):<br>{lista_meios}<br>
-                        Cadastre na Tabela Meio Pagamento e reprocessar!
+                        3Cadastre na Tabela Meio Pagamento e reprocessar!
                         </div>
                     """, unsafe_allow_html=True)
 
