@@ -54,7 +54,7 @@ df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records()
 tab1, tab2, tab3 = st.tabs([
     "📥 Upload e Processamento",
     "🔄 Atualizar Google Sheets",
-    "📝 Auditar integração Everest"
+    "📝 Desenvolvimento"
 ])
 
 # ======================
@@ -192,4 +192,4 @@ with tab2:
 # 📝 Auditar integração Everest
 # ======================
 with tab3:
-    st.info("🔍 Aqui você poderá auditar a integração com o Everest.")
+    st.info("🔍 Desenvolvimento")
