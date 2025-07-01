@@ -195,82 +195,88 @@ with tab1:
 # 🔄 Atualizar Google Sheets
 # ======================
 with tab2:
-  #  st.info("🚀 Aqui ficará sua funcionalidade para atualizar dados no Google Sheets.")
-
     st.markdown("""
       🔗 [Link **Faturamento Meio Pagamento**](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing)
     """, unsafe_allow_html=True)
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
+        
+        # 🔍 Mostrar colunas para debug
+        st.write("Colunas do df_final carregado na aba 2:", df_final.columns.tolist())
 
-        lojas_nao_cadastradas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
-        todas_lojas_ok = len(lojas_nao_cadastradas) == 0
+        if all(col in df_final.columns for col in ["Meio de Pagamento", "Loja", "Data"]):
+            
+            lojas_nao_cadastradas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
+            todas_lojas_ok = len(lojas_nao_cadastradas) == 0
 
-        # Chave única de duplicação
-        df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
-                        df_final['Meio de Pagamento'].astype(str) + df_final['Loja'].astype(str)
-        df_final['M'] = df_final['M'].apply(str)
+            # Chave única de duplicação
+            df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
+                            df_final['Meio de Pagamento'].astype(str) + df_final['Loja'].astype(str)
+            df_final['M'] = df_final['M'].apply(str)
 
-        # Converter valores
-        df_final['Valor (R$)'] = df_final['Valor (R$)'].apply(lambda x: float(str(x).replace(',', '.')) if pd.notnull(x) else x)
-        df_final['Data'] = pd.to_datetime(df_final['Data'].astype(str).str.replace("'", "").str.strip(), dayfirst=True)
-        df_final['Data'] = (df_final['Data'] - pd.Timestamp("1899-12-30")).dt.days
+            # Converter valores
+            df_final['Valor (R$)'] = df_final['Valor (R$)'].apply(lambda x: float(str(x).replace(',', '.')) if pd.notnull(x) else x)
+            df_final['Data'] = pd.to_datetime(df_final['Data'].astype(str).str.replace("'", "").str.strip(), dayfirst=True)
+            df_final['Data'] = (df_final['Data'] - pd.Timestamp("1899-12-30")).dt.days
 
-        def to_int_safe(x):
-            try:
-                x_clean = str(x).replace("'", "").strip()
-                return int(x_clean)
-            except:
-                return ""
-
-        df_final['Código Everest'] = df_final['Código Everest'].apply(to_int_safe)
-        df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(to_int_safe)
-        df_final['Ano'] = df_final['Ano'].apply(to_int_safe)
-
-        # Conectar
-        planilha_destino = gc.open("Vendas diarias")
-        aba_destino = planilha_destino.worksheet("Faturamento Meio Pagamento")
-        valores_existentes = aba_destino.get_all_values()
-
-        # 💡 Usa coluna J (índice 9) como critério de duplicação
-        dados_existentes = set([linha[9] for linha in valores_existentes[1:] if len(linha) > 9])
-
-        novos_dados, duplicados = [], []
-        rows = df_final.fillna("").values.tolist()
-
-        for linha in rows:
-            chave_m = linha[-1]
-            if chave_m not in dados_existentes:
-                novos_dados.append(linha)
-                dados_existentes.add(chave_m)
-            else:
-                duplicados.append(linha)
-
-        if todas_lojas_ok and st.button("📥 Enviar dados para o Google Sheets"):
-            with st.spinner("🔄 Atualizando o Google Sheets..."):
+            def to_int_safe(x):
                 try:
-                    if novos_dados:
-                        primeira_linha_vazia = len(valores_existentes) + 1
-                        aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
+                    x_clean = str(x).replace("'", "").strip()
+                    return int(x_clean)
+                except:
+                    return ""
 
-                        from gspread_formatting import CellFormat, NumberFormat, format_cell_range
-                        data_format = CellFormat(numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy'))
-                        numero_format = CellFormat(numberFormat=NumberFormat(type='NUMBER', pattern='0'))
+            df_final['Código Everest'] = df_final['Código Everest'].apply(to_int_safe)
+            df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(to_int_safe)
+            df_final['Ano'] = df_final['Ano'].apply(to_int_safe)
 
-                        format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(novos_dados)}", data_format)
-                        format_cell_range(aba_destino, f"J2:J{primeira_linha_vazia + len(novos_dados)}", numero_format)  
-                        format_cell_range(aba_destino, f"E2:E{primeira_linha_vazia + len(novos_dados)}", numero_format)
-                        format_cell_range(aba_destino, f"G2:G{primeira_linha_vazia + len(novos_dados)}", numero_format)
+            # Conectar
+            planilha_destino = gc.open("Vendas diarias")
+            aba_destino = planilha_destino.worksheet("Faturamento Meio Pagamento")
+            valores_existentes = aba_destino.get_all_values()
 
-                        st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) para o Google Sheets!")
+            # 💡 Usa coluna J (índice 9) como critério de duplicação
+            dados_existentes = set([linha[9] for linha in valores_existentes[1:] if len(linha) > 9])
 
-                    if duplicados:
-                        st.warning(f"⚠️ {len(duplicados)} registro(s) duplicado(s) não foram enviados.")
-                except Exception as e:
-                    st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
+            novos_dados, duplicados = [], []
+            rows = df_final.fillna("").values.tolist()
+
+            for linha in rows:
+                chave_m = linha[-1]
+                if chave_m not in dados_existentes:
+                    novos_dados.append(linha)
+                    dados_existentes.add(chave_m)
+                else:
+                    duplicados.append(linha)
+
+            if todas_lojas_ok and st.button("📥 Enviar dados para o Google Sheets"):
+                with st.spinner("🔄 Atualizando o Google Sheets..."):
+                    try:
+                        if novos_dados:
+                            primeira_linha_vazia = len(valores_existentes) + 1
+                            aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
+
+                            from gspread_formatting import CellFormat, NumberFormat, format_cell_range
+                            data_format = CellFormat(numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy'))
+                            numero_format = CellFormat(numberFormat=NumberFormat(type='NUMBER', pattern='0'))
+
+                            format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(novos_dados)}", data_format)
+                            format_cell_range(aba_destino, f"J2:J{primeira_linha_vazia + len(novos_dados)}", numero_format)  
+                            format_cell_range(aba_destino, f"E2:E{primeira_linha_vazia + len(novos_dados)}", numero_format)
+                            format_cell_range(aba_destino, f"G2:G{primeira_linha_vazia + len(novos_dados)}", numero_format)
+
+                            st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) para o Google Sheets!")
+
+                        if duplicados:
+                            st.warning(f"⚠️ {len(duplicados)} registro(s) duplicado(s) não foram enviados.")
+                    except Exception as e:
+                        st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
+        else:
+            st.warning("⚠️ O dataframe carregado não tem as colunas necessárias ('Data', 'Meio de Pagamento' e 'Loja'). Volte para a aba 1 e faça o processamento.")
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
 
 
 # ======================
