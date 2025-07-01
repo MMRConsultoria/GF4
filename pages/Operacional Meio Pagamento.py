@@ -181,6 +181,10 @@ with tab1:
 
                 if not tem_erros:
                     st.success("✅ Relatório de faturamento por meio de pagamento gerado com sucesso!")
+
+                    # Salva no session_state
+                    st.session_state.df_final = df
+                    
                     output = BytesIO()
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
                         df.to_excel(writer, index=False, sheet_name="FaturamentoPorMeio")
