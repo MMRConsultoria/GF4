@@ -32,6 +32,22 @@ st.markdown("""
 if not st.session_state.get("acesso_liberado"):
     st.stop()
 
+# 🔌 Conexão com Google Sheets
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+gc = gspread.authorize(credentials)
+planilha = gc.open("Vendas diarias")
+
+df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
+df_meio_pgto_google = pd.DataFrame(planilha.worksheet("Tabela Meio Pagamento").get_all_records())
+
+# Normaliza coluna Meio de Pagamento
+if "Meio de Pagamento" in df_meio_pgto_google.columns:
+    df_meio_pgto_google["Meio de Pagamento"] = df_meio_pgto_google["Meio de Pagamento"].astype(str).str.strip().str.lower()
+else:
+    df_meio_pgto_google = pd.DataFrame({"Meio de Pagamento": []})
+
 # 🔥 Título
 st.markdown("""
     <div style='display: flex; align-items: center; gap: 10px;'>
@@ -39,14 +55,6 @@ st.markdown("""
         <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Meio de Pagamento</h1>
     </div>
 """, unsafe_allow_html=True)
-
-# 🔌 Conexão com Google Sheets
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-gc = gspread.authorize(credentials)
-planilha = gc.open("Vendas diarias")
-df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
 
 # ========================
 # 🗂️ Abas
@@ -148,9 +156,8 @@ with tab1:
                 valor_total = f"R$ {df_meio_pagamento['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                 col2.markdown(f"<div style='font-size:1.2rem;'>💰 Valor total<br><span style='color:green;'>{valor_total}</span></div>", unsafe_allow_html=True)
 
-                # Validação das lojas
+                # Validação das lojas e meios de pagamento
                 empresas_nao_localizadas = df_meio_pagamento[df_meio_pagamento["Código Everest"].isna()]["Loja"].unique()
-                # Validação dos meios de pagamento
                 meios_nao_localizados = df_meio_pagamento[
                     ~df_meio_pagamento["Meio de Pagamento"].isin(df_meio_pgto_google["Meio de Pagamento"])
                 ]["Meio de Pagamento"].unique()
