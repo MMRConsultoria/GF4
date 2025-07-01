@@ -197,12 +197,12 @@ with tab1:
 with tab2:
     st.markdown("🔗 [Abrir planilha Faturamento Meio Pagamento](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU)")
 
-    if 'df_final' not in st.session_state:
+    if 'df_meio_pagamento' not in st.session_state:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
-    elif not all(c in st.session_state.df_final.columns for c in ["Meio de Pagamento","Loja","Data"]):
+    elif not all(c in st.session_state.df_meio_pagamento.columns for c in ["Meio de Pagamento","Loja","Data"]):
         st.warning("⚠️ O arquivo processado não tem as colunas necessárias.")
     else:
-        df_final = st.session_state.df_final.copy()
+        df_final = st.session_state.df_meio_pagamento.copy()
         lojas_nao_cadastradas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
         todas_lojas_ok = len(lojas_nao_cadastradas) == 0
 
