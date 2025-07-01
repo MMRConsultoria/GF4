@@ -368,7 +368,8 @@ with aba4:
     #meses_selecionados = st.multiselect("", options=meses_nomes_disponiveis, default=meses_nomes_disponiveis, key="meses_aba3")
     meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
     mes_atual_nome = meses_dict[datetime.today().month]
-    meses_selecionados = st.multiselect("", options=meses_nomes_disponiveis, default=[mes_atual_nome], key="meses_aba3")
+    default_mes = [mes_atual_nome] if mes_atual_nome in meses_nomes_disponiveis else meses_nomes_disponiveis
+    meses_selecionados = st.multiselect("", options=meses_nomes_disponiveis, default=default_mes, key="meses_aba3")
     
    
    # Garantir que "hoje" seja do tipo date
