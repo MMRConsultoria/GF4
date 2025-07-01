@@ -274,8 +274,7 @@ with aba1:
             else:
                 st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
 
-           # except Exception as e:
-           #     st.error(f"❌ Erro ao processar o arquivo: {e}")
+           
                 # 📥 Botão de Download do Excel diretamente na Aba 1
                 if 'df_vendas_diarias' in st.session_state:
                     def to_excel(df):
