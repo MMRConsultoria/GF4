@@ -273,24 +273,21 @@ with aba1:
                 st.markdown(mensagem, unsafe_allow_html=True)
             else:
                 st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
-                 def to_excel(df):
-                        output = BytesIO()
-                        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                            df.to_excel(writer, index=False, sheet_name='Faturamento Servico')
-                        output.seek(0)
-                        return output
+                def to_excel(df):
+                    output = BytesIO()
+                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                        df.to_excel(writer, index=False, sheet_name='Faturamento Servico')
+                    output.seek(0)
+                    return output
             
-                    excel_data = to_excel(st.session_state.df_vendas_diarias)
+                excel_data = to_excel(st.session_state.df_vendas_diarias)
             
-                    st.download_button(
-                        label="📥 Baixar Relatório Excel",
-                        data=excel_data,
-                        file_name="faturamento_servico.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
-              
-                   
-
+                st.download_button(
+                    label="📥 Baixar Relatório Excel",
+                    data=excel_data,
+                    file_name="faturamento_servico.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
                 
 
 # =======================================
