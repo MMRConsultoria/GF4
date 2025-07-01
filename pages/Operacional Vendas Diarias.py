@@ -261,7 +261,12 @@ with aba1:
                     """, unsafe_allow_html=True)
             else:
                 st.warning("⚠️ Não foi possível identificar o período de datas.")
-            
+            def to_excel(df):
+                    output = BytesIO()
+                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                        df.to_excel(writer, index=False, sheet_name='Faturamento Servico')
+                    output.seek(0)
+                    return output
             empresas_nao_localizadas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
             if len(empresas_nao_localizadas) > 0:
                 empresas_nao_localizadas_str = "<br>".join(empresas_nao_localizadas)
@@ -273,12 +278,7 @@ with aba1:
                 st.markdown(mensagem, unsafe_allow_html=True)
             else:
                 st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
-                def to_excel(df):
-                    output = BytesIO()
-                    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                        df.to_excel(writer, index=False, sheet_name='Faturamento Servico')
-                    output.seek(0)
-                    return output
+                
             
                 excel_data = to_excel(st.session_state.df_vendas_diarias)
             
