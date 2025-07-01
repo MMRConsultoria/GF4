@@ -9,6 +9,25 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 st.set_page_config(page_title="Relatório Vendas Diarias", layout="wide")
 
+# 🔥 CSS para estilizar as abas igual ao seu modelo
+st.markdown("""
+    <style>
+    .stApp { background-color: #f9f9f9; }
+    div[data-baseweb="tab-list"] { margin-top: 20px; }
+    button[data-baseweb="tab"] {
+        background-color: #f0f2f6;
+        border-radius: 10px;
+        padding: 10px 20px;
+        margin-right: 10px;
+        transition: all 0.3s ease;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    button[data-baseweb="tab"]:hover { background-color: #dce0ea; color: black; }
+    button[data-baseweb="tab"][aria-selected="true"] { background-color: #0366d6; color: white; }
+    </style>
+""", unsafe_allow_html=True)
+
 # 🔒 Bloqueia o acesso caso o usuário não esteja logado
 if not st.session_state.get("acesso_liberado"):
     st.stop()
