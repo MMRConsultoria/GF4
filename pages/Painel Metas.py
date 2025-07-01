@@ -143,16 +143,16 @@ with aba1:
     df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)].copy()
 
     import calendar
-    
-    # Agora sim pega a última data correta já do mês filtrado
     ultima_data_realizado_dt = df_anos_filtrado["Data"].max()
-    ultima_data_realizado = ultima_data_realizado_dt.strftime("%d/%m/%Y")
     
-    # Calcula o percentual desejável até a última data
-    dias_do_mes = calendar.monthrange(ano_selecionado, ordem_meses.index(mes_selecionado) + 1)[1]
-    dias_corridos = ultima_data_realizado_dt.day
-    percentual_meta_desejavel = dias_corridos / dias_do_mes
-
+    if pd.isna(ultima_data_realizado_dt):
+        ultima_data_realizado = "N/A"
+        percentual_meta_desejavel = 0
+    else:
+        ultima_data_realizado = ultima_data_realizado_dt.strftime("%d/%m/%Y")
+        dias_do_mes = calendar.monthrange(ano_selecionado, ordem_meses.index(mes_selecionado) + 1)[1]
+        dias_corridos = ultima_data_realizado_dt.day
+        percentual_meta_desejavel = dias_corridos / dias_do_mes
 
 
 
