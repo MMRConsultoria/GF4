@@ -240,14 +240,14 @@ with aba1:
 
             st.session_state.df_vendas_diarias = df_final
             st.session_state.atualizou_google = False
-
+            
             datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
             if not datas_validas.empty:
                 data_inicial = datas_validas.min().strftime("%d/%m/%Y")
                 data_final = datas_validas.max().strftime("%d/%m/%Y")
                 valor_total = df_final["Fat.Total"].sum().round(2)
                 valor_total_formatado = f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-
+            
                 col1, col2 = st.columns(2)
                 with col1:
                     st.markdown(f"""
@@ -261,7 +261,7 @@ with aba1:
                     """, unsafe_allow_html=True)
             else:
                 st.warning("⚠️ Não foi possível identificar o período de datas.")
-
+            
             empresas_nao_localizadas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
             if len(empresas_nao_localizadas) > 0:
                 empresas_nao_localizadas_str = "<br>".join(empresas_nao_localizadas)
@@ -291,6 +291,7 @@ with aba1:
                         file_name="faturamento_servico.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
+
                 
 
 # =======================================
