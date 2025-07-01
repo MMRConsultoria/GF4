@@ -151,45 +151,12 @@ with tab1:
                 df["Ano"] = pd.to_datetime(df["Data"], dayfirst=True).dt.year
                 df = df[["Data", "Dia da Semana", "Meio de Pagamento", "Loja","Código Everest", "Grupo", "Código Grupo Everest","Valor (R$)", "Mês", "Ano"]]
 
-                df_meios_pgto = pd.DataFrame(planilha.worksheet("Tabela Meio Pagamento").get_all_records())
-                meios_cadastrados = df_meios_pgto["Meio de Pagamento"].astype(str).str.strip().str.lower().unique()
-                meios_usados = df["Meio de Pagamento"].astype(str).str.strip().str.lower().unique()
-                meios_nao_cadastrados = [m for m in meios_usados if m not in meios_cadastrados]
-
-                lojas_sem_codigo = df[df["Código Everest"].isna()]["Loja"].unique()
+                st.session_state.df_final = df
 
                 col1, col2 = st.columns(2)
                 col1.markdown(f"<div style='font-size:1.2rem;'>📅 <strong>Período processado</strong><br>{periodo_min} até {periodo_max}</div>", unsafe_allow_html=True)
-
-                tem_erros = False
-
-                if len(meios_nao_cadastrados) > 0:
-                    tem_erros = True
-                    lista_meios = "<br>".join([f"- {m}" for m in meios_nao_cadastrados])
-                    col1.markdown(f"""
-                        <div style='color:#856404; font-size:0.95rem; margin-top:5px;'>
-                        ⚠️ {len(meios_nao_cadastrados)} meio(s) de pagamento não localizado(s):<br>{lista_meios}<br>
-                        </div>
-                    """, unsafe_allow_html=True)
-
                 valor_total_formatado = f"R$ {df['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                 col2.markdown(f"<div style='font-size:1.2rem;'>💰 <strong>Valor total</strong><br><span style='color:green;'>{valor_total_formatado}</span></div>", unsafe_allow_html=True)
-
-                if len(lojas_sem_codigo) > 0:
-                    tem_erros = True
-                    st.markdown(f"<div style='color:#856404; font-size:0.95rem; margin-top:5px;'>⚠️ Lojas sem código Everest cadastrado: {', '.join(lojas_sem_codigo)}<br>🔗 <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit' target='_blank' style='color:#0d6efd;'>Atualize os dados na planilha de empresas</a></div>", unsafe_allow_html=True)
-
-                if not tem_erros:
-                    st.success("✅ Relatório de faturamento por meio de pagamento gerado com sucesso!")
-
-                    # Salva no session_state
-                    st.session_state.df_final = df
-                    
-                    output = BytesIO()
-                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                        df.to_excel(writer, index=False, sheet_name="FaturamentoPorMeio")
-                    output.seek(0)
-                    st.download_button("📥 Baixar relatório", data=output, file_name="FaturamentoPorMeio_transformado.xlsx")
 
 # ======================
 # 🔄 Atualizar Google Sheets
@@ -201,87 +168,56 @@ with tab2:
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
-        
-        # 🔍 Mostrar colunas para debug
-        st.write("Colunas do df_final carregado na aba 2:", df_final.columns.tolist())
 
-        if all(col in df_final.columns for col in ["Meio de Pagamento", "Loja", "Data"]):
-            
-            lojas_nao_cadastradas = df_final[df_final["Codigo Everest"].isna()]["Loja"].unique()
-            todas_lojas_ok = len(lojas_nao_cadastradas) == 0
+        lojas_nao_cadastradas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
+        todas_lojas_ok = len(lojas_nao_cadastradas) == 0
 
-            # Chave única de duplicação
-            df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
-                            df_final['Meio de Pagamento'].astype(str) + df_final['Loja'].astype(str)
-            df_final['M'] = df_final['M'].apply(str)
+        df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
+                        df_final['Meio de Pagamento'].astype(str) + df_final['Loja'].astype(str)
 
-            # Converter valores
-            df_final['Valor'] = df_final['Valor'].apply(lambda x: float(str(x).replace(',', '.')) if pd.notnull(x) else x)
-            df_final['Data'] = pd.to_datetime(df_final['Data'].astype(str).str.replace("'", "").str.strip(), dayfirst=True)
-            df_final['Data'] = (df_final['Data'] - pd.Timestamp("1899-12-30")).dt.days
+        df_final['Valor (R$)'] = df_final['Valor (R$)'].apply(lambda x: float(str(x).replace(',', '.')) if pd.notnull(x) else x)
+        df_final['Data'] = pd.to_datetime(df_final['Data'], dayfirst=True)
+        df_final['Data'] = (df_final['Data'] - pd.Timestamp("1899-12-30")).dt.days
 
-            def to_int_safe(x):
+        def to_int_safe(x):
+            try:
+                return int(str(x).strip())
+            except:
+                return ""
+
+        df_final['Código Everest'] = df_final['Código Everest'].apply(to_int_safe)
+        df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(to_int_safe)
+        df_final['Ano'] = df_final['Ano'].apply(to_int_safe)
+
+        aba_destino = gc.open("Vendas diarias").worksheet("Faturamento Meio Pagamento")
+        valores_existentes = aba_destino.get_all_values()
+        dados_existentes = set([linha[9] for linha in valores_existentes[1:] if len(linha) > 9])
+
+        novos_dados, duplicados = [], []
+        rows = df_final.fillna("").values.tolist()
+        for linha in rows:
+            chave_m = linha[-1]
+            if chave_m not in dados_existentes:
+                novos_dados.append(linha)
+                dados_existentes.add(chave_m)
+            else:
+                duplicados.append(linha)
+
+        if todas_lojas_ok and st.button("📥 Enviar dados para o Google Sheets"):
+            with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
-                    x_clean = str(x).replace("'", "").strip()
-                    return int(x_clean)
-                except:
-                    return ""
-
-            df_final['Codigo Everest'] = df_final['Codigo Everest'].apply(to_int_safe)
-            df_final['Cod Grupo Empresas'] = df_final['Cod Grupo Empresas'].apply(to_int_safe)
-            df_final['Ano'] = df_final['Ano'].apply(to_int_safe)
-
-            # Conectar
-            planilha_destino = gc.open("Vendas diarias")
-            aba_destino = planilha_destino.worksheet("Faturamento Meio Pagamento")
-            valores_existentes = aba_destino.get_all_values()
-
-            # 💡 Usa coluna J (índice 9) como critério de duplicação
-            dados_existentes = set([linha[9] for linha in valores_existentes[1:] if len(linha) > 9])
-
-            novos_dados, duplicados = [], []
-            rows = df_final.fillna("").values.tolist()
-
-            for linha in rows:
-                chave_m = linha[-1]
-                if chave_m not in dados_existentes:
-                    novos_dados.append(linha)
-                    dados_existentes.add(chave_m)
-                else:
-                    duplicados.append(linha)
-
-            if todas_lojas_ok and st.button("📥 Enviar dados para o Google Sheets"):
-                with st.spinner("🔄 Atualizando o Google Sheets..."):
-                    try:
-                        if novos_dados:
-                            primeira_linha_vazia = len(valores_existentes) + 1
-                            aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
-
-                            from gspread_formatting import CellFormat, NumberFormat, format_cell_range
-                            data_format = CellFormat(numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy'))
-                            numero_format = CellFormat(numberFormat=NumberFormat(type='NUMBER', pattern='0'))
-
-                            format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(novos_dados)}", data_format)
-                            format_cell_range(aba_destino, f"J2:J{primeira_linha_vazia + len(novos_dados)}", numero_format)  
-                            format_cell_range(aba_destino, f"E2:E{primeira_linha_vazia + len(novos_dados)}", numero_format)
-                            format_cell_range(aba_destino, f"G2:G{primeira_linha_vazia + len(novos_dados)}", numero_format)
-
-                            st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) para o Google Sheets!")
-
-                        if duplicados:
-                            st.warning(f"⚠️ {len(duplicados)} registro(s) duplicado(s) não foram enviados.")
-                    except Exception as e:
-                        st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
-        else:
-            st.warning("⚠️ O dataframe carregado não tem as colunas necessárias ('Data', 'Meio de Pagamento' e 'Loja'). Volte para a aba 1 e faça o processamento.")
+                    if novos_dados:
+                        aba_destino.append_rows(novos_dados)
+                        st.success(f"✅ {len(novos_dados)} novos registros enviados para o Google Sheets!")
+                    if duplicados:
+                        st.warning(f"⚠️ {len(duplicados)} registros duplicados não foram enviados.")
+                except Exception as e:
+                    st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
 
-
-
-
 # ======================
-# 📝 Auditar integração Everest
+# 📝 Aba de desenvolvimento
 # ======================
 with tab3:
     st.info("🔍 Desenvolvimento")
