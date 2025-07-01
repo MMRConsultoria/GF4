@@ -29,17 +29,19 @@ gc = gspread.authorize(credentials)
 planilha = gc.open("Vendas diarias")
 df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
 
-# ✅ Menu superior estilo abas (mas com radio horizontal)
-opcao = st.radio(
-    "",
-    ["📥 Upload e Processamento", "🔄 Atualizar Google Sheets", "📝 Auditar integração Everest"],
-    horizontal=True
-)
+# ========================
+# Abas estilizadas com st.tabs
+# ========================
+tab1, tab2, tab3 = st.tabs([
+    "📥 Upload e Processamento",
+    "🔄 Atualizar Google Sheets",
+    "📝 Auditar integração Everest"
+])
 
-# -----------------------
-# 📥 UPLOAD E PROCESSAMENTO
-# -----------------------
-if opcao == "📥 Upload e Processamento":
+# ======================
+# 📥 Upload e processamento
+# ======================
+with tab1:
     uploaded_file = st.file_uploader(
         label="📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de faturamento",
         type=["xlsx", "xlsm"],
@@ -161,14 +163,14 @@ if opcao == "📥 Upload e Processamento":
                     output.seek(0)
                     st.download_button("📥 Baixar relatório", data=output, file_name="FaturamentoPorMeio_transformado.xlsx")
 
-# ------------------------
-# 🔄 ATUALIZAR GOOGLE SHEETS
-# ------------------------
-elif opcao == "🔄 Atualizar Google Sheets":
+# ======================
+# 🔄 Atualizar Google Sheets
+# ======================
+with tab2:
     st.info("🚀 Aqui ficará sua funcionalidade para atualizar dados no Google Sheets.")
 
-# ------------------------
-# 📝 AUDITAR INTEGRAÇÃO EVEREST
-# ------------------------
-elif opcao == "📝 Auditar integração Everest":
+# ======================
+# 📝 Auditar integração Everest
+# ======================
+with tab3:
     st.info("🔍 Aqui você poderá auditar a integração com o Everest.")
