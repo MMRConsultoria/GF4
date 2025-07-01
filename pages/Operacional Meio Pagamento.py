@@ -165,7 +165,13 @@ with tab1:
 
                 if len(meios_nao_cadastrados) > 0:
                     tem_erros = True
-                    col1.markdown(f"<div style='color:#856404; font-size:0.95rem; margin-top:5px;'>⚠️ {len(meios_nao_cadastrados)} meio(s) de pagamento não localizado(s). Cadastre na Tabela Meio Pagamento e reprocessar!</div>", unsafe_allow_html=True)
+                    lista_meios = "<br>".join([f"- {m}" for m in meios_nao_cadastrados])
+                    col1.markdown(f"""
+                        <div style='color:#856404; font-size:0.95rem; margin-top:5px;'>
+                        ⚠️ {len(meios_nao_cadastrados)} meio(s) de pagamento não localizado(s):<br>{lista_meios}<br>
+                        Cadastre na Tabela Meio Pagamento e reprocessar!
+                        </div>
+                    """, unsafe_allow_html=True)
 
                 valor_total_formatado = f"R$ {df['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                 col2.markdown(f"<div style='font-size:1.2rem;'>💰 <strong>Valor total</strong><br><span style='color:green;'>{valor_total_formatado}</span></div>", unsafe_allow_html=True)
