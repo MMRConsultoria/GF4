@@ -151,13 +151,45 @@ with tab1:
                 df["Ano"] = pd.to_datetime(df["Data"], dayfirst=True).dt.year
                 df = df[["Data", "Dia da Semana", "Meio de Pagamento", "Loja","Código Everest", "Grupo", "Código Grupo Everest","Valor (R$)", "Mês", "Ano"]]
 
-                st.session_state.df_final = df
+                df_meios_pgto = pd.DataFrame(planilha.worksheet("Tabela Meio Pagamento").get_all_records())
+                meios_cadastrados = df_meios_pgto["Meio de Pagamento"].astype(str).str.strip().str.lower().unique()
+                meios_usados = df["Meio de Pagamento"].astype(str).str.strip().str.lower().unique()
+                meios_nao_cadastrados = [m for m in meios_usados if m not in meios_cadastrados]
+
+                lojas_sem_codigo = df[df["Código Everest"].isna()]["Loja"].unique()
 
                 col1, col2 = st.columns(2)
                 col1.markdown(f"<div style='font-size:1.2rem;'>📅 <strong>Período processado</strong><br>{periodo_min} até {periodo_max}</div>", unsafe_allow_html=True)
+
+                tem_erros = False
+
+                if len(meios_nao_cadastrados) > 0:
+                    tem_erros = True
+                    lista_meios = "<br>".join([f"- {m}" for m in meios_nao_cadastrados])
+                    col1.markdown(f"""
+                        <div style='color:#856404; font-size:0.95rem; margin-top:5px;'>
+                        ⚠️ {len(meios_nao_cadastrados)} meio(s) de pagamento não localizado(s):<br>{lista_meios}<br>
+                        </div>
+                    """, unsafe_allow_html=True)
+
                 valor_total_formatado = f"R$ {df['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                 col2.markdown(f"<div style='font-size:1.2rem;'>💰 <strong>Valor total</strong><br><span style='color:green;'>{valor_total_formatado}</span></div>", unsafe_allow_html=True)
 
+                if len(lojas_sem_codigo) > 0:
+                    tem_erros = True
+                    st.markdown(f"<div style='color:#856404; font-size:0.95rem; margin-top:5px;'>⚠️ Lojas sem código Everest cadastrado: {', '.join(lojas_sem_codigo)}<br>🔗 <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit' target='_blank' style='color:#0d6efd;'>Atualize os dados na planilha de empresas</a></div>", unsafe_allow_html=True)
+
+                if not tem_erros:
+                    st.success("✅ Relatório de faturamento por meio de pagamento gerado com sucesso!")
+
+                    # Salva no session_state
+                    st.session_state.df_final = df
+                    
+                    output = BytesIO()
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                        df.to_excel(writer, index=False, sheet_name="FaturamentoPorMeio")
+                    output.seek(0)
+                    st.download_button("📥 Baixar relatório", data=output, file_name="FaturamentoPorMeio_transformado.xlsx")
 # ======================
 # 🔄 Atualizar Google Sheets
 # ======================
