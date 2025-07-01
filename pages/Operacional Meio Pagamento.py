@@ -70,7 +70,6 @@ with tab1:
         try:
             xls = pd.ExcelFile(uploaded_file)
             abas_disponiveis = xls.sheet_names
-
             aba_escolhida = abas_disponiveis[0] if len(abas_disponiveis) == 1 else st.selectbox(
                 "Escolha a aba para processar", abas_disponiveis)
 
@@ -148,19 +147,15 @@ with tab1:
                 valor_total = f"R$ {df_meio_pagamento['Valor (R$)'].sum():,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                 col2.markdown(f"<div style='font-size:1.2rem;'>💰 Valor total<br><span style='color:green;'>{valor_total}</span></div>", unsafe_allow_html=True)
 
-                # Só permite download se todas lojas estiverem cadastradas
+                # 🚀 Agora valida as duas regras ao mesmo tempo
+                df_meio_pagamento["Meio de Pagamento"] = df_meio_pagamento["Meio de Pagamento"].str.strip().str.lower()
                 empresas_nao_localizadas = df_meio_pagamento[df_meio_pagamento["Código Everest"].isna()]["Loja"].unique()
-                if len(empresas_nao_localizadas) > 0:
-                    empresas_nao_localizadas_str = "<br>".join(empresas_nao_localizadas)
-                    mensagem = f"""
-                    ⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s), cadastre e reprocesse novamente!<br>
-                    {empresas_nao_localizadas_str}
-                    <br>✏️ Atualize a tabela clicando 
-                    <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU' target='_blank'><strong>aqui</strong></a>.
-                    """
-                    st.markdown(mensagem, unsafe_allow_html=True)
-                else:
-                    st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
+                meios_nao_localizados = df_meio_pagamento[
+                    ~df_meio_pagamento["Meio de Pagamento"].isin(df_meio_pgto_google["Meio de Pagamento"])
+                ]["Meio de Pagamento"].unique()
+
+                if len(empresas_nao_localizadas) == 0 and len(meios_nao_localizados) == 0:
+                    st.success("✅ Todas as empresas e todos os meios de pagamento foram localizados na Tabela_Empresa!")
 
                     output = BytesIO()
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
@@ -173,6 +168,24 @@ with tab1:
                         file_name="FaturamentoPorMeio.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
+                else:
+                    if len(empresas_nao_localizadas) > 0:
+                        empresas_nao_localizadas_str = "<br>".join(empresas_nao_localizadas)
+                        mensagem_emp = f"""
+                        ⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s), cadastre e reprocesse!<br>
+                        {empresas_nao_localizadas_str}
+                        <br>✏️ Atualize a tabela clicando 
+                        <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU' target='_blank'><strong>aqui</strong></a>.
+                        """
+                        st.markdown(mensagem_emp, unsafe_allow_html=True)
+
+                    if len(meios_nao_localizados) > 0:
+                        meios_nao_localizados_str = "<br>".join(meios_nao_localizados)
+                        mensagem_pgto = f"""
+                        ⚠️ {len(meios_nao_localizados)} meio(s) de pagamento não cadastrado(s), cadastre e reprocesse!<br>
+                        {meios_nao_localizados_str}
+                        """
+                        st.markdown(mensagem_pgto, unsafe_allow_html=True)
 
 # ======================
 # 🔄 Aba 2
