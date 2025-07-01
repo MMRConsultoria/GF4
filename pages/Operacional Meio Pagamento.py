@@ -207,7 +207,7 @@ with tab2:
 
         if all(col in df_final.columns for col in ["Meio de Pagamento", "Loja", "Data"]):
             
-            lojas_nao_cadastradas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
+            lojas_nao_cadastradas = df_final[df_final["Codigo Everest"].isna()]["Loja"].unique()
             todas_lojas_ok = len(lojas_nao_cadastradas) == 0
 
             # Chave única de duplicação
@@ -216,7 +216,7 @@ with tab2:
             df_final['M'] = df_final['M'].apply(str)
 
             # Converter valores
-            df_final['Valor (R$)'] = df_final['Valor (R$)'].apply(lambda x: float(str(x).replace(',', '.')) if pd.notnull(x) else x)
+            df_final['Valor'] = df_final['Valor'].apply(lambda x: float(str(x).replace(',', '.')) if pd.notnull(x) else x)
             df_final['Data'] = pd.to_datetime(df_final['Data'].astype(str).str.replace("'", "").str.strip(), dayfirst=True)
             df_final['Data'] = (df_final['Data'] - pd.Timestamp("1899-12-30")).dt.days
 
@@ -227,8 +227,8 @@ with tab2:
                 except:
                     return ""
 
-            df_final['Código Everest'] = df_final['Código Everest'].apply(to_int_safe)
-            df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(to_int_safe)
+            df_final['Codigo Everest'] = df_final['Codigo Everest'].apply(to_int_safe)
+            df_final['Cod Grupo Empresas'] = df_final['Cod Grupo Empresas'].apply(to_int_safe)
             df_final['Ano'] = df_final['Ano'].apply(to_int_safe)
 
             # Conectar
@@ -276,6 +276,7 @@ with tab2:
             st.warning("⚠️ O dataframe carregado não tem as colunas necessárias ('Data', 'Meio de Pagamento' e 'Loja'). Volte para a aba 1 e faça o processamento.")
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
 
 
 
