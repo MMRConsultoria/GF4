@@ -36,7 +36,7 @@ if not st.session_state.get("acesso_liberado"):
 st.markdown("""
     <div style='display: flex; align-items: center; gap: 10px;'>
         <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
-        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatório Vendas Diarias</h1>
+        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Meio de Pagamento</h1>
     </div>
 """, unsafe_allow_html=True)
 
