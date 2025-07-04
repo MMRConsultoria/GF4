@@ -238,7 +238,7 @@ with tab2:
 # ======================
 
 with tab3:
-    st.header("📊 Relatório Consolidado direto do Google Sheets")
+    st.header("📊 Relatório Consolidado por Meio de Pagamento (Todas as Lojas)")
 
     try:
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
@@ -258,105 +258,63 @@ with tab3:
             .astype(float)
         )
 
-        # Datas
+        # Converte datas
         df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
         df_relatorio = df_relatorio[df_relatorio["Data"].notna()]
-        df_relatorio["Mês"] = df_relatorio["Data"].dt.month.map({
-            1:'jan',2:'fev',3:'mar',4:'abr',5:'mai',6:'jun',
-            7:'jul',8:'ago',9:'set',10:'out',11:'nov',12:'dez'})
-        df_relatorio["Ano"] = df_relatorio["Data"].dt.year
 
-        # Filtros
-        anos_disponiveis = sorted(df_relatorio["Ano"].dropna().unique())
-        ano_sel = st.selectbox("Ano:", anos_disponiveis, index=len(anos_disponiveis)-1)
-        meses = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]
-        meses_disponiveis = df_relatorio[df_relatorio["Ano"]==ano_sel]["Mês"].unique()
-        mes_sel = st.selectbox("Mês:", [m for m in meses if m in meses_disponiveis])
+        # Filtro por intervalo de datas
+        min_data = df_relatorio["Data"].min().date()
+        max_data = df_relatorio["Data"].max().date()
+        data_inicio, data_fim = st.date_input(
+            "Selecione o período:",
+            value=(min_data, max_data),
+            min_value=min_data,
+            max_value=max_data
+        )
 
-        df_filtrado = df_relatorio[
-            (df_relatorio["Ano"] == ano_sel) &
-            (df_relatorio["Mês"] == mes_sel)
-        ]
-
-        if df_filtrado.empty:
-            st.info("🔍 Não há dados para o período selecionado.")
+        if data_inicio > data_fim:
+            st.warning("🚫 A data inicial não pode ser maior que a data final.")
         else:
-            # 🔝 Total geral por Loja
-            total_geral = df_filtrado["Valor (R$)"].sum()
-            linha_total = pd.DataFrame({
-                "Loja": ["TOTAL GERAL"],
-                "Valor (R$)": [f"R$ {total_geral:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")]
-            })
-            df_total_loja = df_filtrado.groupby("Loja")["Valor (R$)"].sum().reset_index()
-            df_total_loja["Valor (R$)"] = df_total_loja["Valor (R$)"].map(
-                lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            )
-            df_total_loja = pd.concat([linha_total, df_total_loja], ignore_index=True)
-            st.subheader("📌 Total por Loja")
-            st.dataframe(df_total_loja, use_container_width=True)
+            # Filtra dataframe
+            df_filtrado = df_relatorio[
+                (df_relatorio["Data"].dt.date >= data_inicio) &
+                (df_relatorio["Data"].dt.date <= data_fim)
+            ]
 
-            # Download Loja
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df_total_loja.to_excel(writer, index=False, sheet_name="Total por Loja")
-            output.seek(0)
-            st.download_button(
-                "📥 Baixar por Loja (Excel)",
-                data=output,
-                file_name=f"Relatorio_Lojas_{mes_sel}_{ano_sel}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+            if df_filtrado.empty:
+                st.info("🔍 Não há dados para o período selecionado.")
+            else:
+                # Total geral
+                total_geral = df_filtrado["Valor (R$)"].sum()
+                linha_total = pd.DataFrame({
+                    "Meio de Pagamento": ["TOTAL GERAL"],
+                    "Valor (R$)": [f"R$ {total_geral:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")]
+                })
 
-            # 🔝 Total por Meio de Pagamento
-            st.subheader("📌 Total por Meio de Pagamento")
-            total_mp = df_filtrado["Valor (R$)"].sum()
-            linha_total_mp = pd.DataFrame({
-                "Meio de Pagamento": ["TOTAL GERAL"],
-                "Valor (R$)": [f"R$ {total_mp:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")]
-            })
-            df_total_mp = df_filtrado.groupby("Meio de Pagamento")["Valor (R$)"].sum().reset_index()
-            df_total_mp["Valor (R$)"] = df_total_mp["Valor (R$)"].map(
-                lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            )
-            df_total_mp = pd.concat([linha_total_mp, df_total_mp], ignore_index=True)
-            st.dataframe(df_total_mp, use_container_width=True)
+                # Total por Meio de Pagamento
+                df_total_mp = df_filtrado.groupby("Meio de Pagamento")["Valor (R$)"].sum().reset_index()
+                df_total_mp["Valor (R$)"] = df_total_mp["Valor (R$)"].map(
+                    lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                )
 
-            output_mp = BytesIO()
-            with pd.ExcelWriter(output_mp, engine='openpyxl') as writer:
-                df_total_mp.to_excel(writer, index=False, sheet_name="Total por MP")
-            output_mp.seek(0)
-            st.download_button(
-                "📥 Baixar por Meio de Pagamento (Excel)",
-                data=output_mp,
-                file_name=f"Relatorio_MeioPgto_{mes_sel}_{ano_sel}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+                # Junta total geral no topo
+                df_total_mp = pd.concat([linha_total, df_total_mp], ignore_index=True)
 
-            # 🔝 Total por Data
-            st.subheader("📌 Total por Data")
-            total_data = df_filtrado["Valor (R$)"].sum()
-            linha_total_data = pd.DataFrame({
-                "Data": ["TOTAL GERAL"],
-                "Valor (R$)": [f"R$ {total_data:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")]
-            })
-            df_total_data = df_filtrado.groupby("Data")["Valor (R$)"].sum().reset_index()
-            df_total_data["Data"] = df_total_data["Data"].dt.strftime("%d/%m/%Y")
-            df_total_data["Valor (R$)"] = df_total_data["Valor (R$)"].map(
-                lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            )
-            df_total_data = pd.concat([linha_total_data, df_total_data], ignore_index=True)
-            st.dataframe(df_total_data, use_container_width=True)
+                st.subheader("📌 Total por Meio de Pagamento")
+                st.dataframe(df_total_mp, use_container_width=True)
 
-            output_data = BytesIO()
-            with pd.ExcelWriter(output_data, engine='openpyxl') as writer:
-                df_total_data.to_excel(writer, index=False, sheet_name="Total por Data")
-            output_data.seek(0)
-            st.download_button(
-                "📥 Baixar por Data (Excel)",
-                data=output_data,
-                file_name=f"Relatorio_Data_{mes_sel}_{ano_sel}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+                # Download Excel
+                output = BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    df_total_mp.to_excel(writer, index=False, sheet_name="Total por Meio de Pagamento")
+                output.seek(0)
+
+                st.download_button(
+                    "📥 Baixar Relatório Excel",
+                    data=output,
+                    file_name=f"Relatorio_MP_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
 
     except Exception as e:
         st.error(f"❌ Erro ao acessar Google Sheets: {e}")
