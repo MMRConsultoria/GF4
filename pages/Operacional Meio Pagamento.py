@@ -236,47 +236,59 @@ with tab2:
 # ======================
 # 📝 Aba 3
 # ======================
+
 with tab3:
-    st.header("📊 Relatório consolidado")
+    st.header("📊 Relatório Consolidado direto do Google Sheets")
 
-    if 'df_meio_pagamento' not in st.session_state:
-        st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
-    else:
-        df_relatorio = st.session_state.df_meio_pagamento.copy()
+    try:
+        aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
+        df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
 
-        # Filtro por ano e mês
-        anos = sorted(df_relatorio["Ano"].dropna().unique())
-        ano_selecionado = st.selectbox("Selecione o Ano:", anos, index=len(anos)-1)
-
-        meses = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]
-        meses_disponiveis = df_relatorio[df_relatorio["Ano"]==ano_selecionado]["Mês"].unique()
-        mes_selecionado = st.selectbox("Selecione o Mês:", [m for m in meses if m in meses_disponiveis])
-
-        # Filtra o dataframe
-        df_filtrado = df_relatorio[
-            (df_relatorio["Ano"] == ano_selecionado) &
-            (df_relatorio["Mês"] == mes_selecionado)
-        ]
-
-        if df_filtrado.empty:
-            st.info("Não há dados para o período selecionado.")
+        if df_relatorio.empty or "Data" not in df_relatorio.columns:
+            st.info("🚫 Não há dados disponíveis na planilha 'Faturamento Meio Pagamento'.")
         else:
-            # Total por loja
-            df_total_loja = df_filtrado.groupby(["Loja"]).agg({"Valor (R$)": "sum"}).reset_index()
-            df_total_loja["Valor (R$)"] = df_total_loja["Valor (R$)"].map(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            # Ajusta colunas
+            df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], origin="1899-12-30", unit="D")
+            df_relatorio["Mês"] = df_relatorio["Data"].dt.month.map({
+                1:'jan',2:'fev',3:'mar',4:'abr',5:'mai',6:'jun',
+                7:'jul',8:'ago',9:'set',10:'out',11:'nov',12:'dez'})
+            df_relatorio["Ano"] = df_relatorio["Data"].dt.year
 
-            st.subheader("📌 Total por Loja")
-            st.dataframe(df_total_loja, use_container_width=True)
+            # Filtros
+            anos_disponiveis = sorted(df_relatorio["Ano"].dropna().unique())
+            ano_sel = st.selectbox("Ano:", anos_disponiveis, index=len(anos_disponiveis)-1)
 
-            # Download do relatório
-            output_rel = BytesIO()
-            with pd.ExcelWriter(output_rel, engine='openpyxl') as writer:
-                df_total_loja.to_excel(writer, index=False, sheet_name="Total por Loja")
-            output_rel.seek(0)
+            meses = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]
+            meses_disponiveis = df_relatorio[df_relatorio["Ano"]==ano_sel]["Mês"].unique()
+            mes_sel = st.selectbox("Mês:", [m for m in meses if m in meses_disponiveis])
 
-            st.download_button(
-                "📥 Baixar Relatório por Loja (Excel)",
-                data=output_rel,
-                file_name=f"Relatorio_Total_por_Loja_{mes_selecionado}_{ano_selecionado}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+            # Filtra dados
+            df_filtrado = df_relatorio[
+                (df_relatorio["Ano"] == ano_sel) &
+                (df_relatorio["Mês"] == mes_sel)
+            ]
+
+            if df_filtrado.empty:
+                st.info("🔍 Não há dados para o período selecionado.")
+            else:
+                # Total por loja
+                df_total_loja = df_filtrado.groupby("Loja")["Valor (R$)"].sum().reset_index()
+                df_total_loja["Valor (R$)"] = df_total_loja["Valor (R$)"].map(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+                st.subheader("📌 Total por Loja")
+                st.dataframe(df_total_loja, use_container_width=True)
+
+                # Download
+                output = BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    df_total_loja.to_excel(writer, index=False, sheet_name="Total por Loja")
+                output.seek(0)
+
+                st.download_button(
+                    "📥 Baixar Relatório Excel",
+                    data=output,
+                    file_name=f"Relatorio_Lojas_{mes_sel}_{ano_sel}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+    except Exception as e:
+        st.error(f"❌ Erro ao acessar o Google Sheets: {e}")
