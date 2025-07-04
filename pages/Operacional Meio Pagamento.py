@@ -325,7 +325,7 @@ with tab3:
                 output.seek(0)
 
                 st.download_button(
-                    "📥 Baixar Relatório Excel (Valores Numéricos)",
+                    "📥 Baixar Excel",
                     data=output,
                     file_name=f"Relatorio_MP_PorDia_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
