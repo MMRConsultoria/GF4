@@ -275,4 +275,30 @@ with tab3:
 
             df_filtrado = df_relatorio[
                 (df_relatorio["Ano"] == ano_sel) &
-                (df_relatorio["Mês"]()_
+                (df_relatorio["Mês"] == mes_sel)
+            ]
+
+            if df_filtrado.empty:
+                st.info("🔍 Não há dados para o período selecionado.")
+            else:
+                df_total_loja = df_filtrado.groupby("Loja")["Valor (R$)"].sum().reset_index()
+                df_total_loja["Valor (R$)"] = df_total_loja["Valor (R$)"].map(
+                    lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                )
+
+                st.subheader("📌 Total por Loja")
+                st.dataframe(df_total_loja, use_container_width=True)
+
+                output = BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    df_total_loja.to_excel(writer, index=False, sheet_name="Total por Loja")
+                output.seek(0)
+
+                st.download_button(
+                    "📥 Baixar Relatório Excel",
+                    data=output,
+                    file_name=f"Relatorio_Lojas_{mes_sel}_{ano_sel}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+    except Exception as e:
+        st.error(f"❌ Erro ao acessar Google Sheets: {e}")
