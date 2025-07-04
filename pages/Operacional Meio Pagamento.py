@@ -237,4 +237,46 @@ with tab2:
 # 📝 Aba 3
 # ======================
 with tab3:
-    st.info("🔍 Desenvolvimento")
+    st.header("📊 Relatório consolidado")
+
+    if 'df_meio_pagamento' not in st.session_state:
+        st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+    else:
+        df_relatorio = st.session_state.df_meio_pagamento.copy()
+
+        # Filtro por ano e mês
+        anos = sorted(df_relatorio["Ano"].dropna().unique())
+        ano_selecionado = st.selectbox("Selecione o Ano:", anos, index=len(anos)-1)
+
+        meses = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]
+        meses_disponiveis = df_relatorio[df_relatorio["Ano"]==ano_selecionado]["Mês"].unique()
+        mes_selecionado = st.selectbox("Selecione o Mês:", [m for m in meses if m in meses_disponiveis])
+
+        # Filtra o dataframe
+        df_filtrado = df_relatorio[
+            (df_relatorio["Ano"] == ano_selecionado) &
+            (df_relatorio["Mês"] == mes_selecionado)
+        ]
+
+        if df_filtrado.empty:
+            st.info("Não há dados para o período selecionado.")
+        else:
+            # Total por loja
+            df_total_loja = df_filtrado.groupby(["Loja"]).agg({"Valor (R$)": "sum"}).reset_index()
+            df_total_loja["Valor (R$)"] = df_total_loja["Valor (R$)"].map(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+            st.subheader("📌 Total por Loja")
+            st.dataframe(df_total_loja, use_container_width=True)
+
+            # Download do relatório
+            output_rel = BytesIO()
+            with pd.ExcelWriter(output_rel, engine='openpyxl') as writer:
+                df_total_loja.to_excel(writer, index=False, sheet_name="Total por Loja")
+            output_rel.seek(0)
+
+            st.download_button(
+                "📥 Baixar Relatório por Loja (Excel)",
+                data=output_rel,
+                file_name=f"Relatorio_Total_por_Loja_{mes_selecionado}_{ano_selecionado}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
