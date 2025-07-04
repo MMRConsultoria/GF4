@@ -238,7 +238,7 @@ with tab2:
 # ======================
 
 with tab3:
-    st.header("📊 Relatório Consolidado por Meio de Pagamento - Coluna por Dia")
+    st.header("📊 Relatório Consolidado por Meio de Pagamento - Coluna por Dia e Total Geral")
 
     try:
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
@@ -294,21 +294,25 @@ with tab3:
                     fill_value=0
                 ).reset_index()
 
-                # Calcula total geral (por coluna)
-                total_geral_linha = pd.DataFrame([["TOTAL GERAL"] + df_pivot.drop(columns="Meio de Pagamento").sum().tolist()],
-                                                 columns=df_pivot.columns)
+                # Adiciona coluna TOTAL GERAL (soma das datas para cada MP)
+                df_pivot["TOTAL GERAL"] = df_pivot.drop(columns="Meio de Pagamento").sum(axis=1)
+
+                # Calcula linha TOTAL GERAL (soma dos MPs para cada data + total geral)
+                totais_por_coluna = df_pivot.drop(columns="Meio de Pagamento").sum()
+                linha_total = pd.DataFrame([["TOTAL GERAL"] + totais_por_coluna.tolist()],
+                                           columns=df_pivot.columns)
 
                 # Junta o total geral no final
-                df_pivot_total = pd.concat([df_pivot, total_geral_linha], ignore_index=True)
+                df_pivot_total = pd.concat([df_pivot, linha_total], ignore_index=True)
 
-                # Prepara para exibir no Streamlit (com R$)
+                # Prepara para exibir no Streamlit (formata como R$)
                 df_pivot_exibe = df_pivot_total.copy()
                 for col in df_pivot_exibe.columns[1:]:
                     df_pivot_exibe[col] = df_pivot_exibe[col].map(
                         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                     )
 
-                st.subheader("📌 Consolidado por Meio de Pagamento com Colunas por Dia")
+                st.subheader("📌 Consolidado por Meio de Pagamento (Colunas por Dia + Total Geral)")
                 st.dataframe(df_pivot_exibe, use_container_width=True)
 
                 # Download Excel com valores numéricos
