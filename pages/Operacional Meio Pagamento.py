@@ -243,19 +243,24 @@ with tab3:
     try:
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
         df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
-
-        # Limpa cabeçalhos
         df_relatorio.columns = df_relatorio.columns.str.strip()
 
-        # Verifica se tem coluna Data
+        # Converte valor (corrigindo vírgulas, espaços etc)
+        df_relatorio["Valor (R$)"] = (
+            df_relatorio["Valor (R$)"]
+            .astype(str)
+            .str.replace(" ", "")
+            .str.replace(".", "")
+            .str.replace(",", ".")
+            .astype(float)
+        )
+
+        # Datas
         if "Data" not in df_relatorio.columns:
             st.warning(f"🚫 A coluna 'Data' não existe. Colunas encontradas: {list(df_relatorio.columns)}")
         else:
-            # Converte para datetime
             df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
             df_relatorio = df_relatorio[df_relatorio["Data"].notna()]
-
-            # Gera Mês e Ano
             df_relatorio["Mês"] = df_relatorio["Data"].dt.month.map({
                 1:'jan',2:'fev',3:'mar',4:'abr',5:'mai',6:'jun',
                 7:'jul',8:'ago',9:'set',10:'out',11:'nov',12:'dez'})
@@ -264,40 +269,10 @@ with tab3:
             # Filtros
             anos_disponiveis = sorted(df_relatorio["Ano"].dropna().unique())
             ano_sel = st.selectbox("Ano:", anos_disponiveis, index=len(anos_disponiveis)-1)
-
             meses = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]
             meses_disponiveis = df_relatorio[df_relatorio["Ano"]==ano_sel]["Mês"].unique()
             mes_sel = st.selectbox("Mês:", [m for m in meses if m in meses_disponiveis])
 
-            # Filtra dados
             df_filtrado = df_relatorio[
                 (df_relatorio["Ano"] == ano_sel) &
-                (df_relatorio["Mês"] == mes_sel)
-            ]
-
-            if df_filtrado.empty:
-                st.info("🔍 Não há dados para o período selecionado.")
-            else:
-                # Total por Loja
-                df_total_loja = df_filtrado.groupby("Loja")["Valor (R$)"].sum().reset_index()
-                df_total_loja["Valor (R$)"] = df_total_loja["Valor (R$)"].map(
-                    lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                )
-
-                st.subheader("📌 Total por Loja")
-                st.dataframe(df_total_loja, use_container_width=True)
-
-                # Download
-                output = BytesIO()
-                with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    df_total_loja.to_excel(writer, index=False, sheet_name="Total por Loja")
-                output.seek(0)
-
-                st.download_button(
-                    "📥 Baixar Relatório Excel",
-                    data=output,
-                    file_name=f"Relatorio_Lojas_{mes_sel}_{ano_sel}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-    except Exception as e:
-        st.error(f"❌ Erro ao acessar Google Sheets: {e}")
+                (df_relatorio["Mês"]()_
