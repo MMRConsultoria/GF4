@@ -238,7 +238,7 @@ with tab2:
 # ======================
 
 with tab3:
-    st.header("📊 Relatório Consolidado por Meio de Pagamento (Todas as Lojas)")
+    st.header("📊 Relatório Consolidado por Meio de Pagamento - Coluna por Dia")
 
     try:
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
@@ -284,45 +284,43 @@ with tab3:
             if df_filtrado.empty:
                 st.info("🔍 Não há dados para o período selecionado.")
             else:
-                # Total geral
-                total_geral = df_filtrado["Valor (R$)"].sum()
-                linha_total = pd.DataFrame({
-                    "Meio de Pagamento": ["TOTAL GERAL"],
-                    "Valor (R$)": [total_geral]
-                })
+                # Monta pivot table com Meio de Pagamento vs Data
+                df_pivot = pd.pivot_table(
+                    df_filtrado,
+                    index="Meio de Pagamento",
+                    columns=df_filtrado["Data"].dt.strftime("%d/%m/%Y"),
+                    values="Valor (R$)",
+                    aggfunc="sum",
+                    fill_value=0
+                ).reset_index()
 
-                # Total por Meio de Pagamento ordenado do maior pro menor
-                df_total_mp = df_filtrado.groupby("Meio de Pagamento")["Valor (R$)"].sum().reset_index()
-                df_total_mp = df_total_mp.sort_values(by="Valor (R$)", ascending=False)
+                # Calcula total geral (por coluna)
+                total_geral_linha = pd.DataFrame([["TOTAL GERAL"] + df_pivot.drop(columns="Meio de Pagamento").sum().tolist()],
+                                                 columns=df_pivot.columns)
 
-                # Junta total geral no topo para exportar
-                df_total_mp_export = pd.concat([linha_total, df_total_mp], ignore_index=True)
+                # Junta o total geral no final
+                df_pivot_total = pd.concat([df_pivot, total_geral_linha], ignore_index=True)
 
-                # Para exibir no Streamlit, formata com R$
-                df_total_mp_exibe = df_total_mp.copy()
-                df_total_mp_exibe["Valor (R$)"] = df_total_mp_exibe["Valor (R$)"].map(
-                    lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                )
-                linha_total_exibe = pd.DataFrame({
-                    "Meio de Pagamento": ["TOTAL GERAL"],
-                    "Valor (R$)": [f"R$ {total_geral:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")]
-                })
-                df_total_mp_exibe = pd.concat([linha_total_exibe, df_total_mp_exibe], ignore_index=True)
+                # Prepara para exibir no Streamlit (com R$)
+                df_pivot_exibe = df_pivot_total.copy()
+                for col in df_pivot_exibe.columns[1:]:
+                    df_pivot_exibe[col] = df_pivot_exibe[col].map(
+                        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                    )
 
-                # Exibe no app
-                st.subheader("📌 Total por Meio de Pagamento")
-                st.dataframe(df_total_mp_exibe, use_container_width=True)
+                st.subheader("📌 Consolidado por Meio de Pagamento com Colunas por Dia")
+                st.dataframe(df_pivot_exibe, use_container_width=True)
 
-                # Download Excel (valores numéricos)
+                # Download Excel com valores numéricos
                 output = BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    df_total_mp_export.to_excel(writer, index=False, sheet_name="Total por Meio de Pagamento")
+                    df_pivot_total.to_excel(writer, index=False, sheet_name="Total por Dia")
                 output.seek(0)
 
                 st.download_button(
                     "📥 Baixar Relatório Excel (Valores Numéricos)",
                     data=output,
-                    file_name=f"Relatorio_MP_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
+                    file_name=f"Relatorio_MP_PorDia_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
