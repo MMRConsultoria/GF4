@@ -247,12 +247,15 @@ with tab3:
         # Limpa cabeçalhos
         df_relatorio.columns = df_relatorio.columns.str.strip()
 
-        # Checa se tem coluna Data
+        # Verifica se tem coluna Data
         if "Data" not in df_relatorio.columns:
             st.warning(f"🚫 A coluna 'Data' não existe. Colunas encontradas: {list(df_relatorio.columns)}")
         else:
-            # Prepara dados
-            df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], origin="1899-12-30", unit="D")
+            # Converte para datetime
+            df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
+            df_relatorio = df_relatorio[df_relatorio["Data"].notna()]
+
+            # Gera Mês e Ano
             df_relatorio["Mês"] = df_relatorio["Data"].dt.month.map({
                 1:'jan',2:'fev',3:'mar',4:'abr',5:'mai',6:'jun',
                 7:'jul',8:'ago',9:'set',10:'out',11:'nov',12:'dez'})
