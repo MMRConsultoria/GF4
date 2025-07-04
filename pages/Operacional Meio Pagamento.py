@@ -315,7 +315,7 @@ with tab3:
                         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                     )
 
-                st.subheader("📌 Consolidado por Meio de Pagamento (Total Geral no topo, ordenado)")
+                #st.subheader("📌 Consolidado por Meio de Pagamento (Total Geral no topo, ordenado)")
                 st.dataframe(df_pivot_exibe, use_container_width=True)
 
                 # Download Excel com valores numéricos
