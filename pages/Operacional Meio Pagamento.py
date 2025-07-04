@@ -238,7 +238,7 @@ with tab2:
 # ======================
 
 with tab3:
-    st.header("📊 Relatório Consolidado por Meio de Pagamento - Coluna por Dia + Total Geral")
+    #st.header("📊 Relatório Consolidado por Meio de Pagamento - Coluna por Dia + Total Geral")
 
     try:
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
