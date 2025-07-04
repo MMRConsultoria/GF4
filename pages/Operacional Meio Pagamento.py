@@ -244,10 +244,14 @@ with tab3:
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
         df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
 
-        if df_relatorio.empty or "Data" not in df_relatorio.columns:
-            st.info("🚫 Não há dados disponíveis na planilha 'Faturamento Meio Pagamento'.")
+        # Limpa cabeçalhos
+        df_relatorio.columns = df_relatorio.columns.str.strip()
+
+        # Checa se tem coluna Data
+        if "Data" not in df_relatorio.columns:
+            st.warning(f"🚫 A coluna 'Data' não existe. Colunas encontradas: {list(df_relatorio.columns)}")
         else:
-            # Ajusta colunas
+            # Prepara dados
             df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], origin="1899-12-30", unit="D")
             df_relatorio["Mês"] = df_relatorio["Data"].dt.month.map({
                 1:'jan',2:'fev',3:'mar',4:'abr',5:'mai',6:'jun',
@@ -271,9 +275,11 @@ with tab3:
             if df_filtrado.empty:
                 st.info("🔍 Não há dados para o período selecionado.")
             else:
-                # Total por loja
+                # Total por Loja
                 df_total_loja = df_filtrado.groupby("Loja")["Valor (R$)"].sum().reset_index()
-                df_total_loja["Valor (R$)"] = df_total_loja["Valor (R$)"].map(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                df_total_loja["Valor (R$)"] = df_total_loja["Valor (R$)"].map(
+                    lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                )
 
                 st.subheader("📌 Total por Loja")
                 st.dataframe(df_total_loja, use_container_width=True)
@@ -291,4 +297,4 @@ with tab3:
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
     except Exception as e:
-        st.error(f"❌ Erro ao acessar o Google Sheets: {e}")
+        st.error(f"❌ Erro ao acessar Google Sheets: {e}")
