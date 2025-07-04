@@ -288,29 +288,39 @@ with tab3:
                 total_geral = df_filtrado["Valor (R$)"].sum()
                 linha_total = pd.DataFrame({
                     "Meio de Pagamento": ["TOTAL GERAL"],
-                    "Valor (R$)": [f"R$ {total_geral:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")]
+                    "Valor (R$)": [total_geral]
                 })
 
-                # Total por Meio de Pagamento
+                # Total por Meio de Pagamento, ordenado do maior pro menor
                 df_total_mp = df_filtrado.groupby("Meio de Pagamento")["Valor (R$)"].sum().reset_index()
-                df_total_mp["Valor (R$)"] = df_total_mp["Valor (R$)"].map(
-                    lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                )
+                df_total_mp = df_total_mp.sort_values(by="Valor (R$)", ascending=False)
 
                 # Junta total geral no topo
-                df_total_mp = pd.concat([linha_total, df_total_mp], ignore_index=True)
+                df_total_mp_export = pd.concat([linha_total, df_total_mp], ignore_index=True)
 
+                # Para exibir no Streamlit, formata com R$
+                df_total_mp_exibe = df_total_mp.copy()
+                df_total_mp_exibe["Valor (R$)"] = df_total_mp_exibe["Valor (R$)"].map(
+                    lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                )
+                linha_total_exibe = pd.DataFrame({
+                    "Meio de Pagamento": ["TOTAL GERAL"],
+                    "Valor (R$)": [f"R$ {total_geral:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")]
+                })
+                df_total_mp_exibe = pd.concat([linha_total_exibe, df_total_mp_exibe], ignore_index=True)
+
+                # Exibe
                 st.subheader("📌 Total por Meio de Pagamento")
-                st.dataframe(df_total_mp, use_container_width=True)
+                st.dataframe(df_total_mp_exibe, use_container_width=True)
 
-                # Download Excel
+                # Download Excel com valores numéricos
                 output = BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    df_total_mp.to_excel(writer, index=False, sheet_name="Total por Meio de Pagamento")
+                    df_total_mp_export.to_excel(writer, index=False, sheet_name="Total por Meio de Pagamento")
                 output.seek(0)
 
                 st.download_button(
-                    "📥 Baixar Relatório Excel",
+                    "📥 Baixar Relatório Excel (Valores Numéricos)",
                     data=output,
                     file_name=f"Relatorio_MP_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
