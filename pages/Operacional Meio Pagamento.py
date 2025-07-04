@@ -238,7 +238,7 @@ with tab2:
 # ======================
 
 with tab3:
-    st.header("📊 Relatório Consolidado por Meio de Pagamento - Coluna por Dia e Total Geral")
+    st.header("📊 Relatório Consolidado por Meio de Pagamento - Coluna por Dia + Total Geral")
 
     try:
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
@@ -294,16 +294,19 @@ with tab3:
                     fill_value=0
                 ).reset_index()
 
-                # Adiciona coluna TOTAL GERAL (soma das datas para cada MP)
+                # Adiciona coluna TOTAL GERAL
                 df_pivot["TOTAL GERAL"] = df_pivot.drop(columns="Meio de Pagamento").sum(axis=1)
 
-                # Calcula linha TOTAL GERAL (soma dos MPs para cada data + total geral)
+                # Ordena do maior para o menor pelo TOTAL GERAL
+                df_pivot = df_pivot.sort_values(by="TOTAL GERAL", ascending=False)
+
+                # Calcula linha TOTAL GERAL (soma das linhas)
                 totais_por_coluna = df_pivot.drop(columns="Meio de Pagamento").sum()
                 linha_total = pd.DataFrame([["TOTAL GERAL"] + totais_por_coluna.tolist()],
                                            columns=df_pivot.columns)
 
-                # Junta o total geral no final
-                df_pivot_total = pd.concat([df_pivot, linha_total], ignore_index=True)
+                # Coloca a linha TOTAL GERAL no topo
+                df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
                 # Prepara para exibir no Streamlit (formata como R$)
                 df_pivot_exibe = df_pivot_total.copy()
@@ -312,7 +315,7 @@ with tab3:
                         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                     )
 
-                st.subheader("📌 Consolidado por Meio de Pagamento (Colunas por Dia + Total Geral)")
+                st.subheader("📌 Consolidado por Meio de Pagamento (Total Geral no topo, ordenado)")
                 st.dataframe(df_pivot_exibe, use_container_width=True)
 
                 # Download Excel com valores numéricos
@@ -330,3 +333,4 @@ with tab3:
 
     except Exception as e:
         st.error(f"❌ Erro ao acessar Google Sheets: {e}")
+
