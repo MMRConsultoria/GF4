@@ -241,11 +241,12 @@ with tab3:
     st.header("📊 Relatório Consolidado direto do Google Sheets")
 
     try:
+        # 🔌 Lê Google Sheets
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
         df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
         df_relatorio.columns = df_relatorio.columns.str.strip()
 
-        # Corrige valores: R$, parênteses negativos, pontos, vírgulas
+        # 🔄 Corrige valores monetários (remove R$, () negativos, pontos, vírgulas)
         df_relatorio["Valor (R$)"] = (
             df_relatorio["Valor (R$)"]
             .astype(str)
@@ -258,7 +259,7 @@ with tab3:
             .astype(float)
         )
 
-        # Converte datas
+        # 📅 Converte datas
         df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
         df_relatorio = df_relatorio[df_relatorio["Data"].notna()]
         df_relatorio["Mês"] = df_relatorio["Data"].dt.month.map({
@@ -266,13 +267,15 @@ with tab3:
             7:'jul',8:'ago',9:'set',10:'out',11:'nov',12:'dez'})
         df_relatorio["Ano"] = df_relatorio["Data"].dt.year
 
-        # Filtros
+        # 🗓️ Filtros
         anos_disponiveis = sorted(df_relatorio["Ano"].dropna().unique())
         ano_sel = st.selectbox("Ano:", anos_disponiveis, index=len(anos_disponiveis)-1)
+
         meses = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]
         meses_disponiveis = df_relatorio[df_relatorio["Ano"]==ano_sel]["Mês"].unique()
         mes_sel = st.selectbox("Mês:", [m for m in meses if m in meses_disponiveis])
 
+        # 🔍 Filtra dados
         df_filtrado = df_relatorio[
             (df_relatorio["Ano"] == ano_sel) &
             (df_relatorio["Mês"] == mes_sel)
@@ -281,14 +284,27 @@ with tab3:
         if df_filtrado.empty:
             st.info("🔍 Não há dados para o período selecionado.")
         else:
+            # 🔝 Total geral
+            total_geral = df_filtrado["Valor (R$)"].sum()
+            linha_total = pd.DataFrame({
+                "Loja": ["TOTAL GERAL"],
+                "Valor (R$)": [f"R$ {total_geral:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")]
+            })
+
+            # 🏪 Total por loja
             df_total_loja = df_filtrado.groupby("Loja")["Valor (R$)"].sum().reset_index()
             df_total_loja["Valor (R$)"] = df_total_loja["Valor (R$)"].map(
                 lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             )
 
+            # 🔗 Junta total geral no topo
+            df_total_loja = pd.concat([linha_total, df_total_loja], ignore_index=True)
+
+            # 📊 Exibe
             st.subheader("📌 Total por Loja")
             st.dataframe(df_total_loja, use_container_width=True)
 
+            # 💾 Download Excel
             output = BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
                 df_total_loja.to_excel(writer, index=False, sheet_name="Total por Loja")
