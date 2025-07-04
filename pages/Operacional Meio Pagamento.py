@@ -262,12 +262,12 @@ with tab3:
         df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
         df_relatorio = df_relatorio[df_relatorio["Data"].notna()]
 
-        # Filtro por intervalo de datas
+        # Filtro por intervalo de datas, default para último dia
         min_data = df_relatorio["Data"].min().date()
         max_data = df_relatorio["Data"].max().date()
         data_inicio, data_fim = st.date_input(
             "Selecione o período:",
-            value=(min_data, max_data),
+            value=(max_data, max_data),
             min_value=min_data,
             max_value=max_data
         )
@@ -291,11 +291,11 @@ with tab3:
                     "Valor (R$)": [total_geral]
                 })
 
-                # Total por Meio de Pagamento, ordenado do maior pro menor
+                # Total por Meio de Pagamento ordenado do maior pro menor
                 df_total_mp = df_filtrado.groupby("Meio de Pagamento")["Valor (R$)"].sum().reset_index()
                 df_total_mp = df_total_mp.sort_values(by="Valor (R$)", ascending=False)
 
-                # Junta total geral no topo
+                # Junta total geral no topo para exportar
                 df_total_mp_export = pd.concat([linha_total, df_total_mp], ignore_index=True)
 
                 # Para exibir no Streamlit, formata com R$
@@ -309,11 +309,11 @@ with tab3:
                 })
                 df_total_mp_exibe = pd.concat([linha_total_exibe, df_total_mp_exibe], ignore_index=True)
 
-                # Exibe
+                # Exibe no app
                 st.subheader("📌 Total por Meio de Pagamento")
                 st.dataframe(df_total_mp_exibe, use_container_width=True)
 
-                # Download Excel com valores numéricos
+                # Download Excel (valores numéricos)
                 output = BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     df_total_mp_export.to_excel(writer, index=False, sheet_name="Total por Meio de Pagamento")
