@@ -242,6 +242,7 @@ with tab3:
         pd.set_option('display.max_colwidth', 20)
         pd.set_option('display.width', 1000)
 
+        # Carrega dados
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
         df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
         df_relatorio.columns = df_relatorio.columns.str.strip()
@@ -249,6 +250,15 @@ with tab3:
         aba_meio_pagamento = planilha.worksheet("Tabela Meio Pagamento")
         df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
         df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip()
+
+        # 🚀 Normaliza coluna Antecipa S/N
+        colunas_corrigidas = []
+        for col in df_meio_pagamento.columns:
+            if "Antecipa" in col and "S" in col:
+                colunas_corrigidas.append("Antecipa S/N")
+            else:
+                colunas_corrigidas.append(col)
+        df_meio_pagamento.columns = colunas_corrigidas
 
         # Corrige valores
         df_relatorio["Valor (R$)"] = (
@@ -315,7 +325,7 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
-                    # Renomeia colunas
+                    # Renomeia datas
                     colunas_datas = [col for col in df_pivot.columns if "/" in col]
                     novo_nome_datas = {col: f"Vendas - {col}" for col in colunas_datas}
                     df_pivot.rename(columns=novo_nome_datas, inplace=True)
@@ -339,13 +349,11 @@ with tab3:
                     # Total vendas
                     df_intercalado["Total Vendas"] = df_intercalado[[c for c in df_intercalado.columns if "Vendas" in c]].sum(axis=1)
 
-                    # Linha total geral
                     totais_por_coluna = df_intercalado[[c for c in df_intercalado.columns if "Vendas" in c or "Vlr Taxa Bandeira" in c]].sum()
                     linha_total = pd.DataFrame([["Total Vendas", "", "", "", ""] + totais_por_coluna.tolist()],
                                                columns=df_intercalado.columns)
                     df_pivot_total = pd.concat([linha_total, df_intercalado], ignore_index=True)
 
-                    # Formatar
                     df_pivot_exibe = df_pivot_total.copy()
                     for col in [c for c in df_pivot_exibe.columns if "Vendas" in c or "Vlr Taxa Bandeira" in c or c == "Total Vendas"]:
                         df_pivot_exibe[col] = df_pivot_exibe[col].map(
