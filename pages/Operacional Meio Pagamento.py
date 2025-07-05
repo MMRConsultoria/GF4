@@ -306,39 +306,39 @@ with tab3:
                     df_completo["Taxa Bandeira"] = pd.to_numeric(df_completo["Taxa Bandeira"], errors="coerce").fillna(0) / 100
                     df_completo["Taxa Antecipação"] = pd.to_numeric(df_completo["Taxa Antecipação"], errors="coerce").fillna(0) / 100
 
-                    df_pivot_valor = pd.pivot_table(
+                    df_pivot = pd.pivot_table(
                         df_completo,
-                        index=["Meio de Pagamento", "Taxa Bandeira", "Taxa Antecipação", "Prazo", "Antecipa S/N"],
+                        index=["Meio de Pagamento", "Taxa Bandeira", "Taxa Antecipação", "Antecipa S/N", "Prazo"],
                         columns=df_completo["Data"].dt.strftime("%d/%m/%Y"),
                         values="Valor (R$)",
                         aggfunc="sum",
                         fill_value=0
                     ).reset_index()
 
-                    colunas_datas = [col for col in df_pivot_valor.columns if "/" in col]
+                    colunas_datas = [col for col in df_pivot.columns if "/" in col]
                     for col in colunas_datas:
-                        df_pivot_valor[col] = pd.to_numeric(df_pivot_valor[col], errors="coerce").fillna(0.0)
+                        df_pivot[col] = pd.to_numeric(df_pivot[col], errors="coerce").fillna(0.0)
 
                     for col in colunas_datas:
-                        df_pivot_valor[f"{col} - Taxa Bandeira"] = df_pivot_valor[col] * df_pivot_valor["Taxa Bandeira"]
-                        df_pivot_valor[f"{col} - Taxa Antecipação"] = df_pivot_valor[col] * df_pivot_valor["Taxa Antecipação"]
-                        df_pivot_valor[f"{col} - Liquido"] = df_pivot_valor[col] - df_pivot_valor[f"{col} - Taxa Bandeira"] - df_pivot_valor[f"{col} - Taxa Antecipação"]
+                        df_pivot[f"{col} - Taxa Bandeira"] = df_pivot[col] * df_pivot["Taxa Bandeira"]
+                        df_pivot[f"{col} - Taxa Antecipação"] = df_pivot[col] * df_pivot["Taxa Antecipação"]
+                        df_pivot[f"{col} - Liquido"] = df_pivot[col] - df_pivot[f"{col} - Taxa Bandeira"] - df_pivot[f"{col} - Taxa Antecipação"]
 
-                    cols_bandeira = [c for c in df_pivot_valor.columns if "- Taxa Bandeira" in c]
-                    cols_antecipacao = [c for c in df_pivot_valor.columns if "- Taxa Antecipação" in c]
-                    cols_liquido = [c for c in df_pivot_valor.columns if "- Liquido" in c]
+                    cols_bandeira = [c for c in df_pivot.columns if "- Taxa Bandeira" in c]
+                    cols_antecipacao = [c for c in df_pivot.columns if "- Taxa Antecipação" in c]
+                    cols_liquido = [c for c in df_pivot.columns if "- Liquido" in c]
 
-                    df_pivot_valor["TOTAL VENDAS"] = df_pivot_valor[colunas_datas].sum(axis=1)
-                    df_pivot_valor["TOTAL TAXA BANDEIRA"] = df_pivot_valor[cols_bandeira].sum(axis=1)
-                    df_pivot_valor["TOTAL TAXA ANTECIPACAO"] = df_pivot_valor[cols_antecipacao].sum(axis=1)
-                    df_pivot_valor["TOTAL LIQUIDO"] = df_pivot_valor[cols_liquido].sum(axis=1)
+                    df_pivot["TOTAL VENDAS"] = df_pivot[colunas_datas].sum(axis=1)
+                    df_pivot["TOTAL TAXA BANDEIRA"] = df_pivot[cols_bandeira].sum(axis=1)
+                    df_pivot["TOTAL TAXA ANTECIPACAO"] = df_pivot[cols_antecipacao].sum(axis=1)
+                    df_pivot["TOTAL LIQUIDO"] = df_pivot[cols_liquido].sum(axis=1)
 
-                    totais_por_coluna = df_pivot_valor.iloc[:, 5:].sum()
+                    totais_por_coluna = df_pivot.iloc[:, 5:].sum()
                     linha_total = pd.DataFrame(
                         [["TOTAL GERAL", "", "", "", ""] + totais_por_coluna.tolist()],
-                        columns=df_pivot_valor.columns
+                        columns=df_pivot.columns
                     )
-                    df_final_total = pd.concat([linha_total, df_pivot_valor], ignore_index=True)
+                    df_final_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
                     for col in df_final_total.columns[5:]:
                         df_final_total[col] = df_final_total[col].map(
