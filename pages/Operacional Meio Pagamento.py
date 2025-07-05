@@ -64,7 +64,6 @@ tab1, tab2, tab3 = st.tabs([
     "🔄 Atualizar Google Sheets",
     "📝 Desenvolvimento"
 ])
-
 # ======================
 # 📥 Aba 1
 # ======================
