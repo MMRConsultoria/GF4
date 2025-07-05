@@ -238,6 +238,10 @@ with tab2:
 
 with tab3:
     try:
+        import pandas as pd
+        pd.set_option('display.max_colwidth', 20)
+        pd.set_option('display.width', 1000)
+
         # Carrega dados
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
         df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
@@ -350,11 +354,11 @@ with tab3:
 
                 elif modo_relatorio == "Financeiro":
                     df_completo = df_filtrado.merge(
-                        df_meio_pagamento[["Meio de Pagamento", "Recebimento", "Antecipa S/N"]],
+                        df_meio_pagamento[["Meio de Pagamento", "Prazo", "Antecipa S/N"]],
                         on="Meio de Pagamento",
                         how="left"
                     )
-                    df_completo["Recebimento"] = pd.to_numeric(df_completo["Recebimento"], errors="coerce").fillna(0).astype(int)
+                    df_completo["Prazo"] = pd.to_numeric(df_completo["Prazo"], errors="coerce").fillna(0).astype(int)
                     df_completo["Antecipa S/N"] = df_completo["Antecipa S/N"].astype(str).str.strip().str.upper()
 
                     from pandas.tseries.offsets import BDay
@@ -362,7 +366,7 @@ with tab3:
                         if row["Antecipa S/N"] == "SIM":
                             return row["Data"] + BDay(1)
                         else:
-                            return row["Data"] + BDay(row["Recebimento"])
+                            return row["Data"] + BDay(row["Prazo"])
                     df_completo["Data Recebimento"] = df_completo.apply(calcula_recebimento, axis=1)
 
                     df_financeiro = df_completo.groupby(df_completo["Data Recebimento"].dt.date)["Valor (R$)"].sum().reset_index()
@@ -392,14 +396,14 @@ with tab3:
 
                 elif modo_relatorio == "Vendas + Prazo e Taxas":
                     df_completo = df_filtrado.merge(
-                        df_meio_pagamento[["Meio de Pagamento", "Recebimento", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"]],
+                        df_meio_pagamento[["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"]],
                         on="Meio de Pagamento",
                         how="left"
                     )
 
                     df_pivot = pd.pivot_table(
                         df_completo,
-                        index=["Meio de Pagamento", "Recebimento", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"],
+                        index=["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"],
                         columns=df_completo["Data"].dt.strftime("%d/%m/%Y"),
                         values="Valor (R$)",
                         aggfunc="sum",
