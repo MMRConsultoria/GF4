@@ -292,7 +292,7 @@ with tab3:
                 (df_relatorio["Data"].dt.date >= data_inicio) &
                 (df_relatorio["Data"].dt.date <= data_fim)
             ]
-
+        
             if df_filtrado.empty:
                 st.info("🔍 Não há dados para o período selecionado.")
             else:
@@ -303,7 +303,6 @@ with tab3:
                     index_cols = ["Loja", "Grupo", "Meio de Pagamento"]
                 elif tipo_relatorio == "Grupo":
                     index_cols = ["Grupo", "Meio de Pagamento"]
-
                 # Monta pivot
                 df_pivot = pd.pivot_table(
                     df_filtrado,
