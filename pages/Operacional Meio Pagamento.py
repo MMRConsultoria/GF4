@@ -324,17 +324,21 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
-                    df_pivot["TOTAL GERAL"] = df_pivot.select_dtypes(include=[np.number]).sum(axis=1)
-                    totais_por_coluna = df_pivot.select_dtypes(include=[np.number]).sum()
+                    # renomeia para manter padrão
+                    novo_nome_datas = {col: f"Vendas - {col}" for col in df_pivot.columns if "/" in str(col)}
+                    df_pivot.rename(columns=novo_nome_datas, inplace=True)
 
+                    df_pivot["TOTAL GERAL"] = df_pivot[[col for col in df_pivot.columns if "Vendas -" in str(col)]].sum(axis=1)
+
+                    # monta total geral
                     linha_total_dict = {df_pivot.columns[0]: "TOTAL GERAL"}
                     for col in df_pivot.columns[1:]:
-                        if col in totais_por_coluna.index:
-                            linha_total_dict[col] = totais_por_coluna[col]
+                        if str(col).startswith("Vendas -") or col == "TOTAL GERAL":
+                            linha_total_dict[col] = df_pivot[col].sum()
                         else:
                             linha_total_dict[col] = np.nan
-
                     linha_total = pd.DataFrame([linha_total_dict])
+
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
                     df_pivot_exibe = df_pivot_total.copy()
@@ -417,23 +421,20 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
-                    colunas_datas = [col for col in df_pivot.columns if "/" in col]
-                    novo_nome_datas = {col: f"Vendas - {col}" for col in colunas_datas}
+                    novo_nome_datas = {col: f"Vendas - {col}" for col in df_pivot.columns if "/" in str(col)}
                     df_pivot.rename(columns=novo_nome_datas, inplace=True)
-                    colunas_datas = list(novo_nome_datas.values())
+                    colunas_vendas = [col for col in df_pivot.columns if str(col).startswith("Vendas -")]
 
-                    df_pivot["TOTAL GERAL"] = df_pivot[colunas_datas].sum(axis=1)
+                    df_pivot["TOTAL GERAL"] = df_pivot[colunas_vendas].sum(axis=1)
                     df_pivot["Taxa Bandeira"] = df_pivot["Taxa Bandeira"].astype(str).str.replace("%", "").str.replace(",", ".").astype(float) / 100
                     df_pivot["Vlr Taxa Bandeira"] = df_pivot["TOTAL GERAL"] * df_pivot["Taxa Bandeira"]
 
-                    totais_por_coluna = df_pivot.select_dtypes(include=[np.number]).sum()
                     linha_total_dict = {df_pivot.columns[0]: "TOTAL GERAL"}
                     for col in df_pivot.columns[1:]:
-                        if col in totais_por_coluna.index:
-                            linha_total_dict[col] = totais_por_coluna[col]
+                        if str(col).startswith("Vendas -") or col == "TOTAL GERAL" or "Vlr Taxa" in str(col):
+                            linha_total_dict[col] = df_pivot[col].sum()
                         else:
                             linha_total_dict[col] = np.nan
-
                     linha_total = pd.DataFrame([linha_total_dict])
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
