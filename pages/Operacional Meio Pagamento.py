@@ -392,14 +392,14 @@ with tab3:
 
                 elif modo_relatorio == "Vendas + Prazo e Taxas":
                     df_completo = df_filtrado.merge(
-                        df_meio_pagamento[["Meio de Pagamento", "Recebimento", "Antecipa S/N", "Taxa Operadora", "Taxa Antecipacao"]],
+                        df_meio_pagamento[["Meio de Pagamento", "Recebimento", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"]],
                         on="Meio de Pagamento",
                         how="left"
                     )
 
                     df_pivot = pd.pivot_table(
                         df_completo,
-                        index=["Meio de Pagamento", "Recebimento", "Antecipa S/N", "Taxa Operadora", "Taxa Antecipacao"],
+                        index=["Meio de Pagamento", "Recebimento", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"],
                         columns=df_completo["Data"].dt.strftime("%d/%m/%Y"),
                         values="Valor (R$)",
                         aggfunc="sum",
