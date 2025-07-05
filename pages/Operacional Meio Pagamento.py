@@ -239,6 +239,7 @@ with tab2:
 with tab3:
     try:
         import pandas as pd
+        import numpy as np
         pd.set_option('display.max_colwidth', 20)
         pd.set_option('display.width', 1000)
 
@@ -327,7 +328,7 @@ with tab3:
                     df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, len(index_cols):].sum(axis=1)
                     totais_por_coluna = df_pivot.iloc[:, len(index_cols):].sum()
                     linha_total = pd.DataFrame(
-                        [["TOTAL GERAL"] + [""]*(len(index_cols)-1) + totais_por_coluna.tolist()],
+                        [["TOTAL GERAL"] + [np.nan]*(len(index_cols)-1) + totais_por_coluna.tolist()],
                         columns=df_pivot.columns
                     )
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
@@ -416,18 +417,18 @@ with tab3:
                     df_pivot.rename(columns=novo_nome_datas, inplace=True)
                     colunas_datas = list(novo_nome_datas.values())
 
-                    # ✅ Garantir taxas como numérico
+                    # Garantir taxas numéricas
                     df_pivot["Taxa Bandeira"] = pd.to_numeric(df_pivot["Taxa Bandeira"], errors="coerce").fillna(0)
                     df_pivot["Taxa Antecipação"] = pd.to_numeric(df_pivot["Taxa Antecipação"], errors="coerce").fillna(0)
 
-                    # ✅ Calcula novas colunas
+                    # Calcula novas colunas
                     df_pivot["Vlr Taxa Bandeira"] = df_pivot[colunas_datas].sum(axis=1) * df_pivot["Taxa Bandeira"]
                     df_pivot["Vlr Taxa Antecipação"] = df_pivot[colunas_datas].sum(axis=1) * df_pivot["Taxa Antecipação"]
 
                     df_pivot["TOTAL GERAL"] = df_pivot[colunas_datas].sum(axis=1)
                     totais_por_coluna = df_pivot.iloc[:, 5:].sum()
                     linha_total = pd.DataFrame(
-                        [["TOTAL GERAL", "", "", "", ""] + totais_por_coluna.tolist()],
+                        [["TOTAL GERAL"] + [np.nan]*(len(df_pivot.columns)-1-len(totais_por_coluna)) + totais_por_coluna.tolist()],
                         columns=df_pivot.columns
                     )
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
