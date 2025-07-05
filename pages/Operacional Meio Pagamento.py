@@ -324,8 +324,11 @@ with tab3:
                     # Corrige eventual renomeação
                     df_pivot.rename(columns={"Vendas - Antecipa S/N": "Antecipa S/N"}, inplace=True)
 
-                    # Cria colunas de Vlr Taxa Bandeira ao lado
+                    # Cria colunas de Vlr Taxa Bandeira intercaladas ao lado de cada coluna de vendas
                     colunas_vendas = [col for col in df_pivot.columns if "Vendas" in col]
+                    cols_fixas = ["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"]
+                    novas_cols = []
+                    
                     for col_vendas in colunas_vendas:
                         data_col = col_vendas.split(" - ")[1]
                         col_taxa = f"Vlr Taxa Bandeira - {data_col}"
@@ -336,9 +339,14 @@ with tab3:
                                           errors="coerce").fillna(0) / 100
                         )
                         df_pivot[col_taxa] = df_pivot[col_vendas] * taxa_bandeira
-
+                        novas_cols.extend([col_vendas, col_taxa])
+                    
+                    # Rearranja para intercalar: fixos + (vendas + taxa) + total
+                    df_pivot = df_pivot[cols_fixas + novas_cols]
+                    
                     # Total Vendas continua o mesmo
                     df_pivot["Total Vendas"] = df_pivot[colunas_vendas].sum(axis=1)
+                    
 
                     # Linha total geral
                     totais_por_coluna = df_pivot[[c for c in df_pivot.columns if "Vendas" in c or "Vlr Taxa Bandeira" in c]].sum()
