@@ -416,7 +416,11 @@ with tab3:
                     df_pivot.rename(columns=novo_nome_datas, inplace=True)
                     colunas_datas = list(novo_nome_datas.values())
 
-                    # ✅ Calcula as colunas novas
+                    # ✅ Garantir taxas como numérico
+                    df_pivot["Taxa Bandeira"] = pd.to_numeric(df_pivot["Taxa Bandeira"], errors="coerce").fillna(0)
+                    df_pivot["Taxa Antecipação"] = pd.to_numeric(df_pivot["Taxa Antecipação"], errors="coerce").fillna(0)
+
+                    # ✅ Calcula novas colunas
                     df_pivot["Vlr Taxa Bandeira"] = df_pivot[colunas_datas].sum(axis=1) * df_pivot["Taxa Bandeira"]
                     df_pivot["Vlr Taxa Antecipação"] = df_pivot[colunas_datas].sum(axis=1) * df_pivot["Taxa Antecipação"]
 
