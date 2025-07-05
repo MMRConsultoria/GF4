@@ -400,46 +400,35 @@ with tab3:
                         on="Meio de Pagamento",
                         how="left"
                     )
-                    df_completo["Taxa Bandeira"] = pd.to_numeric(df_completo["Taxa Bandeira"], errors="coerce").fillna(0) / 100
-                    df_completo["Taxa Antecipação"] = pd.to_numeric(df_completo["Taxa Antecipação"], errors="coerce").fillna(0) / 100
 
-                    df_pivot_valor = pd.pivot_table(
+                    df_pivot = pd.pivot_table(
                         df_completo,
-                        index=["Meio de Pagamento", "Prazo", "Antecipa S/N"],
+                        index=["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"],
                         columns=df_completo["Data"].dt.strftime("%d/%m/%Y"),
                         values="Valor (R$)",
                         aggfunc="sum",
                         fill_value=0
                     ).reset_index()
 
-                    taxas = df_meio_pagamento[["Meio de Pagamento", "Taxa Bandeira", "Taxa Antecipação"]].drop_duplicates()
-                    df_final = df_pivot_valor.merge(taxas, on="Meio de Pagamento", how="left")
-                    df_final["Taxa Bandeira"] = pd.to_numeric(df_final["Taxa Bandeira"], errors="coerce").fillna(0) / 100
-                    df_final["Taxa Antecipação"] = pd.to_numeric(df_final["Taxa Antecipação"], errors="coerce").fillna(0) / 100
-
-                    colunas_datas = [col for col in df_final.columns if "/" in col]
-                    for col in colunas_datas:
-                        df_final[f"{col} - Taxa Bandeira"] = df_final[col] * df_final["Taxa Bandeira"]
-                        df_final[f"{col} - Taxa Antecipação"] = df_final[col] * df_final["Taxa Antecipação"]
-
-                    df_final["TOTAL GERAL"] = df_final[colunas_datas].sum(axis=1)
-                    totais_por_coluna = df_final.iloc[:, 3:].sum()
+                    df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, 5:].sum(axis=1)
+                    totais_por_coluna = df_pivot.iloc[:, 5:].sum()
                     linha_total = pd.DataFrame(
-                        [["TOTAL GERAL", "", ""] + totais_por_coluna.tolist()],
-                        columns=df_final.columns
+                        [["TOTAL GERAL", "", "", "", ""] + totais_por_coluna.tolist()],
+                        columns=df_pivot.columns
                     )
-                    df_final_total = pd.concat([linha_total, df_final], ignore_index=True)
+                    df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
-                    for col in df_final_total.columns[3:]:
-                        df_final_total[col] = df_final_total[col].map(
+                    df_pivot_exibe = df_pivot_total.copy()
+                    for col in df_pivot_exibe.columns[5:]:
+                        df_pivot_exibe[col] = df_pivot_exibe[col].map(
                             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                         )
 
-                    st.dataframe(df_final_total, use_container_width=True)
+                    st.dataframe(df_pivot_exibe, use_container_width=True)
 
                     output = BytesIO()
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                        df_final_total.to_excel(writer, index=False, sheet_name="PrazoTaxas")
+                        df_pivot_total.to_excel(writer, index=False, sheet_name="PrazoTaxas")
                     output.seek(0)
 
                     st.download_button(
