@@ -285,7 +285,6 @@ with tab3:
             max_value=max_data
         )
 
-        # Seletor principal
         modo_relatorio = st.selectbox(
             "Escolha o tipo de análise:",
             ["Vendas", "Financeiro", "Vendas + Prazo e Taxas"]
@@ -324,10 +323,10 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
-                    df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, len(index_cols):].sum(axis=1)
+                    df_pivot["Total Vendas"] = df_pivot.iloc[:, len(index_cols):].sum(axis=1)
                     totais_por_coluna = df_pivot.iloc[:, len(index_cols):].sum()
                     linha_total = pd.DataFrame(
-                        [["TOTAL GERAL"] + [""]*(len(index_cols)-1) + totais_por_coluna.tolist()],
+                        [["Total Vendas"] + [""]*(len(index_cols)-1) + totais_por_coluna.tolist()],
                         columns=df_pivot.columns
                     )
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
@@ -373,7 +372,7 @@ with tab3:
                     df_financeiro = df_financeiro.rename(columns={"Data Recebimento": "Data"}).sort_values("Data")
 
                     total_geral = df_financeiro["Valor (R$)"].sum()
-                    linha_total = pd.DataFrame([["TOTAL GERAL", total_geral]], columns=df_financeiro.columns)
+                    linha_total = pd.DataFrame([["Total Vendas", total_geral]], columns=df_financeiro.columns)
                     df_financeiro_total = pd.concat([linha_total, df_financeiro], ignore_index=True)
 
                     df_financeiro_total["Valor (R$)"] = df_financeiro_total["Valor (R$)"].map(
@@ -410,15 +409,14 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
-                    # ✅ Alteração: renomeia as colunas de data
                     colunas_datas = [col for col in df_pivot.columns if "/" in col]
                     novo_nome_datas = {col: f"Vendas - {col}" for col in colunas_datas}
                     df_pivot.rename(columns=novo_nome_datas, inplace=True)
 
-                    df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, 5:].sum(axis=1)
+                    df_pivot["Total Vendas"] = df_pivot.iloc[:, 5:].sum(axis=1)
                     totais_por_coluna = df_pivot.iloc[:, 5:].sum()
                     linha_total = pd.DataFrame(
-                        [["TOTAL GERAL", "", "", "", ""] + totais_por_coluna.tolist()],
+                        [["Total Vendas", "", "", "", ""] + totais_por_coluna.tolist()],
                         columns=df_pivot.columns
                     )
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
