@@ -281,41 +281,21 @@ with tab3:
             if df_filtrado.empty:
                 st.info("🔍 Não há dados para o período selecionado.")
             else:
-                # 🔗 Junta com Tabela Empresa para trazer o Grupo
-                df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
-                df_empresa.columns = df_empresa.columns.str.strip()
-                df_empresa = df_empresa[["Loja", "Grupo"]]
-
-                # Normaliza: tira espaços, uppercase e remove acentos
+                # Normaliza Loja, Grupo e Meio de Pagamento
                 from unidecode import unidecode
-                df_filtrado["Loja"] = df_filtrado["Loja"].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
-                df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
+                for col in ["Loja", "Grupo", "Meio de Pagamento"]:
+                    df_filtrado[col] = df_filtrado[col].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
 
                 # Debug para diagnosticar
-                st.write("📝 Lojas no dataframe filtrado (df_filtrado):")
-                st.write(df_filtrado["Loja"].unique())
-
-                st.write("🏬 Lojas no dataframe empresa (df_empresa):")
-                st.write(df_empresa["Loja"].unique())
-
-                # Merge
-                df_completo = df_filtrado.merge(df_empresa, on="Loja", how="left")
-
-                # Mostrar o resultado do merge para debug
-                st.write("🔍 Resultado do merge (primeiras 20 linhas):")
-                st.write(df_completo[["Loja", "Grupo"]].head(20))
-
-                # Se Grupo ainda ficou vazio, preenche com ""
-                if "Grupo" not in df_completo.columns:
-                    df_completo["Grupo"] = ""
-                else:
-                    df_completo["Grupo"] = df_completo["Grupo"].fillna("")
+                st.write("📝 Lojas encontradas:", df_filtrado["Loja"].unique())
+                st.write("🏷️ Grupos encontrados:", df_filtrado["Grupo"].unique())
+                st.write("💳 Meios de Pagamento encontrados:", df_filtrado["Meio de Pagamento"].unique())
 
                 # Monta pivot table indexado por Loja + Grupo + Meio de Pagamento
                 df_pivot = pd.pivot_table(
-                    df_completo,
+                    df_filtrado,
                     index=["Loja", "Grupo", "Meio de Pagamento"],
-                    columns=df_completo["Data"].dt.strftime("%d/%m/%Y"),
+                    columns=df_filtrado["Data"].dt.strftime("%d/%m/%Y"),
                     values="Valor (R$)",
                     aggfunc="sum",
                     fill_value=0
