@@ -281,7 +281,7 @@ with tab3:
             [
                 "Resumo por Meio de Pagamento",
                 "Detalhado por Loja, Grupo e Meio de Pagamento",
-                "Resumo por Loja e Grupo"
+                "Resumo por Grupo e Meio de Pagamento"
             ]
         )
 
@@ -301,8 +301,8 @@ with tab3:
                     index_cols = ["Meio de Pagamento"]
                 elif tipo_relatorio == "Detalhado por Loja, Grupo e Meio de Pagamento":
                     index_cols = ["Loja", "Grupo", "Meio de Pagamento"]
-                elif tipo_relatorio == "Resumo por Loja e Grupo":
-                    index_cols = ["Loja", "Grupo"]
+                elif tipo_relatorio == "Resumo por Grupo e Meio de Pagamento":
+                    index_cols = ["Grupo", "Meio de Pagamento"]
 
                 # Monta pivot
                 df_pivot = pd.pivot_table(
@@ -322,8 +322,10 @@ with tab3:
 
                 # Linha total geral
                 totais_por_coluna = df_pivot.iloc[:, len(index_cols):].sum()
-                linha_total = pd.DataFrame([["TOTAL GERAL"] + [""]*(len(index_cols)-1) + totais_por_coluna.tolist()],
-                                           columns=df_pivot.columns)
+                linha_total = pd.DataFrame(
+                    [["TOTAL GERAL"] + [""]*(len(index_cols)-1) + totais_por_coluna.tolist()],
+                    columns=df_pivot.columns
+                )
 
                 df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
