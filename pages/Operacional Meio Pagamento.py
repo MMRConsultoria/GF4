@@ -410,12 +410,17 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
-                    # ✅ Alteração: renomeia as colunas de data
                     colunas_datas = [col for col in df_pivot.columns if "/" in col]
                     novo_nome_datas = {col: f"Vendas - {col}" for col in colunas_datas}
                     df_pivot.rename(columns=novo_nome_datas, inplace=True)
+                    colunas_datas = list(novo_nome_datas.values())
 
-                    df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, 5:].sum(axis=1)
+                    df_pivot["TOTAL GERAL"] = df_pivot[colunas_datas].sum(axis=1)
+
+                    # ✅ Calcula Vlr Taxa Bandeira
+                    df_pivot["Taxa Bandeira"] = df_pivot["Taxa Bandeira"].astype(str).str.replace("%", "").str.replace(",", ".").astype(float) / 100
+                    df_pivot["Vlr Taxa Bandeira"] = df_pivot["TOTAL GERAL"] * df_pivot["Taxa Bandeira"]
+
                     totais_por_coluna = df_pivot.iloc[:, 5:].sum()
                     linha_total = pd.DataFrame(
                         [["TOTAL GERAL", "", "", "", ""] + totais_por_coluna.tolist()],
