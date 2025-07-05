@@ -286,11 +286,6 @@ with tab3:
                 for col in ["Loja", "Grupo", "Meio de Pagamento"]:
                     df_filtrado[col] = df_filtrado[col].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
 
-                # Debug para diagnosticar
-                st.write("📝 Lojas encontradas:", df_filtrado["Loja"].unique())
-                st.write("🏷️ Grupos encontrados:", df_filtrado["Grupo"].unique())
-                st.write("💳 Meios de Pagamento encontrados:", df_filtrado["Meio de Pagamento"].unique())
-
                 # Monta pivot table indexado por Loja + Grupo + Meio de Pagamento
                 df_pivot = pd.pivot_table(
                     df_filtrado,
