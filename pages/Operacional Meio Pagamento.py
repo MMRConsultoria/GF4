@@ -282,7 +282,7 @@ with tab3:
             max_value=max_data
         )
 
-        # Primeira escolha: Vendas ou Financeiro
+        # Seletor principal
         modo_relatorio = st.selectbox(
             "Escolha o tipo de análise:",
             ["Vendas", "Financeiro"]
@@ -300,13 +300,11 @@ with tab3:
                 st.info("🔍 Não há dados para o período selecionado.")
             else:
                 if modo_relatorio == "Vendas":
-                    # Sub-seletor para o tipo de vendas
                     tipo_relatorio = st.selectbox(
                         "Escolha o relatório que deseja visualizar:",
                         ["Meio de Pagamento", "Loja", "Grupo"]
                     )
 
-                    # Decide index
                     if tipo_relatorio == "Meio de Pagamento":
                         index_cols = ["Meio de Pagamento"]
                     elif tipo_relatorio == "Loja":
@@ -314,7 +312,7 @@ with tab3:
                     elif tipo_relatorio == "Grupo":
                         index_cols = ["Grupo", "Meio de Pagamento"]
 
-                    # Pivot
+                    # Monta pivot
                     df_pivot = pd.pivot_table(
                         df_filtrado,
                         index=index_cols,
@@ -324,14 +322,16 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
+                    # Coluna TOTAL GERAL
                     df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, len(index_cols):].sum(axis=1)
-                    df_pivot = df_pivot.sort_values(by="TOTAL GERAL", ascending=False)
 
+                    # Linha TOTAL GERAL
                     totais_por_coluna = df_pivot.iloc[:, len(index_cols):].sum()
                     linha_total = pd.DataFrame(
                         [["TOTAL GERAL"] + [""]*(len(index_cols)-1) + totais_por_coluna.tolist()],
                         columns=df_pivot.columns
                     )
+
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
                     # Formatação
@@ -358,7 +358,7 @@ with tab3:
                     )
 
                 elif modo_relatorio == "Financeiro":
-                    # Junta dados ao meio pagamento com coluna Antecipa S/N correta
+                    # Junta dados com Recebimento e Antecipa S/N
                     df_completo = df_filtrado.merge(
                         df_meio_pagamento[["Meio de Pagamento", "Recebimento", "Antecipa S/N"]],
                         on="Meio de Pagamento",
@@ -375,6 +375,7 @@ with tab3:
                             return row["Data"] + BDay(row["Recebimento"])
                     df_completo["Data Recebimento"] = df_completo.apply(calcula_recebimento, axis=1)
 
+                    # Agrupa
                     df_financeiro = df_completo.groupby(df_completo["Data Recebimento"].dt.date)["Valor (R$)"].sum().reset_index()
                     df_financeiro = df_financeiro.rename(columns={"Data Recebimento": "Data"}).sort_values("Data")
 
