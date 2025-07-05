@@ -401,6 +401,10 @@ with tab3:
                         how="left"
                     )
 
+                    # Converte taxas para decimal
+                    df_completo["Taxa Bandeira"] = pd.to_numeric(df_completo["Taxa Bandeira"], errors="coerce").fillna(0) / 100
+                    df_completo["Taxa Antecipação"] = pd.to_numeric(df_completo["Taxa Antecipação"], errors="coerce").fillna(0) / 100
+
                     df_pivot = pd.pivot_table(
                         df_completo,
                         index=["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"],
@@ -410,7 +414,13 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
-                    df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, 5:].sum(axis=1)
+                    # Adiciona colunas para taxas
+                    colunas_datas = df_pivot.columns[5:]
+                    for col in colunas_datas:
+                        df_pivot[f"{col} - Taxa Bandeira"] = df_pivot[col] * df_pivot["Taxa Bandeira"]
+                        df_pivot[f"{col} - Taxa Antecipação"] = df_pivot[col] * df_pivot["Taxa Antecipação"]
+
+                    df_pivot["TOTAL GERAL"] = df_pivot[colunas_datas].sum(axis=1)
                     totais_por_coluna = df_pivot.iloc[:, 5:].sum()
                     linha_total = pd.DataFrame(
                         [["TOTAL GERAL", "", "", "", ""] + totais_por_coluna.tolist()],
@@ -418,13 +428,13 @@ with tab3:
                     )
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
-                    df_pivot_exibe = df_pivot_total.copy()
-                    for col in df_pivot_exibe.columns[5:]:
-                        df_pivot_exibe[col] = df_pivot_exibe[col].map(
+                    # Formata todas as colunas numéricas
+                    for col in df_pivot_total.columns[5:]:
+                        df_pivot_total[col] = df_pivot_total[col].map(
                             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                         )
 
-                    st.dataframe(df_pivot_exibe, use_container_width=True)
+                    st.dataframe(df_pivot_total, use_container_width=True)
 
                     output = BytesIO()
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
