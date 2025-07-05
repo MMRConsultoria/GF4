@@ -263,7 +263,7 @@ with tab3:
             .astype(float)
         )
 
-        # Datas
+        # Converte datas
         df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
         df_relatorio = df_relatorio[df_relatorio["Data"].notna()]
 
@@ -274,7 +274,6 @@ with tab3:
             if col in df_meio_pagamento.columns:
                 df_meio_pagamento[col] = df_meio_pagamento[col].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
 
-        # Datas do filtro
         min_data = df_relatorio["Data"].min().date()
         max_data = df_relatorio["Data"].max().date()
         data_inicio, data_fim = st.date_input(
@@ -316,39 +315,37 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
-                    # Renomeia colunas de data
+                    # Renomeia colunas
                     colunas_datas = [col for col in df_pivot.columns if "/" in col]
                     novo_nome_datas = {col: f"Vendas - {col}" for col in colunas_datas}
                     df_pivot.rename(columns=novo_nome_datas, inplace=True)
+                    colunas_vendas = list(novo_nome_datas.values())
 
-                    # Corrige eventual renomeação
-                    df_pivot.rename(columns={"Vendas - Antecipa S/N": "Antecipa S/N"}, inplace=True)
+                    # Calcular taxa bandeira e intercalar
+                    taxa_bandeira = (
+                        pd.to_numeric(df_pivot["Taxa Bandeira"].astype(str)
+                                      .str.replace("%", "")
+                                      .str.replace(",", "."),
+                                      errors="coerce").fillna(0) / 100
+                    )
 
-                    # Cria colunas de Vlr Taxa Bandeira ao lado
-                    colunas_vendas = [col for col in df_pivot.columns if "Vendas" in col]
+                    df_intercalado = df_pivot[["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"]].copy()
                     for col_vendas in colunas_vendas:
                         data_col = col_vendas.split(" - ")[1]
                         col_taxa = f"Vlr Taxa Bandeira - {data_col}"
-                        taxa_bandeira = (
-                            pd.to_numeric(df_pivot["Taxa Bandeira"].astype(str)
-                                          .str.replace("%","")
-                                          .str.replace(",","."),
-                                          errors="coerce").fillna(0) / 100
-                        )
-                        df_pivot[col_taxa] = df_pivot[col_vendas] * taxa_bandeira
+                        df_intercalado[col_vendas] = df_pivot[col_vendas]
+                        df_intercalado[col_taxa] = df_pivot[col_vendas] * taxa_bandeira
 
-                    # Total Vendas continua o mesmo
-                    df_pivot["Total Vendas"] = df_pivot[colunas_vendas].sum(axis=1)
+                    # Total vendas
+                    df_intercalado["Total Vendas"] = df_intercalado[[c for c in df_intercalado.columns if "Vendas" in c]].sum(axis=1)
 
                     # Linha total geral
-                    totais_por_coluna = df_pivot[[c for c in df_pivot.columns if "Vendas" in c or "Vlr Taxa Bandeira" in c]].sum()
-                    linha_total = pd.DataFrame(
-                        [["Total Vendas", "", "", "", ""] + totais_por_coluna.tolist()],
-                        columns=df_pivot.columns
-                    )
-                    df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
+                    totais_por_coluna = df_intercalado[[c for c in df_intercalado.columns if "Vendas" in c or "Vlr Taxa Bandeira" in c]].sum()
+                    linha_total = pd.DataFrame([["Total Vendas", "", "", "", ""] + totais_por_coluna.tolist()],
+                                               columns=df_intercalado.columns)
+                    df_pivot_total = pd.concat([linha_total, df_intercalado], ignore_index=True)
 
-                    # Formata valores
+                    # Formatar
                     df_pivot_exibe = df_pivot_total.copy()
                     for col in [c for c in df_pivot_exibe.columns if "Vendas" in c or "Vlr Taxa Bandeira" in c or c == "Total Vendas"]:
                         df_pivot_exibe[col] = df_pivot_exibe[col].map(
