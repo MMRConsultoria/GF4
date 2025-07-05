@@ -358,7 +358,7 @@ with tab3:
                     )
 
                 elif modo_relatorio == "Financeiro":
-                    # Junta dados ao meio pagamento
+                    # Junta dados ao meio pagamento com coluna Antecipa S/N correta
                     df_completo = df_filtrado.merge(
                         df_meio_pagamento[["Meio de Pagamento", "Recebimento", "Antecipa S/N"]],
                         on="Meio de Pagamento",
