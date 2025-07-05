@@ -410,6 +410,11 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
+                    # ✅ Alteração: renomeia as colunas de data
+                    colunas_datas = [col for col in df_pivot.columns if "/" in col]
+                    novo_nome_datas = {col: f"Vendas - {col}" for col in colunas_datas}
+                    df_pivot.rename(columns=novo_nome_datas, inplace=True)
+
                     df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, 5:].sum(axis=1)
                     totais_por_coluna = df_pivot.iloc[:, 5:].sum()
                     linha_total = pd.DataFrame(
