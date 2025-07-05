@@ -326,10 +326,14 @@ with tab3:
 
                     df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, len(index_cols):].sum(axis=1)
                     totais_por_coluna = df_pivot.iloc[:, len(index_cols):].sum()
-                    linha_total = pd.DataFrame(
-                        [["TOTAL GERAL"] + [""]*(len(index_cols)-1) + totais_por_coluna.tolist()],
-                        columns=df_pivot.columns
-                    )
+                    # ✅ linha total 100% robusta
+                    linha_total_dict = {df_pivot.columns[0]: "TOTAL GERAL"}
+                    for col in df_pivot.columns[1:5]:
+                        linha_total_dict[col] = np.nan
+                    for col in df_pivot.columns[5:]:
+                        linha_total_dict[col] = df_pivot[col].sum()
+                    
+                    linha_total = pd.DataFrame([linha_total_dict])
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
                     df_pivot_exibe = df_pivot_total.copy()
