@@ -321,6 +321,11 @@ with tab3:
                     df_final["Taxa Antecipação"] = pd.to_numeric(df_final["Taxa Antecipação"], errors="coerce").fillna(0) / 100
 
                     colunas_datas = [col for col in df_final.columns if "/" in col]
+                    
+                    # 💪 Garante que todas as colunas de datas são float
+                    for col in colunas_datas:
+                        df_final[col] = pd.to_numeric(df_final[col], errors="coerce").fillna(0.0)
+
                     for col in colunas_datas:
                         df_final[f"{col} - Taxa Bandeira"] = df_final[col] * df_final["Taxa Bandeira"]
                         df_final[f"{col} - Taxa Antecipação"] = df_final[col] * df_final["Taxa Antecipação"]
