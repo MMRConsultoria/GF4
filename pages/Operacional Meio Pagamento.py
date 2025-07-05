@@ -250,6 +250,11 @@ with tab3:
         df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
         df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip()
 
+        # ✅ Normaliza o Meio de Pagamento nas duas tabelas
+        from unidecode import unidecode
+        for df in [df_relatorio, df_meio_pagamento]:
+            df["Meio de Pagamento"] = df["Meio de Pagamento"].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
+
         df_relatorio["Valor (R$)"] = (
             df_relatorio["Valor (R$)"]
             .astype(str)
@@ -265,8 +270,8 @@ with tab3:
         df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
         df_relatorio = df_relatorio[df_relatorio["Data"].notna()]
 
-        from unidecode import unidecode
-        for col in ["Loja", "Grupo", "Meio de Pagamento"]:
+        # Normaliza também Loja e Grupo
+        for col in ["Loja", "Grupo"]:
             df_relatorio[col] = df_relatorio[col].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
             if col in df_meio_pagamento.columns:
                 df_meio_pagamento[col] = df_meio_pagamento[col].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
