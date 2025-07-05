@@ -328,7 +328,7 @@ with tab3:
                     df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, len(index_cols):].sum(axis=1)
                     totais_por_coluna = df_pivot.iloc[:, len(index_cols):].sum()
                     linha_total = pd.DataFrame(
-                        [["TOTAL GERAL"] + [np.nan]*(len(index_cols)-1) + totais_por_coluna.tolist()],
+                        [["TOTAL GERAL"] + [np.nan]*(len(index_cols)-1) + [float(x) for x in totais_por_coluna]],
                         columns=df_pivot.columns
                     )
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
@@ -428,7 +428,7 @@ with tab3:
                     df_pivot["TOTAL GERAL"] = df_pivot[colunas_datas].sum(axis=1)
                     totais_por_coluna = df_pivot.iloc[:, 5:].sum()
                     linha_total = pd.DataFrame(
-                        [["TOTAL GERAL"] + [np.nan]*(len(df_pivot.columns)-1-len(totais_por_coluna)) + totais_por_coluna.tolist()],
+                        [["TOTAL GERAL"] + [np.nan]*(len(df_pivot.columns)-1-len(totais_por_coluna)) + [float(x) for x in totais_por_coluna]],
                         columns=df_pivot.columns
                     )
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
