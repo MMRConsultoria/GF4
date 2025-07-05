@@ -340,7 +340,8 @@ with tab3:
                     df_pivot_exibe = df_pivot_total.copy()
                     for col in df_pivot_exibe.select_dtypes(include=[np.number]).columns:
                         df_pivot_exibe[col] = df_pivot_exibe[col].map(
-                            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notna(x) else ""
+                            lambda x: f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                            if isinstance(x, (int, float, np.integer, np.floating)) and pd.notna(x) else ""
                         )
 
                     st.dataframe(df_pivot_exibe, use_container_width=True)
@@ -382,7 +383,8 @@ with tab3:
                     df_financeiro_total = pd.concat([linha_total, df_financeiro], ignore_index=True)
 
                     df_financeiro_total["Valor (R$)"] = df_financeiro_total["Valor (R$)"].map(
-                        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notna(x) else ""
+                        lambda x: f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                        if isinstance(x, (int, float, np.integer, np.floating)) and pd.notna(x) else ""
                     )
 
                     st.dataframe(df_financeiro_total, use_container_width=True)
@@ -438,7 +440,8 @@ with tab3:
                     df_pivot_exibe = df_pivot_total.copy()
                     for col in df_pivot_exibe.select_dtypes(include=[np.number]).columns:
                         df_pivot_exibe[col] = df_pivot_exibe[col].map(
-                            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notna(x) else ""
+                            lambda x: f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                            if isinstance(x, (int, float, np.integer, np.floating)) and pd.notna(x) else ""
                         )
 
                     st.dataframe(df_pivot_exibe, use_container_width=True)
