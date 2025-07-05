@@ -297,11 +297,11 @@ with tab3:
                 st.info("🔍 Não há dados para o período selecionado.")
             else:
                 # Decide qual index usar conforme seleção
-                if tipo_relatorio == "Resumo por Meio de Pagamento":
+                if tipo_relatorio == "Meio de Pagamento":
                     index_cols = ["Meio de Pagamento"]
-                elif tipo_relatorio == "Detalhado por Loja, Grupo e Meio de Pagamento":
+                elif tipo_relatorio == "Loja":
                     index_cols = ["Loja", "Grupo", "Meio de Pagamento"]
-                elif tipo_relatorio == "Resumo por Grupo e Meio de Pagamento":
+                elif tipo_relatorio == "Grupo":
                     index_cols = ["Grupo", "Meio de Pagamento"]
 
                 # Monta pivot
