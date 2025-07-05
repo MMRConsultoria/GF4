@@ -324,28 +324,18 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
-                    # renomeia para manter padrão
-                    novo_nome_datas = {col: f"Vendas - {col}" for col in df_pivot.columns if "/" in str(col)}
-                    df_pivot.rename(columns=novo_nome_datas, inplace=True)
-
-                    df_pivot["TOTAL GERAL"] = df_pivot[[col for col in df_pivot.columns if "Vendas -" in str(col)]].sum(axis=1)
-
-                    # monta total geral
-                    linha_total_dict = {df_pivot.columns[0]: "TOTAL GERAL"}
-                    for col in df_pivot.columns[1:]:
-                        if str(col).startswith("Vendas -") or col == "TOTAL GERAL":
-                            linha_total_dict[col] = df_pivot[col].sum()
-                        else:
-                            linha_total_dict[col] = np.nan
-                    linha_total = pd.DataFrame([linha_total_dict])
-
+                    df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, len(index_cols):].sum(axis=1)
+                    totais_por_coluna = df_pivot.iloc[:, len(index_cols):].sum()
+                    linha_total = pd.DataFrame(
+                        [["TOTAL GERAL"] + [""]*(len(index_cols)-1) + totais_por_coluna.tolist()],
+                        columns=df_pivot.columns
+                    )
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
                     df_pivot_exibe = df_pivot_total.copy()
-                    for col in df_pivot_exibe.select_dtypes(include=[np.number]).columns:
+                    for col in df_pivot_exibe.columns[len(index_cols):]:
                         df_pivot_exibe[col] = df_pivot_exibe[col].map(
-                            lambda x: f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                            if isinstance(x, (int, float, np.integer, np.floating)) and pd.notna(x) else ""
+                            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                         )
 
                     st.dataframe(df_pivot_exibe, use_container_width=True)
@@ -387,8 +377,7 @@ with tab3:
                     df_financeiro_total = pd.concat([linha_total, df_financeiro], ignore_index=True)
 
                     df_financeiro_total["Valor (R$)"] = df_financeiro_total["Valor (R$)"].map(
-                        lambda x: f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                        if isinstance(x, (int, float, np.integer, np.floating)) and pd.notna(x) else ""
+                        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                     )
 
                     st.dataframe(df_financeiro_total, use_container_width=True)
@@ -421,28 +410,33 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
-                    novo_nome_datas = {col: f"Vendas - {col}" for col in df_pivot.columns if "/" in str(col)}
+                    colunas_datas = [col for col in df_pivot.columns if "/" in col]
+                    novo_nome_datas = {col: f"Vendas - {col}" for col in colunas_datas}
                     df_pivot.rename(columns=novo_nome_datas, inplace=True)
-                    colunas_vendas = [col for col in df_pivot.columns if str(col).startswith("Vendas -")]
+                    colunas_datas = list(novo_nome_datas.values())
 
-                    df_pivot["TOTAL GERAL"] = df_pivot[colunas_vendas].sum(axis=1)
+                   df_pivot["TOTAL GERAL"] = df_pivot[colunas_datas].sum(axis=1)
+
+                    # Taxa Bandeira
                     df_pivot["Taxa Bandeira"] = df_pivot["Taxa Bandeira"].astype(str).str.replace("%", "").str.replace(",", ".").astype(float) / 100
                     df_pivot["Vlr Taxa Bandeira"] = df_pivot["TOTAL GERAL"] * df_pivot["Taxa Bandeira"]
-
-                    linha_total_dict = {df_pivot.columns[0]: "TOTAL GERAL"}
-                    for col in df_pivot.columns[1:]:
-                        if str(col).startswith("Vendas -") or col == "TOTAL GERAL" or "Vlr Taxa" in str(col):
-                            linha_total_dict[col] = df_pivot[col].sum()
-                        else:
-                            linha_total_dict[col] = np.nan
-                    linha_total = pd.DataFrame([linha_total_dict])
+                    
+                    totais_por_coluna = df_pivot.iloc[:, 5:].sum()
+                    
+                    # ✅ Linha TOTAL GERAL 100% robusta
+                    linha_total = pd.DataFrame([{
+                        df_pivot.columns[0]: "TOTAL GERAL",
+                        **{col: "" for col in df_pivot.columns[1:5]},
+                        **dict(zip(df_pivot.columns[5:], totais_por_coluna))
+                    }])
+                    
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
+
                     df_pivot_exibe = df_pivot_total.copy()
-                    for col in df_pivot_exibe.select_dtypes(include=[np.number]).columns:
+                    for col in df_pivot_exibe.columns[5:]:
                         df_pivot_exibe[col] = df_pivot_exibe[col].map(
-                            lambda x: f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                            if isinstance(x, (int, float, np.integer, np.floating)) and pd.notna(x) else ""
+                            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                         )
 
                     st.dataframe(df_pivot_exibe, use_container_width=True)
