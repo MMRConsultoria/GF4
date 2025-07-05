@@ -326,13 +326,14 @@ with tab3:
 
                     df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, len(index_cols):].sum(axis=1)
                     totais_por_coluna = df_pivot.iloc[:, len(index_cols):].sum()
-                    # ✅ linha total 100% robusta
+
+                    # ✅ linha total robusta
                     linha_total_dict = {df_pivot.columns[0]: "TOTAL GERAL"}
-                    for col in df_pivot.columns[1:5]:
+                    for col in df_pivot.columns[1:len(index_cols)]:
                         linha_total_dict[col] = np.nan
-                    for col in df_pivot.columns[5:]:
-                        linha_total_dict[col] = df_pivot[col].sum()
-                    
+                    for col in df_pivot.columns[len(index_cols):]:
+                        linha_total_dict[col] = totais_por_coluna[col]
+
                     linha_total = pd.DataFrame([linha_total_dict])
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
@@ -421,24 +422,26 @@ with tab3:
 
                     df_pivot["TOTAL GERAL"] = df_pivot[colunas_datas].sum(axis=1)
 
-                    # Taxa Bandeira
+                    # Calcula Vlr Taxa Bandeira
                     df_pivot["Taxa Bandeira"] = df_pivot["Taxa Bandeira"].astype(str).str.replace("%", "").str.replace(",", ".").astype(float) / 100
                     df_pivot["Vlr Taxa Bandeira"] = df_pivot["TOTAL GERAL"] * df_pivot["Taxa Bandeira"]
-                    
-                    totais_por_coluna = df_pivot.iloc[:, 5:].sum()
-                    
-                    # ✅ linha total segura
-                    linha_total = pd.DataFrame([{
-                        df_pivot.columns[0]: "TOTAL GERAL",
-                        **{col: np.nan for col in df_pivot.columns[1:5]},
-                        **dict(zip(df_pivot.columns[5:], totais_por_coluna))
-                    }])
-                    
+
+                    colunas_numericas = [col for col in df_pivot.columns if df_pivot[col].dtype in [np.float64, np.int64]]
+                    totais_por_coluna = df_pivot[colunas_numericas].sum()
+
+                    # ✅ linha total robusta
+                    linha_total_dict = {df_pivot.columns[0]: "TOTAL GERAL"}
+                    for col in df_pivot.columns[1:]:
+                        if col in colunas_numericas:
+                            linha_total_dict[col] = totais_por_coluna[col]
+                        else:
+                            linha_total_dict[col] = np.nan
+
+                    linha_total = pd.DataFrame([linha_total_dict])
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
-
                     df_pivot_exibe = df_pivot_total.copy()
-                    for col in df_pivot_exibe.columns[5:]:
+                    for col in colunas_numericas:
                         df_pivot_exibe[col] = df_pivot_exibe[col].map(
                             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                         )
