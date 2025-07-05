@@ -239,9 +239,14 @@ with tab2:
 
 with tab3:
     try:
+        # Carrega dados
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
         df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
         df_relatorio.columns = df_relatorio.columns.str.strip()
+
+        aba_meio_pagamento = planilha.worksheet("Tabela Meio Pagamento")
+        df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
+        df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip()
 
         # Corrige valores
         df_relatorio["Valor (R$)"] = (
@@ -260,10 +265,12 @@ with tab3:
         df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
         df_relatorio = df_relatorio[df_relatorio["Data"].notna()]
 
-        # Normaliza colunas principais
+        # Normaliza
         from unidecode import unidecode
         for col in ["Loja", "Grupo", "Meio de Pagamento"]:
             df_relatorio[col] = df_relatorio[col].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
+            if col in df_meio_pagamento.columns:
+                df_meio_pagamento[col] = df_meio_pagamento[col].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
 
         # Filtro datas
         min_data = df_relatorio["Data"].min().date()
@@ -275,14 +282,10 @@ with tab3:
             max_value=max_data
         )
 
-        # ÚNICO seletor para escolher o tipo de relatório
-        tipo_relatorio = st.selectbox(
-            "Escolha o relatório que deseja visualizar:",
-            [
-                "Meio de Pagamento",
-                "Loja",
-                "Grupo"
-            ]
+        # Primeira escolha: Vendas ou Financeiro
+        modo_relatorio = st.selectbox(
+            "Escolha o tipo de análise:",
+            ["Vendas", "Financeiro"]
         )
 
         if data_inicio > data_fim:
@@ -296,61 +299,104 @@ with tab3:
             if df_filtrado.empty:
                 st.info("🔍 Não há dados para o período selecionado.")
             else:
-                # Decide qual index usar conforme seleção
-                if tipo_relatorio == "Meio de Pagamento":
-                    index_cols = ["Meio de Pagamento"]
-                elif tipo_relatorio == "Loja":
-                    index_cols = ["Loja", "Grupo", "Meio de Pagamento"]
-                elif tipo_relatorio == "Grupo":
-                    index_cols = ["Grupo", "Meio de Pagamento"]
+                if modo_relatorio == "Vendas":
+                    # Sub-seletor para o tipo de vendas
+                    tipo_relatorio = st.selectbox(
+                        "Escolha o relatório que deseja visualizar:",
+                        ["Meio de Pagamento", "Loja", "Grupo"]
+                    )
 
-                # Monta pivot
-                df_pivot = pd.pivot_table(
-                    df_filtrado,
-                    index=index_cols,
-                    columns=df_filtrado["Data"].dt.strftime("%d/%m/%Y"),
-                    values="Valor (R$)",
-                    aggfunc="sum",
-                    fill_value=0
-                ).reset_index()
+                    # Decide index
+                    if tipo_relatorio == "Meio de Pagamento":
+                        index_cols = ["Meio de Pagamento"]
+                    elif tipo_relatorio == "Loja":
+                        index_cols = ["Loja", "Grupo", "Meio de Pagamento"]
+                    elif tipo_relatorio == "Grupo":
+                        index_cols = ["Grupo", "Meio de Pagamento"]
 
-                # Coluna TOTAL GERAL
-                df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, len(index_cols):].sum(axis=1)
+                    # Pivot
+                    df_pivot = pd.pivot_table(
+                        df_filtrado,
+                        index=index_cols,
+                        columns=df_filtrado["Data"].dt.strftime("%d/%m/%Y"),
+                        values="Valor (R$)",
+                        aggfunc="sum",
+                        fill_value=0
+                    ).reset_index()
 
-                # Ordena
-                df_pivot = df_pivot.sort_values(by="TOTAL GERAL", ascending=False)
+                    df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, len(index_cols):].sum(axis=1)
+                    df_pivot = df_pivot.sort_values(by="TOTAL GERAL", ascending=False)
 
-                # Linha total geral
-                totais_por_coluna = df_pivot.iloc[:, len(index_cols):].sum()
-                linha_total = pd.DataFrame(
-                    [["TOTAL GERAL"] + [""]*(len(index_cols)-1) + totais_por_coluna.tolist()],
-                    columns=df_pivot.columns
-                )
+                    totais_por_coluna = df_pivot.iloc[:, len(index_cols):].sum()
+                    linha_total = pd.DataFrame(
+                        [["TOTAL GERAL"] + [""]*(len(index_cols)-1) + totais_por_coluna.tolist()],
+                        columns=df_pivot.columns
+                    )
+                    df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
-                df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
+                    # Formatação
+                    df_pivot_exibe = df_pivot_total.copy()
+                    for col in df_pivot_exibe.columns[len(index_cols):]:
+                        df_pivot_exibe[col] = df_pivot_exibe[col].map(
+                            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                        )
 
-                # Formatação R$
-                df_pivot_exibe = df_pivot_total.copy()
-                for col in df_pivot_exibe.columns[len(index_cols):]:
-                    df_pivot_exibe[col] = df_pivot_exibe[col].map(
+                    st.dataframe(df_pivot_exibe, use_container_width=True)
+
+                    # Download Excel
+                    from io import BytesIO
+                    output = BytesIO()
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                        df_pivot_total.to_excel(writer, index=False, sheet_name=f"{tipo_relatorio}")
+                    output.seek(0)
+
+                    st.download_button(
+                        "📥 Baixar Excel",
+                        data=output,
+                        file_name=f"Relatorio_{tipo_relatorio}_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+
+                elif modo_relatorio == "Financeiro":
+                    # Junta dados ao meio pagamento
+                    df_completo = df_filtrado.merge(
+                        df_meio_pagamento[["Meio de Pagamento", "Recebimento", "Antecipa S/N"]],
+                        on="Meio de Pagamento",
+                        how="left"
+                    )
+                    df_completo["Recebimento"] = pd.to_numeric(df_completo["Recebimento"], errors="coerce").fillna(0).astype(int)
+                    df_completo["Antecipa S/N"] = df_completo["Antecipa S/N"].astype(str).str.strip().str.upper()
+
+                    from pandas.tseries.offsets import BDay
+                    def calcula_recebimento(row):
+                        if row["Antecipa S/N"] == "SIM":
+                            return row["Data"] + BDay(1)
+                        else:
+                            return row["Data"] + BDay(row["Recebimento"])
+                    df_completo["Data Recebimento"] = df_completo.apply(calcula_recebimento, axis=1)
+
+                    df_financeiro = df_completo.groupby(df_completo["Data Recebimento"].dt.date)["Valor (R$)"].sum().reset_index()
+                    df_financeiro = df_financeiro.rename(columns={"Data Recebimento": "Data"}).sort_values("Data")
+
+                    # Formata
+                    df_financeiro["Valor (R$)"] = df_financeiro["Valor (R$)"].map(
                         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                     )
 
-                st.dataframe(df_pivot_exibe, use_container_width=True)
+                    st.dataframe(df_financeiro, use_container_width=True)
 
-                # Download Excel
-                from io import BytesIO
-                output = BytesIO()
-                with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    df_pivot_total.to_excel(writer, index=False, sheet_name=f"Relatório")
-                output.seek(0)
+                    # Download Excel
+                    output = BytesIO()
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                        df_financeiro.to_excel(writer, index=False, sheet_name="Financeiro")
+                    output.seek(0)
 
-                st.download_button(
-                    "📥 Baixar Excel",
-                    data=output,
-                    file_name=f"Relatorio_{tipo_relatorio.replace(' ', '_')}_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+                    st.download_button(
+                        "📥 Baixar Excel",
+                        data=output,
+                        file_name=f"Financeiro_Recebimentos_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
 
     except Exception as e:
         st.error(f"❌ Erro ao acessar Google Sheets: {e}")
