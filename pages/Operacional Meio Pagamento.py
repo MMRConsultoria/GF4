@@ -423,10 +423,10 @@ with tab3:
                     
                     totais_por_coluna = df_pivot.iloc[:, 5:].sum()
                     
-                    # ✅ Linha TOTAL GERAL 100% robusta
+                    # ✅ linha total segura
                     linha_total = pd.DataFrame([{
                         df_pivot.columns[0]: "TOTAL GERAL",
-                        **{col: "" for col in df_pivot.columns[1:5]},
+                        **{col: np.nan for col in df_pivot.columns[1:5]},
                         **dict(zip(df_pivot.columns[5:], totais_por_coluna))
                     }])
                     
