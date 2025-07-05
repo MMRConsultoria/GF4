@@ -286,6 +286,10 @@ with tab3:
                 df_empresa.columns = df_empresa.columns.str.strip()
                 df_empresa = df_empresa[["Loja", "Grupo"]]
 
+                # Normaliza para uppercase e tira espaços
+                df_filtrado["Loja"] = df_filtrado["Loja"].astype(str).str.strip().str.upper()
+                df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.upper()
+
                 df_completo = df_filtrado.merge(df_empresa, on="Loja", how="left")
 
                 if "Grupo" not in df_completo.columns:
