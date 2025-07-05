@@ -279,9 +279,9 @@ with tab3:
         tipo_relatorio = st.selectbox(
             "Escolha o relatório que deseja visualizar:",
             [
-                "Resumo por Meio de Pagamento",
-                "Detalhado por Loja, Grupo e Meio de Pagamento",
-                "Resumo por Grupo e Meio de Pagamento"
+                "Meio de Pagamento",
+                "Loja",
+                "Grupo"
             ]
         )
 
@@ -297,7 +297,7 @@ with tab3:
                 st.info("🔍 Não há dados para o período selecionado.")
             else:
                 # Decide qual index usar conforme seleção
-                if tipo_relatorio == "Meio de Pagamento":
+                if tipo_relatorio == "Resumo por Meio de Pagamento":
                     index_cols = ["Meio de Pagamento"]
                 elif tipo_relatorio == "Detalhado por Loja, Grupo e Meio de Pagamento":
                     index_cols = ["Loja", "Grupo", "Meio de Pagamento"]
