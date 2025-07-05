@@ -324,7 +324,7 @@ with tab3:
                     # Corrige eventual renomeação
                     df_pivot.rename(columns={"Vendas - Antecipa S/N": "Antecipa S/N"}, inplace=True)
 
-                    # Cria colunas de Vlr Taxa Bandeira ao lado
+                    # Cria colunas de Vlr Taxa Bandeira ao lado e intercala
                     colunas_vendas = [col for col in df_pivot.columns if "Vendas" in col]
                     for col_vendas in colunas_vendas:
                         data_col = col_vendas.split(" - ")[1]
@@ -332,10 +332,29 @@ with tab3:
                         taxa_bandeira = (
                             pd.to_numeric(df_pivot["Taxa Bandeira"].astype(str)
                                           .str.replace("%","")
-                                          .str.replace(",","."),
-                                          errors="coerce").fillna(0) / 100
+                                          .str.replace(",","."), errors="coerce").fillna(0) / 100
                         )
                         df_pivot[col_taxa] = df_pivot[col_vendas] * taxa_bandeira
+                    
+                    # Intercala as colunas
+                    cols_fixas = ["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"]
+                    novas_cols = []
+                    for col in colunas_vendas:
+                        data_col = col.split(" - ")[1]
+                        col_taxa = f"Vlr Taxa Bandeira - {data_col}"
+                        novas_cols.extend([col, col_taxa])
+                    
+                    df_pivot = df_pivot[cols_fixas + novas_cols + ["Total Vendas"]]
+                    
+                    # Linha total geral
+                    totais_por_coluna = df_pivot[[c for c in df_pivot.columns if "Vendas" in c or "Vlr Taxa Bandeira" in c]].sum()
+                    linha_total = pd.DataFrame(
+                        [["Total Vendas", "", "", "", ""] + totais_por_coluna.tolist()],
+                        columns=df_pivot.columns
+                    )
+                    df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
+
+
 
                     # Total Vendas continua o mesmo
                     df_pivot["Total Vendas"] = df_pivot[colunas_vendas].sum(axis=1)
