@@ -9,3 +9,4 @@ openpyxl
 gspread-formatting
 plotly
 streamlit-aggrid
+unidecode
