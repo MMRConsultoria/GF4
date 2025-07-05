@@ -284,7 +284,7 @@ with tab3:
         # Seletor principal
         modo_relatorio = st.selectbox(
             "Escolha o tipo de análise:",
-            ["Vendas", "Financeiro"]
+            ["Vendas", "Financeiro", "Vendas + Prazo e Taxas"]
         )
 
         if data_inicio > data_fim:
@@ -311,7 +311,6 @@ with tab3:
                     elif tipo_relatorio == "Grupo":
                         index_cols = ["Grupo", "Meio de Pagamento"]
 
-                    # Monta pivot
                     df_pivot = pd.pivot_table(
                         df_filtrado,
                         index=index_cols,
@@ -321,19 +320,14 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
-                    # Coluna TOTAL GERAL
                     df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, len(index_cols):].sum(axis=1)
-
-                    # Linha TOTAL GERAL
                     totais_por_coluna = df_pivot.iloc[:, len(index_cols):].sum()
                     linha_total = pd.DataFrame(
                         [["TOTAL GERAL"] + [""]*(len(index_cols)-1) + totais_por_coluna.tolist()],
                         columns=df_pivot.columns
                     )
-
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
-                    # Formatação
                     df_pivot_exibe = df_pivot_total.copy()
                     for col in df_pivot_exibe.columns[len(index_cols):]:
                         df_pivot_exibe[col] = df_pivot_exibe[col].map(
@@ -342,8 +336,6 @@ with tab3:
 
                     st.dataframe(df_pivot_exibe, use_container_width=True)
 
-                    # Download Excel
-                    from io import BytesIO
                     output = BytesIO()
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
                         df_pivot_total.to_excel(writer, index=False, sheet_name=f"{tipo_relatorio}")
@@ -357,7 +349,6 @@ with tab3:
                     )
 
                 elif modo_relatorio == "Financeiro":
-                    # Junta dados com Recebimento e Antecipa S/N
                     df_completo = df_filtrado.merge(
                         df_meio_pagamento[["Meio de Pagamento", "Recebimento", "Antecipa S/N"]],
                         on="Meio de Pagamento",
@@ -374,23 +365,19 @@ with tab3:
                             return row["Data"] + BDay(row["Recebimento"])
                     df_completo["Data Recebimento"] = df_completo.apply(calcula_recebimento, axis=1)
 
-                    # Agrupa
                     df_financeiro = df_completo.groupby(df_completo["Data Recebimento"].dt.date)["Valor (R$)"].sum().reset_index()
                     df_financeiro = df_financeiro.rename(columns={"Data Recebimento": "Data"}).sort_values("Data")
 
-                    # Linha TOTAL GERAL
                     total_geral = df_financeiro["Valor (R$)"].sum()
                     linha_total = pd.DataFrame([["TOTAL GERAL", total_geral]], columns=df_financeiro.columns)
                     df_financeiro_total = pd.concat([linha_total, df_financeiro], ignore_index=True)
 
-                    # Formata
                     df_financeiro_total["Valor (R$)"] = df_financeiro_total["Valor (R$)"].map(
                         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                     )
 
                     st.dataframe(df_financeiro_total, use_container_width=True)
 
-                    # Download Excel
                     output = BytesIO()
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
                         df_financeiro_total.to_excel(writer, index=False, sheet_name="Financeiro")
@@ -400,6 +387,50 @@ with tab3:
                         "📥 Baixar Excel",
                         data=output,
                         file_name=f"Financeiro_Recebimentos_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+
+                elif modo_relatorio == "Vendas + Prazo e Taxas":
+                    df_completo = df_filtrado.merge(
+                        df_meio_pagamento[["Meio de Pagamento", "Recebimento", "Antecipa S/N", "Taxa Operadora", "Taxa Antecipacao"]],
+                        on="Meio de Pagamento",
+                        how="left"
+                    )
+
+                    df_pivot = pd.pivot_table(
+                        df_completo,
+                        index=["Meio de Pagamento", "Recebimento", "Antecipa S/N", "Taxa Operadora", "Taxa Antecipacao"],
+                        columns=df_completo["Data"].dt.strftime("%d/%m/%Y"),
+                        values="Valor (R$)",
+                        aggfunc="sum",
+                        fill_value=0
+                    ).reset_index()
+
+                    df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, 5:].sum(axis=1)
+                    totais_por_coluna = df_pivot.iloc[:, 5:].sum()
+                    linha_total = pd.DataFrame(
+                        [["TOTAL GERAL", "", "", "", ""] + totais_por_coluna.tolist()],
+                        columns=df_pivot.columns
+                    )
+                    df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
+
+                    df_pivot_exibe = df_pivot_total.copy()
+                    for col in df_pivot_exibe.columns[5:]:
+                        df_pivot_exibe[col] = df_pivot_exibe[col].map(
+                            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                        )
+
+                    st.dataframe(df_pivot_exibe, use_container_width=True)
+
+                    output = BytesIO()
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                        df_pivot_total.to_excel(writer, index=False, sheet_name="PrazoTaxas")
+                    output.seek(0)
+
+                    st.download_button(
+                        "📥 Baixar Excel",
+                        data=output,
+                        file_name=f"Vendas_Prazo_Taxas_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
 
