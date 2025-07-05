@@ -239,7 +239,6 @@ with tab2:
 with tab3:
     try:
         import pandas as pd
-        import numpy as np
         pd.set_option('display.max_colwidth', 20)
         pd.set_option('display.width', 1000)
 
@@ -327,14 +326,10 @@ with tab3:
 
                     df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, len(index_cols):].sum(axis=1)
                     totais_por_coluna = df_pivot.iloc[:, len(index_cols):].sum()
-
-                    # ✅ usando dict seguro
-                    linha_total = pd.DataFrame([{
-                        df_pivot.columns[0]: "TOTAL GERAL",
-                        **{col: np.nan for col in df_pivot.columns[1:len(df_pivot.columns)-len(totais_por_coluna)]},
-                        **dict(zip(df_pivot.columns[-len(totais_por_coluna):], totais_por_coluna))
-                    }])
-
+                    linha_total = pd.DataFrame(
+                        [["TOTAL GERAL"] + [""]*(len(index_cols)-1) + totais_por_coluna.tolist()],
+                        columns=df_pivot.columns
+                    )
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
                     df_pivot_exibe = df_pivot_total.copy()
@@ -415,28 +410,17 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
-                    # Renomeia datas
+                    # ✅ Alteração: renomeia as colunas de data
                     colunas_datas = [col for col in df_pivot.columns if "/" in col]
                     novo_nome_datas = {col: f"Vendas - {col}" for col in colunas_datas}
                     df_pivot.rename(columns=novo_nome_datas, inplace=True)
-                    colunas_datas = list(novo_nome_datas.values())
 
-                    df_pivot["Taxa Bandeira"] = pd.to_numeric(df_pivot["Taxa Bandeira"], errors="coerce").fillna(0)
-                    df_pivot["Taxa Antecipação"] = pd.to_numeric(df_pivot["Taxa Antecipação"], errors="coerce").fillna(0)
-
-                    df_pivot["Vlr Taxa Bandeira"] = df_pivot[colunas_datas].sum(axis=1) * df_pivot["Taxa Bandeira"]
-                    df_pivot["Vlr Taxa Antecipação"] = df_pivot[colunas_datas].sum(axis=1) * df_pivot["Taxa Antecipação"]
-
-                    df_pivot["TOTAL GERAL"] = df_pivot[colunas_datas].sum(axis=1)
+                    df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, 5:].sum(axis=1)
                     totais_por_coluna = df_pivot.iloc[:, 5:].sum()
-
-                    # ✅ usando dict seguro
-                    linha_total = pd.DataFrame([{
-                        df_pivot.columns[0]: "TOTAL GERAL",
-                        **{col: np.nan for col in df_pivot.columns[1:len(df_pivot.columns)-len(totais_por_coluna)]},
-                        **dict(zip(df_pivot.columns[-len(totais_por_coluna):], totais_por_coluna))
-                    }])
-
+                    linha_total = pd.DataFrame(
+                        [["TOTAL GERAL", "", "", "", ""] + totais_por_coluna.tolist()],
+                        columns=df_pivot.columns
+                    )
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
                     df_pivot_exibe = df_pivot_total.copy()
