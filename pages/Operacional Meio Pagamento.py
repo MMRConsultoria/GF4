@@ -378,17 +378,22 @@ with tab3:
                     df_financeiro = df_completo.groupby(df_completo["Data Recebimento"].dt.date)["Valor (R$)"].sum().reset_index()
                     df_financeiro = df_financeiro.rename(columns={"Data Recebimento": "Data"}).sort_values("Data")
 
+                    # Linha TOTAL GERAL
+                    total_geral = df_financeiro["Valor (R$)"].sum()
+                    linha_total = pd.DataFrame([["TOTAL GERAL", total_geral]], columns=df_financeiro.columns)
+                    df_financeiro_total = pd.concat([linha_total, df_financeiro], ignore_index=True)
+
                     # Formata
-                    df_financeiro["Valor (R$)"] = df_financeiro["Valor (R$)"].map(
+                    df_financeiro_total["Valor (R$)"] = df_financeiro_total["Valor (R$)"].map(
                         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                     )
 
-                    st.dataframe(df_financeiro, use_container_width=True)
+                    st.dataframe(df_financeiro_total, use_container_width=True)
 
                     # Download Excel
                     output = BytesIO()
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                        df_financeiro.to_excel(writer, index=False, sheet_name="Financeiro")
+                        df_financeiro_total.to_excel(writer, index=False, sheet_name="Financeiro")
                     output.seek(0)
 
                     st.download_button(
