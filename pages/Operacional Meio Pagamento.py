@@ -286,14 +286,30 @@ with tab3:
                 df_empresa.columns = df_empresa.columns.str.strip()
                 df_empresa = df_empresa[["Loja", "Grupo"]]
 
-                # Normaliza para uppercase e tira espaços
-                df_filtrado["Loja"] = df_filtrado["Loja"].astype(str).str.strip().str.upper()
-                df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.upper()
+                # Normaliza: tira espaços, uppercase e remove acentos
+                from unidecode import unidecode
+                df_filtrado["Loja"] = df_filtrado["Loja"].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
+                df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
 
+                # Debug para diagnosticar
+                st.write("📝 Lojas no dataframe filtrado (df_filtrado):")
+                st.write(df_filtrado["Loja"].unique())
+
+                st.write("🏬 Lojas no dataframe empresa (df_empresa):")
+                st.write(df_empresa["Loja"].unique())
+
+                # Merge
                 df_completo = df_filtrado.merge(df_empresa, on="Loja", how="left")
 
+                # Mostrar o resultado do merge para debug
+                st.write("🔍 Resultado do merge (primeiras 20 linhas):")
+                st.write(df_completo[["Loja", "Grupo"]].head(20))
+
+                # Se Grupo ainda ficou vazio, preenche com ""
                 if "Grupo" not in df_completo.columns:
                     df_completo["Grupo"] = ""
+                else:
+                    df_completo["Grupo"] = df_completo["Grupo"].fillna("")
 
                 # Monta pivot table indexado por Loja + Grupo + Meio de Pagamento
                 df_pivot = pd.pivot_table(
@@ -328,6 +344,7 @@ with tab3:
                 st.dataframe(df_pivot_exibe, use_container_width=True)
 
                 # Download Excel
+                from io import BytesIO
                 output = BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     df_pivot_total.to_excel(writer, index=False, sheet_name="Total por Dia")
