@@ -324,23 +324,23 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
-                    df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, len(index_cols):].sum(axis=1)
-                    totais_por_coluna = df_pivot.iloc[:, len(index_cols):].sum()
+                    df_pivot["TOTAL GERAL"] = df_pivot.select_dtypes(include=[np.number]).sum(axis=1)
+                    totais_por_coluna = df_pivot.select_dtypes(include=[np.number]).sum()
 
-                    # ✅ linha total robusta
                     linha_total_dict = {df_pivot.columns[0]: "TOTAL GERAL"}
-                    for col in df_pivot.columns[1:len(index_cols)]:
-                        linha_total_dict[col] = np.nan
-                    for col in df_pivot.columns[len(index_cols):]:
-                        linha_total_dict[col] = totais_por_coluna[col]
+                    for col in df_pivot.columns[1:]:
+                        if col in totais_por_coluna.index:
+                            linha_total_dict[col] = totais_por_coluna[col]
+                        else:
+                            linha_total_dict[col] = np.nan
 
                     linha_total = pd.DataFrame([linha_total_dict])
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
                     df_pivot_exibe = df_pivot_total.copy()
-                    for col in df_pivot_exibe.columns[len(index_cols):]:
+                    for col in df_pivot_exibe.select_dtypes(include=[np.number]).columns:
                         df_pivot_exibe[col] = df_pivot_exibe[col].map(
-                            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notna(x) else ""
                         )
 
                     st.dataframe(df_pivot_exibe, use_container_width=True)
@@ -382,7 +382,7 @@ with tab3:
                     df_financeiro_total = pd.concat([linha_total, df_financeiro], ignore_index=True)
 
                     df_financeiro_total["Valor (R$)"] = df_financeiro_total["Valor (R$)"].map(
-                        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notna(x) else ""
                     )
 
                     st.dataframe(df_financeiro_total, use_container_width=True)
@@ -421,18 +421,13 @@ with tab3:
                     colunas_datas = list(novo_nome_datas.values())
 
                     df_pivot["TOTAL GERAL"] = df_pivot[colunas_datas].sum(axis=1)
-
-                    # Calcula Vlr Taxa Bandeira
                     df_pivot["Taxa Bandeira"] = df_pivot["Taxa Bandeira"].astype(str).str.replace("%", "").str.replace(",", ".").astype(float) / 100
                     df_pivot["Vlr Taxa Bandeira"] = df_pivot["TOTAL GERAL"] * df_pivot["Taxa Bandeira"]
 
-                    colunas_numericas = [col for col in df_pivot.columns if df_pivot[col].dtype in [np.float64, np.int64]]
-                    totais_por_coluna = df_pivot[colunas_numericas].sum()
-
-                    # ✅ linha total robusta
+                    totais_por_coluna = df_pivot.select_dtypes(include=[np.number]).sum()
                     linha_total_dict = {df_pivot.columns[0]: "TOTAL GERAL"}
                     for col in df_pivot.columns[1:]:
-                        if col in colunas_numericas:
+                        if col in totais_por_coluna.index:
                             linha_total_dict[col] = totais_por_coluna[col]
                         else:
                             linha_total_dict[col] = np.nan
@@ -441,9 +436,9 @@ with tab3:
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
                     df_pivot_exibe = df_pivot_total.copy()
-                    for col in colunas_numericas:
+                    for col in df_pivot_exibe.select_dtypes(include=[np.number]).columns:
                         df_pivot_exibe[col] = df_pivot_exibe[col].map(
-                            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notna(x) else ""
                         )
 
                     st.dataframe(df_pivot_exibe, use_container_width=True)
