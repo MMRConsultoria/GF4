@@ -415,7 +415,7 @@ with tab3:
                     df_pivot.rename(columns=novo_nome_datas, inplace=True)
                     colunas_datas = list(novo_nome_datas.values())
 
-                   df_pivot["TOTAL GERAL"] = df_pivot[colunas_datas].sum(axis=1)
+                    df_pivot["TOTAL GERAL"] = df_pivot[colunas_datas].sum(axis=1)
 
                     # Taxa Bandeira
                     df_pivot["Taxa Bandeira"] = df_pivot["Taxa Bandeira"].astype(str).str.replace("%", "").str.replace(",", ".").astype(float) / 100
