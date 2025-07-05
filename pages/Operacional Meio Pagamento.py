@@ -400,45 +400,46 @@ with tab3:
                         on="Meio de Pagamento",
                         how="left"
                     )
-
-                    # Converte taxas para decimal
                     df_completo["Taxa Bandeira"] = pd.to_numeric(df_completo["Taxa Bandeira"], errors="coerce").fillna(0) / 100
                     df_completo["Taxa Antecipação"] = pd.to_numeric(df_completo["Taxa Antecipação"], errors="coerce").fillna(0) / 100
 
-                    df_pivot = pd.pivot_table(
+                    df_pivot_valor = pd.pivot_table(
                         df_completo,
-                        index=["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"],
+                        index=["Meio de Pagamento", "Prazo", "Antecipa S/N"],
                         columns=df_completo["Data"].dt.strftime("%d/%m/%Y"),
                         values="Valor (R$)",
                         aggfunc="sum",
                         fill_value=0
                     ).reset_index()
 
-                    # Adiciona colunas para taxas
-                    colunas_datas = df_pivot.columns[5:]
+                    taxas = df_meio_pagamento[["Meio de Pagamento", "Taxa Bandeira", "Taxa Antecipação"]].drop_duplicates()
+                    df_final = df_pivot_valor.merge(taxas, on="Meio de Pagamento", how="left")
+                    df_final["Taxa Bandeira"] = pd.to_numeric(df_final["Taxa Bandeira"], errors="coerce").fillna(0) / 100
+                    df_final["Taxa Antecipação"] = pd.to_numeric(df_final["Taxa Antecipação"], errors="coerce").fillna(0) / 100
+
+                    colunas_datas = [col for col in df_final.columns if "/" in col]
                     for col in colunas_datas:
-                        df_pivot[f"{col} - Taxa Bandeira"] = df_pivot[col] * df_pivot["Taxa Bandeira"]
-                        df_pivot[f"{col} - Taxa Antecipação"] = df_pivot[col] * df_pivot["Taxa Antecipação"]
+                        df_final[f"{col} - Taxa Bandeira"] = df_final[col] * df_final["Taxa Bandeira"]
+                        df_final[f"{col} - Taxa Antecipação"] = df_final[col] * df_final["Taxa Antecipação"]
 
-                    df_pivot["TOTAL GERAL"] = df_pivot[colunas_datas].sum(axis=1)
-                    totais_por_coluna = df_pivot.iloc[:, 5:].sum()
+                    df_final["TOTAL GERAL"] = df_final[colunas_datas].sum(axis=1)
+                    totais_por_coluna = df_final.iloc[:, 3:].sum()
                     linha_total = pd.DataFrame(
-                        [["TOTAL GERAL", "", "", "", ""] + totais_por_coluna.tolist()],
-                        columns=df_pivot.columns
+                        [["TOTAL GERAL", "", ""] + totais_por_coluna.tolist()],
+                        columns=df_final.columns
                     )
-                    df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
+                    df_final_total = pd.concat([linha_total, df_final], ignore_index=True)
 
-                    # Formata todas as colunas numéricas
-                    for col in df_pivot_total.columns[5:]:
-                        df_pivot_total[col] = df_pivot_total[col].map(
+                    for col in df_final_total.columns[3:]:
+                        df_final_total[col] = df_final_total[col].map(
                             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                         )
 
-                    st.dataframe(df_pivot_total, use_container_width=True)
+                    st.dataframe(df_final_total, use_container_width=True)
 
                     output = BytesIO()
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                        df_pivot_total.to_excel(writer, index=False, sheet_name="PrazoTaxas")
+                        df_final_total.to_excel(writer, index=False, sheet_name="PrazoTaxas")
                     output.seek(0)
 
                     st.download_button(
