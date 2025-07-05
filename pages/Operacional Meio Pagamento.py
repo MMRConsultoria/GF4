@@ -260,6 +260,10 @@ with tab3:
         df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
         df_relatorio = df_relatorio[df_relatorio["Data"].notna()]
 
+        # Normaliza Meio de Pagamento
+        from unidecode import unidecode
+        df_relatorio["Meio de Pagamento"] = df_relatorio["Meio de Pagamento"].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
+
         # Filtro datas
         min_data = df_relatorio["Data"].min().date()
         max_data = df_relatorio["Data"].max().date()
@@ -270,26 +274,31 @@ with tab3:
             max_value=max_data
         )
 
+        # Filtro meios de pagamento
+        meios_disponiveis = sorted(df_relatorio["Meio de Pagamento"].unique())
+        meios_selecionados = st.multiselect(
+            "Selecione os Meios de Pagamento que deseja visualizar:",
+            options=meios_disponiveis,
+            default=meios_disponiveis
+        )
+
         if data_inicio > data_fim:
             st.warning("🚫 A data inicial não pode ser maior que a data final.")
         else:
+            # Filtra data e meios de pagamento
             df_filtrado = df_relatorio[
                 (df_relatorio["Data"].dt.date >= data_inicio) &
-                (df_relatorio["Data"].dt.date <= data_fim)
+                (df_relatorio["Data"].dt.date <= data_fim) &
+                (df_relatorio["Meio de Pagamento"].isin(meios_selecionados))
             ]
 
             if df_filtrado.empty:
-                st.info("🔍 Não há dados para o período selecionado.")
+                st.info("🔍 Não há dados para o período e filtros selecionados.")
             else:
-                # Normaliza Loja, Grupo e Meio de Pagamento
-                from unidecode import unidecode
-                for col in ["Loja", "Grupo", "Meio de Pagamento"]:
-                    df_filtrado[col] = df_filtrado[col].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
-
-                # Monta pivot table indexado por Loja + Grupo + Meio de Pagamento
+                # Monta pivot table indexado só por Meio de Pagamento
                 df_pivot = pd.pivot_table(
                     df_filtrado,
-                    index=["Loja", "Grupo", "Meio de Pagamento"],
+                    index=["Meio de Pagamento"],
                     columns=df_filtrado["Data"].dt.strftime("%d/%m/%Y"),
                     values="Valor (R$)",
                     aggfunc="sum",
@@ -297,21 +306,21 @@ with tab3:
                 ).reset_index()
 
                 # Coluna TOTAL GERAL
-                df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, 3:].sum(axis=1)
+                df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, 1:].sum(axis=1)
 
                 # Ordena do maior para o menor pelo TOTAL GERAL
                 df_pivot = df_pivot.sort_values(by="TOTAL GERAL", ascending=False)
 
                 # Linha total geral
-                totais_por_coluna = df_pivot.iloc[:, 3:].sum()
-                linha_total = pd.DataFrame([["TOTAL GERAL", "", ""] + totais_por_coluna.tolist()],
+                totais_por_coluna = df_pivot.iloc[:, 1:].sum()
+                linha_total = pd.DataFrame([["TOTAL GERAL"] + totais_por_coluna.tolist()],
                                            columns=df_pivot.columns)
 
                 df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
                 # Formatação R$
                 df_pivot_exibe = df_pivot_total.copy()
-                for col in df_pivot_exibe.columns[3:]:
+                for col in df_pivot_exibe.columns[1:]:
                     df_pivot_exibe[col] = df_pivot_exibe[col].map(
                         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                     )
@@ -322,13 +331,13 @@ with tab3:
                 from io import BytesIO
                 output = BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    df_pivot_total.to_excel(writer, index=False, sheet_name="Total por Dia")
+                    df_pivot_total.to_excel(writer, index=False, sheet_name="Resumo Meio Pagamento")
                 output.seek(0)
 
                 st.download_button(
                     "📥 Baixar Excel",
                     data=output,
-                    file_name=f"Relatorio_Loja_Grupo_MP_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
+                    file_name=f"Resumo_MeioPagamento_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
