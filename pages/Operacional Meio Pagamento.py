@@ -242,7 +242,6 @@ with tab3:
         pd.set_option('display.max_colwidth', 20)
         pd.set_option('display.width', 1000)
 
-        # Carrega dados
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
         df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
         df_relatorio.columns = df_relatorio.columns.str.strip()
@@ -251,7 +250,6 @@ with tab3:
         df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
         df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip()
 
-        # Corrige valores
         df_relatorio["Valor (R$)"] = (
             df_relatorio["Valor (R$)"]
             .astype(str)
@@ -264,18 +262,15 @@ with tab3:
             .astype(float)
         )
 
-        # Converte datas
         df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
         df_relatorio = df_relatorio[df_relatorio["Data"].notna()]
 
-        # Normaliza
         from unidecode import unidecode
         for col in ["Loja", "Grupo", "Meio de Pagamento"]:
             df_relatorio[col] = df_relatorio[col].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
             if col in df_meio_pagamento.columns:
                 df_meio_pagamento[col] = df_meio_pagamento[col].astype(str).str.strip().str.upper().apply(lambda x: unidecode(x))
 
-        # Filtro datas
         min_data = df_relatorio["Data"].min().date()
         max_data = df_relatorio["Data"].max().date()
         data_inicio, data_fim = st.date_input(
@@ -285,7 +280,6 @@ with tab3:
             max_value=max_data
         )
 
-        # Seletor principal
         modo_relatorio = st.selectbox(
             "Escolha o tipo de análise:",
             ["Vendas", "Financeiro", "Vendas + Prazo e Taxas"]
@@ -302,133 +296,62 @@ with tab3:
             if df_filtrado.empty:
                 st.info("🔍 Não há dados para o período selecionado.")
             else:
-                if modo_relatorio == "Vendas":
-                    tipo_relatorio = st.selectbox(
-                        "Escolha o relatório que deseja visualizar:",
-                        ["Meio de Pagamento", "Loja", "Grupo"]
-                    )
-
-                    if tipo_relatorio == "Meio de Pagamento":
-                        index_cols = ["Meio de Pagamento"]
-                    elif tipo_relatorio == "Loja":
-                        index_cols = ["Loja", "Grupo", "Meio de Pagamento"]
-                    elif tipo_relatorio == "Grupo":
-                        index_cols = ["Grupo", "Meio de Pagamento"]
-
-                    df_pivot = pd.pivot_table(
-                        df_filtrado,
-                        index=index_cols,
-                        columns=df_filtrado["Data"].dt.strftime("%d/%m/%Y"),
-                        values="Valor (R$)",
-                        aggfunc="sum",
-                        fill_value=0
-                    ).reset_index()
-
-                    df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, len(index_cols):].sum(axis=1)
-                    totais_por_coluna = df_pivot.iloc[:, len(index_cols):].sum()
-                    linha_total = pd.DataFrame(
-                        [["TOTAL GERAL"] + [""]*(len(index_cols)-1) + totais_por_coluna.tolist()],
-                        columns=df_pivot.columns
-                    )
-                    df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
-
-                    df_pivot_exibe = df_pivot_total.copy()
-                    for col in df_pivot_exibe.columns[len(index_cols):]:
-                        df_pivot_exibe[col] = df_pivot_exibe[col].map(
-                            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                        )
-
-                    st.dataframe(df_pivot_exibe, use_container_width=True)
-
-                    output = BytesIO()
-                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                        df_pivot_total.to_excel(writer, index=False, sheet_name=f"{tipo_relatorio}")
-                    output.seek(0)
-
-                    st.download_button(
-                        "📥 Baixar Excel",
-                        data=output,
-                        file_name=f"Relatorio_{tipo_relatorio}_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
-
-                elif modo_relatorio == "Financeiro":
-                    df_completo = df_filtrado.merge(
-                        df_meio_pagamento[["Meio de Pagamento", "Prazo", "Antecipa S/N"]],
-                        on="Meio de Pagamento",
-                        how="left"
-                    )
-                    df_completo["Prazo"] = pd.to_numeric(df_completo["Prazo"], errors="coerce").fillna(0).astype(int)
-                    df_completo["Antecipa S/N"] = df_completo["Antecipa S/N"].astype(str).str.strip().str.upper()
-
-                    from pandas.tseries.offsets import BDay
-                    def calcula_recebimento(row):
-                        if row["Antecipa S/N"] == "SIM":
-                            return row["Data"] + BDay(1)
-                        else:
-                            return row["Data"] + BDay(row["Prazo"])
-                    df_completo["Data Recebimento"] = df_completo.apply(calcula_recebimento, axis=1)
-
-                    df_financeiro = df_completo.groupby(df_completo["Data Recebimento"].dt.date)["Valor (R$)"].sum().reset_index()
-                    df_financeiro = df_financeiro.rename(columns={"Data Recebimento": "Data"}).sort_values("Data")
-
-                    total_geral = df_financeiro["Valor (R$)"].sum()
-                    linha_total = pd.DataFrame([["TOTAL GERAL", total_geral]], columns=df_financeiro.columns)
-                    df_financeiro_total = pd.concat([linha_total, df_financeiro], ignore_index=True)
-
-                    df_financeiro_total["Valor (R$)"] = df_financeiro_total["Valor (R$)"].map(
-                        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                    )
-
-                    st.dataframe(df_financeiro_total, use_container_width=True)
-
-                    output = BytesIO()
-                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                        df_financeiro_total.to_excel(writer, index=False, sheet_name="Financeiro")
-                    output.seek(0)
-
-                    st.download_button(
-                        "📥 Baixar Excel",
-                        data=output,
-                        file_name=f"Financeiro_Recebimentos_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
-
-                elif modo_relatorio == "Vendas + Prazo e Taxas":
+                if modo_relatorio == "Vendas + Prazo e Taxas":
                     df_completo = df_filtrado.merge(
                         df_meio_pagamento[["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"]],
                         on="Meio de Pagamento",
                         how="left"
                     )
 
-                    df_pivot = pd.pivot_table(
+                    df_completo["Taxa Bandeira"] = pd.to_numeric(df_completo["Taxa Bandeira"], errors="coerce").fillna(0) / 100
+                    df_completo["Taxa Antecipação"] = pd.to_numeric(df_completo["Taxa Antecipação"], errors="coerce").fillna(0) / 100
+
+                    df_pivot_valor = pd.pivot_table(
                         df_completo,
-                        index=["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"],
+                        index=["Meio de Pagamento", "Prazo", "Antecipa S/N"],
                         columns=df_completo["Data"].dt.strftime("%d/%m/%Y"),
                         values="Valor (R$)",
                         aggfunc="sum",
                         fill_value=0
                     ).reset_index()
 
-                    df_pivot["TOTAL GERAL"] = df_pivot.iloc[:, 5:].sum(axis=1)
-                    totais_por_coluna = df_pivot.iloc[:, 5:].sum()
-                    linha_total = pd.DataFrame(
-                        [["TOTAL GERAL", "", "", "", ""] + totais_por_coluna.tolist()],
-                        columns=df_pivot.columns
-                    )
-                    df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
+                    taxas = df_meio_pagamento[["Meio de Pagamento", "Taxa Bandeira", "Taxa Antecipação"]].drop_duplicates()
+                    df_final = df_pivot_valor.merge(taxas, on="Meio de Pagamento", how="left")
+                    df_final["Taxa Bandeira"] = pd.to_numeric(df_final["Taxa Bandeira"], errors="coerce").fillna(0) / 100
+                    df_final["Taxa Antecipação"] = pd.to_numeric(df_final["Taxa Antecipação"], errors="coerce").fillna(0) / 100
 
-                    df_pivot_exibe = df_pivot_total.copy()
-                    for col in df_pivot_exibe.columns[5:]:
-                        df_pivot_exibe[col] = df_pivot_exibe[col].map(
+                    colunas_datas = [col for col in df_final.columns if "/" in col]
+                    for col in colunas_datas:
+                        df_final[f"{col} - Taxa Bandeira"] = df_final[col] * df_final["Taxa Bandeira"]
+                        df_final[f"{col} - Taxa Antecipação"] = df_final[col] * df_final["Taxa Antecipação"]
+                        df_final[f"{col} - Liquido"] = df_final[col] - df_final[f"{col} - Taxa Bandeira"] - df_final[f"{col} - Taxa Antecipação"]
+
+                    cols_bandeira = [c for c in df_final.columns if "- Taxa Bandeira" in c]
+                    cols_antecipacao = [c for c in df_final.columns if "- Taxa Antecipação" in c]
+                    cols_liquido = [c for c in df_final.columns if "- Liquido" in c]
+
+                    df_final["TOTAL VENDAS"] = df_final[colunas_datas].sum(axis=1)
+                    df_final["TOTAL TAXA BANDEIRA"] = df_final[cols_bandeira].sum(axis=1)
+                    df_final["TOTAL TAXA ANTECIPACAO"] = df_final[cols_antecipacao].sum(axis=1)
+                    df_final["TOTAL LIQUIDO"] = df_final[cols_liquido].sum(axis=1)
+
+                    totais_por_coluna = df_final.iloc[:, 3:].sum()
+                    linha_total = pd.DataFrame(
+                        [["TOTAL GERAL", "", ""] + totais_por_coluna.tolist()],
+                        columns=df_final.columns
+                    )
+                    df_final_total = pd.concat([linha_total, df_final], ignore_index=True)
+
+                    for col in df_final_total.columns[3:]:
+                        df_final_total[col] = df_final_total[col].map(
                             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                         )
 
-                    st.dataframe(df_pivot_exibe, use_container_width=True)
+                    st.dataframe(df_final_total, use_container_width=True)
 
                     output = BytesIO()
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                        df_pivot_total.to_excel(writer, index=False, sheet_name="PrazoTaxas")
+                        df_final_total.to_excel(writer, index=False, sheet_name="PrazoTaxas")
                     output.seek(0)
 
                     st.download_button(
