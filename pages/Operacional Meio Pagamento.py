@@ -307,4 +307,66 @@ with tab3:
                         how="left"
                     )
 
-                    df_completo["Taxa Bandeira"] = pd.to_numeric(df_completo["Taxa Bandeira"], errors="coerce").filln_
+                    df_completo["Taxa Bandeira"] = pd.to_numeric(df_completo["Taxa Bandeira"], errors="coerce").fillna(0) / 100
+                    df_completo["Taxa Antecipação"] = pd.to_numeric(df_completo["Taxa Antecipação"], errors="coerce").fillna(0) / 100
+
+                    df_pivot = pd.pivot_table(
+                        df_completo,
+                        index=["Meio de Pagamento", "Taxa Bandeira", "Taxa Antecipação", "Antecipa S/N", "Prazo"],
+                        columns=df_completo["Data"].dt.strftime("%d/%m/%Y"),
+                        values="Valor (R$)",
+                        aggfunc="sum",
+                        fill_value=0
+                    ).reset_index()
+
+                    # Renomeia as datas para "Vendas - data"
+                    colunas_datas = [col for col in df_pivot.columns if "/" in col]
+                    novo_nome_datas = {col: f"Vendas - {col}" for col in colunas_datas}
+                    df_pivot.rename(columns=novo_nome_datas, inplace=True)
+                    colunas_datas = list(novo_nome_datas.values())
+
+                    for col in colunas_datas:
+                        df_pivot[col] = pd.to_numeric(df_pivot[col], errors="coerce").fillna(0.0)
+
+                    for col in colunas_datas:
+                        df_pivot[f"{col} - Taxa Bandeira"] = df_pivot[col] * df_pivot["Taxa Bandeira"]
+                        df_pivot[f"{col} - Taxa Antecipação"] = df_pivot[col] * df_pivot["Taxa Antecipação"]
+                        df_pivot[f"{col} - Liquido"] = df_pivot[col] - df_pivot[f"{col} - Taxa Bandeira"] - df_pivot[f"{col} - Taxa Antecipação"]
+
+                    cols_bandeira = [c for c in df_pivot.columns if "- Taxa Bandeira" in c]
+                    cols_antecipacao = [c for c in df_pivot.columns if "- Taxa Antecipação" in c]
+                    cols_liquido = [c for c in df_pivot.columns if "- Liquido" in c]
+
+                    df_pivot["TOTAL VENDAS"] = df_pivot[colunas_datas].sum(axis=1)
+                    df_pivot["TOTAL TAXA BANDEIRA"] = df_pivot[cols_bandeira].sum(axis=1)
+                    df_pivot["TOTAL TAXA ANTECIPACAO"] = df_pivot[cols_bandeira].sum(axis=1)
+                    df_pivot["TOTAL LIQUIDO"] = df_pivot[cols_liquido].sum(axis=1)
+
+                    totais_por_coluna = df_pivot.iloc[:, 5:].sum()
+                    linha_total = pd.DataFrame(
+                        [["TOTAL GERAL", "", "", "", ""] + totais_por_coluna.tolist()],
+                        columns=df_pivot.columns
+                    )
+                    df_final_total = pd.concat([linha_total, df_pivot], ignore_index=True)
+
+                    for col in df_final_total.columns[5:]:
+                        df_final_total[col] = df_final_total[col].map(
+                            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                        )
+
+                    st.dataframe(df_final_total, use_container_width=True)
+
+                    output = BytesIO()
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                        df_final_total.to_excel(writer, index=False, sheet_name="PrazoTaxas")
+                    output.seek(0)
+
+                    st.download_button(
+                        "📥 Baixar Excel",
+                        data=output,
+                        file_name=f"Vendas_Prazo_Taxas_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+
+    except Exception as e:
+        st.error(f"❌ Erro ao acessar Google Sheets: {e}")
