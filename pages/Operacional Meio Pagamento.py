@@ -282,7 +282,7 @@ with tab3:
                 st.info("🔍 Não há dados para o período selecionado.")
             else:
                 # 🔗 Junta com Tabela Empresa para trazer o Grupo
-                df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
+                df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
                 df_empresa.columns = df_empresa.columns.str.strip()
                 df_empresa = df_empresa[["Loja", "Grupo"]]
 
