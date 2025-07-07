@@ -462,11 +462,15 @@ with tab3:
                     output = BytesIO()
                     from io import BytesIO
                     import pandas as pd
+                    from openpyxl import load_workbook
+                    from openpyxl.styles import numbers
                     
                     output = BytesIO()
                     
-                    # 🔥 Garante que Taxa Bandeira e Taxa Antecipação estejam numéricas
+                    # Copia DataFrame antes de formatação para export
                     df_exportar = df_pivot_total.copy()
+                    
+                    # Garante Taxa Bandeira e Antecipação como decimal
                     df_exportar["Taxa Bandeira"] = (
                         pd.to_numeric(df_exportar["Taxa Bandeira"].astype(str)
                                       .str.replace("%", "")
@@ -480,27 +484,49 @@ with tab3:
                                       errors="coerce") / 100
                     )
                     
-                    # 🔥 Formata todas as colunas monetárias como Contábil (R$)
-                    for col in df_exportar.columns:
-                        if ("Vendas" in col or "Vlr Taxa Bandeira" in col 
-                            or "Vlr Taxa Antecipação" in col or "Total Tx" in col 
-                            or col in ["Total Vendas", "Total a Receber"]):
-                            df_exportar[col] = df_exportar[col].map(
-                                lambda x: f'R$ {x:,.2f}'.replace(",", "X").replace(".", ",").replace("X", ".") 
-                                if pd.notna(x) else ""
-                            )
-                    
-                    # Exporta para Excel
+                    # Salva para Excel sem formatação
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
                         df_exportar.to_excel(writer, index=False, sheet_name="PrazoTaxas")
                     output.seek(0)
                     
+                    # Reabre workbook para aplicar number_format
+                    wb = load_workbook(output)
+                    ws = wb["PrazoTaxas"]
+                    
+                    # Identifica colunas para formatar
+                    header = [cell.value for cell in ws[1]]
+                    
+                    # Formata colunas de taxas como percentual
+                    for col_name in ["Taxa Bandeira", "Taxa Antecipação"]:
+                        if col_name in header:
+                            col_idx = header.index(col_name) + 1
+                            for row in ws.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx):
+                                for cell in row:
+                                    cell.number_format = "0.00%"
+                    
+                    # Formata valores como contábil (R$)
+                    for col_name in header:
+                        if ("Vendas" in col_name or "Vlr Taxa Bandeira" in col_name 
+                            or "Vlr Taxa Antecipação" in col_name or "Total Tx" in col_name 
+                            or col_name in ["Total Vendas", "Total a Receber"]):
+                            col_idx = header.index(col_name) + 1
+                            for row in ws.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx):
+                                for cell in row:
+                                    cell.number_format = '"R$" #,##0.00'
+                    
+                    # Salva final
+                    output_final = BytesIO()
+                    wb.save(output_final)
+                    output_final.seek(0)
+                    
                     # Botão para download
                     st.download_button(
                         "📥 Baixar Excel",
-                        data=output,
+                        data=output_final,
                         file_name=f"Vendas_Prazo_Taxas_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
-    except Exception as e:
-            st.error(f"❌ Erro ao acessar Google Sheets: {e}")
+                    
+                                        )
+                        except Exception as e:
+                                st.error(f"❌ Erro ao acessar Google Sheets: {e}")
