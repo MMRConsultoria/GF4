@@ -210,12 +210,12 @@ with aba1:
             df_final_fmt = df_final.copy()
             df_final_fmt["Meta"] = df_final_fmt["Meta"].apply(lambda x: f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
-            st.success("✅ Dados consolidados com TOTAL no topo e valores formatados como 240.000,00:")
+            st.success("✅ Dados consolidados")
             st.dataframe(df_final_fmt)
 
             excel_file = formatar_excel_contabil(df_final)
             st.download_button(
-                label="📥 Baixar Excel consolidado (.xlsx)",
+                label="📥 Baixar Excel (.xlsx)",
                 data=excel_file,
                 file_name="metas_consolidado.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
