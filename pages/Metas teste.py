@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="Processar Metas Dinâmico", layout="wide")
-st.title("📈 Processar Metas - Cabeçalho dinâmico, dados 2 linhas abaixo")
+st.title("📈 Processar Metas - Só META, ignorando Consolidado")
 
 uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
@@ -28,39 +28,47 @@ if uploaded_file:
         st.subheader(f"📝 Aba: {aba}")
         df_raw = pd.read_excel(xls, sheet_name=aba, header=None)
 
-        # Procurar a linha onde tem META ou FAT
+        # Encontrar linha com 'META'
         linha_header = None
         for idx in range(0, len(df_raw)):
-            linha_textos = df_raw.iloc[idx, :].astype(str).str.lower().str.replace(" ", "")
-            if linha_textos.str.contains("meta").any() or linha_textos.str.contains("fat").any():
+            linha_textos = df_raw.iloc[idx,:].astype(str).str.lower().str.replace(" ", "")
+            if linha_textos.str.contains("meta").any():
                 linha_header = idx
                 break
 
         if linha_header is None:
-            st.warning(f"⚠️ Não encontrou linha com 'META' ou 'FAT.' na aba {aba}.")
+            st.warning(f"⚠️ Não encontrou linha com 'META' na aba {aba}.")
             continue
 
-        # Encontrar colunas que tem META ou FAT
+        # Encontrar colunas só META
         metas_cols = []
         for col in range(df_raw.shape[1]):
             texto = str(df_raw.iloc[linha_header, col]).lower().replace(" ", "")
-            if "fat" in texto or "meta" in texto:
+            if "meta" in texto:
                 metas_cols.append(col)
 
         st.write(f"✅ Linha do header detectada: {linha_header}")
-        st.write(f"✅ Colunas META/FAT detectadas: {metas_cols}")
+        st.write(f"✅ Colunas apenas META detectadas: {metas_cols}")
 
-        linha_dados_inicio = linha_header + 2  # DUAS linhas abaixo
+        linha_dados_inicio = linha_header + 2
 
         for idx in range(linha_dados_inicio, len(df_raw)):
             if pd.isna(df_raw.iloc[idx, 1]):
-                continue  # pula se não tiver mês na coluna B
+                continue  # pula se não tiver mês
 
             mes_bruto = str(df_raw.iloc[idx, 1]).strip().lower()
             mes = mapa_meses.get(mes_bruto, mes_bruto)
 
             for c in metas_cols:
-                loja = df_raw.iloc[linha_header - 1, c]  # uma linha acima do header tem o nome da loja
+                loja = df_raw.iloc[linha_header - 1, c]
+                if pd.isna(loja):
+                    continue
+
+                loja = str(loja).strip()
+                # Ignorar consolidados
+                if "consolidado" in loja.lower():
+                    continue
+
                 valor = df_raw.iloc[idx, c]
                 if isinstance(valor, str):
                     valor = valor.replace('R$', '').replace('.', '').replace(',', '.').strip()
@@ -78,7 +86,7 @@ if uploaded_file:
                 }
                 df_final = pd.concat([df_final, pd.DataFrame([linha])], ignore_index=True)
 
-    st.success("✅ Dados consolidados no formato desejado:")
+    st.success("✅ Dados consolidados só com META e sem Consolidado:")
     st.dataframe(df_final)
 
     if not df_final.empty:
@@ -86,7 +94,7 @@ if uploaded_file:
         st.download_button(
             label="📥 Baixar CSV consolidado",
             data=csv,
-            file_name="metas_consolidado.csv",
+            file_name="metas_somente_meta_sem_consolidado.csv",
             mime='text/csv'
         )
 else:
