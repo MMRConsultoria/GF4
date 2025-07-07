@@ -5,7 +5,7 @@ from io import BytesIO
 import openpyxl
 
 st.set_page_config(page_title="Processar Metas Dinâmico", layout="wide")
-st.title("📈 Processar Metas - sem linhas extras, ordenado, Excel contábil com milhar")
+st.title("📈 Processar Metas - Excel contábil e visualização formatada (240.000,00)")
 
 uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
@@ -16,7 +16,7 @@ def formatar_excel_contabil(df, nome_aba="Metas"):
         workbook = writer.book
         worksheet = writer.sheets[nome_aba]
         
-        # Formatar coluna Meta com milhar 240.000,00
+        # Formatar coluna Meta no Excel
         for idx, cell in enumerate(worksheet[1], 1):
             if cell.value == "Meta":
                 col_meta_idx = idx
@@ -51,7 +51,7 @@ if uploaded_file:
         df_raw_ffill = pd.read_excel(xls, sheet_name=aba, header=None)
         df_raw_ffill = df_raw_ffill.ffill(axis=0)
         
-        # Também carregamos a aba original SEM ffill
+        # Aba original sem ffill
         df_raw_original = pd.read_excel(xls, sheet_name=aba, header=None)
 
         grupo = df_raw_ffill.iloc[0,0]
@@ -76,11 +76,10 @@ if uploaded_file:
         linha_dados_inicio = linha_header + 2
 
         for idx in range(linha_dados_inicio, len(df_raw_ffill)):
-            # Validar pela coluna original sem ffill
             mes_original = str(df_raw_original.iloc[idx, 1]).strip().lower()
             mes_original = mes_original.replace("marco", "março")
             if mes_original not in mapa_meses:
-                continue  # só processa se realmente é mês do Excel original
+                continue
 
             mes = mapa_meses[mes_original]
 
@@ -108,12 +107,16 @@ if uploaded_file:
 
     df_final = df_final.drop_duplicates()
     if not df_final.empty:
-        df_final["Meta"] = df_final["Meta"].fillna(0)  # Troca None/NaN por 0
+        df_final["Meta"] = df_final["Meta"].fillna(0)
         df_final["Mês"] = pd.Categorical(df_final["Mês"], categories=ordem_meses, ordered=True)
         df_final = df_final.sort_values(["Ano", "Mês", "Loja"])
 
-        st.success("✅ Dados prontos, Meta em 0,00, ordenados por mês:")
-        st.dataframe(df_final)
+        # Formatar a exibição na tela do Streamlit
+        df_final_fmt = df_final.copy()
+        df_final_fmt["Meta"] = df_final_fmt["Meta"].apply(lambda x: f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+        st.success("✅ Dados prontos, Meta exibida como 240.000,00 na tela e Excel contábil:")
+        st.dataframe(df_final_fmt)
 
         excel_file = formatar_excel_contabil(df_final)
         st.download_button(
@@ -126,4 +129,3 @@ if uploaded_file:
         st.warning("⚠️ Nenhum dado encontrado. Verifique se as abas selecionadas contêm dados válidos.")
 else:
     st.info("💡 Faça o upload de um arquivo Excel para começar.")
-
