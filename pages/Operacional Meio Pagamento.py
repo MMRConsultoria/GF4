@@ -250,11 +250,17 @@ with tab3:
         df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
         df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip()
 
-        # Ajusta valores
+         # Corrige valores
         df_relatorio["Valor (R$)"] = (
             df_relatorio["Valor (R$)"]
-            .astype(str).str.replace("R$", "").str.replace("(", "-").str.replace(")", "")
-            .str.replace(" ", "").str.replace(".", "").str.replace(",", ".").astype(float)
+            .astype(str)
+            .str.replace("R$", "", regex=False)
+            .str.replace("(", "-")
+            .str.replace(")", "")
+            .str.replace(" ", "")
+            .str.replace(".", "")
+            .str.replace(",", ".")
+            .astype(float)
         )
 
         df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
@@ -383,48 +389,66 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
+                    # Renomeia colunas de data
                     colunas_datas = [col for col in df_pivot.columns if "/" in col]
                     novo_nome_datas = {col: f"Vendas - {col}" for col in colunas_datas}
                     df_pivot.rename(columns=novo_nome_datas, inplace=True)
 
-                    colunas_vendas = [col for col in df_pivot.columns if "Vendas -" in col]
+                    # Corrige eventual renomeação
+                    df_pivot.rename(columns={"Vendas - Antecipa S/N": "Antecipa S/N"}, inplace=True)
+
+                    # Cria colunas de Vlr Taxa Bandeira intercaladas ao lado de cada coluna de vendas
+                    colunas_vendas = [col for col in df_pivot.columns if "Vendas" in col]
                     cols_fixas = ["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"]
                     novas_cols = []
 
                     for col_vendas in colunas_vendas:
                         data_col = col_vendas.split(" - ")[1]
                         col_taxa = f"Vlr Taxa Bandeira - {data_col}"
-                        
-                        # 🔥 converte explicitamente o valor de vendas para numérico
-                        df_pivot[col_vendas] = pd.to_numeric(df_pivot[col_vendas], errors='coerce').fillna(0)
-                        
                         taxa_bandeira = (
                             pd.to_numeric(df_pivot["Taxa Bandeira"].astype(str)
-                                          .str.replace("%","")
-                                          .str.replace(",","."), 
-                                          errors="coerce").fillna(0) / 100
+                                        .str.replace("%","")
+                                        .str.replace(",","."),
+                                        errors="coerce").fillna(0) / 100
                         )
                         df_pivot[col_taxa] = df_pivot[col_vendas] * taxa_bandeira
                         novas_cols.extend([col_vendas, col_taxa])
+
+                    # Rearranja para intercalar: fixos + (vendas + taxa) + total
                     df_pivot = df_pivot[cols_fixas + novas_cols]
 
+                    # Total Vendas continua o mesmo
                     df_pivot["Total Vendas"] = df_pivot[colunas_vendas].sum(axis=1)
 
-                    totais_por_coluna = df_pivot[[c for c in df_pivot.columns if "Vendas" in c or "Vlr Taxa" in c]].sum()
+
+                    # Linha total geral
+                    totais_por_coluna = df_pivot[[c for c in df_pivot.columns if "Vendas" in c or "Vlr Taxa Bandeira" in c]].sum()
                     linha_total = pd.DataFrame(
-                        [["TOTAL GERAL", "", "", "", ""] + totais_por_coluna.tolist()],
+                        [["Total Vendas", "", "", "", ""] + totais_por_coluna.tolist()],
                         columns=df_pivot.columns
                     )
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
 
+                    # Formata valores
                     df_pivot_exibe = df_pivot_total.copy()
-                    for col in [c for c in df_pivot_exibe.columns if "Vendas" in c or "Vlr Taxa" in c or c == "Total Vendas"]:
+                    for col in [c for c in df_pivot_exibe.columns if "Vendas" in c or "Vlr Taxa Bandeira" in c or c == "Total Vendas"]:
                         df_pivot_exibe[col] = df_pivot_exibe[col].map(
                             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                            if pd.notna(x) else ""
                         )
 
                     st.dataframe(df_pivot_exibe, use_container_width=True)
+
+                    output = BytesIO()
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                        df_pivot_total.to_excel(writer, index=False, sheet_name="PrazoTaxas")
+                    output.seek(0)
+
+                    st.download_button(
+                        "📥 Baixar Excel",
+                        data=output,
+                        file_name=f"Vendas_Prazo_Taxas_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
 
     except Exception as e:
         st.error(f"❌ Erro ao acessar Google Sheets: {e}")
