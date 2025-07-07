@@ -449,11 +449,13 @@ with tab3:
 
 
                     # Formata valores
+                 
                     df_pivot_exibe = df_pivot_total.copy()
-                    for col in [c for c in df_pivot_exibe.columns if "Vendas" in c or "Vlr Taxa Bandeira" in c or c == "Total Vendas"]:
+                    for col in [c for c in df_pivot_exibe.columns if "Vendas" in c or "Vlr Taxa Bandeira" in c or "Vlr Taxa Antecipação" in c or c == "Total Vendas"]:
                         df_pivot_exibe[col] = df_pivot_exibe[col].map(
                             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                         )
+
 
                     st.dataframe(df_pivot_exibe, use_container_width=True)
 
