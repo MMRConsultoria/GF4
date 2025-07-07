@@ -1,33 +1,56 @@
+import streamlit as st
 import pandas as pd
-import tkinter as tk
-from tkinter import filedialog
+import numpy as np
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+from io import BytesIO
 
-# Oculta a janela principal do Tkinter
-root = tk.Tk()
-root.withdraw()
+st.set_page_config(page_title="Importador de Metas", layout="wide")
+st.title("📊 Importador de Metas")
 
-# Abre diálogo para selecionar o arquivo
-arquivo_excel = filedialog.askopenfilename(
-    title="Selecione o arquivo Excel",
-    filetypes=[("Excel files", "*.xlsx *.xls")]
-)
+# ================================
+# 1. Conexão Google Sheets
+# ================================
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT"]  # ou json.loads(open('credentials.json').read())
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+gc = gspread.authorize(credentials)
 
-print(f"Arquivo escolhido: {arquivo_excel}")
+planilha = gc.open("Vendas diarias")
+aba_metas = planilha.worksheet("Metas 1")
 
-# Lê todas as abas
-xls = pd.ExcelFile(arquivo_excel)
-print(f"Abas encontradas: {xls.sheet_names}")
+# ================================
+# 2. Upload do arquivo
+# ================================
+uploaded_file = st.file_uploader("Selecione o arquivo Excel (.xlsx)", type=["xlsx"])
 
-dfs = []
-for aba in xls.sheet_names:
-    df = pd.read_excel(xls, sheet_name=aba)
-    df["Grupo"] = aba
-    dfs.append(df)
+if uploaded_file:
+    st.success("📥 Arquivo carregado com sucesso!")
 
-# Consolida
-df_total = pd.concat(dfs, ignore_index=True)
-print("Consolidado com sucesso.")
+    # ================================
+    # 3. Consolidar abas
+    # ================================
+    xls = pd.ExcelFile(uploaded_file)
+    st.write("✅ Abas encontradas:", xls.sheet_names)
 
-# Salva só para testar
-df_total.to_excel("Importador.xlsx", index=False)
-print("Arquivo Importador.xlsx criado.")
+    dfs = []
+    for aba in xls.sheet_names:
+        df = pd.read_excel(xls, sheet_name=aba)
+        df["Grupo"] = aba
+        dfs.append(df)
+
+    df_total = pd.concat(dfs, ignore_index=True)
+    st.write("📈 Consolidado:", df_total.head())
+
+    # ================================
+    # 4. Atualizar no Google Sheets
+    # ================================
+    st.info("Atualizando dados na aba 'Metas 1'...")
+
+    # Converte o dataframe para lista de listas (inclui cabeçalho)
+    dados = [df_total.columns.tolist()] + df_total.fillna("").astype(str).values.tolist()
+
+    aba_metas.clear()
+    aba_metas.update('A1', dados)
+
+    st.success("✅ Dados atualizados com sucesso no Google Sheets na aba 'Metas 1'!")
