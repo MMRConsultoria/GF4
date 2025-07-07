@@ -315,11 +315,7 @@ with tab3:
                 st.info("🔍 Não há dados para o período selecionado.")
             else:
                 if modo_relatorio == "Vendas":
-                    tipo_relatorio = st.selectbox(
-                        "Escolha o relatório que deseja visualizar:",
-                        ["Meio de Pagamento", "Loja", "Grupo"]
-                    )
-
+                    
                     if tipo_relatorio == "Meio de Pagamento":
                         index_cols = ["Meio de Pagamento"]
                     elif tipo_relatorio == "Loja":
