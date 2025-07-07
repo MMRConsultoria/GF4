@@ -5,7 +5,7 @@ from io import BytesIO
 import openpyxl
 
 st.set_page_config(page_title="Processar Metas Dinâmico", layout="wide")
-st.title("📈 Processar Metas (detecta META, mês MM, lojas na coluna anterior, dados 2 linhas abaixo, Excel contábil)")
+st.title("📈 Processar Metas - ordenado por mês, só linhas válidas, Excel contábil")
 
 uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
@@ -16,7 +16,7 @@ def formatar_excel_contabil(df, nome_aba="Metas"):
         workbook = writer.book
         worksheet = writer.sheets[nome_aba]
         
-        # Identificar a coluna 'Meta' e formatar como contábil brasileiro
+        # Formatar coluna Meta
         for idx, cell in enumerate(worksheet[1], 1):
             if cell.value == "Meta":
                 col_meta_idx = idx
@@ -37,12 +37,13 @@ if uploaded_file:
         default=[]
     )
 
-    # Mês em MM
     mapa_meses = {
-        "janeiro": "01", "fevereiro": "02", "março": "03", "abril": "04",
-        "maio": "05", "junho": "06", "julho": "07", "agosto": "08",
-        "setembro": "09", "outubro": "10", "novembro": "11", "dezembro": "12"
+        "janeiro": "Jan", "fevereiro": "Fev", "março": "Mar", "abril": "Abr",
+        "maio": "Mai", "junho": "Jun", "julho": "Jul", "agosto": "Ago",
+        "setembro": "Set", "outubro": "Out", "novembro": "Nov", "dezembro": "Dez"
     }
+
+    ordem_meses = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"]
 
     df_final = pd.DataFrame(columns=["Mês", "Ano", "Grupo", "Loja", "Meta"])
 
@@ -75,9 +76,9 @@ if uploaded_file:
             if not mes_bruto or mes_bruto == "nan":
                 continue
 
-            mes = mapa_meses.get(mes_bruto, mes_bruto)
-            if len(mes) != 2:
-                continue
+            mes = mapa_meses.get(mes_bruto)
+            if mes is None:
+                continue  # ignora linhas sem mês válido
 
             for c in metas_cols:
                 loja = df_raw.iloc[linha_header - 1, c-1]
@@ -102,9 +103,11 @@ if uploaded_file:
                 df_final = pd.concat([df_final, pd.DataFrame([linha])], ignore_index=True)
 
     df_final = df_final.drop_duplicates()
-
     if not df_final.empty:
-        st.success("✅ Dados consolidados prontos para download:")
+        df_final["Mês"] = pd.Categorical(df_final["Mês"], categories=ordem_meses, ordered=True)
+        df_final = df_final.sort_values(["Ano", "Mês", "Loja"])
+
+        st.success("✅ Dados consolidados prontos para download, ordenados por mês:")
         st.dataframe(df_final)
 
         excel_file = formatar_excel_contabil(df_final)
