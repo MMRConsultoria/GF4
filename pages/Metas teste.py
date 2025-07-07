@@ -25,15 +25,10 @@ if uploaded_file:
     df_final = pd.DataFrame(columns=["Mês", "Ano", "Grupo", "Loja", "Meta"])
 
     for aba in abas_escolhidas:
-        st.subheader(f"📝 Aba: {aba}")
         df_raw = pd.read_excel(xls, sheet_name=aba, header=None)
-
-        # Eliminar mesclas via ffill
         df_raw = df_raw.ffill(axis=0)
+        grupo = df_raw.iloc[0,0]
 
-        grupo = df_raw.iloc[0,0]  # Grupo está em A1
-
-        # Encontrar linha do cabeçalho que tenha 'META'
         linha_header = None
         for idx in range(0, len(df_raw)):
             linha_textos = df_raw.iloc[idx,:].astype(str).str.lower().str.replace(" ", "")
@@ -42,20 +37,14 @@ if uploaded_file:
                 break
 
         if linha_header is None:
-            st.warning(f"⚠️ Não encontrou linha com 'META' na aba {aba}.")
             continue
 
-        # Encontrar colunas META
         metas_cols = []
         for col in range(df_raw.shape[1]):
             texto = str(df_raw.iloc[linha_header, col]).lower().replace(" ", "")
             if "meta" in texto:
                 metas_cols.append(col)
 
-        st.write(f"✅ Linha do header detectada: {linha_header}")
-        st.write(f"✅ Colunas META detectadas: {metas_cols}")
-
-        # Ler dados 2 linhas abaixo do cabeçalho
         linha_dados_inicio = linha_header + 2
 
         for idx in range(linha_dados_inicio, len(df_raw)):
@@ -66,7 +55,7 @@ if uploaded_file:
             mes = mapa_meses.get(mes_bruto, mes_bruto)
 
             for c in metas_cols:
-                loja = df_raw.iloc[linha_header - 1, c-1]  # pega loja na coluna anterior
+                loja = df_raw.iloc[linha_header - 1, c-1]
                 if pd.isna(loja) or "consolidado" in str(loja).lower():
                     continue
 
@@ -87,10 +76,9 @@ if uploaded_file:
                 }
                 df_final = pd.concat([df_final, pd.DataFrame([linha])], ignore_index=True)
 
-    st.success("✅ Dados consolidados só com META, ignorando Consolidado:")
-    st.dataframe(df_final)
-
     if not df_final.empty:
+        st.success("✅ Dados consolidados prontos para download:")
+        st.dataframe(df_final)
         csv = df_final.to_csv(index=False).encode('utf-8')
         st.download_button(
             label="📥 Baixar CSV consolidado",
@@ -98,5 +86,7 @@ if uploaded_file:
             file_name="metas_consolidado.csv",
             mime='text/csv'
         )
+    else:
+        st.warning("⚠️ Nenhum dado encontrado. Verifique se as abas selecionadas contêm dados válidos.")
 else:
     st.info("💡 Faça o upload de um arquivo Excel para começar.")
