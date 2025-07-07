@@ -5,7 +5,7 @@ from io import BytesIO
 import openpyxl
 
 st.set_page_config(page_title="Processar Metas Dinâmico", layout="wide")
-st.title("📈 Processar Metas - ordenado, sem linhas extras, Excel contábil")
+st.title("📈 Processar Metas - sem linhas extras, ordenado, Excel contábil")
 
 uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
@@ -48,13 +48,17 @@ if uploaded_file:
     df_final = pd.DataFrame(columns=["Mês", "Ano", "Grupo", "Loja", "Meta"])
 
     for aba in abas_escolhidas:
-        df_raw = pd.read_excel(xls, sheet_name=aba, header=None)
-        df_raw = df_raw.ffill(axis=0)
-        grupo = df_raw.iloc[0,0]
+        df_raw_ffill = pd.read_excel(xls, sheet_name=aba, header=None)
+        df_raw_ffill = df_raw_ffill.ffill(axis=0)
+        
+        # Também carregamos a aba original SEM ffill
+        df_raw_original = pd.read_excel(xls, sheet_name=aba, header=None)
+
+        grupo = df_raw_ffill.iloc[0,0]
 
         linha_header = None
-        for idx in range(0, len(df_raw)):
-            linha_textos = df_raw.iloc[idx,:].astype(str).str.lower().str.replace(" ", "")
+        for idx in range(0, len(df_raw_ffill)):
+            linha_textos = df_raw_ffill.iloc[idx,:].astype(str).str.lower().str.replace(" ", "")
             if linha_textos.str.contains("meta").any():
                 linha_header = idx
                 break
@@ -63,30 +67,29 @@ if uploaded_file:
             continue
 
         metas_cols = []
-        for col in range(df_raw.shape[1]):
-            texto = str(df_raw.iloc[linha_header, col]).lower().replace(" ", "")
-            loja_na_col_anterior = str(df_raw.iloc[linha_header - 1, col - 1]).lower()
+        for col in range(df_raw_ffill.shape[1]):
+            texto = str(df_raw_ffill.iloc[linha_header, col]).lower().replace(" ", "")
+            loja_na_col_anterior = str(df_raw_ffill.iloc[linha_header - 1, col - 1]).lower()
             if "meta" in texto and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
                 metas_cols.append(col)
 
         linha_dados_inicio = linha_header + 2
 
-        for idx in range(linha_dados_inicio, len(df_raw)):
-            mes_bruto = str(df_raw.iloc[idx, 1]).strip().lower()
-            mes_bruto = mes_bruto.replace("marco", "março")
-            if not mes_bruto or mes_bruto == "nan":
-                continue
+        for idx in range(linha_dados_inicio, len(df_raw_ffill)):
+            # Validar pela coluna original sem ffill
+            mes_original = str(df_raw_original.iloc[idx, 1]).strip().lower()
+            mes_original = mes_original.replace("marco", "março")
+            if mes_original not in mapa_meses:
+                continue  # só processa se realmente é mês do Excel original
 
-            mes = mapa_meses.get(mes_bruto)
-            if mes is None:
-                continue  # ignora linhas sem mês válido (não deixa pegar linhas extras)
+            mes = mapa_meses[mes_original]
 
             for c in metas_cols:
-                loja = df_raw.iloc[linha_header - 1, c-1]
+                loja = df_raw_ffill.iloc[linha_header - 1, c-1]
                 if pd.isna(loja) or "consolidado" in str(loja).lower():
                     continue
 
-                valor = df_raw.iloc[idx, c]
+                valor = df_raw_ffill.iloc[idx, c]
                 if isinstance(valor, str):
                     valor = valor.replace('R$', '').replace('.', '').replace(',', '.').strip()
                     try:
@@ -108,7 +111,7 @@ if uploaded_file:
         df_final["Mês"] = pd.Categorical(df_final["Mês"], categories=ordem_meses, ordered=True)
         df_final = df_final.sort_values(["Ano", "Mês", "Loja"])
 
-        st.success("✅ Dados consolidados prontos para download, ordenados por mês e loja:")
+        st.success("✅ Dados consolidados prontos, só com linhas reais, ordenados por mês:")
         st.dataframe(df_final)
 
         excel_file = formatar_excel_contabil(df_final)
