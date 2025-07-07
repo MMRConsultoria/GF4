@@ -430,28 +430,27 @@ with tab3:
                     # Rearranja para intercalar: fixos + (vendas + taxa) + total
                     df_pivot = df_pivot[cols_fixas + novas_cols]
 
-                    # Total Vendas
+                    # Totais
                     df_pivot["Total Vendas"] = df_pivot[colunas_vendas].sum(axis=1)
-                    
-                    # Total Tx Bandeira e Total Tx Antecipação
                     df_pivot["Total Tx Bandeira"] = df_pivot[[col for col in df_pivot.columns if "Vlr Taxa Bandeira" in col]].sum(axis=1)
                     df_pivot["Total Tx Antecipação"] = df_pivot[[col for col in df_pivot.columns if "Vlr Taxa Antecipação" in col]].sum(axis=1)
+                    df_pivot["Total a Receber"] = df_pivot["Total Vendas"] - df_pivot["Total Tx Bandeira"] - df_pivot["Total Tx Antecipação"]
                     
                     # Linha total geral
                     linha_total_dict = {col: "" for col in df_pivot.columns}
                     linha_total_dict["Meio de Pagamento"] = "TOTAL GERAL"
                     for col in df_pivot.columns:
                         if "Vendas" in col or "Vlr Taxa Bandeira" in col or "Vlr Taxa Antecipação" in col \
-                            or col in ["Total Vendas", "Total Tx Bandeira", "Total Tx Antecipação"]:
+                            or "Total Tx" in col or col in ["Total Vendas", "Total a Receber"]:
                             linha_total_dict[col] = df_pivot[col].sum()
                     
                     linha_total = pd.DataFrame([linha_total_dict])
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
                     
-                    # Formatar tudo como R$
+                    # Formata tudo em R$
                     df_pivot_exibe = df_pivot_total.copy()
                     for col in [c for c in df_pivot_exibe.columns if "Vendas" in c or "Vlr Taxa Bandeira" in c 
-                                or "Vlr Taxa Antecipação" in c or "Total Tx" in c or c == "Total Vendas"]:
+                                or "Vlr Taxa Antecipação" in c or "Total Tx" in c or c in ["Total Vendas", "Total a Receber"]]:
                         df_pivot_exibe[col] = df_pivot_exibe[col].map(
                             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                         )
