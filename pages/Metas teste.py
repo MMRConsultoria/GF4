@@ -3,10 +3,9 @@ import pandas as pd
 
 from io import BytesIO
 import openpyxl
-from openpyxl.styles import numbers
 
 st.set_page_config(page_title="Processar Metas Dinâmico", layout="wide")
-st.title("📈 Processar Metas (detecta META, lojas na coluna anterior, dados 2 linhas abaixo)")
+st.title("📈 Processar Metas (detecta META, lojas na coluna anterior, dados 2 linhas abaixo, Excel contábil)")
 
 uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
@@ -25,7 +24,6 @@ def formatar_excel_contabil(df, nome_aba="Metas"):
                     for cell in row:
                         cell.number_format = '#,##0.00'
                 break
-        writer.save()
     output.seek(0)
     return output
 
