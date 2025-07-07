@@ -274,18 +274,35 @@ with tab3:
 
         min_data = df_relatorio["Data"].min().date()
         max_data = df_relatorio["Data"].max().date()
-        data_inicio, data_fim = st.date_input(
-            "Selecione o período:",
-            value=(max_data, max_data),
-            min_value=min_data,
-            max_value=max_data
-        )
+        
+        
+        
+        
+        
+        col1, col2, col3 = st.columns(3)
 
-        modo_relatorio = st.selectbox(
-            "Escolha o tipo de análise:",
-            ["Vendas", "Financeiro", "Vendas + Prazo e Taxas"]
-        )
-
+        with col1:
+            data_inicio, data_fim = st.date_input(
+                "Período:",
+                value=(max_data, max_data),
+                min_value=min_data,
+                max_value=max_data
+            )
+        
+        with col2:
+            modo_relatorio = st.selectbox(
+                "Tipo de análise:",
+                ["Vendas", "Financeiro", "Vendas + Prazo e Taxas"]
+            )
+        
+        with col3:
+            if modo_relatorio == "Vendas":
+                tipo_relatorio = st.selectbox(
+                    "Relatório:",
+                    ["Meio de Pagamento", "Loja", "Grupo"]
+                )
+            else:
+                tipo_relatorio = None
         if data_inicio > data_fim:
             st.warning("🚫 A data inicial não pode ser maior que a data final.")
         else:
