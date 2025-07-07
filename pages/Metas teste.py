@@ -5,7 +5,7 @@ from io import BytesIO
 import openpyxl
 
 st.set_page_config(page_title="Processar Metas Dinâmico", layout="wide")
-st.title("📈 Processar Metas - ordenado por mês, só linhas válidas, Excel contábil")
+st.title("📈 Processar Metas - ordenado, sem linhas extras, Excel contábil")
 
 uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
@@ -65,7 +65,8 @@ if uploaded_file:
         metas_cols = []
         for col in range(df_raw.shape[1]):
             texto = str(df_raw.iloc[linha_header, col]).lower().replace(" ", "")
-            if "meta" in texto:
+            loja_na_col_anterior = str(df_raw.iloc[linha_header - 1, col - 1]).lower()
+            if "meta" in texto and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
                 metas_cols.append(col)
 
         linha_dados_inicio = linha_header + 2
@@ -78,7 +79,7 @@ if uploaded_file:
 
             mes = mapa_meses.get(mes_bruto)
             if mes is None:
-                continue  # ignora linhas sem mês válido
+                continue  # ignora linhas sem mês válido (não deixa pegar linhas extras)
 
             for c in metas_cols:
                 loja = df_raw.iloc[linha_header - 1, c-1]
@@ -107,7 +108,7 @@ if uploaded_file:
         df_final["Mês"] = pd.Categorical(df_final["Mês"], categories=ordem_meses, ordered=True)
         df_final = df_final.sort_values(["Ano", "Mês", "Loja"])
 
-        st.success("✅ Dados consolidados prontos para download, ordenados por mês:")
+        st.success("✅ Dados consolidados prontos para download, ordenados por mês e loja:")
         st.dataframe(df_final)
 
         excel_file = formatar_excel_contabil(df_final)
