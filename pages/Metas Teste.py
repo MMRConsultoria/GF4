@@ -54,15 +54,4 @@ if uploaded_file:
     df_total = pd.concat(dfs, ignore_index=True)
     st.write("📈 Consolidado:", df_total.head())
 
-    # ================================
-    # 4. Atualizar no Google Sheets
-    # ================================
-    st.info("Atualizando dados na aba 'Metas 1'...")
-
-    # Converte o dataframe para lista de listas (inclui cabeçalho)
-    dados = [df_total.columns.tolist()] + df_total.fillna("").astype(str).values.tolist()
-
-    aba_metas.clear()
-    aba_metas.update('A1', dados)
-
-    st.success("✅ Dados atualizados com sucesso no Google Sheets na aba 'Metas 1'!")
+   
