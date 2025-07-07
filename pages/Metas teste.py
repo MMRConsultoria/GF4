@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="Processar Metas Dinâmico", layout="wide")
-st.title("📈 Processar Metas (Grupo em A1, Mês em B, valores 2 linhas abaixo do META)")
+st.title("📈 Processar Metas (mesclas eliminadas via ffill, 2 linhas abaixo do META)")
 
 uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
@@ -27,6 +27,9 @@ if uploaded_file:
     for aba in abas_escolhidas:
         st.subheader(f"📝 Aba: {aba}")
         df_raw = pd.read_excel(xls, sheet_name=aba, header=None)
+        
+        # Eliminar mesclas: preenche NaN com o valor acima
+        df_raw = df_raw.ffill(axis=0)
 
         grupo = df_raw.iloc[0,0]  # Grupo na célula A1
 
@@ -56,7 +59,7 @@ if uploaded_file:
 
         st.write(f"✅ Cabeçalho META detectado na linha {linha_header}, coluna {meta_col}")
 
-        linha_dados_inicio = linha_header + 2  # 2 linhas abaixo
+        linha_dados_inicio = linha_header + 2  # 2 linhas abaixo do header
 
         for idx in range(linha_dados_inicio, len(df_raw)):
             if pd.isna(df_raw.iloc[idx, 1]):
@@ -99,3 +102,4 @@ if uploaded_file:
         )
 else:
     st.info("💡 Faça o upload de um arquivo Excel para começar.")
+
