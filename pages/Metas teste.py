@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Processar Metas Layout Fixo", layout="wide")
-st.title("📈 Processar Metas - Layout fixo (meses na coluna B)")
+st.set_page_config(page_title="Processar Metas Dinâmico", layout="wide")
+st.title("📈 Processar Metas - Cabeçalho dinâmico, dados 2 linhas abaixo")
 
 uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
@@ -16,7 +16,6 @@ if uploaded_file:
         default=[]
     )
 
-    # Mapa meses
     mapa_meses = {
         "janeiro": "Jan", "fevereiro": "Fev", "março": "Mar", "abril": "Abr",
         "maio": "Mai", "junho": "Jun", "julho": "Jul", "agosto": "Ago",
@@ -29,28 +28,39 @@ if uploaded_file:
         st.subheader(f"📝 Aba: {aba}")
         df_raw = pd.read_excel(xls, sheet_name=aba, header=None)
 
-        linha_lojas = 2
-        linha_header = 3
-        linha_dados_inicio = linha_header + 1
+        # Procurar a linha onde tem META ou FAT
+        linha_header = None
+        for idx in range(0, len(df_raw)):
+            linha_textos = df_raw.iloc[idx, :].astype(str).str.lower().str.replace(" ", "")
+            if linha_textos.str.contains("meta").any() or linha_textos.str.contains("fat").any():
+                linha_header = idx
+                break
 
-        # Detectar colunas META / FAT
+        if linha_header is None:
+            st.warning(f"⚠️ Não encontrou linha com 'META' ou 'FAT.' na aba {aba}.")
+            continue
+
+        # Encontrar colunas que tem META ou FAT
         metas_cols = []
         for col in range(df_raw.shape[1]):
-            texto = str(df_raw.iloc[linha_header, col]).lower()
-            if "meta" in texto or "fat." in texto:
+            texto = str(df_raw.iloc[linha_header, col]).lower().replace(" ", "")
+            if "fat" in texto or "meta" in texto:
                 metas_cols.append(col)
 
+        st.write(f"✅ Linha do header detectada: {linha_header}")
         st.write(f"✅ Colunas META/FAT detectadas: {metas_cols}")
+
+        linha_dados_inicio = linha_header + 2  # DUAS linhas abaixo
 
         for idx in range(linha_dados_inicio, len(df_raw)):
             if pd.isna(df_raw.iloc[idx, 1]):
-                continue  # garante que tem mês
+                continue  # pula se não tiver mês na coluna B
 
             mes_bruto = str(df_raw.iloc[idx, 1]).strip().lower()
             mes = mapa_meses.get(mes_bruto, mes_bruto)
 
             for c in metas_cols:
-                loja = df_raw.iloc[linha_lojas, c]
+                loja = df_raw.iloc[linha_header - 1, c]  # uma linha acima do header tem o nome da loja
                 valor = df_raw.iloc[idx, c]
                 if isinstance(valor, str):
                     valor = valor.replace('R$', '').replace('.', '').replace(',', '.').strip()
