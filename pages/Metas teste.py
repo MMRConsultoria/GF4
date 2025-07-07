@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="Processar Metas Dinâmico", layout="wide")
-st.title("📈 Processar Metas - Só META, ignorando Consolidado")
+st.title("📈 Processar Metas - Só META, ignora Consolidado (dados 2 linhas abaixo do header)")
 
 uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
@@ -16,6 +16,7 @@ if uploaded_file:
         default=[]
     )
 
+    # Mapa meses
     mapa_meses = {
         "janeiro": "Jan", "fevereiro": "Fev", "março": "Mar", "abril": "Abr",
         "maio": "Mai", "junho": "Jun", "julho": "Jul", "agosto": "Ago",
@@ -28,7 +29,7 @@ if uploaded_file:
         st.subheader(f"📝 Aba: {aba}")
         df_raw = pd.read_excel(xls, sheet_name=aba, header=None)
 
-        # Encontrar linha com 'META'
+        # Encontrar linha do cabeçalho que tenha 'META'
         linha_header = None
         for idx in range(0, len(df_raw)):
             linha_textos = df_raw.iloc[idx,:].astype(str).str.lower().str.replace(" ", "")
@@ -40,7 +41,7 @@ if uploaded_file:
             st.warning(f"⚠️ Não encontrou linha com 'META' na aba {aba}.")
             continue
 
-        # Encontrar colunas só META
+        # Encontrar apenas colunas META
         metas_cols = []
         for col in range(df_raw.shape[1]):
             texto = str(df_raw.iloc[linha_header, col]).lower().replace(" ", "")
@@ -48,13 +49,13 @@ if uploaded_file:
                 metas_cols.append(col)
 
         st.write(f"✅ Linha do header detectada: {linha_header}")
-        st.write(f"✅ Colunas apenas META detectadas: {metas_cols}")
+        st.write(f"✅ Colunas META detectadas: {metas_cols}")
 
-        linha_dados_inicio = linha_header + 2
+        linha_dados_inicio = linha_header + 2  # DUAS linhas abaixo do header
 
         for idx in range(linha_dados_inicio, len(df_raw)):
             if pd.isna(df_raw.iloc[idx, 1]):
-                continue  # pula se não tiver mês
+                continue  # garante mês
 
             mes_bruto = str(df_raw.iloc[idx, 1]).strip().lower()
             mes = mapa_meses.get(mes_bruto, mes_bruto)
@@ -65,7 +66,7 @@ if uploaded_file:
                     continue
 
                 loja = str(loja).strip()
-                # Ignorar consolidados
+                # Ignorar consolidado
                 if "consolidado" in loja.lower():
                     continue
 
