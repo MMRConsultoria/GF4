@@ -404,16 +404,29 @@ with tab3:
 
                     for col_vendas in colunas_vendas:
                         data_col = col_vendas.split(" - ")[1]
-                        col_taxa = f"Vlr Taxa Bandeira - {data_col}"
+                    
+                        # já existente - calcula Vlr Taxa Bandeira
+                        col_taxa_bandeira = f"Vlr Taxa Bandeira - {data_col}"
                         taxa_bandeira = (
                             pd.to_numeric(df_pivot["Taxa Bandeira"].astype(str)
-                                        .str.replace("%","")
-                                        .str.replace(",","."),
-                                        errors="coerce").fillna(0) / 100
+                                          .str.replace("%","")
+                                          .str.replace(",","."),
+                                          errors="coerce").fillna(0) / 100
                         )
-                        df_pivot[col_taxa] = df_pivot[col_vendas] * taxa_bandeira
-                        novas_cols.extend([col_vendas, col_taxa])
-
+                        df_pivot[col_taxa_bandeira] = df_pivot[col_vendas] * taxa_bandeira
+                    
+                        # NOVO - calcula Vlr Taxa Antecipação
+                        col_taxa_antecipacao = f"Vlr Taxa Antecipação - {data_col}"
+                        taxa_antecipacao = (
+                            pd.to_numeric(df_pivot["Taxa Antecipação"].astype(str)
+                                          .str.replace("%","")
+                                          .str.replace(",","."),
+                                          errors="coerce").fillna(0) / 100
+                        )
+                        df_pivot[col_taxa_antecipacao] = df_pivot[col_vendas] * taxa_antecipacao
+                    
+                        # intercalar
+                        novas_cols.extend([col_vendas, col_taxa_bandeira, col_taxa_antecipacao])
                     # Rearranja para intercalar: fixos + (vendas + taxa) + total
                     df_pivot = df_pivot[cols_fixas + novas_cols]
 
