@@ -250,7 +250,7 @@ with tab3:
         df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
         df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip()
 
-         # Corrige valores
+        # Corrige valores
         df_relatorio["Valor (R$)"] = (
             df_relatorio["Valor (R$)"]
             .astype(str)
@@ -324,7 +324,6 @@ with tab3:
 
                     df_pivot["Total Vendas"] = df_pivot[[c for c in df_pivot.columns if "Vendas -" in str(c)]].sum(axis=1)
 
-                    # total geral
                     linha_total_dict = {df_pivot.columns[0]: "TOTAL GERAL"}
                     for col in df_pivot.columns[1:]:
                         if "Vendas -" in str(col) or col == "Total Vendas":
@@ -389,23 +388,17 @@ with tab3:
                         fill_value=0
                     ).reset_index()
 
-                    # Renomeia colunas de data
                     colunas_datas = [col for col in df_pivot.columns if "/" in col]
                     novo_nome_datas = {col: f"Vendas - {col}" for col in colunas_datas}
                     df_pivot.rename(columns=novo_nome_datas, inplace=True)
-
-                    # Corrige eventual renomeação
                     df_pivot.rename(columns={"Vendas - Antecipa S/N": "Antecipa S/N"}, inplace=True)
 
-                    # Cria colunas de Vlr Taxa Bandeira intercaladas ao lado de cada coluna de vendas
                     colunas_vendas = [col for col in df_pivot.columns if "Vendas" in col]
                     cols_fixas = ["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"]
                     novas_cols = []
 
                     for col_vendas in colunas_vendas:
                         data_col = col_vendas.split(" - ")[1]
-                    
-                        # já existente - calcula Vlr Taxa Bandeira
                         col_taxa_bandeira = f"Vlr Taxa Bandeira - {data_col}"
                         taxa_bandeira = (
                             pd.to_numeric(df_pivot["Taxa Bandeira"].astype(str)
@@ -414,8 +407,7 @@ with tab3:
                                           errors="coerce").fillna(0) / 100
                         )
                         df_pivot[col_taxa_bandeira] = df_pivot[col_vendas] * taxa_bandeira
-                    
-                        # NOVO - calcula Vlr Taxa Antecipação
+
                         col_taxa_antecipacao = f"Vlr Taxa Antecipação - {data_col}"
                         taxa_antecipacao = (
                             pd.to_numeric(df_pivot["Taxa Antecipação"].astype(str)
@@ -424,30 +416,26 @@ with tab3:
                                           errors="coerce").fillna(0) / 100
                         )
                         df_pivot[col_taxa_antecipacao] = df_pivot[col_vendas] * taxa_antecipacao
-                    
-                        # intercalar
+
                         novas_cols.extend([col_vendas, col_taxa_bandeira, col_taxa_antecipacao])
-                    # Rearranja para intercalar: fixos + (vendas + taxa) + total
+
                     df_pivot = df_pivot[cols_fixas + novas_cols]
 
-                    # Totais
                     df_pivot["Total Vendas"] = df_pivot[colunas_vendas].sum(axis=1)
                     df_pivot["Total Tx Bandeira"] = df_pivot[[col for col in df_pivot.columns if "Vlr Taxa Bandeira" in col]].sum(axis=1)
                     df_pivot["Total Tx Antecipação"] = df_pivot[[col for col in df_pivot.columns if "Vlr Taxa Antecipação" in col]].sum(axis=1)
                     df_pivot["Total a Receber"] = df_pivot["Total Vendas"] - df_pivot["Total Tx Bandeira"] - df_pivot["Total Tx Antecipação"]
-                    
-                    # Linha total geral
+
                     linha_total_dict = {col: "" for col in df_pivot.columns}
                     linha_total_dict["Meio de Pagamento"] = "TOTAL GERAL"
                     for col in df_pivot.columns:
                         if "Vendas" in col or "Vlr Taxa Bandeira" in col or "Vlr Taxa Antecipação" in col \
                             or "Total Tx" in col or col in ["Total Vendas", "Total a Receber"]:
                             linha_total_dict[col] = df_pivot[col].sum()
-                    
+
                     linha_total = pd.DataFrame([linha_total_dict])
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
-                    
-                    # Formata tudo em R$
+
                     df_pivot_exibe = df_pivot_total.copy()
                     for col in [c for c in df_pivot_exibe.columns if "Vendas" in c or "Vlr Taxa Bandeira" in c 
                                 or "Vlr Taxa Antecipação" in c or "Total Tx" in c or c in ["Total Vendas", "Total a Receber"]]:
@@ -455,22 +443,12 @@ with tab3:
                             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                         )
 
-
-
                     st.dataframe(df_pivot_exibe, use_container_width=True)
 
-                    output = BytesIO()
-                    from io import BytesIO
-                    import pandas as pd
                     from openpyxl import load_workbook
-                    from openpyxl.styles import numbers
-                    
+
                     output = BytesIO()
-                    
-                    # Copia DataFrame antes de formatação para export
                     df_exportar = df_pivot_total.copy()
-                    
-                    # Garante Taxa Bandeira e Antecipação como decimal
                     df_exportar["Taxa Bandeira"] = (
                         pd.to_numeric(df_exportar["Taxa Bandeira"].astype(str)
                                       .str.replace("%", "")
@@ -483,28 +461,22 @@ with tab3:
                                       .str.replace(",", "."),
                                       errors="coerce") / 100
                     )
-                    
-                    # Salva para Excel sem formatação
+
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
                         df_exportar.to_excel(writer, index=False, sheet_name="PrazoTaxas")
                     output.seek(0)
-                    
-                    # Reabre workbook para aplicar number_format
+
                     wb = load_workbook(output)
                     ws = wb["PrazoTaxas"]
-                    
-                    # Identifica colunas para formatar
                     header = [cell.value for cell in ws[1]]
-                    
-                    # Formata colunas de taxas como percentual
+
                     for col_name in ["Taxa Bandeira", "Taxa Antecipação"]:
                         if col_name in header:
                             col_idx = header.index(col_name) + 1
                             for row in ws.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx):
                                 for cell in row:
                                     cell.number_format = "0.00%"
-                    
-                    # Formata valores como contábil (R$)
+
                     for col_name in header:
                         if ("Vendas" in col_name or "Vlr Taxa Bandeira" in col_name 
                             or "Vlr Taxa Antecipação" in col_name or "Total Tx" in col_name 
@@ -513,15 +485,17 @@ with tab3:
                             for row in ws.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx):
                                 for cell in row:
                                     cell.number_format = '"R$" #,##0.00'
-                    
+
+                    output_final = BytesIO()
+                    wb.save(output_final)
+                    output_final.seek(0)
+
                     st.download_button(
                         "📥 Baixar Excel",
                         data=output_final,
                         file_name=f"Vendas_Prazo_Taxas_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
-                    
-                                        )
+
     except Exception as e:
-            st.error(f"❌ Erro ao acessar Google Sheets: {e}")
-  
+        st.error(f"❌ Erro ao acessar Google Sheets: {e}")
