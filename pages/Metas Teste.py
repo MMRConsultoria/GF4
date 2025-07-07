@@ -5,18 +5,30 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from io import BytesIO
 
+# ================================
+# Configuração da página Streamlit
+# ================================
 st.set_page_config(page_title="Importador de Metas", layout="wide")
-st.title("📊 Importador de Metas")
+st.title("📊 Importador de Metas para Google Sheets")
 
 # ================================
 # 1. Conexão Google Sheets
 # ================================
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT"]  # ou json.loads(open('credentials.json').read())
+
+# 🔥 Aqui pega as credenciais do secrets ou local
+try:
+    credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
+except:
+    import json
+    with open("seu_arquivo_credenciais.json") as f:
+        credentials_dict = json.load(f)
+
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
 
-planilha = gc.open("Vendas diarias")
+# Abre a sua planilha pelo ID do link
+planilha = gc.open_by_key("1ZaRXVZyv7WZ8xJ8yGEViRibZ-sGoilGO")
 aba_metas = planilha.worksheet("Metas 1")
 
 # ================================
