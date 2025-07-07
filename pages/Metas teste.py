@@ -5,7 +5,7 @@ from io import BytesIO
 import openpyxl
 
 st.set_page_config(page_title="Processar Metas Dinâmico", layout="wide")
-st.title("📈 Processar Metas - sem linhas extras, ordenado, Excel contábil 0,00")
+st.title("📈 Processar Metas - sem linhas extras, ordenado, Excel contábil com milhar")
 
 uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
@@ -16,13 +16,13 @@ def formatar_excel_contabil(df, nome_aba="Metas"):
         workbook = writer.book
         worksheet = writer.sheets[nome_aba]
         
-        # Formatar coluna Meta com 0,00
+        # Formatar coluna Meta com milhar 240.000,00
         for idx, cell in enumerate(worksheet[1], 1):
             if cell.value == "Meta":
                 col_meta_idx = idx
                 for row in worksheet.iter_rows(min_row=2, min_col=col_meta_idx, max_col=col_meta_idx):
                     for cell in row:
-                        cell.number_format = '0,00'  # contábil só com decimal
+                        cell.number_format = '#,##0.00'
                 break
     output.seek(0)
     return output
@@ -108,10 +108,11 @@ if uploaded_file:
 
     df_final = df_final.drop_duplicates()
     if not df_final.empty:
+        df_final["Meta"] = df_final["Meta"].fillna(0)  # Troca None/NaN por 0
         df_final["Mês"] = pd.Categorical(df_final["Mês"], categories=ordem_meses, ordered=True)
         df_final = df_final.sort_values(["Ano", "Mês", "Loja"])
 
-        st.success("✅ Dados prontos, ordenados, sem linhas extras, Meta em 0,00:")
+        st.success("✅ Dados prontos, Meta em 0,00, ordenados por mês:")
         st.dataframe(df_final)
 
         excel_file = formatar_excel_contabil(df_final)
@@ -125,3 +126,4 @@ if uploaded_file:
         st.warning("⚠️ Nenhum dado encontrado. Verifique se as abas selecionadas contêm dados válidos.")
 else:
     st.info("💡 Faça o upload de um arquivo Excel para começar.")
+
