@@ -514,12 +514,6 @@ with tab3:
                                 for cell in row:
                                     cell.number_format = '"R$" #,##0.00'
                     
-                    # Salva final
-                    output_final = BytesIO()
-                    wb.save(output_final)
-                    output_final.seek(0)
-                    
-                    # Botão para download
                     st.download_button(
                         "📥 Baixar Excel",
                         data=output_final,
@@ -530,3 +524,4 @@ with tab3:
                                         )
     except Exception as e:
             st.error(f"❌ Erro ao acessar Google Sheets: {e}")
+  
