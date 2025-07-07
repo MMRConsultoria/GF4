@@ -441,12 +441,6 @@ with aba2:
     }
 
     
-   
-    # Trocar o radio por selectbox
-    modo_visao = st.selectbox(
-        "Escolha a visão dos dados:",
-        ["Por Loja", "Por Grupo"]
-    )
     
     
     def formatar_linha(row):
