@@ -389,12 +389,12 @@ with aba2:
         "Diferença": [total_diferenca], "Tipo": [""]
     })
 
-    # Cria a linha única da Meta Desejável
+    # Cria a linha única da FATURAMENTO DESEJÁVEL
     linha_meta_desejavel = pd.DataFrame({
         "Ano": [""], 
         "Mês": [""], 
         "Grupo": [""],
-        "Loja": [f"META DESEJÁVEL ATÉ {ultima_data_realizado}"],
+        "Loja": [f"FATURAMENTO DESEJÁVEL ATÉ {ultima_data_realizado}"],
         "Meta": [np.nan],
         "Realizado": [np.nan],
         "% Atingido": [percentual_meta_desejavel],
@@ -443,7 +443,7 @@ with aba2:
         loja_valor_upper = loja_valor.upper()
         atingido = row["% Atingido"]
     
-        if "META DESEJÁVEL" in loja_valor_upper:
+        if "FATURAMENTO DESEJÁVEL" in loja_valor_upper:
             fundo = "#FF6666"  # vermelho clarinho
             meta_desejavel_linha = True
         elif "TOTAL GERAL" in loja_valor_upper:
@@ -462,7 +462,7 @@ with aba2:
         for coluna in row.index:
             if coluna == "% Atingido" and not pd.isna(atingido):
                 if meta_desejavel_linha:
-                    # para linha meta desejável sempre fonte preta negrito
+                    # para linha FATURAMENTO DESEJÁVEL sempre fonte preta negrito
                     estilo.append(f"background-color: {fundo}; color: black; font-weight: bold; font-size: 1.1em;")
                 elif atingido >= percentual_meta_desejavel:
                     estilo.append(f"background-color: {fundo}; color: green; font-weight: bold; font-size: 1.1em;")
@@ -484,7 +484,7 @@ with aba2:
     if modo_visao == "Por Grupo":
         dados_exibir = comparativo_final[
             comparativo_final["Loja"].astype(str).str.contains("Lojas:") |
-            comparativo_final["Loja"].astype(str).str.contains("META DESEJÁVEL")
+            comparativo_final["Loja"].astype(str).str.contains("FATURAMENTO DESEJÁVEL")
         ]
     else:
         dados_exibir = comparativo_final.copy()
@@ -526,7 +526,7 @@ with aba2:
     # Remove colunas indesejadas
     dados_excel = dados_exibir.drop(columns=["Tipo", "% Falta Atingir", "eh_tipo"], errors="ignore")
     
-    # Remove duplicatas da linha "Meta Desejável"
+    # Remove duplicatas da linha FATURAMENTO DESEJÁVEL""
     dados_excel = dados_excel.drop_duplicates(subset=["Loja"], keep="first")
     
     # Substitui NaN por string vazia
@@ -544,7 +544,7 @@ with aba2:
         normal_format = workbook.add_format({'border': 1})
     
         estilos_especiais = {
-            "Meta Desejável": {'bg_color': '#FF6666', 'font_color': 'black', 'border': 1},
+            "Faturamento Desejável": {'bg_color': '#FF6666', 'font_color': 'black', 'border': 1},
             "TOTAL GERAL": {'bg_color': '#0366d6', 'font_color': 'black', 'border': 1},
             "Tipo:": {'bg_color': '#FFE699', 'border': 1},
             "Lojas:": {'bg_color': '#d0e6f7', 'border': 1},
@@ -590,7 +590,7 @@ with aba2:
     
             # Estilo da linha
             # Decide estilo conforme mesmo critério do Styler
-            if "META DESEJÁVEL" in loja_valor.upper():
+            if "FATURAMENTO DESEJÁVEL" in loja_valor.upper():
                 estilo_linha = {'bg_color': '#FFE5E5', 'font_color': 'black', 'border': 1}
             elif "TOTAL GERAL" in loja_valor.upper():
                 estilo_linha = {'bg_color': '#cce7fc', 'font_color': 'black', 'border': 1}
@@ -609,7 +609,7 @@ with aba2:
                     fmt = workbook.add_format({**estilo_linha, **moeda_format_dict})
             
                 elif col_name == "% Atingido":
-                    if "META DESEJÁVEL" in loja_valor.upper():
+                    if "FATURAMENTO DESEJÁVEL" in loja_valor.upper():
                         fmt = workbook.add_format({
                             'bg_color': estilo_linha['bg_color'], 'font_color': 'black',
                             'bold': True, 'num_format': '0.00%', 'border': 1
