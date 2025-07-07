@@ -5,7 +5,7 @@ from io import BytesIO
 import openpyxl
 
 st.set_page_config(page_title="Processar Metas Dinâmico", layout="wide")
-st.title("📈 Processar Metas - Excel contábil e visualização formatada (240.000,00)")
+st.title("📈 Processar Metas - com TOTAL no topo, Excel contábil e visualização 240.000,00")
 
 uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
@@ -51,9 +51,7 @@ if uploaded_file:
         df_raw_ffill = pd.read_excel(xls, sheet_name=aba, header=None)
         df_raw_ffill = df_raw_ffill.ffill(axis=0)
         
-        # Aba original sem ffill
         df_raw_original = pd.read_excel(xls, sheet_name=aba, header=None)
-
         grupo = df_raw_ffill.iloc[0,0]
 
         linha_header = None
@@ -111,11 +109,22 @@ if uploaded_file:
         df_final["Mês"] = pd.Categorical(df_final["Mês"], categories=ordem_meses, ordered=True)
         df_final = df_final.sort_values(["Ano", "Mês", "Loja"])
 
-        # Formatar a exibição na tela do Streamlit
+        # Inserir linha TOTAL no topo
+        total_meta = df_final["Meta"].sum()
+        linha_total = pd.DataFrame([{
+            "Mês": "TOTAL",
+            "Ano": "",
+            "Grupo": "",
+            "Loja": "",
+            "Meta": total_meta
+        }])
+        df_final = pd.concat([linha_total, df_final], ignore_index=True)
+
+        # Formatar para exibição na tela
         df_final_fmt = df_final.copy()
         df_final_fmt["Meta"] = df_final_fmt["Meta"].apply(lambda x: f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
-        st.success("✅ Dados prontos, Meta exibida como 240.000,00 na tela e Excel contábil:")
+        st.success("✅ Dados com linha TOTAL no topo, exibindo Meta como 240.000,00:")
         st.dataframe(df_final_fmt)
 
         excel_file = formatar_excel_contabil(df_final)
