@@ -434,13 +434,19 @@ with tab3:
                     df_pivot["Total Vendas"] = df_pivot[colunas_vendas].sum(axis=1)
 
 
-                    # Linha total geral
-                    totais_por_coluna = df_pivot[[c for c in df_pivot.columns if "Vendas" in c or "Vlr Taxa Bandeira" in c]].sum()
-                    linha_total = pd.DataFrame(
-                        [["Total Vendas", "", "", "", ""] + totais_por_coluna.tolist()],
-                        columns=df_pivot.columns
-                    )
+                    
+                    # Linha total geral segura (não importa quantas colunas tiver)
+                    linha_total_dict = {col: "" for col in df_pivot.columns}
+                    linha_total_dict["Meio de Pagamento"] = "TOTAL GERAL"
+                    
+                    for col in df_pivot.columns:
+                        if "Vendas" in col or "Vlr Taxa Bandeira" in col or "Vlr Taxa Antecipação" in col or col == "Total Vendas":
+                            linha_total_dict[col] = df_pivot[col].sum()
+                    
+                    linha_total = pd.DataFrame([linha_total_dict])
+                    
                     df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
+
 
                     # Formata valores
                     df_pivot_exibe = df_pivot_total.copy()
