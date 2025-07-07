@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Processar Metas Dinâmico", layout="wide")
-st.title("📈 Processar Metas - Cabeçalho dinâmico (procura linha com META)")
+st.set_page_config(page_title="Processar Metas Layout Fixo", layout="wide")
+st.title("📈 Processar Metas - Layout fixo (meses na coluna B)")
 
 uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
@@ -29,36 +29,28 @@ if uploaded_file:
         st.subheader(f"📝 Aba: {aba}")
         df_raw = pd.read_excel(xls, sheet_name=aba, header=None)
 
-        # Encontrar automaticamente linha do cabeçalho que contenha 'meta'
-        linha_header = None
-        for idx in range(0, len(df_raw)):
-            linha_textos = df_raw.iloc[idx,:].astype(str).str.lower()
-            if linha_textos.str.contains("meta").any():
-                linha_header = idx
-                break
+        linha_lojas = 2
+        linha_header = 3
+        linha_dados_inicio = linha_header + 1
 
-        if linha_header is None:
-            st.warning(f"⚠️ Não encontrou linha com 'META' na aba {aba}.")
-            continue
-
-        # Encontrar colunas META
+        # Detectar colunas META / FAT
         metas_cols = []
         for col in range(df_raw.shape[1]):
             texto = str(df_raw.iloc[linha_header, col]).lower()
-            if "meta" in texto:
+            if "meta" in texto or "fat." in texto:
                 metas_cols.append(col)
 
-        st.write(f"✅ Linha do header META encontrada: {linha_header}")
-        st.write(f"✅ Colunas META detectadas: {metas_cols}")
+        st.write(f"✅ Colunas META/FAT detectadas: {metas_cols}")
 
-        # Montar consolidado
-        for idx in range(linha_header + 1, len(df_raw)):
+        for idx in range(linha_dados_inicio, len(df_raw)):
+            if pd.isna(df_raw.iloc[idx, 1]):
+                continue  # garante que tem mês
+
             mes_bruto = str(df_raw.iloc[idx, 1]).strip().lower()
             mes = mapa_meses.get(mes_bruto, mes_bruto)
 
             for c in metas_cols:
-                # Nome da loja fica na linha acima do cabeçalho
-                loja = df_raw.iloc[linha_header -1, c]
+                loja = df_raw.iloc[linha_lojas, c]
                 valor = df_raw.iloc[idx, c]
                 if isinstance(valor, str):
                     valor = valor.replace('R$', '').replace('.', '').replace(',', '.').strip()
@@ -70,13 +62,13 @@ if uploaded_file:
                 linha = {
                     "Mês": mes,
                     "Ano": 2025,
-                    "Grupo": df_raw.iloc[0,0],
+                    "Grupo": df_raw.iloc[0, 0],
                     "Loja": loja,
                     "Fat.Total": valor
                 }
                 df_final = pd.concat([df_final, pd.DataFrame([linha])], ignore_index=True)
 
-    st.success("✅ Dados consolidados com base no cabeçalho META dinâmico:")
+    st.success("✅ Dados consolidados no formato desejado:")
     st.dataframe(df_final)
 
     if not df_final.empty:
