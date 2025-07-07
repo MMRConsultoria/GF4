@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="Processar Metas Dinâmico", layout="wide")
-st.title("📈 Processar Metas (mesclas eliminadas via ffill, 2 linhas abaixo do META)")
+st.title("📈 Processar Metas (detecta META, lojas na coluna anterior, dados 2 linhas abaixo)")
 
 uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
@@ -32,9 +32,8 @@ if uploaded_file:
         df_raw = df_raw.ffill(axis=0)
 
         grupo = df_raw.iloc[0,0]  # Grupo está em A1
-        linha_lojas = 1            # Lojas estão na linha 2 (index 1)
 
-        # Procurar linha do cabeçalho que tenha 'META'
+        # Encontrar linha do cabeçalho que tenha 'META'
         linha_header = None
         for idx in range(0, len(df_raw)):
             linha_textos = df_raw.iloc[idx,:].astype(str).str.lower().str.replace(" ", "")
@@ -67,7 +66,7 @@ if uploaded_file:
             mes = mapa_meses.get(mes_bruto, mes_bruto)
 
             for c in metas_cols:
-                loja = df_raw.iloc[linha_lojas, c]
+                loja = df_raw.iloc[linha_header - 1, c-1]  # pega loja na coluna anterior
                 if pd.isna(loja) or "consolidado" in str(loja).lower():
                     continue
 
