@@ -393,17 +393,19 @@ with tab3:
 
                     for col_vendas in colunas_vendas:
                         data_col = col_vendas.split(" - ")[1]
-                        col_taxa_bandeira = f"Vlr Taxa Bandeira - {data_col}"
-                        col_taxa_antecip = f"Vlr Taxa Antecipação - {data_col}"
-
-                        taxa_bandeira = pd.to_numeric(df_pivot["Taxa Bandeira"].astype(str).str.replace("%","").str.replace(",","."), errors="coerce").fillna(0) / 100
-                        taxa_antecip = pd.to_numeric(df_pivot["Taxa Antecipação"].astype(str).str.replace("%","").str.replace(",","."), errors="coerce").fillna(0) / 100
-
-                        df_pivot[col_taxa_bandeira] = df_pivot[col_vendas] * taxa_bandeira
-                        df_pivot[col_taxa_antecip] = df_pivot[col_vendas] * taxa_antecip
-
-                        novas_cols.extend([col_vendas, col_taxa_bandeira, col_taxa_antecip])
-
+                        col_taxa = f"Vlr Taxa Bandeira - {data_col}"
+                        
+                        # 🔥 converte explicitamente o valor de vendas para numérico
+                        df_pivot[col_vendas] = pd.to_numeric(df_pivot[col_vendas], errors='coerce').fillna(0)
+                        
+                        taxa_bandeira = (
+                            pd.to_numeric(df_pivot["Taxa Bandeira"].astype(str)
+                                          .str.replace("%","")
+                                          .str.replace(",","."), 
+                                          errors="coerce").fillna(0) / 100
+                        )
+                        df_pivot[col_taxa] = df_pivot[col_vendas] * taxa_bandeira
+                        novas_cols.extend([col_vendas, col_taxa])
                     df_pivot = df_pivot[cols_fixas + novas_cols]
 
                     df_pivot["Total Vendas"] = df_pivot[colunas_vendas].sum(axis=1)
