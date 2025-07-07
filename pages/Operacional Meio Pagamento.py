@@ -460,16 +460,45 @@ with tab3:
                     st.dataframe(df_pivot_exibe, use_container_width=True)
 
                     output = BytesIO()
+                    from io import BytesIO
+                    import pandas as pd
+                    
+                    output = BytesIO()
+                    
+                    # 🔥 Garante que Taxa Bandeira e Taxa Antecipação estejam numéricas
+                    df_exportar = df_pivot_total.copy()
+                    df_exportar["Taxa Bandeira"] = (
+                        pd.to_numeric(df_exportar["Taxa Bandeira"].astype(str)
+                                      .str.replace("%", "")
+                                      .str.replace(",", "."),
+                                      errors="coerce") / 100
+                    )
+                    df_exportar["Taxa Antecipação"] = (
+                        pd.to_numeric(df_exportar["Taxa Antecipação"].astype(str)
+                                      .str.replace("%", "")
+                                      .str.replace(",", "."),
+                                      errors="coerce") / 100
+                    )
+                    
+                    # 🔥 Formata todas as colunas monetárias como Contábil (R$)
+                    for col in df_exportar.columns:
+                        if ("Vendas" in col or "Vlr Taxa Bandeira" in col 
+                            or "Vlr Taxa Antecipação" in col or "Total Tx" in col 
+                            or col in ["Total Vendas", "Total a Receber"]):
+                            df_exportar[col] = df_exportar[col].map(
+                                lambda x: f'R$ {x:,.2f}'.replace(",", "X").replace(".", ",").replace("X", ".") 
+                                if pd.notna(x) else ""
+                            )
+                    
+                    # Exporta para Excel
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                        df_pivot_total.to_excel(writer, index=False, sheet_name="PrazoTaxas")
+                        df_exportar.to_excel(writer, index=False, sheet_name="PrazoTaxas")
                     output.seek(0)
-
+                    
+                    # Botão para download
                     st.download_button(
                         "📥 Baixar Excel",
                         data=output,
                         file_name=f"Vendas_Prazo_Taxas_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
-
-    except Exception as e:
-        st.error(f"❌ Erro ao acessar Google Sheets: {e}")
