@@ -258,18 +258,26 @@ with aba2:
     ordem_meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
     anos_disponiveis = sorted(df_anos["Ano"].unique())
-    col1, col2, col3 = st.columns(3)
 
+    col1, col2, col3 = st.columns(3)
     with col1:
         ano_selecionado = st.selectbox("Ano:", anos_disponiveis, index=anos_disponiveis.index(ano_atual))
-    
     with col2:
         mes_selecionado = st.selectbox("Mês:", ordem_meses, index=ordem_meses.index(mes_atual))
-    
     with col3:
         modo_visao = st.selectbox("Visão:", ["Por Loja", "Por Grupo"])
-        df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)].copy()
-        df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)].copy()
+    
+    # ➕ Novo filtro por Tipo
+    tipos_disponiveis = sorted(df_anos["Tipo"].dropna().unique())
+    tipo_selecionado = st.selectbox("Tipo:", ["TODOS"] + tipos_disponiveis)
+    
+    # Aplica filtro
+    df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)].copy()
+    if tipo_selecionado != "TODOS":
+        df_anos_filtrado = df_anos_filtrado[df_anos_filtrado["Tipo"] == tipo_selecionado]
+    
+    df_metas_filtrado = df_metas[(df_metas["Ano"] == ano_selecionado) & (df_metas["Mês"] == mes_selecionado)].copy()
+    
 
     import calendar
     ultima_data_realizado_dt = df_anos_filtrado["Data"].max()
