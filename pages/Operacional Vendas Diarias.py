@@ -662,7 +662,8 @@ with aba4:
                 
                 # ✅ Junta tudo no final
                 df_resultado_final = pd.concat([df_resultado, subtotal_geral, linha_total], ignore_index=True)
-                                st.session_state.df_resultado = df_resultado
+                                
+                st.session_state.df_resultado = df_resultado
                                       
                 # 🔹 Estilo linha: destacar se tiver diferença (em vermelho)
                 def highlight_diferenca(row):
