@@ -627,8 +627,7 @@ with aba4:
                 colunas_texto = ["Nome (Everest)", "Nome (Externo)"]
                 df_resultado[colunas_texto] = df_resultado[colunas_texto].fillna("")
                 df_resultado = df_resultado.fillna(0)
-               
-                
+
                 df_resultado = df_resultado.reset_index(drop=True)
 
                 # ✅ Aqui entra o subtotal do dia
@@ -645,8 +644,7 @@ with aba4:
                     "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]]
                 
-                df_resultado = pd.concat([df_resultado, subtotal_geral], ignore_index=True)
-                
+          
                 # 🔄 E continua com seu Total Geral normalmente
                 total_everest = ev[["Valor Bruto (Everest)", "Valor Real (Everest)"]].sum()
                 total_externo = ex[["Valor Bruto (Externo)", "Valor Real (Externo)"]].sum()
