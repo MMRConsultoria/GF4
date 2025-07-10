@@ -630,14 +630,11 @@ with aba4:
 
                 df_resultado = df_resultado.reset_index(drop=True)
 
-                # ✅ Subtotal por dia
+                # ✅ Aqui entra o subtotal do dia
                 subtotal_everest = ev.groupby("Data")[["Valor Bruto (Everest)", "Valor Real (Everest)"]].sum().reset_index()
                 subtotal_externo = ex.groupby("Data")[["Valor Bruto (Externo)", "Valor Real (Externo)"]].sum().reset_index()
                 
-                # 🔄 Faz merge por Data para ter os dois lados
                 subtotal_geral = pd.merge(subtotal_everest, subtotal_externo, on="Data", how="outer").fillna(0)
-                
-                # 🔧 Monta o visual do subtotal do dia
                 subtotal_geral["Nome (Everest)"] = "Subtotal do dia"
                 subtotal_geral["Código"] = ""
                 subtotal_geral["Nome (Externo)"] = ""
@@ -647,7 +644,8 @@ with aba4:
                     "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]]
                 
-                # ✅ Total geral direto dos dados brutos
+          
+                # 🔄 E continua com seu Total Geral normalmente
                 total_everest = ev[["Valor Bruto (Everest)", "Valor Real (Everest)"]].sum()
                 total_externo = ex[["Valor Bruto (Externo)", "Valor Real (Externo)"]].sum()
                 
@@ -662,23 +660,30 @@ with aba4:
                     "Valor Real (Externo)": total_externo["Valor Real (Externo)"]
                 }])
                 
-                # ✅ Junta: detalhes + subtotal + total geral
-                df_resultado_final = pd.concat([df_resultado, subtotal_geral, linha_total], ignore_index=True)
+                df_resultado = pd.concat([df_resultado, linha_total], ignore_index=True)
                 
-                # 🔄 Salva no session_state
-                st.session_state.df_resultado = df_resultado_final
-                
-                # 🔹 Estilo linha para diferenças
+
+                st.session_state.df_resultado = df_resultado
+                      
+                # 🔹 Estilo linha: destacar se tiver diferença (em vermelho)
                 def highlight_diferenca(row):
-                    if "Subtotal" in str(row["Nome (Everest)"]) or "Total Geral" in str(row["Data"]):
-                        return ["background-color: #f2f2f2"] * len(row)
                     if (row["Valor Bruto (Everest)"] != row["Valor Bruto (Externo)"]) or (row["Valor Real (Everest)"] != row["Valor Real (Externo)"]):
-                        return ["background-color: #ff9999"] * len(row)
-                    return [""] * len(row)
+                        return ["background-color: #ff9999"] * len(row)  # vermelho claro
+                    else:
+                        return [""] * len(row)
                 
-                # ✅ Mostra o dataframe final completo
+                # 🔹 Estilo colunas: manter azul e rosa padrão
+                def destacar_colunas_por_origem(col):
+                    if "Everest" in col:
+                        return "background-color: #e6f2ff"
+                    elif "Externo" in col:
+                        return "background-color: #fff5e6"
+                    else:
+                        return ""
+                
+                # 🔹 Aplicar estilos
                 st.dataframe(
-                    df_resultado_final.style
+                    df_resultado.style
                         .apply(highlight_diferenca, axis=1)
                         .set_properties(subset=["Valor Bruto (Everest)", "Valor Real (Everest)"], **{"background-color": "#e6f2ff"})
                         .set_properties(subset=["Valor Bruto (Externo)", "Valor Real (Externo)"], **{"background-color": "#fff5e6"})
@@ -691,20 +696,28 @@ with aba4:
                     use_container_width=True,
                     height=600
                 )
+
                 
-                # ✅ Download Excel
-                def to_excel_resultado(df):
-                    output = BytesIO()
-                    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                        df.to_excel(writer, index=False, sheet_name="Comparativo")
-                    output.seek(0)
-                    return output
-                
-                excel_bytes = to_excel_resultado(st.session_state.df_resultado)
-                
-                st.download_button(
-                    label="📥 Baixar Excel",
-                    data=excel_bytes,
-                    file_name="comparativo_everest_externo.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+        else:
+            st.warning("⚠️ Nenhuma data válida encontrada nas abas do Google Sheets.")
+
+    except Exception as e:
+        st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
+
+     # 📅 Botão de download fora do if botao_atualizar para manter na tela
+    if "df_resultado" in st.session_state:
+        def to_excel_resultado(df):
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+                df.to_excel(writer, index=False, sheet_name="Comparativo")
+            output.seek(0)
+            return output
+
+        excel_bytes = to_excel_resultado(st.session_state.df_resultado)
+
+        st.download_button(
+            label="📅 Baixar Excel Simples",
+            data=excel_bytes,
+            file_name="comparativo_everest_externo.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
