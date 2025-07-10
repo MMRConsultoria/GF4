@@ -656,8 +656,8 @@ with aba4:
                 
                 # 🔄 E continua com seu Total Geral normalmente
                 linha_total = pd.DataFrame([{
-                    "Data": "Total Geral",
-                    "Nome (Everest)": "",
+                    "Data": "",
+                    "Nome (Everest)": "Total Geral",
                     "Código": "",
                     "Valor Bruto (Everest)": ev["Valor Bruto (Everest)"].sum(),
                     "Valor Real (Everest)": ev["Valor Real (Everest)"].sum(),
