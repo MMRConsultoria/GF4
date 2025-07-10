@@ -640,7 +640,7 @@ with aba4:
                 subtotal_externo = ex.groupby("Data")[["Valor Bruto (Externo)", "Valor Real (Externo)"]].sum().reset_index()
                 
                 subtotal_geral = pd.merge(subtotal_everest, subtotal_externo, on="Data", how="outer").fillna(0)
-                subtotal_geral["Nome (Everest)"] = "Subtotal do dia"
+                subtotal_geral["Nome (Everest)"] = "Total do dia"
                 subtotal_geral["Código"] = ""
                 subtotal_geral["Nome (Externo)"] = ""
                 
