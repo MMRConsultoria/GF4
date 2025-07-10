@@ -633,8 +633,7 @@ with aba4:
                 # ✅ Aqui entra o subtotal do dia
                 subtotal_everest = ev.groupby("Data")[["Valor Bruto (Everest)", "Valor Real (Everest)"]].sum().reset_index()
                 subtotal_externo = ex.groupby("Data")[["Valor Bruto (Externo)", "Valor Real (Externo)"]].sum().reset_index()
-                
-                subtotal_geral = pd.merge(subtotal_everest, subtotal_externo, on="Data", how="outer").fillna(0)
+
                 subtotal_geral["Nome (Everest)"] = "Subtotal do dia"
                 subtotal_geral["Código"] = ""
                 subtotal_geral["Nome (Externo)"] = ""
@@ -644,8 +643,7 @@ with aba4:
                     "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]]
                 
-          
-                # 🔄 E continua com seu Total Geral normalmente
+                # ✅ Total geral direto dos dados brutos
                 total_everest = ev[["Valor Bruto (Everest)", "Valor Real (Everest)"]].sum()
                 total_externo = ex[["Valor Bruto (Externo)", "Valor Real (Externo)"]].sum()
                 
@@ -660,10 +658,11 @@ with aba4:
                     "Valor Real (Externo)": total_externo["Valor Real (Externo)"]
                 }])
                 
-                df_resultado = pd.concat([df_resultado, linha_total], ignore_index=True)
+                # ✅ Junta: detalhes + subtotal + total geral
+                df_resultado_final = pd.concat([df_resultado, subtotal_geral, linha_total], ignore_index=True)
                 
-
-                st.session_state.df_resultado = df_resultado
+                # 🔄 Salva no session_state
+                st.session_state.df_resultado = df_resultado_final
                       
                 # 🔹 Estilo linha: destacar se tiver diferença (em vermelho)
                 def highlight_diferenca(row):
