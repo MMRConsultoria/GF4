@@ -634,7 +634,7 @@ with aba4:
                 # 🔧 Força as colunas para float (seguro)
                 for col in ["Valor Bruto (Everest)", "Valor Real (Everest)", "Valor Bruto (Externo)", "Valor Real (Externo)"]:
                     df_resultado[col] = pd.to_numeric(df_resultado[col], errors='coerce').fillna(0)
-                
+                st.write(df_resultado.dtypes)
                 # 🔄 Calcula o total geral
                 totais = df_resultado[[
                     "Valor Bruto (Everest)", "Valor Real (Everest)",
