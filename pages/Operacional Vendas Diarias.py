@@ -599,7 +599,7 @@ with aba4:
                 df_comp_filtrado = df_comp[~(df_comp["_Tem_Diferenca"] & df_comp["_Ignorar_Kopp"])].copy()
                 
                 # 🔧 Filtro no Streamlit
-                opcao = st.radio("Filtro de diferenças:", ["Todas", "Somente com diferenças", "Somente sem diferenças"])
+                opcao = st.selectbox("Filtro de diferenças:", ["Todas", "Somente com diferenças", "Somente sem diferenças"])
                 
                 if opcao == "Todas":
                     df_resultado = df_comp_filtrado.copy()
