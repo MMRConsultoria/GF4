@@ -551,6 +551,11 @@ with aba4:
                     "col0": "Data", "col1": "Codigo",
                     "col7": "Valor Bruto (Everest)", "col6": "Impostos (Everest)"
                 })
+                
+                # 🔥 Remove linhas do Everest que são Total/Subtotal
+                ev = ev[~ev["Codigo"].astype(str).str.lower().str.contains("total", na=False)]
+                ev = ev[~ev["Codigo"].astype(str).str.lower().str.contains("subtotal", na=False)]
+                
                 ex = df_externo.rename(columns={
                     "col0": "Data",
                     "col2": "Nome Loja Sistema Externo",
