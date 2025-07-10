@@ -634,6 +634,12 @@ with aba4:
                 # 🔧 Força as colunas para float (seguro)
                 for col in ["Valor Bruto (Everest)", "Valor Real (Everest)", "Valor Bruto (Externo)", "Valor Real (Externo)"]:
                     df_resultado[col] = pd.to_numeric(df_resultado[col], errors='coerce').fillna(0)
+
+                df_somatorio = df_resultado[
+                    ~df_resultado["Nome (Everest)"].astype(str).str.contains("Subtotal", na=False) &
+                    ~df_resultado["Data"].astype(str).str.contains("Total Geral", na=False)
+                ]
+
                 
                 # 🔄 Calcula total geral do Everest diretamente do ev
                 total_everest = ev[["Valor Bruto (Everest)", "Valor Real (Everest)"]].sum()
