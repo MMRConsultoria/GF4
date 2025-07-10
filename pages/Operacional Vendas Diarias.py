@@ -626,11 +626,11 @@ with aba4:
                 
                 colunas_texto = ["Nome (Everest)", "Nome (Externo)"]
                 df_resultado[colunas_texto] = df_resultado[colunas_texto].fillna("")
+                df_resultado = df_resultado.fillna(0)  # 🔥 Aqui ele transforma None/NaN em 0 para as demais colunas
                 df_resultado = df_resultado.reset_index(drop=True)
                 
                 st.session_state.df_resultado = df_resultado
-
-
+                
 
                 
               #  df_resultado = df_diff[[
