@@ -683,7 +683,7 @@ with aba4:
                 
                 # 🔹 Aplicar estilos
                 st.dataframe(
-                    df_resultado.style
+                    df_resultado_final.style
                         .apply(highlight_diferenca, axis=1)
                         .set_properties(subset=["Valor Bruto (Everest)", "Valor Real (Everest)"], **{"background-color": "#e6f2ff"})
                         .set_properties(subset=["Valor Bruto (Externo)", "Valor Real (Externo)"], **{"background-color": "#fff5e6"})
@@ -696,6 +696,7 @@ with aba4:
                     use_container_width=True,
                     height=600
                 )
+
 
                 
         else:
