@@ -635,38 +635,39 @@ with aba4:
 
                 df_resultado = df_resultado.reset_index(drop=True)
 
-                # ✅ Aqui entra o subtotal do dia
-                subtotal_everest = ev.groupby("Data")[["Valor Bruto (Everest)", "Valor Real (Everest)"]].sum().reset_index()
-                subtotal_externo = ex.groupby("Data")[["Valor Bruto (Externo)", "Valor Real (Externo)"]].sum().reset_index()
+                # ✅ Aqui adiciona o Total do dia logo após cada dia
+                dfs_com_totais = []
+                for data, grupo in df_resultado.groupby("Data", sort=False):
+                    dfs_com_totais.append(grupo)
                 
-                subtotal_geral = pd.merge(subtotal_everest, subtotal_externo, on="Data", how="outer").fillna(0)
-                subtotal_geral["Nome (Everest)"] = "Total do dia"
-                subtotal_geral["Código"] = ""
-                subtotal_geral["Nome (Externo)"] = ""
+                    total_dia = {
+                        "Data": data,
+                        "Nome (Everest)": "Total do dia",
+                        "Código": "",
+                        "Valor Bruto (Everest)": grupo["Valor Bruto (Everest)"].sum(),
+                        "Valor Real (Everest)": grupo["Valor Real (Everest)"].sum(),
+                        "Nome (Externo)": "",
+                        "Valor Bruto (Externo)": grupo["Valor Bruto (Externo)"].sum(),
+                        "Valor Real (Externo)": grupo["Valor Real (Externo)"].sum(),
+                    }
+                    dfs_com_totais.append(pd.DataFrame([total_dia]))
                 
-                subtotal_geral = subtotal_geral[[
-                    "Data", "Nome (Everest)", "Código", "Valor Bruto (Everest)", "Valor Real (Everest)",
-                    "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
-                ]]
+                df_resultado_final = pd.concat(dfs_com_totais, ignore_index=True)
                 
-          
                 # 🔄 E continua com seu Total Geral normalmente
-                total_everest = ev[["Valor Bruto (Everest)", "Valor Real (Everest)"]].sum()
-                total_externo = ex[["Valor Bruto (Externo)", "Valor Real (Externo)"]].sum()
-                
                 linha_total = pd.DataFrame([{
                     "Data": "Total Geral",
                     "Nome (Everest)": "",
                     "Código": "",
-                    "Valor Bruto (Everest)": total_everest["Valor Bruto (Everest)"],
-                    "Valor Real (Everest)": total_everest["Valor Real (Everest)"],
+                    "Valor Bruto (Everest)": ev["Valor Bruto (Everest)"].sum(),
+                    "Valor Real (Everest)": ev["Valor Real (Everest)"].sum(),
                     "Nome (Externo)": "",
-                    "Valor Bruto (Externo)": total_externo["Valor Bruto (Externo)"],
-                    "Valor Real (Externo)": total_externo["Valor Real (Externo)"]
+                    "Valor Bruto (Externo)": ex["Valor Bruto (Externo)"].sum(),
+                    "Valor Real (Externo)": ex["Valor Real (Externo)"].sum()
                 }])
                 
-                # ✅ Junta tudo no final
-                df_resultado_final = pd.concat([df_resultado, subtotal_geral, linha_total], ignore_index=True)
+                df_resultado_final = pd.concat([df_resultado_final, linha_total], ignore_index=True)
+
                                 
                 st.session_state.df_resultado = df_resultado
                                       
