@@ -660,11 +660,10 @@ with aba4:
                     "Valor Real (Externo)": total_externo["Valor Real (Externo)"]
                 }])
                 
-                df_resultado = pd.concat([df_resultado, linha_total], ignore_index=True)
-                
-
-                st.session_state.df_resultado = df_resultado
-                      
+                # ✅ Junta tudo no final
+                df_resultado_final = pd.concat([df_resultado, subtotal_geral, linha_total], ignore_index=True)
+                                st.session_state.df_resultado = df_resultado
+                                      
                 # 🔹 Estilo linha: destacar se tiver diferença (em vermelho)
                 def highlight_diferenca(row):
                     if (row["Valor Bruto (Everest)"] != row["Valor Bruto (Externo)"]) or (row["Valor Real (Everest)"] != row["Valor Real (Externo)"]):
