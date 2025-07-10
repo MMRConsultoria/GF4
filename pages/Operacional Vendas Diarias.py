@@ -636,55 +636,29 @@ with aba4:
                     df_resultado[col] = pd.to_numeric(df_resultado[col], errors='coerce').fillna(0)
                 st.write(df_resultado.dtypes)
                 # 🔄 Calcula o total geral
-                totais = df_resultado[[
-                    "Valor Bruto (Everest)", "Valor Real (Everest)",
-                    "Valor Bruto (Externo)", "Valor Real (Externo)"
-                ]].sum()
+                # 🔄 Calcula total geral do Everest diretamente do ev
+                total_everest = ev[["Valor Bruto (Everest)", "Valor Real (Everest)"]].sum()
                 
-                # 🔄 Monta a linha do total
+                # 🔄 Calcula total geral do Externo diretamente do ex
+                total_externo = ex[["Valor Bruto (Externo)", "Valor Real (Externo)"]].sum()
+                
+                # 🔄 Monta a linha do total geral combinando os dois
                 linha_total = pd.DataFrame([{
                     "Data": "Total Geral",
                     "Nome (Everest)": "",
                     "Código": "",
-                    "Valor Bruto (Everest)": totais["Valor Bruto (Everest)"],
-                    "Valor Real (Everest)": totais["Valor Real (Everest)"],
+                    "Valor Bruto (Everest)": total_everest["Valor Bruto (Everest)"],
+                    "Valor Real (Everest)": total_everest["Valor Real (Everest)"],
                     "Nome (Externo)": "",
-                    "Valor Bruto (Externo)": totais["Valor Bruto (Externo)"],
-                    "Valor Real (Externo)": totais["Valor Real (Externo)"]
+                    "Valor Bruto (Externo)": total_externo["Valor Bruto (Externo)"],
+                    "Valor Real (Externo)": total_externo["Valor Real (Externo)"]
                 }])
                 
+                # 🔄 Adiciona ao seu resultado final
                 df_resultado = pd.concat([df_resultado, linha_total], ignore_index=True)
-                
+
                 st.session_state.df_resultado = df_resultado
                       
-                
-
-                
-              #  df_resultado = df_diff[[
-              #      "Data",
-              #      "Nome Loja Everest", "Codigo", "Valor Bruto (Everest)", "Valor Real (Everest)",
-              #      "Nome Loja Sistema Externo", "Valor Bruto (Externo)", "Valor Real (Externo)"
-              #  ]].sort_values("Data")
-
-              #  df_resultado.columns = [
-              #      "Data",
-              #      "Nome (Everest)", "Código", "Valor Bruto (Everest)", "Valor Real (Everest)",
-              #      "Nome (Externo)", "Valor Bruto (Externo)", "Valor Real (Externo)"
-              #  ]
-
-                # 🔹 Substituir None por string vazia só nas colunas de texto
-              #  colunas_texto = ["Nome (Everest)", "Nome (Externo)"]
-              #  df_resultado[colunas_texto] = df_resultado[colunas_texto].fillna("")
-
-                # 🔹 Resetar índice
-              #  df_resultado = df_resultado.reset_index(drop=True)
-
-                # ✅ Salvar no session_state para manter os dados após clique no botão
-              #  st.session_state.df_resultado = df_resultado            
-
-
-
-                # 🔹 Estilo linha: esconder texto de totais
                 # 🔹 Estilo linha: destacar se tiver diferença (em vermelho)
                 def highlight_diferenca(row):
                     if (row["Valor Bruto (Everest)"] != row["Valor Bruto (Externo)"]) or (row["Valor Real (Everest)"] != row["Valor Real (Externo)"]):
