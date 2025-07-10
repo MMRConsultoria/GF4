@@ -627,14 +627,21 @@ with aba4:
                 colunas_texto = ["Nome (Everest)", "Nome (Externo)"]
                 df_resultado[colunas_texto] = df_resultado[colunas_texto].fillna("")
                 df_resultado = df_resultado.fillna(0)
-                df_resultado = df_resultado.reset_index(drop=True)
+               
                 
-                # 👉 Adiciona linha de total geral
+                df_resultado = df_resultado.reset_index(drop=True)
+
+                # 🔧 Força as colunas para float (seguro)
+                for col in ["Valor Bruto (Everest)", "Valor Real (Everest)", "Valor Bruto (Externo)", "Valor Real (Externo)"]:
+                    df_resultado[col] = pd.to_numeric(df_resultado[col], errors='coerce').fillna(0)
+                
+                # 🔄 Calcula o total geral
                 totais = df_resultado[[
                     "Valor Bruto (Everest)", "Valor Real (Everest)",
                     "Valor Bruto (Externo)", "Valor Real (Externo)"
                 ]].sum()
                 
+                # 🔄 Monta a linha do total
                 linha_total = pd.DataFrame([{
                     "Data": "Total Geral",
                     "Nome (Everest)": "",
@@ -649,7 +656,7 @@ with aba4:
                 df_resultado = pd.concat([df_resultado, linha_total], ignore_index=True)
                 
                 st.session_state.df_resultado = df_resultado
-
+                      
                 
 
                 
