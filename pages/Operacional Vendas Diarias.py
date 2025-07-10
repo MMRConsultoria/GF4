@@ -712,18 +712,38 @@ with aba4:
         st.error(f"❌ Erro ao carregar ou comparar dados: {e}")
 
      # 📅 Botão de download fora do if botao_atualizar para manter na tela
-    if "df_resultado" in st.session_state:
-        def to_excel_resultado(df):
+    import xlsxwriter
+
+        def to_excel_com_estilo(df):
             output = BytesIO()
-            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                df.to_excel(writer, index=False, sheet_name="Comparativo")
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                df.to_excel(writer, index=False, sheet_name='Comparativo')
+                workbook  = writer.book
+                worksheet = writer.sheets['Comparativo']
+        
+                # Formatos
+                formato_everest = workbook.add_format({'bg_color': '#e6f2ff'})
+                formato_externo = workbook.add_format({'bg_color': '#fff5e6'})
+                formato_dif = workbook.add_format({'bg_color': '#ff9999'})
+        
+                # Formatar colunas Everest
+                worksheet.set_column('D:E', None, formato_everest)  # Valor Bruto/Real Everest
+                # Formatar colunas Externo
+                worksheet.set_column('G:H', None, formato_externo)  # Valor Bruto/Real Externo
+        
+                # Destacar linhas com diferença
+                for row_num, row_data in enumerate(df.values):
+                    bruto_everest, real_everest, bruto_ext, real_ext = row_data[3], row_data[4], row_data[6], row_data[7]
+                    if (bruto_everest != bruto_ext) or (real_everest != real_ext):
+                        worksheet.set_row(row_num+1, None, formato_dif)
+        
             output.seek(0)
             return output
-
-        excel_bytes = to_excel_resultado(st.session_state.df_resultado)
-
+        
+        # botão
+        excel_bytes = to_excel_com_estilo(df_resultado_final)
         st.download_button(
-            label="📅 Baixar Excel Simples",
+            label="📥 Baixar Excel Estilizado",
             data=excel_bytes,
             file_name="comparativo_everest_externo.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
