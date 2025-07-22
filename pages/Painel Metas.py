@@ -112,6 +112,8 @@ aba1, aba2, aba3 = st.tabs(["📥Importador","📈 Analise Metas", "📊 Auditor
 with aba1:
 # ===========================================
 
+    #st.title("📈 Processar Metas - com TOTAL no topo, Excel contábil e visualização 240.000,00")
+
     uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
     def formatar_excel_contabil(df, nome_aba="Metas"):
@@ -120,7 +122,7 @@ with aba1:
             df.to_excel(writer, index=False, sheet_name=nome_aba)
             workbook = writer.book
             worksheet = writer.sheets[nome_aba]
-
+            
             for idx, cell in enumerate(worksheet[1], 1):
                 if cell.value == "Meta":
                     col_meta_idx = idx
@@ -153,41 +155,24 @@ with aba1:
         for aba in abas_escolhidas:
             df_raw_ffill = pd.read_excel(xls, sheet_name=aba, header=None).ffill(axis=0)
             df_raw_original = pd.read_excel(xls, sheet_name=aba, header=None)
-            grupo = df_raw_ffill.iloc[0, 0]
+            grupo = df_raw_ffill.iloc[0,0]
 
             linha_header = None
-            for idx in range(len(df_raw_ffill)):
-                linha_textos = df_raw_ffill.iloc[idx, :].astype(str).str.lower().str.replace(" ", "")
-                if linha_textos.str.contains("meta").any() or linha_textos.str.contains("fat").any():
+            for idx in range(0, len(df_raw_ffill)):
+                linha_textos = df_raw_ffill.iloc[idx,:].astype(str).str.lower().str.replace(" ", "")
+                if linha_textos.str.contains("meta").any():
                     linha_header = idx
                     break
             if linha_header is None:
-                st.warning(f"⚠️ Não foi possível identificar o cabeçalho da aba '{aba}'. Pulando.")
                 continue
-
-            # Perguntar ao usuário qual coluna usar como "Meta"
-            cabecalho_opcoes = df_raw_ffill.iloc[linha_header, :].dropna().astype(str).unique().tolist()
-            coluna_meta_escolhida = st.selectbox(f"📊 Qual coluna representa a META na aba '{aba}'?", cabecalho_opcoes, key=aba)
 
             metas_cols = []
             for col in range(df_raw_ffill.shape[1]):
-                import unicodedata
+                texto = str(df_raw_ffill.iloc[linha_header, col]).lower().replace(" ", "")
+                loja_na_col_anterior = str(df_raw_ffill.iloc[linha_header - 1, col - 1]).lower()
+                if "meta" in texto and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
+                    metas_cols.append(col)
 
-                def limpar_texto(texto):
-                    if pd.isna(texto):
-                        return ""
-                    return unicodedata.normalize("NFKD", str(texto)).encode("ASCII", "ignore").decode("ASCII").lower().replace(" ", "").strip()
-                
-                ...
-                
-                texto = limpar_texto(df_raw_ffill.iloc[linha_header, col])
-                escolhida = limpar_texto(coluna_meta_escolhida)
-                
-                if texto == escolhida and all(x not in loja_na_col_anterior.lower() for x in ["total", "subtotal", "média"]):
-                    metas_cols.append(col)
-                loja_na_col_anterior = str(df_raw_ffill.iloc[linha_header - 1, col - 1]).strip().lower()
-                if texto == coluna_meta_escolhida.replace(" ", "") and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
-                    metas_cols.append(col)
             linha_dados_inicio = linha_header + 2
 
             for idx in range(linha_dados_inicio, len(df_raw_ffill)):
@@ -197,7 +182,7 @@ with aba1:
                 mes = mapa_meses[mes_original]
 
                 for c in metas_cols:
-                    loja = df_raw_ffill.iloc[linha_header - 1, c - 1]
+                    loja = df_raw_ffill.iloc[linha_header - 1, c-1]
                     if pd.isna(loja) or "consolidado" in str(loja).lower():
                         continue
                     valor = df_raw_ffill.iloc[idx, c]
@@ -239,7 +224,6 @@ with aba1:
             st.warning("⚠️ Nenhum dado encontrado. Verifique as abas selecionadas.")
     else:
         st.info("💡 Faça o upload de um arquivo Excel para começar.")
-
 
 
 #===========================================
