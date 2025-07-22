@@ -150,7 +150,7 @@ with aba1:
         }
         ordem_meses = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"]
 
-        df_final = pd.DataFrame(columns=["Mês", "Ano", "Grupo", "Loja", "Fat"])
+        df_final = pd.DataFrame(columns=["Mês", "Ano", "Grupo", "Loja", "Meta"])
 
         for aba in abas_escolhidas:
             df_raw_ffill = pd.read_excel(xls, sheet_name=aba, header=None).ffill(axis=0)
@@ -160,7 +160,7 @@ with aba1:
             linha_header = None
             for idx in range(0, len(df_raw_ffill)):
                 linha_textos = df_raw_ffill.iloc[idx,:].astype(str).str.lower().str.replace(" ", "")
-                if linha_textos.str.contains("fat").any():
+                if linha_textos.str.contains("meta").any():
                     linha_header = idx
                     break
             if linha_header is None:
@@ -170,7 +170,7 @@ with aba1:
             for col in range(df_raw_ffill.shape[1]):
                 texto = str(df_raw_ffill.iloc[linha_header, col]).lower().replace(" ", "")
                 loja_na_col_anterior = str(df_raw_ffill.iloc[linha_header - 1, col - 1]).lower()
-                if "fat" in texto and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
+                if "meta" in texto and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
                     metas_cols.append(col)
 
             linha_dados_inicio = linha_header + 2
@@ -192,9 +192,8 @@ with aba1:
                             valor = float(valor)
                         except:
                             valor = None
-                    linha = {"Mês": mes, "Ano": 2025, "Grupo": grupo, "Loja": loja, "Fat": valor}
+                    linha = {"Mês": mes, "Ano": 2025, "Grupo": grupo, "Loja": loja, "Meta": valor}
                     df_final = pd.concat([df_final, pd.DataFrame([linha])], ignore_index=True)
-
 
         df_final = df_final.drop_duplicates()
         if not df_final.empty:
