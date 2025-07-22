@@ -171,7 +171,20 @@ with aba1:
 
             metas_cols = []
             for col in range(df_raw_ffill.shape[1]):
-                texto = str(df_raw_ffill.iloc[linha_header, col]).strip().replace(" ", "")
+                import unicodedata
+
+                def limpar_texto(texto):
+                    if pd.isna(texto):
+                        return ""
+                    return unicodedata.normalize("NFKD", str(texto)).encode("ASCII", "ignore").decode("ASCII").lower().replace(" ", "").strip()
+                
+                ...
+                
+                texto = limpar_texto(df_raw_ffill.iloc[linha_header, col])
+                escolhida = limpar_texto(coluna_meta_escolhida)
+                
+                if texto == escolhida and all(x not in loja_na_col_anterior.lower() for x in ["total", "subtotal", "média"]):
+                    metas_cols.append(col)
                 loja_na_col_anterior = str(df_raw_ffill.iloc[linha_header - 1, col - 1]).strip().lower()
                 if texto == coluna_meta_escolhida.replace(" ", "") and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
                     metas_cols.append(col)
