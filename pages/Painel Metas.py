@@ -112,6 +112,8 @@ aba1, aba2, aba3 = st.tabs(["📥Importador","📈 Analise Metas", "📊 Auditor
 with aba1:
 # ===========================================
 
+    #st.title("📈 Processar Metas - com TOTAL no topo, Excel contábil e visualização 240.000,00")
+
     uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
     def formatar_excel_contabil(df, nome_aba="Metas"):
@@ -122,7 +124,7 @@ with aba1:
             worksheet = writer.sheets[nome_aba]
             
             for idx, cell in enumerate(worksheet[1], 1):
-                if cell.value == "Meta":  # já estará renomeado para "Meta"
+                if cell.value == "Meta":
                     col_meta_idx = idx
                     for row in worksheet.iter_rows(min_row=2, min_col=col_meta_idx, max_col=col_meta_idx):
                         for cell in row:
@@ -148,28 +150,28 @@ with aba1:
         }
         ordem_meses = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"]
 
-        df_final = pd.DataFrame(columns=["Mês", "Ano", "Grupo", "Loja", "Fat"])
+        df_final = pd.DataFrame(columns=["Mês", "Ano", "Grupo", "Loja", "Meta"])
 
         for aba in abas_escolhidas:
             df_raw_ffill = pd.read_excel(xls, sheet_name=aba, header=None).ffill(axis=0)
             df_raw_original = pd.read_excel(xls, sheet_name=aba, header=None)
-            grupo = df_raw_ffill.iloc[0, 0]
+            grupo = df_raw_ffill.iloc[0,0]
 
             linha_header = None
             for idx in range(0, len(df_raw_ffill)):
-                linha_textos = df_raw_ffill.iloc[idx, :].astype(str).str.lower().str.replace(" ", "")
-                if linha_textos.str.contains("fat").any():
+                linha_textos = df_raw_ffill.iloc[idx,:].astype(str).str.lower().str.replace(" ", "")
+                if linha_textos.str.contains("FAT.").any():
                     linha_header = idx
                     break
             if linha_header is None:
                 continue
 
-            fat_cols = []
+            metas_cols = []
             for col in range(df_raw_ffill.shape[1]):
                 texto = str(df_raw_ffill.iloc[linha_header, col]).lower().replace(" ", "")
                 loja_na_col_anterior = str(df_raw_ffill.iloc[linha_header - 1, col - 1]).lower()
-                if "fat" in texto and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
-                    fat_cols.append(col)
+                if "FAT." in texto and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
+                    metas_cols.append(col)
 
             linha_dados_inicio = linha_header + 2
 
@@ -179,8 +181,8 @@ with aba1:
                     continue
                 mes = mapa_meses[mes_original]
 
-                for c in fat_cols:
-                    loja = df_raw_ffill.iloc[linha_header - 1, c - 1]
+                for c in metas_cols:
+                    loja = df_raw_ffill.iloc[linha_header - 1, c-1]
                     if pd.isna(loja) or "consolidado" in str(loja).lower():
                         continue
                     valor = df_raw_ffill.iloc[idx, c]
@@ -190,30 +192,28 @@ with aba1:
                             valor = float(valor)
                         except:
                             valor = None
-                    linha = {"Mês": mes, "Ano": 2025, "Grupo": grupo, "Loja": loja, "Fat": valor}
+                    linha = {"Mês": mes, "Ano": 2025, "Grupo": grupo, "Loja": loja, "Meta": valor}
                     df_final = pd.concat([df_final, pd.DataFrame([linha])], ignore_index=True)
 
         df_final = df_final.drop_duplicates()
         if not df_final.empty:
-            df_final["Fat"] = df_final["Fat"].fillna(0)
+            df_final["Meta"] = df_final["Meta"].fillna(0)
             df_final["Mês"] = pd.Categorical(df_final["Mês"], categories=ordem_meses, ordered=True)
             df_final = df_final.sort_values(["Ano", "Mês", "Loja"])
 
-            total_fat = df_final["Fat"].sum()
+            total_meta = df_final["Meta"].sum()
             linha_total = pd.DataFrame([{
-                "Mês": "TOTAL", "Ano": "", "Grupo": "", "Loja": "", "Fat": total_fat
+                "Mês": "TOTAL", "Ano": "", "Grupo": "", "Loja": "", "Meta": total_meta
             }])
             df_final = pd.concat([linha_total, df_final], ignore_index=True)
 
-            # Renomeia apenas para exibição e exportação
             df_final_fmt = df_final.copy()
-            df_final_fmt = df_final_fmt.rename(columns={"Fat": "Meta"})
             df_final_fmt["Meta"] = df_final_fmt["Meta"].apply(lambda x: f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
             st.success("✅ Dados consolidados")
             st.dataframe(df_final_fmt)
 
-            excel_file = formatar_excel_contabil(df_final_fmt)
+            excel_file = formatar_excel_contabil(df_final)
             st.download_button(
                 label="📥 Baixar Excel (.xlsx)",
                 data=excel_file,
