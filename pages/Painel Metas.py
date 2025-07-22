@@ -167,8 +167,7 @@ with aba1:
                 continue
 
             metas_cols = []
-            coluna_meta_escolhida_fmt = coluna_meta_escolhida.strip().upper()
-            
+                      
             for col in range(df_raw_ffill.shape[1]):
                 texto = str(df_raw_ffill.iloc[linha_header, col]).strip().upper()
                 loja_na_col_anterior = str(df_raw_ffill.iloc[linha_header - 1, col - 1]).strip().lower()
