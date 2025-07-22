@@ -168,11 +168,11 @@ with aba1:
 
             metas_cols = []
             for col in range(df_raw_ffill.shape[1]):
-                texto = str(df_raw_ffill.iloc[linha_header, col]).strip().upper()
-                loja_na_col_anterior = str(df_raw_ffill.iloc[linha_header - 1, col - 1]).strip().lower()
-            
-                if texto == "FAT.2025" and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
+                texto = str(df_raw_ffill.iloc[linha_header, col]).lower().replace(" ", "")
+                loja_na_col_anterior = str(df_raw_ffill.iloc[linha_header - 1, col - 1]).lower()
+                if "meta" in texto and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
                     metas_cols.append(col)
+
             linha_dados_inicio = linha_header + 2
 
             for idx in range(linha_dados_inicio, len(df_raw_ffill)):
