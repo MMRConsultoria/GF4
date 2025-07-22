@@ -122,7 +122,7 @@ with aba1:
             worksheet = writer.sheets[nome_aba]
             
             for idx, cell in enumerate(worksheet[1], 1):
-                if cell.value == "Meta":
+                if cell.value == "Meta":  # já estará renomeado para "Meta"
                     col_meta_idx = idx
                     for row in worksheet.iter_rows(min_row=2, min_col=col_meta_idx, max_col=col_meta_idx):
                         for cell in row:
@@ -164,12 +164,12 @@ with aba1:
             if linha_header is None:
                 continue
 
-            metas_cols = []
+            fat_cols = []
             for col in range(df_raw_ffill.shape[1]):
                 texto = str(df_raw_ffill.iloc[linha_header, col]).lower().replace(" ", "")
                 loja_na_col_anterior = str(df_raw_ffill.iloc[linha_header - 1, col - 1]).lower()
                 if "fat" in texto and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
-                    metas_cols.append(col)
+                    fat_cols.append(col)
 
             linha_dados_inicio = linha_header + 2
 
@@ -179,7 +179,7 @@ with aba1:
                     continue
                 mes = mapa_meses[mes_original]
 
-                for c in metas_cols:
+                for c in fat_cols:
                     loja = df_raw_ffill.iloc[linha_header - 1, c - 1]
                     if pd.isna(loja) or "consolidado" in str(loja).lower():
                         continue
@@ -213,7 +213,7 @@ with aba1:
             st.success("✅ Dados consolidados")
             st.dataframe(df_final_fmt)
 
-            excel_file = formatar_excel_contabil(df_final_fmt)  # ← já com 'Meta' no cabeçalho
+            excel_file = formatar_excel_contabil(df_final_fmt)
             st.download_button(
                 label="📥 Baixar Excel (.xlsx)",
                 data=excel_file,
