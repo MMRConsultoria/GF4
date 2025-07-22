@@ -167,13 +167,11 @@ with aba1:
                 continue
 
             metas_cols = []
-            coluna_meta_escolhida_fmt = coluna_meta_escolhida.strip().upper()  # DEFINIDO ANTES DO FOR
-            
             for col in range(df_raw_ffill.shape[1]):
                 texto = str(df_raw_ffill.iloc[linha_header, col]).strip().upper()
                 loja_na_col_anterior = str(df_raw_ffill.iloc[linha_header - 1, col - 1]).strip().lower()
             
-                if texto == coluna_meta_escolhida_fmt and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
+                if texto == "FAT.2025" and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
                     metas_cols.append(col)
             linha_dados_inicio = linha_header + 2
 
