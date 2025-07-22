@@ -160,6 +160,10 @@ with aba1:
             linha_header = None
             for idx in range(0, len(df_raw_ffill)):
                 linha_textos = df_raw_ffill.iloc[idx,:].astype(str).str.lower().str.replace(" ", "")
+
+                # ⬇️ Debug: exibe o conteúdo de cada linha lida
+                st.write(f"🔍 Linha {idx} (verificando cabeçalho):", linha_textos.tolist())
+
                 if linha_textos.str.contains("fat.2025").any():
                     linha_header = idx
                     break
