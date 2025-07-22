@@ -160,7 +160,7 @@ with aba1:
             linha_header = None
             for idx in range(0, len(df_raw_ffill)):
                 linha_textos = df_raw_ffill.iloc[idx,:].astype(str).str.lower().str.replace(" ", "")
-                if linha_textos.str.contains("meta").any():
+                if linha_textos.str.contains("fat").any():
                     linha_header = idx
                     break
             if linha_header is None:
@@ -170,7 +170,7 @@ with aba1:
             for col in range(df_raw_ffill.shape[1]):
                 texto = str(df_raw_ffill.iloc[linha_header, col]).lower().replace(" ", "")
                 loja_na_col_anterior = str(df_raw_ffill.iloc[linha_header - 1, col - 1]).lower()
-                if "meta" in texto and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
+                if "fat" in texto and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
                     metas_cols.append(col)
 
             linha_dados_inicio = linha_header + 2
