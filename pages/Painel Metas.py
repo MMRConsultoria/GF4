@@ -160,7 +160,7 @@ with aba1:
             linha_header = None
             for idx in range(0, len(df_raw_ffill)):
                 linha_textos = df_raw_ffill.iloc[idx,:].astype(str).str.lower().str.replace(" ", "")
-                if linha_textos.str.contains("meta").any():
+                if linha_textos.str.contains("fat.2025").any():
                     linha_header = idx
                     break
             if linha_header is None:
