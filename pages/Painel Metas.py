@@ -157,25 +157,17 @@ with aba1:
             df_raw_original = pd.read_excel(xls, sheet_name=aba, header=None)
             grupo = df_raw_ffill.iloc[0,0]
 
-            linha_header = None
-            for idx in range(0, len(df_raw_ffill)):
-                linha_textos = df_raw_ffill.iloc[idx,:].astype(str).str.lower().str.replace(" ", "")
+            # Força a linha do cabeçalho para linha 3 do Excel (índice 2 em pandas)
+            linha_header = 2
 
-                # ⬇️ Debug: exibe o conteúdo de cada linha lida
-                st.write(f"🔍 Linha {idx} (verificando cabeçalho):", linha_textos.tolist())
-
-                if linha_textos.str.contains("fat.2025").any():
-                    linha_header = idx
-                    break
-            if linha_header is None:
-                continue
 
             metas_cols = []
             for col in range(df_raw_ffill.shape[1]):
                 texto = str(df_raw_ffill.iloc[linha_header, col]).strip().lower()
-                loja_na_col_anterior = str(df_raw_ffill.iloc[linha_header - 1, col - 1]).lower()
-                if "fat.2025" in str(df_raw_ffill.iloc[linha_header, col]).lower() and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
+                loja_na_col_anterior = str(df_raw_ffill.iloc[linha_header - 1, col - 1]).strip().lower()
+                if texto == "fat.2025" and all(x not in loja_na_col_anterior for x in ["total", "subtotal", "média"]):
                     metas_cols.append(col)
+
 
             linha_dados_inicio = linha_header + 2
 
