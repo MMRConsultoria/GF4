@@ -224,7 +224,10 @@ with aba1:
                     nome_coluna = linha_colunas[col]
                     loja = linha_lojas[col]
 
-                    if not nome_coluna or not loja:
+                    if not nome_coluna.strip() or not loja.strip():
+                        continue
+                    # Ignora colunas onde o nome da coluna está em branco ou contém apenas número (ex: "2025")
+                    if re.fullmatch(r"\d{4}", nome_coluna.strip()):
                         continue
                     if nome_coluna not in colunas_escolhidas_nomes:
                         continue
