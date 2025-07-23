@@ -166,15 +166,21 @@ with aba1:
             for col in range(df_preview.shape[1]):
                 loja = linha_lojas[col]
                 nome_coluna = linha_colunas[col]
-
-                if not nome_coluna:
-                    continue
+                
+                # Limpeza e padronização do texto
+                loja = loja.strip() if isinstance(loja, str) else ""
+                nome_coluna = nome_coluna.strip().lower() if isinstance(nome_coluna, str) else ""
+            
                 if not loja or "consolidado" in loja.lower():
                     continue
-                if any(substr in nome_coluna.lower() for substr in ["%", "variação", "diferença", "dif.", "delta"]):
+                if not nome_coluna:
                     continue
-
-                colunas_filtradas.append(nome_coluna)
+                if re.fullmatch(r"\d{4}", nome_coluna):  # ignora colunas como "2025"
+                    continue
+                if any(substr in nome_coluna for substr in ["%", "variação", "diferença", "dif.", "delta"]):
+                    continue
+            
+                colunas_filtradas.append(linha_colunas[col])  # mantém o nome original (sem .lower())
 
             colunas_unicas = sorted(set(colunas_filtradas))
 
@@ -224,8 +230,24 @@ with aba1:
                     nome_coluna = linha_colunas[col]
                     loja = linha_lojas[col]
 
-                    if not nome_coluna or not loja:
+                    if not loja.strip():
                         continue
+                    
+                    # Ignora coluna se nome da coluna estiver vazio ou for apenas número/símbolo/% etc.
+                    nome_coluna_limpo = nome_coluna.strip().lower()
+                    
+                    if (
+                        not nome_coluna_limpo
+                        or nome_coluna_limpo in ["", "-", "nan"]
+                        or re.fullmatch(r"\d{4}", nome_coluna_limpo)
+                        or "%" in nome_coluna_limpo
+                        or "variação" in nome_coluna_limpo
+                        or "diferença" in nome_coluna_limpo
+                        or "delta" in nome_coluna_limpo
+                        or re.fullmatch(r"-?\d+(?:[.,]\d+)?%", nome_coluna_limpo)  # % isolado
+                    ):
+                        continue
+
                     if nome_coluna not in colunas_escolhidas_nomes:
                         continue
                     if "consolidado" in loja.lower():
