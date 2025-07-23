@@ -106,216 +106,12 @@ def formatar_moeda_br(val):
 # ================================
 # Abas
 # ================================
-aba1, aba2, aba3 = st.tabs(["📥Importador","📈 Analise Metas", "📊 Auditoria Metas"])
+aba1, aba2, aba3 = st.tabs(["📈 Analise Metas", "📊 Auditoria Metas","📥Importador"])
 
 
-# ===========================================
-with aba1:
-# ===========================================
 
-    uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
-
-    def formatar_excel_contabil(df, nome_aba="Metas"):
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name=nome_aba)
-            workbook = writer.book
-            worksheet = writer.sheets[nome_aba]
-
-            for idx, cell in enumerate(worksheet[1], 1):
-                if cell.value == "Meta":
-                    col_meta_idx = idx
-                    for row in worksheet.iter_rows(min_row=2, min_col=col_meta_idx, max_col=col_meta_idx):
-                        for cell in row:
-                            cell.number_format = '#,##0.00'
-                    break
-        output.seek(0)
-        return output
-
-    # 🔁 Estado para armazenar resultado e arquivo anterior
-    if "df_resultado" not in st.session_state:
-        st.session_state.df_resultado = pd.DataFrame()
-    if "nome_arquivo_carregado" not in st.session_state:
-        st.session_state.nome_arquivo_carregado = None
-
-    if uploaded_file:
-        if st.session_state.nome_arquivo_carregado != uploaded_file.name:
-            st.session_state.df_resultado = pd.DataFrame()
-        st.session_state.nome_arquivo_carregado = uploaded_file.name
-
-        xls = pd.ExcelFile(uploaded_file)
-        todas_abas = xls.sheet_names
-
-        abas_escolhidas = st.multiselect(
-            "Selecione as abas a processar:",
-            options=todas_abas,
-            default=[]
-        )
-
-        if not abas_escolhidas:
-            st.session_state.df_resultado = pd.DataFrame()
-
-        if abas_escolhidas:
-            aba_referencia = abas_escolhidas[0]
-            df_preview = pd.read_excel(xls, sheet_name=aba_referencia, header=None).copy()
-            df_preview.iloc[1, :] = df_preview.iloc[1, :].ffill()
-
-            linha_lojas = df_preview.iloc[1, :].astype(str).str.strip()
-            linha_colunas = df_preview.iloc[2, :].fillna("").astype(str).str.strip()
-
-            colunas_filtradas = []
-            for col in range(df_preview.shape[1]):
-                loja = linha_lojas[col]
-                nome_coluna = linha_colunas[col]
-                
-                # Limpeza e padronização do texto
-                loja = loja.strip() if isinstance(loja, str) else ""
-                nome_coluna = nome_coluna.strip().lower() if isinstance(nome_coluna, str) else ""
-            
-                if not loja or "consolidado" in loja.lower():
-                    continue
-                if not nome_coluna:
-                    continue
-                if re.fullmatch(r"\d{4}", nome_coluna):  # ignora colunas como "2025"
-                    continue
-                if any(substr in nome_coluna for substr in ["%", "variação", "diferença", "dif.", "delta"]):
-                    continue
-            
-                colunas_filtradas.append(linha_colunas[col])  # mantém o nome original (sem .lower())
-
-            colunas_unicas = sorted(set(colunas_filtradas))
-
-            colunas_escolhidas_nomes = st.multiselect(
-                "📜 Selecione o(s) nome(s) das colunas abaixo das lojas a serem importadas:",
-                options=colunas_unicas,
-                default=[]
-            )
-
-            if not abas_escolhidas:
-                st.session_state.df_resultado = pd.DataFrame()
-                st.warning("⚠️ Nenhuma aba selecionada.")
-                st.stop()
-
-            if not colunas_escolhidas_nomes:
-                st.session_state.df_resultado = pd.DataFrame()
-                st.warning("⚠️ Nenhuma coluna selecionada.")
-                st.stop()
-
-            import re
-
-            mapa_meses = {
-                "janeiro": "Jan", "fevereiro": "Fev", "março": "Mar", "abril": "Abr",
-                "maio": "Mai", "junho": "Jun", "julho": "Jul", "agosto": "Ago",
-                "setembro": "Set", "outubro": "Out", "novembro": "Nov", "dezembro": "Dez"
-            }
-            ordem_meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
-
-            df_final = pd.DataFrame(columns=["Mês", "Ano", "Grupo", "Loja", "Meta"])
-
-            for aba in abas_escolhidas:
-                df_raw_original = pd.read_excel(xls, sheet_name=aba, header=None)
-                df_raw_ffill = df_raw_original.copy()
-                
-                # Aplicar ffill apenas nas linhas de cabeçalho (0, 1 e 2)
-                for i in [0, 1, 2]:
-                    df_raw_ffill.iloc[i, :] = df_raw_ffill.iloc[i, :].ffill()
-                
-                grupo = df_raw_ffill.iloc[0, 0]
-                df_raw_ffill.iloc[1, :] = df_raw_ffill.iloc[1, :].ffill()
-
-                linha_lojas = df_raw_ffill.iloc[1, :].astype(str).str.strip()
-                linha_colunas = df_raw_ffill.iloc[2, :].fillna("").astype(str).str.strip()
-
-                colunas_validas = {}
-                for col in range(df_raw_ffill.shape[1]):
-                    # Verifica se o cabeçalho original (linha 2) está vazio → ignora a coluna
-                    valor_cabecalho_original = str(df_raw_original.iloc[2, col]).strip().lower()
-                    if not valor_cabecalho_original or valor_cabecalho_original in ["", "nan", "-", None]:
-                        continue
-                
-                    nome_coluna = linha_colunas[col].strip()
-                    loja = linha_lojas[col].strip()
-                
-                    if not loja or "consolidado" in loja.lower():
-                        continue
-                    if re.fullmatch(r"\d{4}", nome_coluna):
-                        continue
-                    if any(substr in nome_coluna.lower() for substr in ["%", "variação", "diferença", "dif.", "delta"]):
-                        continue
-                    if nome_coluna not in colunas_escolhidas_nomes:
-                        continue
-                
-                    colunas_validas[col] = (loja, nome_coluna)
-
-                linha_dados_inicio = 4
-                for idx in range(linha_dados_inicio, len(df_raw_ffill)):
-                    celula_mes = df_raw_original.iloc[idx, 1]
-                    if pd.isna(celula_mes):
-                        continue
-                    mes_original = str(celula_mes).strip().lower().replace("marco", "março")
-                    if mes_original in ["", "-", "nan", "total"]:
-                        continue
-                    if mes_original not in mapa_meses:
-                        continue
-                    mes = mapa_meses[mes_original]
-
-                    for col, (loja, nome_coluna) in colunas_validas.items():
-                        valor = df_raw_ffill.iloc[idx, col]
-                        if pd.isna(valor) or str(valor).strip() in ["", "-", "nan"]:
-                            continue
-                        if isinstance(valor, str):
-                            valor = valor.replace('R$', '').replace('.', '').replace(',', '.').strip()
-                            try:
-                                valor = float(valor)
-                            except:
-                                continue
-
-                        match_ano = re.search(r"(20\d{2})", nome_coluna)
-                        ano = int(match_ano.group(1)) if match_ano else None
-
-                        linha = {"Mês": mes, "Ano": ano, "Grupo": grupo, "Loja": loja, "Meta": valor}
-                        df_final = pd.concat([df_final, pd.DataFrame([linha])], ignore_index=True)
-
-            df_final = df_final.drop_duplicates()
-
-            if not df_final.empty and colunas_escolhidas_nomes:
-                df_final["Meta"] = df_final["Meta"].fillna(0)
-                df_final["Mês"] = pd.Categorical(df_final["Mês"], categories=ordem_meses, ordered=True)
-                df_final = df_final.sort_values(["Ano", "Mês", "Loja"])
-
-                total_meta = df_final["Meta"].sum()
-                linha_total = pd.DataFrame([{ "Mês": "TOTAL", "Ano": "", "Grupo": "", "Loja": "", "Meta": total_meta }])
-                df_final = pd.concat([linha_total, df_final], ignore_index=True)
-
-                df_final_fmt = df_final.copy()
-                df_final_fmt["Meta"] = df_final_fmt["Meta"].apply(lambda x: f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-                st.session_state.df_resultado = df_final_fmt
-            else:
-                st.session_state.df_resultado = pd.DataFrame()
-
-            with st.container():
-                if st.session_state.df_resultado.empty:
-                    st.write("")
-                else:
-                    st.success("✅ Dados consolidados")
-                    st.dataframe(st.session_state.df_resultado)
-                    excel_file = formatar_excel_contabil(df_final)
-                    st.download_button(
-                        label="📅 Baixar Excel (.xlsx)",
-                        data=excel_file,
-                        file_name="metas_consolidado.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
-
-            if not abas_escolhidas:
-                st.session_state.df_resultado = pd.DataFrame()
-                st.warning("⚠️ Nenhuma aba selecionada.")
-            elif not uploaded_file:
-                st.session_state.df_resultado = pd.DataFrame()
-                st.info("💡 Faça o upload de um arquivo Excel para começar.")
-    
 #===========================================
-with aba2:
+with aba1:
 #===========================================
     # --- Metas ---
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
@@ -758,11 +554,10 @@ with aba2:
     )
 
 
-    
 
 
 # ================================
-with aba3:
+with aba2:
 # ================================    
 
     st.markdown("## Painel Gráfico Semanal")
@@ -850,4 +645,213 @@ with aba3:
     ))
     fig_part.update_layout(height=300)
     st.plotly_chart(fig_part, use_container_width=True)
+
+
+
+# ===========================================
+with aba3:
+# ===========================================
+
+    uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
+
+    def formatar_excel_contabil(df, nome_aba="Metas"):
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name=nome_aba)
+            workbook = writer.book
+            worksheet = writer.sheets[nome_aba]
+
+            for idx, cell in enumerate(worksheet[1], 1):
+                if cell.value == "Meta":
+                    col_meta_idx = idx
+                    for row in worksheet.iter_rows(min_row=2, min_col=col_meta_idx, max_col=col_meta_idx):
+                        for cell in row:
+                            cell.number_format = '#,##0.00'
+                    break
+        output.seek(0)
+        return output
+
+    # 🔁 Estado para armazenar resultado e arquivo anterior
+    if "df_resultado" not in st.session_state:
+        st.session_state.df_resultado = pd.DataFrame()
+    if "nome_arquivo_carregado" not in st.session_state:
+        st.session_state.nome_arquivo_carregado = None
+
+    if uploaded_file:
+        if st.session_state.nome_arquivo_carregado != uploaded_file.name:
+            st.session_state.df_resultado = pd.DataFrame()
+        st.session_state.nome_arquivo_carregado = uploaded_file.name
+
+        xls = pd.ExcelFile(uploaded_file)
+        todas_abas = xls.sheet_names
+
+        abas_escolhidas = st.multiselect(
+            "Selecione as abas a processar:",
+            options=todas_abas,
+            default=[]
+        )
+
+        if not abas_escolhidas:
+            st.session_state.df_resultado = pd.DataFrame()
+
+        if abas_escolhidas:
+            aba_referencia = abas_escolhidas[0]
+            df_preview = pd.read_excel(xls, sheet_name=aba_referencia, header=None).copy()
+            df_preview.iloc[1, :] = df_preview.iloc[1, :].ffill()
+
+            linha_lojas = df_preview.iloc[1, :].astype(str).str.strip()
+            linha_colunas = df_preview.iloc[2, :].fillna("").astype(str).str.strip()
+
+            colunas_filtradas = []
+            for col in range(df_preview.shape[1]):
+                loja = linha_lojas[col]
+                nome_coluna = linha_colunas[col]
+                
+                # Limpeza e padronização do texto
+                loja = loja.strip() if isinstance(loja, str) else ""
+                nome_coluna = nome_coluna.strip().lower() if isinstance(nome_coluna, str) else ""
+            
+                if not loja or "consolidado" in loja.lower():
+                    continue
+                if not nome_coluna:
+                    continue
+                if re.fullmatch(r"\d{4}", nome_coluna):  # ignora colunas como "2025"
+                    continue
+                if any(substr in nome_coluna for substr in ["%", "variação", "diferença", "dif.", "delta"]):
+                    continue
+            
+                colunas_filtradas.append(linha_colunas[col])  # mantém o nome original (sem .lower())
+
+            colunas_unicas = sorted(set(colunas_filtradas))
+
+            colunas_escolhidas_nomes = st.multiselect(
+                "📜 Selecione o(s) nome(s) das colunas abaixo das lojas a serem importadas:",
+                options=colunas_unicas,
+                default=[]
+            )
+
+            if not abas_escolhidas:
+                st.session_state.df_resultado = pd.DataFrame()
+                st.warning("⚠️ Nenhuma aba selecionada.")
+                st.stop()
+
+            if not colunas_escolhidas_nomes:
+                st.session_state.df_resultado = pd.DataFrame()
+                st.warning("⚠️ Nenhuma coluna selecionada.")
+                st.stop()
+
+            import re
+
+            mapa_meses = {
+                "janeiro": "Jan", "fevereiro": "Fev", "março": "Mar", "abril": "Abr",
+                "maio": "Mai", "junho": "Jun", "julho": "Jul", "agosto": "Ago",
+                "setembro": "Set", "outubro": "Out", "novembro": "Nov", "dezembro": "Dez"
+            }
+            ordem_meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+
+            df_final = pd.DataFrame(columns=["Mês", "Ano", "Grupo", "Loja", "Meta"])
+
+            for aba in abas_escolhidas:
+                df_raw_original = pd.read_excel(xls, sheet_name=aba, header=None)
+                df_raw_ffill = df_raw_original.copy()
+                
+                # Aplicar ffill apenas nas linhas de cabeçalho (0, 1 e 2)
+                for i in [0, 1, 2]:
+                    df_raw_ffill.iloc[i, :] = df_raw_ffill.iloc[i, :].ffill()
+                
+                grupo = df_raw_ffill.iloc[0, 0]
+                df_raw_ffill.iloc[1, :] = df_raw_ffill.iloc[1, :].ffill()
+
+                linha_lojas = df_raw_ffill.iloc[1, :].astype(str).str.strip()
+                linha_colunas = df_raw_ffill.iloc[2, :].fillna("").astype(str).str.strip()
+
+                colunas_validas = {}
+                for col in range(df_raw_ffill.shape[1]):
+                    # Verifica se o cabeçalho original (linha 2) está vazio → ignora a coluna
+                    valor_cabecalho_original = str(df_raw_original.iloc[2, col]).strip().lower()
+                    if not valor_cabecalho_original or valor_cabecalho_original in ["", "nan", "-", None]:
+                        continue
+                
+                    nome_coluna = linha_colunas[col].strip()
+                    loja = linha_lojas[col].strip()
+                
+                    if not loja or "consolidado" in loja.lower():
+                        continue
+                    if re.fullmatch(r"\d{4}", nome_coluna):
+                        continue
+                    if any(substr in nome_coluna.lower() for substr in ["%", "variação", "diferença", "dif.", "delta"]):
+                        continue
+                    if nome_coluna not in colunas_escolhidas_nomes:
+                        continue
+                
+                    colunas_validas[col] = (loja, nome_coluna)
+
+                linha_dados_inicio = 4
+                for idx in range(linha_dados_inicio, len(df_raw_ffill)):
+                    celula_mes = df_raw_original.iloc[idx, 1]
+                    if pd.isna(celula_mes):
+                        continue
+                    mes_original = str(celula_mes).strip().lower().replace("marco", "março")
+                    if mes_original in ["", "-", "nan", "total"]:
+                        continue
+                    if mes_original not in mapa_meses:
+                        continue
+                    mes = mapa_meses[mes_original]
+
+                    for col, (loja, nome_coluna) in colunas_validas.items():
+                        valor = df_raw_ffill.iloc[idx, col]
+                        if pd.isna(valor) or str(valor).strip() in ["", "-", "nan"]:
+                            continue
+                        if isinstance(valor, str):
+                            valor = valor.replace('R$', '').replace('.', '').replace(',', '.').strip()
+                            try:
+                                valor = float(valor)
+                            except:
+                                continue
+
+                        match_ano = re.search(r"(20\d{2})", nome_coluna)
+                        ano = int(match_ano.group(1)) if match_ano else None
+
+                        linha = {"Mês": mes, "Ano": ano, "Grupo": grupo, "Loja": loja, "Meta": valor}
+                        df_final = pd.concat([df_final, pd.DataFrame([linha])], ignore_index=True)
+
+            df_final = df_final.drop_duplicates()
+
+            if not df_final.empty and colunas_escolhidas_nomes:
+                df_final["Meta"] = df_final["Meta"].fillna(0)
+                df_final["Mês"] = pd.Categorical(df_final["Mês"], categories=ordem_meses, ordered=True)
+                df_final = df_final.sort_values(["Ano", "Mês", "Loja"])
+
+                total_meta = df_final["Meta"].sum()
+                linha_total = pd.DataFrame([{ "Mês": "TOTAL", "Ano": "", "Grupo": "", "Loja": "", "Meta": total_meta }])
+                df_final = pd.concat([linha_total, df_final], ignore_index=True)
+
+                df_final_fmt = df_final.copy()
+                df_final_fmt["Meta"] = df_final_fmt["Meta"].apply(lambda x: f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                st.session_state.df_resultado = df_final_fmt
+            else:
+                st.session_state.df_resultado = pd.DataFrame()
+
+            with st.container():
+                if st.session_state.df_resultado.empty:
+                    st.write("")
+                else:
+                    st.success("✅ Dados consolidados")
+                    st.dataframe(st.session_state.df_resultado)
+                    excel_file = formatar_excel_contabil(df_final)
+                    st.download_button(
+                        label="📅 Baixar Excel (.xlsx)",
+                        data=excel_file,
+                        file_name="metas_consolidado.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+
+            if not abas_escolhidas:
+                st.session_state.df_resultado = pd.DataFrame()
+                st.warning("⚠️ Nenhuma aba selecionada.")
+            elif not uploaded_file:
+                st.session_state.df_resultado = pd.DataFrame()
+                st.info("💡 Faça o upload de um arquivo Excel para começar.")
+        
+
     
