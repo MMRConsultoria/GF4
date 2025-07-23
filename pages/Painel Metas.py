@@ -559,7 +559,7 @@ with aba1:
 # ================================
 with aba2:
 # ================================    
-
+    st.info("🔧 Esta aba está em desenvolvimento.")
     st.markdown("## Painel Gráfico Semanal")
 
     # --- Preparação dos dados (exemplo)
