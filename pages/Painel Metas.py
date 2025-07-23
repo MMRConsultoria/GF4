@@ -206,8 +206,13 @@ with aba1:
             df_final = pd.DataFrame(columns=["Mês", "Ano", "Grupo", "Loja", "Meta"])
 
             for aba in abas_escolhidas:
-                df_raw_ffill = pd.read_excel(xls, sheet_name=aba, header=None).ffill(axis=0)
                 df_raw_original = pd.read_excel(xls, sheet_name=aba, header=None)
+                df_raw_ffill = df_raw_original.copy()
+                
+                # Aplicar ffill apenas nas linhas de cabeçalho (0, 1 e 2)
+                for i in [0, 1, 2]:
+                    df_raw_ffill.iloc[i, :] = df_raw_ffill.iloc[i, :].ffill()
+                
                 grupo = df_raw_ffill.iloc[0, 0]
                 df_raw_ffill.iloc[1, :] = df_raw_ffill.iloc[1, :].ffill()
 
