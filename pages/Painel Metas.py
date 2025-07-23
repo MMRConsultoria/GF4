@@ -138,7 +138,6 @@ with aba1:
         st.session_state.nome_arquivo_carregado = None
 
     if uploaded_file:
-        # 🧹 Limpa resultados se trocar o arquivo
         if st.session_state.nome_arquivo_carregado != uploaded_file.name:
             st.session_state.df_resultado = pd.DataFrame()
         st.session_state.nome_arquivo_carregado = uploaded_file.name
@@ -180,28 +179,22 @@ with aba1:
             colunas_unicas = sorted(set(colunas_filtradas))
 
             colunas_escolhidas_nomes = st.multiselect(
-                "📝 Selecione o(s) nome(s) das colunas abaixo das lojas a serem importadas:",
+                "📜 Selecione o(s) nome(s) das colunas abaixo das lojas a serem importadas:",
                 options=colunas_unicas,
                 default=[]
             )
 
-            # ⚠️ Limpa se nenhuma aba for selecionada
             if not abas_escolhidas:
                 st.session_state.df_resultado = pd.DataFrame()
                 st.warning("⚠️ Nenhuma aba selecionada.")
                 st.stop()
-            
-            # ⚠️ Limpa se nenhuma coluna válida for escolhida
+
             if not colunas_escolhidas_nomes:
                 st.session_state.df_resultado = pd.DataFrame()
                 st.warning("⚠️ Nenhuma coluna selecionada.")
                 st.stop()
 
-
-
-            
-            if not colunas_escolhidas_nomes:
-                st.session_state.df_resultado = pd.DataFrame()
+            import re
 
             mapa_meses = {
                 "janeiro": "Jan", "fevereiro": "Fev", "março": "Mar", "abril": "Abr",
@@ -235,7 +228,7 @@ with aba1:
                     if any(substr in nome_coluna.lower() for substr in ["%", "variação", "diferença", "dif.", "delta"]):
                         continue
 
-                    colunas_validas[col] = loja
+                    colunas_validas[col] = (loja, nome_coluna)  # <- agora armazena nome_coluna também
 
                 linha_dados_inicio = 4
                 for idx in range(linha_dados_inicio, len(df_raw_ffill)):
@@ -249,7 +242,7 @@ with aba1:
                         continue
                     mes = mapa_meses[mes_original]
 
-                    for col, loja in colunas_validas.items():
+                    for col, (loja, nome_coluna) in colunas_validas.items():
                         valor = df_raw_ffill.iloc[idx, col]
                         if pd.isna(valor) or str(valor).strip() in ["", "-", "nan"]:
                             continue
@@ -259,7 +252,11 @@ with aba1:
                                 valor = float(valor)
                             except:
                                 continue
-                        linha = {"Mês": mes, "Ano": 2025, "Grupo": grupo, "Loja": loja, "Meta": valor}
+
+                        match_ano = re.search(r"(20\d{2})", nome_coluna)
+                        ano = int(match_ano.group(1)) if match_ano else None
+
+                        linha = {"Mês": mes, "Ano": ano, "Grupo": grupo, "Loja": loja, "Meta": valor}
                         df_final = pd.concat([df_final, pd.DataFrame([linha])], ignore_index=True)
 
             df_final = df_final.drop_duplicates()
@@ -268,42 +265,37 @@ with aba1:
                 df_final["Meta"] = df_final["Meta"].fillna(0)
                 df_final["Mês"] = pd.Categorical(df_final["Mês"], categories=ordem_meses, ordered=True)
                 df_final = df_final.sort_values(["Ano", "Mês", "Loja"])
-            
+
                 total_meta = df_final["Meta"].sum()
-                linha_total = pd.DataFrame([{
-                    "Mês": "TOTAL", "Ano": "", "Grupo": "", "Loja": "", "Meta": total_meta
-                }])
+                linha_total = pd.DataFrame([{ "Mês": "TOTAL", "Ano": "", "Grupo": "", "Loja": "", "Meta": total_meta }])
                 df_final = pd.concat([linha_total, df_final], ignore_index=True)
-            
+
                 df_final_fmt = df_final.copy()
                 df_final_fmt["Meta"] = df_final_fmt["Meta"].apply(lambda x: f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
                 st.session_state.df_resultado = df_final_fmt
-            
             else:
                 st.session_state.df_resultado = pd.DataFrame()
 
             with st.container():
                 if st.session_state.df_resultado.empty:
-                    st.write("")  # força renderização limpa
+                    st.write("")
                 else:
                     st.success("✅ Dados consolidados")
                     st.dataframe(st.session_state.df_resultado)
                     excel_file = formatar_excel_contabil(df_final)
                     st.download_button(
-                        label="📥 Baixar Excel (.xlsx)",
+                        label="📅 Baixar Excel (.xlsx)",
                         data=excel_file,
                         file_name="metas_consolidado.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
-        
-            # abaixo disso, fora do container:
+
             if not abas_escolhidas:
                 st.session_state.df_resultado = pd.DataFrame()
                 st.warning("⚠️ Nenhuma aba selecionada.")
             elif not uploaded_file:
                 st.session_state.df_resultado = pd.DataFrame()
                 st.info("💡 Faça o upload de um arquivo Excel para começar.")
-        
 
 
     
