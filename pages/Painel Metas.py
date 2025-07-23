@@ -257,19 +257,20 @@ with aba1:
                 st.session_state.df_resultado = df_final_fmt
             
             # ⬇️ Isso garante que a tabela só apareça se houver algo válido
-            if not st.session_state.df_resultado.empty:
-                st.success("✅ Dados consolidados")
-                st.dataframe(st.session_state.df_resultado)
+            with st.container():
+                if not st.session_state.df_resultado.empty and not st.session_state.df_resultado.isnull().all().all():
+                    st.success("✅ Dados consolidados")
+                    st.dataframe(st.session_state.df_resultado)
             
-                excel_file = formatar_excel_contabil(df_final)
-                st.download_button(
-                    label="📥 Baixar Excel (.xlsx)",
-                    data=excel_file,
-                    file_name="metas_consolidado.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-            else:
-                st.warning("⚠️ Nenhum dado encontrado. Verifique as abas selecionadas.")
+                    excel_file = formatar_excel_contabil(df_final)
+                    st.download_button(
+                        label="📥 Baixar Excel (.xlsx)",
+                        data=excel_file,
+                        file_name="metas_consolidado.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                else:
+                    st.empty()  # garante que a área seja "limpa"
 
         else:
             st.session_state.df_resultado = pd.DataFrame()
