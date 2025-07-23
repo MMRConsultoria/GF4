@@ -146,21 +146,25 @@ with aba1:
             aba_referencia = abas_escolhidas[0]
             df_preview = pd.read_excel(xls, sheet_name=aba_referencia, header=None).ffill(axis=0)
 
-            linha_lojas = df_preview.iloc[1, :].fillna("").astype(str).str.strip()
+            # Pega linha de lojas (mescladas, mas já propagadas com ffill) e linha de nomes
+            linha_lojas = df_preview.iloc[1, :].ffill().fillna("").astype(str).str.strip()
             linha_colunas = df_preview.iloc[2, :].fillna("").astype(str).str.strip()
-
+            
             colunas_filtradas = []
+            
+            loja_anterior = None
             for col in range(df_preview.shape[1]):
                 loja = linha_lojas[col]
                 nome_coluna = linha_colunas[col]
-
-                if not nome_coluna or not loja:
+            
+                if not nome_coluna:
                     continue
-                if "consolidado" in loja.lower():
+                if not loja or "consolidado" in loja.lower():
                     continue
                 if any(substr in nome_coluna.lower() for substr in ["%", "variação", "diferença", "dif.", "delta"]):
                     continue
-
+            
+                # Garante que só pega colunas abaixo de uma loja com nome (mesclada ou não)
                 colunas_filtradas.append(nome_coluna)
 
             colunas_unicas = sorted(set(colunas_filtradas))
