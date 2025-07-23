@@ -112,7 +112,6 @@ aba1, aba2, aba3 = st.tabs(["📥Importador","📈 Analise Metas", "📊 Auditor
 with aba1:
 # ===========================================
 
-
     uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
     def formatar_excel_contabil(df, nome_aba="Metas"):
@@ -143,11 +142,10 @@ with aba1:
         )
 
         if abas_escolhidas:
-            # 👉 Usa a primeira aba como base visual para colunas sugeridas
             aba_referencia = abas_escolhidas[0]
             df_preview = pd.read_excel(xls, sheet_name=aba_referencia, header=None).copy()
 
-            # 🔄 Aplica ffill diretamente na linha de lojas
+            # 🔄 Aplica ffill na linha 2 (lojas mescladas)
             df_preview.iloc[1, :] = df_preview.iloc[1, :].ffill()
 
             linha_lojas = df_preview.iloc[1, :].astype(str).str.strip()
@@ -190,10 +188,12 @@ with aba1:
                 df_raw_original = pd.read_excel(xls, sheet_name=aba, header=None)
                 grupo = df_raw_ffill.iloc[0, 0]
 
-                linha_lojas = df_raw_ffill.iloc[1, :].fillna("").astype(str).str.strip()
+                # 🟠 Aqui também aplica ffill para capturar mesclagens
+                df_raw_ffill.iloc[1, :] = df_raw_ffill.iloc[1, :].ffill()
+
+                linha_lojas = df_raw_ffill.iloc[1, :].astype(str).str.strip()
                 linha_colunas = df_raw_ffill.iloc[2, :].fillna("").astype(str).str.strip()
 
-                # 🔍 Identifica colunas válidas dinamicamente nesta aba
                 colunas_validas = {}
                 for col in range(df_raw_ffill.shape[1]):
                     nome_coluna = linha_colunas[col]
@@ -210,7 +210,7 @@ with aba1:
 
                     colunas_validas[col] = loja
 
-                linha_dados_inicio = 4  # após os cabeçalhos
+                linha_dados_inicio = 4
 
                 for idx in range(linha_dados_inicio, len(df_raw_ffill)):
                     mes_original = str(df_raw_original.iloc[idx, 1]).strip().lower().replace("marco", "março")
@@ -259,6 +259,7 @@ with aba1:
                 st.warning("⚠️ Nenhum dado encontrado. Verifique as abas selecionadas.")
     else:
         st.info("💡 Faça o upload de um arquivo Excel para começar.")
+
 
 
     
