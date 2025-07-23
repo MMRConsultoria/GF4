@@ -220,33 +220,43 @@ with aba1:
                     df_raw_ffill.iloc[i, :] = df_raw_ffill.iloc[i, :].ffill()
                 
                 grupo = df_raw_ffill.iloc[0, 0]
+                df_raw_ffill.iloc[1, :] = df_raw_ffill.iloc[1, :].ffill()
+
                 linha_lojas = df_raw_ffill.iloc[1, :].astype(str).str.strip()
                 linha_colunas = df_raw_ffill.iloc[2, :].fillna("").astype(str).str.strip()
-                linha_colunas_original = df_raw_original.iloc[2, :].astype(str).str.strip()
-            
+
                 colunas_validas = {}
                 for col in range(df_raw_ffill.shape[1]):
                     nome_coluna = linha_colunas[col]
-                    nome_coluna_original = linha_colunas_original[col]
                     loja = linha_lojas[col]
-            
-                    if not nome_coluna_original.strip():
-                        continue
-                    if not nome_coluna.strip():
-                        continue
+
                     if not loja.strip():
+                        continue
+                    
+                    # Ignora coluna se nome da coluna estiver vazio ou for apenas número/símbolo/% etc.
+                    nome_coluna_limpo = nome_coluna.strip().lower()
+                    
+                    if (
+                        not nome_coluna_limpo
+                        or nome_coluna_limpo in ["", "-", "nan"]
+                        or re.fullmatch(r"\d{4}", nome_coluna_limpo)
+                        or "%" in nome_coluna_limpo
+                        or "variação" in nome_coluna_limpo
+                        or "diferença" in nome_coluna_limpo
+                        or "delta" in nome_coluna_limpo
+                        or re.fullmatch(r"-?\d+(?:[.,]\d+)?%", nome_coluna_limpo)  # % isolado
+                    ):
+                        continue
+
+                    if nome_coluna not in colunas_escolhidas_nomes:
                         continue
                     if "consolidado" in loja.lower():
                         continue
-                    if nome_coluna not in colunas_escolhidas_nomes:
-                        continue
                     if any(substr in nome_coluna.lower() for substr in ["%", "variação", "diferença", "dif.", "delta"]):
                         continue
-                    if re.fullmatch(r"\d{4}", nome_coluna.strip()):
-                        continue
-            
-                    colunas_validas[col] = (loja, nome_coluna)
-            
+
+                    colunas_validas[col] = (loja, nome_coluna)  # <- agora armazena nome_coluna também
+
                 linha_dados_inicio = 4
                 for idx in range(linha_dados_inicio, len(df_raw_ffill)):
                     celula_mes = df_raw_original.iloc[idx, 1]
@@ -258,7 +268,7 @@ with aba1:
                     if mes_original not in mapa_meses:
                         continue
                     mes = mapa_meses[mes_original]
-            
+
                     for col, (loja, nome_coluna) in colunas_validas.items():
                         valor = df_raw_ffill.iloc[idx, col]
                         if pd.isna(valor) or str(valor).strip() in ["", "-", "nan"]:
@@ -269,13 +279,12 @@ with aba1:
                                 valor = float(valor)
                             except:
                                 continue
-            
+
                         match_ano = re.search(r"(20\d{2})", nome_coluna)
                         ano = int(match_ano.group(1)) if match_ano else None
-            
+
                         linha = {"Mês": mes, "Ano": ano, "Grupo": grupo, "Loja": loja, "Meta": valor}
                         df_final = pd.concat([df_final, pd.DataFrame([linha])], ignore_index=True)
-            
 
             df_final = df_final.drop_duplicates()
 
@@ -314,7 +323,6 @@ with aba1:
             elif not uploaded_file:
                 st.session_state.df_resultado = pd.DataFrame()
                 st.info("💡 Faça o upload de um arquivo Excel para começar.")
-
 
     
 #===========================================
