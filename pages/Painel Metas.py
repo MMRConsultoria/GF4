@@ -112,9 +112,7 @@ aba1, aba2, aba3 = st.tabs(["📥Importador","📈 Analise Metas", "📊 Auditor
 with aba1:
 # ===========================================
 
-    # ===========================================
-with aba1:
-# ===========================================
+
 
     uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
