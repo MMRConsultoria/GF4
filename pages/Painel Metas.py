@@ -228,10 +228,27 @@ with aba1:
 
                 colunas_validas = {}
                 for col in range(df_raw_ffill.shape[1]):
-                    nome_coluna = linha_colunas[col]
-                    loja = linha_lojas[col]
-
-                    if not loja.strip():
+                    nome_coluna = linha_colunas[col].strip()
+                    loja = linha_lojas[col].strip()
+                    
+                    # Ignora se o cabeçalho está vazio (sem nome_coluna)
+                    if not nome_coluna:
+                        continue
+                    
+                    # Ignora loja consolidada ou vazia
+                    if not loja or "consolidado" in loja.lower():
+                        continue
+                    
+                    # Ignora se coluna for apenas o ano (ex: "2025")
+                    if re.fullmatch(r"\d{4}", nome_coluna):
+                        continue
+                    
+                    # Ignora se for indicadores não numéricos
+                    if any(substr in nome_coluna.lower() for substr in ["%", "variação", "diferença", "dif.", "delta"]):
+                        continue
+                    
+                    # Só aceita se o nome da coluna está explicitamente no filtro
+                    if nome_coluna not in colunas_escolhidas_nomes:
                         continue
                     
                     # Ignora coluna se nome da coluna estiver vazio ou for apenas número/símbolo/% etc.
