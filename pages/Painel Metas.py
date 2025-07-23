@@ -181,7 +181,7 @@ with aba1:
             }
             ordem_meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 
-            df_final.drop(index=df_final.index, inplace=True)
+          
 
             for aba in abas_escolhidas:
                 df_raw_ffill = pd.read_excel(xls, sheet_name=aba, header=None).ffill(axis=0)
