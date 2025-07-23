@@ -213,11 +213,21 @@ with aba1:
                 linha_dados_inicio = 4
 
                 for idx in range(linha_dados_inicio, len(df_raw_ffill)):
-                    mes_original = str(df_raw_original.iloc[idx, 1]).strip().lower().replace("marco", "março")
+                    celula_mes = df_raw_original.iloc[idx, 1]
+                
+                    if pd.isna(celula_mes):
+                        continue  # pula linhas totalmente vazias
+                
+                    mes_original = str(celula_mes).strip().lower().replace("marco", "março")
+                    
+                    if mes_original in ["", "-", "nan", "total"]:
+                        continue  # ignora linhas com traço, total ou vazias
+                
                     if mes_original not in mapa_meses:
-                        continue
+                        continue  # ignora se não for mês válido
+                
                     mes = mapa_meses[mes_original]
-
+                
                     for col, loja in colunas_validas.items():
                         valor = df_raw_ffill.iloc[idx, col]
                         if isinstance(valor, str):
@@ -228,6 +238,7 @@ with aba1:
                                 valor = None
                         linha = {"Mês": mes, "Ano": 2025, "Grupo": grupo, "Loja": loja, "Meta": valor}
                         df_final = pd.concat([df_final, pd.DataFrame([linha])], ignore_index=True)
+
 
             df_final = df_final.drop_duplicates()
 
