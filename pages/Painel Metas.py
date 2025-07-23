@@ -112,7 +112,7 @@ aba1, aba2, aba3 = st.tabs(["📥Importador","📈 Analise Metas", "📊 Auditor
 with aba1:
 # ===========================================
 
-    import streamlit as st
+import streamlit as st
 import pandas as pd
 from io import BytesIO
 
@@ -145,14 +145,14 @@ with st.container():
         abas_escolhidas = st.multiselect(
             "📑 Selecione as abas a processar:",
             options=todas_abas,
-            default=[todas_abas[0]] if todas_abas else []
+            default=[]  # ❌ Nenhuma aba selecionada automaticamente
         )
 
         if abas_escolhidas:
             aba_referencia = abas_escolhidas[0]
             df_preview = pd.read_excel(xls, sheet_name=aba_referencia, header=None).ffill(axis=0)
 
-            linha_lojas = df_preview.iloc[1, :].fillna("").astype(str).str.strip()
+            linha_lojas = df_preview.iloc[1, :].ffill().fillna("").astype(str).str.strip()
             linha_colunas = df_preview.iloc[2, :].fillna("").astype(str).str.strip()
 
             opcoes_colunas = {}
@@ -162,17 +162,24 @@ with st.container():
                 loja = linha_lojas[col]
                 nome_coluna = linha_colunas[col]
 
-                if loja == "" or "consolidado" in loja.lower():
+                if not nome_coluna or not loja:
                     continue
 
-                lojas_por_coluna[col] = loja
+                if "consolidado" in loja.lower():
+                    continue
 
-                if nome_coluna not in opcoes_colunas:
-                    opcoes_colunas[nome_coluna] = []
-                opcoes_colunas[nome_coluna].append(col)
+                if any(substr in nome_coluna.lower() for substr in ["%", "variação", "diferença", "dif.", "delta"]):
+                    continue
+
+                lojas_por_coluna[col] = loja.strip()
+
+                nome_coluna_fmt = nome_coluna.strip()
+                if nome_coluna_fmt not in opcoes_colunas:
+                    opcoes_colunas[nome_coluna_fmt] = []
+                opcoes_colunas[nome_coluna_fmt].append(col)
 
             colunas_escolhidas_nomes = st.multiselect(
-                "📝 Selecione o(s) nome(s) da coluna abaixo das lojas a serem importadas:",
+                "📝 Selecione o(s) nome(s) das colunas abaixo das lojas a serem importadas:",
                 options=list(opcoes_colunas.keys()),
                 default=[nome for nome in opcoes_colunas.keys() if "meta" in nome.lower()]
             )
@@ -196,7 +203,7 @@ with st.container():
                 df_raw_original = pd.read_excel(xls, sheet_name=aba, header=None)
                 grupo = df_raw_ffill.iloc[0, 0]
 
-                linha_dados_inicio = 4  # Assume que dados começam na linha 5
+                linha_dados_inicio = 4  # Dados iniciam após cabeçalhos
 
                 for idx in range(linha_dados_inicio, len(df_raw_ffill)):
                     mes_original = str(df_raw_original.iloc[idx, 1]).strip().lower().replace("marco", "março")
@@ -251,6 +258,7 @@ with st.container():
                 st.warning("⚠️ Nenhum dado válido encontrado nas abas selecionadas.")
     else:
         st.info("💡 Faça o upload de um arquivo Excel para começar.")
+
 
 
 
