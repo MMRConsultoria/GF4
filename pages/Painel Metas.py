@@ -152,6 +152,9 @@ with aba1:
             default=[]
         )
 
+        if not abas_escolhidas:
+            st.session_state.df_resultado = pd.DataFrame()
+
         if abas_escolhidas:
             aba_referencia = abas_escolhidas[0]
             df_preview = pd.read_excel(xls, sheet_name=aba_referencia, header=None).copy()
@@ -181,6 +184,9 @@ with aba1:
                 options=colunas_unicas,
                 default=[nome for nome in colunas_unicas if "meta" in nome.lower()]
             )
+
+            if not colunas_escolhidas_nomes:
+                st.session_state.df_resultado = pd.DataFrame()
 
             mapa_meses = {
                 "janeiro": "Jan", "fevereiro": "Fev", "março": "Mar", "abril": "Abr",
@@ -280,6 +286,7 @@ with aba1:
     else:
         st.session_state.df_resultado = pd.DataFrame()
         st.info("💡 Faça o upload de um arquivo Excel para começar.")
+
 
 
     
