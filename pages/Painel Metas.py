@@ -224,11 +224,24 @@ with aba1:
                     nome_coluna = linha_colunas[col]
                     loja = linha_lojas[col]
 
-                    if not nome_coluna.strip() or not loja.strip():
+                    if not loja.strip():
                         continue
-                    # Ignora colunas onde o nome da coluna está em branco ou contém apenas número (ex: "2025")
-                    if re.fullmatch(r"\d{4}", nome_coluna.strip()):
+                    
+                    # Ignora coluna se nome da coluna estiver vazio ou for apenas número/símbolo/% etc.
+                    nome_coluna_limpo = nome_coluna.strip().lower()
+                    
+                    if (
+                        not nome_coluna_limpo
+                        or nome_coluna_limpo in ["", "-", "nan"]
+                        or re.fullmatch(r"\d{4}", nome_coluna_limpo)
+                        or "%" in nome_coluna_limpo
+                        or "variação" in nome_coluna_limpo
+                        or "diferença" in nome_coluna_limpo
+                        or "delta" in nome_coluna_limpo
+                        or re.fullmatch(r"-?\d+(?:[.,]\d+)?%", nome_coluna_limpo)  # % isolado
+                    ):
                         continue
+
                     if nome_coluna not in colunas_escolhidas_nomes:
                         continue
                     if "consolidado" in loja.lower():
