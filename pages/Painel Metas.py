@@ -262,10 +262,11 @@ with aba1:
                 df_final_fmt["Meta"] = df_final_fmt["Meta"].apply(lambda x: f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
                 with st.container():
-                    if not df_final.empty and abas_escolhidas and colunas_escolhidas_nomes:
+                    # ✅ Só exibe se realmente processou
+                    if uploaded_file and abas_escolhidas and colunas_escolhidas_nomes and not df_final.empty:
                         st.success("✅ Dados consolidados")
                         st.dataframe(df_final_fmt)
-                
+                    
                         excel_file = formatar_excel_contabil(df_final)
                         st.download_button(
                             label="📥 Baixar Excel (.xlsx)",
@@ -274,7 +275,7 @@ with aba1:
                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                         )
                     else:
-                        st.info("ℹ️ Selecione as abas e colunas para visualizar os dados.")
+                        st.empty()  # 👉 Isso evita que "fantasmas" de dados anteriores apareçam
 
             else:
                 st.warning("⚠️ Nenhum dado encontrado. Verifique as abas selecionadas.")
