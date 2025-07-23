@@ -112,7 +112,6 @@ aba1, aba2, aba3 = st.tabs(["📥Importador","📈 Analise Metas", "📊 Auditor
 with aba1:
 # ===========================================
 
-
     uploaded_file = st.file_uploader("📁 Escolha seu arquivo Excel", type=["xlsx"])
 
     def formatar_excel_contabil(df, nome_aba="Metas"):
@@ -143,12 +142,28 @@ with aba1:
         )
 
         if abas_escolhidas:
-            # 👉 Usa a primeira aba só como referência para o usuário escolher os nomes das colunas desejadas
+            # 👉 Usa a primeira aba como referência para listar apenas colunas abaixo de lojas
             aba_referencia = abas_escolhidas[0]
             df_preview = pd.read_excel(xls, sheet_name=aba_referencia, header=None).ffill(axis=0)
 
+            linha_lojas = df_preview.iloc[1, :].fillna("").astype(str).str.strip()
             linha_colunas = df_preview.iloc[2, :].fillna("").astype(str).str.strip()
-            colunas_unicas = sorted(set(linha_colunas) - set(["", "nan"]))
+
+            colunas_filtradas = []
+            for col in range(df_preview.shape[1]):
+                loja = linha_lojas[col]
+                nome_coluna = linha_colunas[col]
+
+                if not nome_coluna or not loja:
+                    continue
+                if "consolidado" in loja.lower():
+                    continue
+                if any(substr in nome_coluna.lower() for substr in ["%", "variação", "diferença", "dif.", "delta"]):
+                    continue
+
+                colunas_filtradas.append(nome_coluna)
+
+            colunas_unicas = sorted(set(colunas_filtradas))
 
             colunas_escolhidas_nomes = st.multiselect(
                 "📝 Selecione o(s) nome(s) das colunas abaixo das lojas a serem importadas:",
@@ -240,11 +255,7 @@ with aba1:
     else:
         st.info("💡 Faça o upload de um arquivo Excel para começar.")
 
-
-
-
-
-
+    
 #===========================================
 with aba2:
 #===========================================
