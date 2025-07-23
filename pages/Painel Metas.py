@@ -166,15 +166,21 @@ with aba1:
             for col in range(df_preview.shape[1]):
                 loja = linha_lojas[col]
                 nome_coluna = linha_colunas[col]
-
-                if not nome_coluna:
-                    continue
+                
+                # Limpeza e padronização do texto
+                loja = loja.strip() if isinstance(loja, str) else ""
+                nome_coluna = nome_coluna.strip().lower() if isinstance(nome_coluna, str) else ""
+            
                 if not loja or "consolidado" in loja.lower():
                     continue
-                if any(substr in nome_coluna.lower() for substr in ["%", "variação", "diferença", "dif.", "delta"]):
+                if not nome_coluna:
                     continue
-
-                colunas_filtradas.append(nome_coluna)
+                if re.fullmatch(r"\d{4}", nome_coluna):  # ignora colunas como "2025"
+                    continue
+                if any(substr in nome_coluna for substr in ["%", "variação", "diferença", "dif.", "delta"]):
+                    continue
+            
+                colunas_filtradas.append(linha_colunas[col])  # mantém o nome original (sem .lower())
 
             colunas_unicas = sorted(set(colunas_filtradas))
 
