@@ -5,6 +5,7 @@ st.set_page_config(page_title="Vendas Diarias", layout="wide")
 
 import pandas as pd
 import numpy as np
+import re
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
