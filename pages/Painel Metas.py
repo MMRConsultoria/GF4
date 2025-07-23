@@ -228,57 +228,24 @@ with aba1:
 
                 colunas_validas = {}
                 for col in range(df_raw_ffill.shape[1]):
-                    # Verifica se a célula do cabeçalho da linha 2 está vazia no original
-                    if df_raw_original.iloc[2, col] in [None, "", np.nan]:
+                    # Verifica se o cabeçalho original (linha 2) está vazio → ignora a coluna
+                    valor_cabecalho_original = str(df_raw_original.iloc[2, col]).strip().lower()
+                    if not valor_cabecalho_original or valor_cabecalho_original in ["", "nan", "-", None]:
                         continue
-                    
+                
                     nome_coluna = linha_colunas[col].strip()
                     loja = linha_lojas[col].strip()
-                    
-                    # Ignora se o cabeçalho está vazio (sem nome_coluna)
-                    # ⚠️ Se o cabeçalho da coluna (linha 2) está vazio, pula
-                    if df_raw_original.iloc[2, col] in [None, "", np.nan]:
-                        continue
-                    
-                    # Ignora loja consolidada ou vazia
+                
                     if not loja or "consolidado" in loja.lower():
                         continue
-                    
-                    # Ignora se coluna for apenas o ano (ex: "2025")
                     if re.fullmatch(r"\d{4}", nome_coluna):
                         continue
-                    
-                    # Ignora se for indicadores não numéricos
                     if any(substr in nome_coluna.lower() for substr in ["%", "variação", "diferença", "dif.", "delta"]):
                         continue
-                    
-                    # Só aceita se o nome da coluna está explicitamente no filtro
                     if nome_coluna not in colunas_escolhidas_nomes:
                         continue
-                    
-                    # Ignora coluna se nome da coluna estiver vazio ou for apenas número/símbolo/% etc.
-                    nome_coluna_limpo = nome_coluna.strip().lower()
-                    
-                    if (
-                        not nome_coluna_limpo
-                        or nome_coluna_limpo in ["", "-", "nan"]
-                        or re.fullmatch(r"\d{4}", nome_coluna_limpo)
-                        or "%" in nome_coluna_limpo
-                        or "variação" in nome_coluna_limpo
-                        or "diferença" in nome_coluna_limpo
-                        or "delta" in nome_coluna_limpo
-                        or re.fullmatch(r"-?\d+(?:[.,]\d+)?%", nome_coluna_limpo)  # % isolado
-                    ):
-                        continue
-
-                    if nome_coluna not in colunas_escolhidas_nomes:
-                        continue
-                    if "consolidado" in loja.lower():
-                        continue
-                    if any(substr in nome_coluna.lower() for substr in ["%", "variação", "diferença", "dif.", "delta"]):
-                        continue
-
-                    colunas_validas[col] = (loja, nome_coluna)  # <- agora armazena nome_coluna também
+                
+                    colunas_validas[col] = (loja, nome_coluna)
 
                 linha_dados_inicio = 4
                 for idx in range(linha_dados_inicio, len(df_raw_ffill)):
