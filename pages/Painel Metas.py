@@ -261,16 +261,21 @@ with aba1:
                 df_final_fmt = df_final.copy()
                 df_final_fmt["Meta"] = df_final_fmt["Meta"].apply(lambda x: f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
-                st.success("✅ Dados consolidados")
-                st.dataframe(df_final_fmt)
+                with st.container():
+                    if not df_final.empty and abas_escolhidas and colunas_escolhidas_nomes:
+                        st.success("✅ Dados consolidados")
+                        st.dataframe(df_final_fmt)
+                
+                        excel_file = formatar_excel_contabil(df_final)
+                        st.download_button(
+                            label="📥 Baixar Excel (.xlsx)",
+                            data=excel_file,
+                            file_name="metas_consolidado.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
+                    else:
+                        st.info("ℹ️ Selecione as abas e colunas para visualizar os dados.")
 
-                excel_file = formatar_excel_contabil(df_final)
-                st.download_button(
-                    label="📥 Baixar Excel (.xlsx)",
-                    data=excel_file,
-                    file_name="metas_consolidado.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
             else:
                 st.warning("⚠️ Nenhum dado encontrado. Verifique as abas selecionadas.")
     else:
