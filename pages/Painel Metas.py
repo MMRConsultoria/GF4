@@ -268,18 +268,18 @@ with aba1:
                 st.session_state.df_resultado = pd.DataFrame()
 
             with st.container():
-            if st.session_state.df_resultado.empty:
-                st.write("")  # força renderização limpa
-            else:
-                st.success("✅ Dados consolidados")
-                st.dataframe(st.session_state.df_resultado)
-                excel_file = formatar_excel_contabil(df_final)
-                st.download_button(
-                    label="📥 Baixar Excel (.xlsx)",
-                    data=excel_file,
-                    file_name="metas_consolidado.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+                if st.session_state.df_resultado.empty:
+                    st.write("")  # força renderização limpa
+                else:
+                    st.success("✅ Dados consolidados")
+                    st.dataframe(st.session_state.df_resultado)
+                    excel_file = formatar_excel_contabil(df_final)
+                    st.download_button(
+                        label="📥 Baixar Excel (.xlsx)",
+                        data=excel_file,
+                        file_name="metas_consolidado.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
         
             # abaixo disso, fora do container:
             if not abas_escolhidas:
