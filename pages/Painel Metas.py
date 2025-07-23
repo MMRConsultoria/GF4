@@ -181,7 +181,7 @@ with aba1:
             }
             ordem_meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 
-            df_final = pd.DataFrame(columns=["Mês", "Ano", "Grupo", "Loja", "Meta"])
+            df_final.drop(index=df_final.index, inplace=True)
 
             for aba in abas_escolhidas:
                 df_raw_ffill = pd.read_excel(xls, sheet_name=aba, header=None).ffill(axis=0)
@@ -230,12 +230,17 @@ with aba1:
                 
                     for col, loja in colunas_validas.items():
                         valor = df_raw_ffill.iloc[idx, col]
+                    
+                        if pd.isna(valor) or str(valor).strip() in ["", "-", "nan"]:
+                            continue  # ignora valores ausentes ou lixo
+                    
                         if isinstance(valor, str):
                             valor = valor.replace('R$', '').replace('.', '').replace(',', '.').strip()
                             try:
                                 valor = float(valor)
                             except:
-                                valor = None
+                                continue  # pula se não conseguir converter
+                    
                         linha = {"Mês": mes, "Ano": 2025, "Grupo": grupo, "Loja": loja, "Meta": valor}
                         df_final = pd.concat([df_final, pd.DataFrame([linha])], ignore_index=True)
 
