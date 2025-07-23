@@ -131,11 +131,18 @@ with aba1:
         output.seek(0)
         return output
 
-    # 🔁 Sessão para armazenar o último resultado e limpar quando necessário
+    # 🔁 Estado para armazenar resultado e arquivo anterior
     if "df_resultado" not in st.session_state:
         st.session_state.df_resultado = pd.DataFrame()
+    if "nome_arquivo_carregado" not in st.session_state:
+        st.session_state.nome_arquivo_carregado = None
 
     if uploaded_file:
+        # 🧹 Limpa resultados se trocar o arquivo
+        if st.session_state.nome_arquivo_carregado != uploaded_file.name:
+            st.session_state.df_resultado = pd.DataFrame()
+        st.session_state.nome_arquivo_carregado = uploaded_file.name
+
         xls = pd.ExcelFile(uploaded_file)
         todas_abas = xls.sheet_names
 
@@ -249,19 +256,15 @@ with aba1:
             
                 df_final_fmt = df_final.copy()
                 df_final_fmt["Meta"] = df_final_fmt["Meta"].apply(lambda x: f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-            
                 st.session_state.df_resultado = df_final_fmt
             
             else:
-                df_final_fmt = pd.DataFrame(columns=["Mês", "Ano", "Grupo", "Loja", "Meta"])
-                st.session_state.df_resultado = df_final_fmt
-            
-            # ⬇️ Isso garante que a tabela só apareça se houver algo válido
+                st.session_state.df_resultado = pd.DataFrame()
+
             with st.container():
                 if not st.session_state.df_resultado.empty and not st.session_state.df_resultado.isnull().all().all():
                     st.success("✅ Dados consolidados")
                     st.dataframe(st.session_state.df_resultado)
-            
                     excel_file = formatar_excel_contabil(df_final)
                     st.download_button(
                         label="📥 Baixar Excel (.xlsx)",
@@ -270,14 +273,14 @@ with aba1:
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
                 else:
-                    st.empty()  # garante que a área seja "limpa"
-
+                    st.empty()
         else:
             st.session_state.df_resultado = pd.DataFrame()
             st.warning("⚠️ Nenhuma aba selecionada.")
     else:
         st.session_state.df_resultado = pd.DataFrame()
         st.info("💡 Faça o upload de um arquivo Excel para começar.")
+
 
     
 #===========================================
