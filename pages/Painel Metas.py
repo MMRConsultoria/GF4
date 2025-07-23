@@ -182,9 +182,24 @@ with aba1:
             colunas_escolhidas_nomes = st.multiselect(
                 "📝 Selecione o(s) nome(s) das colunas abaixo das lojas a serem importadas:",
                 options=colunas_unicas,
-                default=[nome for nome in colunas_unicas if "meta" in nome.lower()]
+                default=[]
             )
 
+            # ⚠️ Limpa se nenhuma aba for selecionada
+            if not abas_escolhidas:
+                st.session_state.df_resultado = pd.DataFrame()
+                st.warning("⚠️ Nenhuma aba selecionada.")
+                st.stop()
+            
+            # ⚠️ Limpa se nenhuma coluna válida for escolhida
+            if not colunas_escolhidas_nomes:
+                st.session_state.df_resultado = pd.DataFrame()
+                st.warning("⚠️ Nenhuma coluna selecionada.")
+                st.stop()
+
+
+
+            
             if not colunas_escolhidas_nomes:
                 st.session_state.df_resultado = pd.DataFrame()
 
