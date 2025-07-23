@@ -268,25 +268,27 @@ with aba1:
                 st.session_state.df_resultado = pd.DataFrame()
 
             with st.container():
-                if not st.session_state.df_resultado.empty and not st.session_state.df_resultado.isnull().all().all():
-                    st.success("✅ Dados consolidados")
-                    st.dataframe(st.session_state.df_resultado)
-                    excel_file = formatar_excel_contabil(df_final)
-                    st.download_button(
-                        label="📥 Baixar Excel (.xlsx)",
-                        data=excel_file,
-                        file_name="metas_consolidado.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
-                else:
-                    st.empty()
-        else:
-            st.session_state.df_resultado = pd.DataFrame()
-            st.warning("⚠️ Nenhuma aba selecionada.")
-    else:
-        st.session_state.df_resultado = pd.DataFrame()
-        st.info("💡 Faça o upload de um arquivo Excel para começar.")
-
+            if st.session_state.df_resultado.empty:
+                st.write("")  # força renderização limpa
+            else:
+                st.success("✅ Dados consolidados")
+                st.dataframe(st.session_state.df_resultado)
+                excel_file = formatar_excel_contabil(df_final)
+                st.download_button(
+                    label="📥 Baixar Excel (.xlsx)",
+                    data=excel_file,
+                    file_name="metas_consolidado.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+        
+            # abaixo disso, fora do container:
+            if not abas_escolhidas:
+                st.session_state.df_resultado = pd.DataFrame()
+                st.warning("⚠️ Nenhuma aba selecionada.")
+            elif not uploaded_file:
+                st.session_state.df_resultado = pd.DataFrame()
+                st.info("💡 Faça o upload de um arquivo Excel para começar.")
+        
 
 
     
