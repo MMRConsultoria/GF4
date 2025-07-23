@@ -228,11 +228,16 @@ with aba1:
 
                 colunas_validas = {}
                 for col in range(df_raw_ffill.shape[1]):
+                    # Verifica se a célula do cabeçalho da linha 2 está vazia no original
+                    if df_raw_original.iloc[2, col] in [None, "", np.nan]:
+                        continue
+                    
                     nome_coluna = linha_colunas[col].strip()
                     loja = linha_lojas[col].strip()
                     
                     # Ignora se o cabeçalho está vazio (sem nome_coluna)
-                    if not nome_coluna:
+                    # ⚠️ Se o cabeçalho da coluna (linha 2) está vazio, pula
+                    if df_raw_original.iloc[2, col] in [None, "", np.nan]:
                         continue
                     
                     # Ignora loja consolidada ou vazia
