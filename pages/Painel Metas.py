@@ -240,21 +240,27 @@ with aba1:
                 df_final["Meta"] = df_final["Meta"].fillna(0)
                 df_final["Mês"] = pd.Categorical(df_final["Mês"], categories=ordem_meses, ordered=True)
                 df_final = df_final.sort_values(["Ano", "Mês", "Loja"])
-
+            
                 total_meta = df_final["Meta"].sum()
                 linha_total = pd.DataFrame([{
                     "Mês": "TOTAL", "Ano": "", "Grupo": "", "Loja": "", "Meta": total_meta
                 }])
                 df_final = pd.concat([linha_total, df_final], ignore_index=True)
-
+            
                 df_final_fmt = df_final.copy()
                 df_final_fmt["Meta"] = df_final_fmt["Meta"].apply(lambda x: f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
+            
                 st.session_state.df_resultado = df_final_fmt
-
+            
+            else:
+                df_final_fmt = pd.DataFrame(columns=["Mês", "Ano", "Grupo", "Loja", "Meta"])
+                st.session_state.df_resultado = df_final_fmt
+            
+            # ⬇️ Isso garante que a tabela só apareça se houver algo válido
+            if not st.session_state.df_resultado.empty:
                 st.success("✅ Dados consolidados")
-                st.dataframe(df_final_fmt)
-
+                st.dataframe(st.session_state.df_resultado)
+            
                 excel_file = formatar_excel_contabil(df_final)
                 st.download_button(
                     label="📥 Baixar Excel (.xlsx)",
@@ -263,8 +269,8 @@ with aba1:
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
             else:
-                st.session_state.df_resultado = pd.DataFrame()
                 st.warning("⚠️ Nenhum dado encontrado. Verifique as abas selecionadas.")
+
         else:
             st.session_state.df_resultado = pd.DataFrame()
             st.warning("⚠️ Nenhuma aba selecionada.")
