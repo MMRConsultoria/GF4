@@ -192,6 +192,11 @@ with aba1:
     comparativo["% Falta Atingir"] = np.maximum(0, 1 - comparativo["% Atingido"])
     comparativo["Mês"] = pd.Categorical(comparativo["Mês"], categories=ordem_meses, ordered=True)
 
+    # 🔥 AQUI: garante que o filtro por tipo seja respeitado
+    if tipo_selecionado != "TODOS":
+        comparativo = comparativo[comparativo["Tipo"] == tipo_selecionado]
+    
+
     tipo_subtotais = []
     for tipo, dados_tipo in comparativo.groupby("Tipo"):
         soma_meta_tipo = dados_tipo["Meta"].sum()
