@@ -176,25 +176,18 @@ for grupo, _, df_grp in grupos_info:
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
 # ====================================
-#  🔎 Aplica filtro final ao df_final
+# 🔎 Aplica filtro automático baseado no selectbox
 # ====================================
-if grupos_selecionados:
-    blocos_filtrados = []
-    for grupo in grupos_selecionados:
-        subtotal = df_final[df_final["Grupo"] == f"SUBTOTAL {grupo}"]
-        if not subtotal.empty:
-            blocos_filtrados.append(subtotal)
+if opcao_filtro == "Grupo":
+    # Mantém apenas subtotais e total
+    df_final = df_final[
+        df_final["Grupo"].str.startswith("SUBTOTAL") | (df_final["Grupo"] == "TOTAL")
+    ]
 
-    # Recalcula total geral com lojas dos grupos filtrados
-    lojas_dos_grupos = df_base[df_base["Grupo"].isin(grupos_selecionados)]
-    linha_total = lojas_dos_grupos[colunas_valores].sum(numeric_only=True)
-    linha_total["Grupo"] = "TOTAL"
-    linha_total["Loja"] = f"Lojas: {lojas_dos_grupos.shape[0]}"
-
-    df_final = pd.concat([pd.DataFrame([linha_total])] + blocos_filtrados, ignore_index=True)
-
-elif lojas_selecionadas:
-    df_final = df_final[df_final["Loja"].isin(lojas_selecionadas + [""])]  # Inclui subtotais e total
+elif opcao_filtro == "Loja":
+    # Mantém tudo (lojas + subtotais + total)
+    pass  # Nenhuma modificação necessária
+# Se "Nenhum", mantém tudo também
 
 # ====================================
 # 🔎 Aplica filtro automático baseado no selectbox
