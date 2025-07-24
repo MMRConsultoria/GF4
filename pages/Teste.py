@@ -21,9 +21,7 @@ planilha_empresa = gc.open("Vendas diarias")
 # Carrega dados
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
 df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
-df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
 
-# Padroniza dados
 df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
 df_empresa["Grupo"] = df_empresa["Grupo"].str.strip()
 df_vendas.columns = df_vendas.columns.str.strip()
@@ -41,22 +39,6 @@ df_vendas["Fat.Total"] = (
     .str.replace(",", ".", regex=False)
 )
 df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
-
-# Trata Metas
-df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
-df_metas["Mês"] = df_metas["Mês"].astype(str).str.zfill(2)
-df_metas["Ano"] = df_metas["Ano"].astype(str).str.strip()
-df_metas["Meta"] = (
-    df_metas["Meta"]
-    .astype(str)
-    .str.replace("R$", "", regex=False)
-    .str.replace("(", "-", regex=False)
-    .str.replace(")", "", regex=False)
-    .str.replace(" ", "", regex=False)
-    .str.replace(".", "", regex=False)
-    .str.replace(",", ".", regex=False)
-)
-df_metas["Meta"] = pd.to_numeric(df_metas["Meta"], errors="coerce").fillna(0)
 
 # Filtros
 data_min = df_vendas["Data"].min()
@@ -102,13 +84,19 @@ df_acumulado = df_acumulado.rename(columns={"Fat.Total": nome_col_acumulado})
 df_base = df_pivot.merge(df_acumulado, on=["Grupo", "Loja"], how="left")
 df_base = df_base[df_base[nome_col_acumulado] != 0]
 
+# ================================
 # Subtotais e ordenação
+# ================================
+
 col_acumulado = nome_col_acumulado
 colunas_valores = [col for col in df_base.columns if col not in ["Grupo", "Loja"]]
+
+# Cria linha de total geral
 linha_total = df_base[colunas_valores].sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
 linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
 
+# Agrupa grupos e ordena do maior para o menor total acumulado
 blocos = []
 grupos_info = []
 for grupo, df_grp in df_base.groupby("Grupo"):
@@ -117,37 +105,26 @@ for grupo, df_grp in df_base.groupby("Grupo"):
 
 grupos_info.sort(key=lambda x: x[1], reverse=True)
 
+# Ordena lojas dentro dos grupos e adiciona subtotal
 for grupo, _, df_grp in grupos_info:
+    # Ordena lojas por acumulado do maior para o menor
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
+
+    # Calcula subtotal do grupo
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
-    subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
+    qtde_lojas = df_grp_ord["Loja"].nunique()
+    subtotal["Loja"] = f"Lojas: {qtde_lojas:02d}"
+
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord)
+
     blocos.append(pd.DataFrame([subtotal]))
 
 # Concatena tudo
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
-# Junta Meta
-mes_filtro = data_fim_dt.strftime("%m")
-ano_filtro = data_fim_dt.strftime("%Y")
-df_metas_filtrado = df_metas[(df_metas["Mês"] == mes_filtro) & (df_metas["Ano"] == ano_filtro)].copy()
-df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.upper()
-df_final = df_final.merge(df_metas_filtrado[["Loja", "Meta"]], on="Loja", how="left")
-df_final["Meta"] = df_final["Meta"].fillna(0)
-
-# Posiciona a Meta ao lado do Acumulado
-colunas_chave = ["Grupo", "Loja"]
-colunas_valores = [col for col in df_final.columns if col not in colunas_chave]
-if "Meta" in colunas_valores and col_acumulado in colunas_valores:
-    colunas_valores.remove("Meta")
-    idx = colunas_valores.index(col_acumulado)
-    colunas_valores.insert(idx + 1, "Meta")
-df_final = df_final[colunas_chave + colunas_valores]
-
 # Percentuais
-colunas_percentuais = ["%LojaXGrupo", "%Grupo"]
 df_final["%LojaXGrupo"] = np.nan
 df_final["%Grupo"] = np.nan
 
@@ -156,6 +133,7 @@ filtro_lojas = (
     (~df_final["Grupo"].str.startswith("SUBTOTAL")) &
     (df_final["Grupo"] != "TOTAL")
 )
+
 df_lojas_reais = df_final[filtro_lojas].copy()
 soma_por_grupo = df_lojas_reais.groupby("Grupo")[col_acumulado].transform("sum")
 soma_total_geral = df_lojas_reais[col_acumulado].sum()
@@ -174,12 +152,19 @@ df_final.loc[filtro_grupos, "%Grupo"] = (
     df_final.loc[filtro_grupos, col_acumulado] / soma_total_geral
 ).round(4)
 
-# Oculta %LojaXGrupo se modo Grupo
+# Ocultar coluna %LojaXGrupo se modo for Grupo
+colunas_chave = ["Grupo", "Loja"]
+colunas_valores = [col for col in df_final.columns if col not in colunas_chave]
 if modo_exibicao == "Grupo":
     colunas_valores = [col for col in colunas_valores if col != "%LojaXGrupo"]
 df_final = df_final[colunas_chave + colunas_valores]
 
-# Formatação
+# ================================
+# Formatação correta para R$ e %
+# ================================
+
+colunas_percentuais = ["%LojaXGrupo", "%Grupo"]
+
 def formatar_brasileiro_com_coluna(valor, coluna):
     try:
         if pd.isna(valor):
@@ -198,6 +183,7 @@ for col in colunas_valores:
 # Estilo
 cores_alternadas = ["#dce6f1", "#d9ead3"]
 estilos = []
+
 if modo_exibicao == "Grupo":
     for i, row in df_final.iterrows():
         if row["Grupo"] == "TOTAL":
@@ -226,6 +212,7 @@ else:
             estilos.append([f"background-color: {cor}"] * len(row))
 
 # Exibição
+
 def aplicar_estilo_final(df, estilos_linha):
     def apply_row_style(row):
         return estilos_linha[row.name]
