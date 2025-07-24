@@ -378,13 +378,9 @@ with aba4:
     with col3:
         exibir_total = st.selectbox("Total:", ["Total", "Total Não"])
         exibir_total_bool = (exibir_total == "Total")
+    # 🔸 Visão (Loja ou Grupo)
     with col4:
-        modo_visao = st.selectbox(
-            "Visão:",
-            options=["Loja", "Grupo"],
-            format_func=lambda x: f"Por {x}",
-            key="visao_aba4"
-        )
+        modo_visao = st.selectbox("Visão:", ["Por Loja", "Por Grupo"], key="visao_aba4")
     
     with col5:
         tipo_metrica = st.selectbox("Métrica:", ["Bruto", "Real", "Ambos"], key="metrica_aba4")
