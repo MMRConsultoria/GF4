@@ -346,37 +346,26 @@ with aba4:
         df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
     ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
   
-    # === FILTROS COM SELECTBOX ===
-
-    # 🔹 ANO: busca anos disponíveis e seleciona o mais recente
+    # === FILTROS ===
+    
     anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
     ultimo_ano = anos_disponiveis[0] if anos_disponiveis else datetime.today().year
-    ano_selecionado = st.selectbox("Ano:", options=anos_disponiveis, index=0, key="ano_aba3")
+    ano_opcao = st.multiselect("📅 Selecione ano/mês(s):", options=anos_disponiveis, default=[ultimo_ano], key="ano_aba3")
     
-    # 🔹 Filtra o dataframe com base no ano escolhido
-    df_filtrado = df_anos[df_anos["Ano"] == ano_selecionado].copy()
-    
-    # 🔹 Normalização das colunas
+   
+    df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
     df_filtrado["Grupo"] = df_filtrado["Grupo"].astype(str).str.strip().str.upper()
     df_filtrado["Loja"] = df_filtrado["Loja"].astype(str).str.strip().str.lower().str.title()
-    
-    # 🔹 MONTAGEM DICIONÁRIO MESES
-    meses_dict = {
-        1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
-        7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
-    }
-    mes_num = meses_dict_invertido[mes_selecionado]
-    
-    # 🔹 Define mês atual como default (caso disponível)
+
+   
+    meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
+                  7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"}
+
     meses_disponiveis = sorted(df_filtrado["Mês Num"].unique())
     meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
     mes_atual_nome = meses_dict[datetime.today().month]
-    default_index = meses_nomes_disponiveis.index(mes_atual_nome) if mes_atual_nome in meses_nomes_disponiveis else 0
-    
-    # 🔹 SELECTBOX de mês
-    mes_selecionado = st.selectbox("Mês:", options=meses_nomes_disponiveis, index=default_index, key="meses_aba3")
-    mes_num = meses_dict_invertido[mes_selecionado]
-
+    default_mes = [mes_atual_nome] if mes_atual_nome in meses_nomes_disponiveis else meses_nomes_disponiveis
+    meses_selecionados = st.multiselect("", options=meses_nomes_disponiveis, default=default_mes, key="meses_aba3")
     
    
     # Garantir que "hoje" seja do tipo date
