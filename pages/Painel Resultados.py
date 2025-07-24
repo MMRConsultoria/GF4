@@ -772,7 +772,7 @@ with aba4:
             tabela_final = pd.concat([total_geral, tabela])
         
         # ✅ Junta o grupo à loja e posiciona à esquerda
-        if "Loja" in tabela_final.index.name and "Grupo" in df_empresa.columns:
+        if tabela_final.index.name == "Loja" and "Grupo" in df_empresa.columns:
             tabela_final = tabela_final.reset_index()
             df_lojas_grupo = df_empresa[["Loja", "Grupo"]].drop_duplicates()
             tabela_final = tabela_final.merge(df_lojas_grupo, on="Loja", how="left")
