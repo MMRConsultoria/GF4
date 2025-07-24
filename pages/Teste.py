@@ -85,16 +85,18 @@ df_base = df_pivot.merge(df_acumulado, on=["Grupo", "Loja"], how="left")
 df_base = df_base[df_base[nome_col_acumulado] != 0]
 
 # ================================
-# Adiciona coluna de Meta
+# Adiciona a coluna Meta após o Acumulado
 # ================================
+
+# Carrega a aba de Metas
 df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
 
-# Padroniza nomes e datas
+# Padroniza colunas da aba Metas
 df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
 df_metas["Mês"] = df_metas["Mês"].astype(str).str.zfill(2)
 df_metas["Ano"] = df_metas["Ano"].astype(str).str.strip()
 
-# Trata a coluna de valor da Meta
+# Trata os valores da coluna Meta
 df_metas["Meta"] = (
     df_metas["Meta"]
     .astype(str)
@@ -107,24 +109,35 @@ df_metas["Meta"] = (
 )
 df_metas["Meta"] = pd.to_numeric(df_metas["Meta"], errors="coerce").fillna(0)
 
-# Filtra metas pelo mês e ano da data final
+# Extrai mês e ano do filtro
 mes_filtro = data_fim_dt.strftime("%m")
 ano_filtro = data_fim_dt.strftime("%Y")
+
+# Filtra apenas as metas do mês e ano selecionados
 df_metas_filtrado = df_metas[(df_metas["Mês"] == mes_filtro) & (df_metas["Ano"] == ano_filtro)].copy()
 
-# Faz o merge com a base, usando Loja
+# Padroniza nome das lojas do df_base
 df_base["Loja"] = df_base["Loja"].astype(str).str.strip().str.upper()
-df_base = df_base.merge(df_metas_filtrado[["Loja", "Meta"]], on="Loja", how="left")
+
+# Junta a meta por loja no df_base
+df_base = df_base.merge(
+    df_metas_filtrado[["Loja", "Meta"]],
+    on="Loja",
+    how="left"
+)
+
 df_base["Meta"] = df_base["Meta"].fillna(0)
 
-# Reposiciona a coluna Meta ao lado do acumulado
-colunas_valores = [col for col in df_base.columns if col not in ["Grupo", "Loja"]]
-if "Meta" in colunas_valores and nome_col_acumulado in colunas_valores:
+# Reorganiza a coluna Meta para vir após o acumulado
+col_acumulado = nome_col_acumulado
+colunas_base = ["Grupo", "Loja"]
+colunas_valores = [col for col in df_base.columns if col not in colunas_base]
+if "Meta" in colunas_valores and col_acumulado in colunas_valores:
     colunas_valores.remove("Meta")
-    idx = colunas_valores.index(nome_col_acumulado)
+    idx = colunas_valores.index(col_acumulado)
     colunas_valores.insert(idx + 1, "Meta")
+df_base = df_base[colunas_base + colunas_valores]
 
-df_base = df_base[["Grupo", "Loja"] + colunas_valores]
 
 
 
