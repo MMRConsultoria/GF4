@@ -112,13 +112,18 @@ df_pivot.columns = [f"Fat Total ({d.strftime('%d/%m/%Y')})" for d in df_pivot.co
 # Junta com Grupo
 df_final = df_pivot.reset_index().merge(df_empresa[["Loja", "Grupo"]], on="Loja", how="left")
 
-# Reorganiza colunas
-cols = ["Grupo", "Loja"] + [col for col in df_final.columns if col not in ["Grupo", "Loja"]]
-df_final = df_final[cols]
+# Garante ordem: Grupo, Loja, [valores]
+cols_ordenadas = ["Grupo", "Loja"] + [col for col in df_final.columns if col not in ["Grupo", "Loja"]]
+df_final = df_final[cols_ordenadas]
+
+# Calcula total geral (somando apenas colunas de valores)
 total_geral = df_final.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
 total_geral["Grupo"] = "TOTAL"
 total_geral["Loja"] = ""
 df_final = pd.concat([pd.DataFrame([total_geral]), df_final], ignore_index=True)
+df_final = df_final[cols_ordenadas]  # Garante que continue na ordem certa
+
+
 # ================================
 # 6. Exibição
 # ================================
