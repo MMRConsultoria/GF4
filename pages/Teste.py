@@ -138,12 +138,13 @@ df_acumulado = df_mes.groupby(["Grupo", "Loja"], as_index=False)["Fat.Total"].su
 nome_coluna_acumulado = f"Acumulado Mês (01/{data_fim_dt.strftime('%m')} até {data_fim_dt.strftime('%d/%m')})"
 df_acumulado = df_acumulado.rename(columns={"Fat.Total": nome_coluna_acumulado})
 
-# ----------- Junta diário + acumulado ----------
+# Junta diário + acumulado
 df_final = df_pivot.merge(df_acumulado, on=["Grupo", "Loja"], how="left")
 
-# Ordena colunas: Grupo, Loja, dias..., acumulado
+# Ordena colunas
 colunas_chave = ["Grupo", "Loja"]
-# Extrai data da string "Fat Total dd/mm/aaaa" para ordenar corretamente
+
+# Ordena datas
 def extrair_data(col):
     return datetime.strptime(col.replace("Fat Total ", ""), "%d/%m/%Y")
 
@@ -151,12 +152,15 @@ colunas_dias = sorted(
     [col for col in df_pivot.columns if col not in colunas_chave],
     key=extrair_data
 )
+
 colunas_finais = colunas_chave + colunas_dias + [nome_coluna_acumulado]
 df_final = df_final[colunas_finais]
 
-# ----------- Total geral e subtotal por grupo -----------
+# ================================
+# 7. Subtotal por grupo + total geral
+# ================================
 
-# Calcula total geral e salva linha
+# Calcula total geral
 total_geral_dict = {
     "Grupo": "TOTAL",
     "Loja": "",
@@ -164,13 +168,11 @@ total_geral_dict = {
 total_geral_dict.update(df_final.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True).to_dict())
 linha_total = pd.DataFrame([total_geral_dict])
 
-# Remove total para inserirmos depois
+# Remove total e ordena por grupo/loja
 df_sem_total = df_final.copy()
-
-# Ordena por grupo e loja
 df_sem_total = df_sem_total.sort_values(by=["Grupo", "Loja"])
 
-# Monta blocos com subtotais
+# Subtotais por grupo
 linhas_com_subtotais = []
 
 for grupo, grupo_df in df_sem_total.groupby("Grupo"):
@@ -179,20 +181,28 @@ for grupo, grupo_df in df_sem_total.groupby("Grupo"):
     subtotal = grupo_df.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     subtotal["Grupo"] = grupo
     subtotal["Loja"] = "SUBTOTAL"
-
     linhas_com_subtotais.append(pd.DataFrame([subtotal]))
 
-# Junta subtotais e reinsere total geral no topo
-df_final_com_subtotal = pd.concat(linhas_com_subtotais, ignore_index=True)
-df_final_com_subtotal = pd.concat([linha_total, df_final_com_subtotal], ignore_index=True)
-
+# Junta com total geral no topo
+df_final_com_subtotal = pd.concat([linha_total] + linhas_com_subtotais, ignore_index=True)
 
 # ================================
-# 7. Exibição final
+# 8. Exibição final (formato brasileiro)
 # ================================
-st.markdown("### 📊 Resumo por Loja - Coluna por Dia + Acumulado do Mês")
+
+def formatar_brasileiro(valor):
+    try:
+        return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except:
+        return valor
+
+colunas_valores = [col for col in df_final_com_subtotal.columns if col not in ["Grupo", "Loja"]]
+df_formatado = df_final_com_subtotal.copy()
+df_formatado[colunas_valores] = df_formatado[colunas_valores].applymap(formatar_brasileiro)
+
+st.markdown("### 📊 Resumo por Loja - Coluna por Dia + Acumulado do Mês + Subtotais")
 st.dataframe(
-    df_final.style.format({col: "R$ {:,.2f}" for col in df_final.columns if col not in ["Grupo", "Loja"]}),
+    df_formatado,
     use_container_width=True,
     height=600
 )
