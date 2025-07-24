@@ -212,7 +212,7 @@ else:
             estilos.append([f"background-color: {cor}"] * len(row))
 
 # Exibição
-st.markdown("### 📊 Relatório Final com Estilo")
+
 def aplicar_estilo_final(df, estilos_linha):
     def apply_row_style(row):
         return estilos_linha[row.name]
