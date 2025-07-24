@@ -671,8 +671,26 @@ with aba4:
 
         total_geral = pd.DataFrame(tabela.sum(numeric_only=True)).T
         total_geral.index = ["Total Geral"]
-
         tabela_final = pd.concat([total_geral, tabela])
+
+
+        # Adiciona Grupo ao lado da Loja
+        tabela_final = tabela_final.reset_index()
+        
+        # Junta com os dados da empresa para obter o Grupo da Loja
+        tabela_final = tabela_final.merge(df_empresa[["Loja", "Grupo"]], on="Loja", how="left")
+        
+        # Coloca a coluna Grupo antes da coluna Loja
+        cols = ["Grupo", "Loja"] + [col for col in tabela_final.columns if col not in ["Grupo", "Loja"]]
+        tabela_final = tabela_final[cols]
+        
+        # (Opcional) se quiser manter o índice por loja, pode reativar isso:
+        # tabela_final = tabela_final.set_index("Loja")
+
+
+
+
+    
 
     elif modo_visao == "Por Grupo":
         tabela = tabela.fillna(0)
