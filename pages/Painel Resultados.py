@@ -319,8 +319,7 @@ with aba4:
         padding-top: 0.5rem !important;
         padding-bottom: 0.5rem !important;
     }
-    </style>
-    """, unsafe_allow_html=True)
+    
 
     /* 🔴 Estilo moderno para st.radio() */
     .stRadio > div {
@@ -355,7 +354,8 @@ with aba4:
         box-shadow: none !important;
     }
 
-  
+    </style>
+    """, unsafe_allow_html=True)
 
     # Normaliza dados
     
