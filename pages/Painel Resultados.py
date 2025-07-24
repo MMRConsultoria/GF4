@@ -365,7 +365,7 @@ with aba4:
         1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
         7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
     }
-    meses_dict_invertido = {v: k for k, v in meses_dict.items()}
+    mes_num = meses_dict_invertido[mes_selecionado]
     
     # 🔹 Define mês atual como default (caso disponível)
     meses_disponiveis = sorted(df_filtrado["Mês Num"].unique())
