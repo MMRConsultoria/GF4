@@ -139,6 +139,37 @@ df_base = df_base.merge(
 
 df_base["Meta"] = df_base["Meta"].fillna(0)
 
+# ================================
+# Coluna %Meta Atingida com cor
+# ================================
+from calendar import monthrange
+
+# Número de dias no mês de referência
+dias_mes = monthrange(data_fim_dt.year, data_fim_dt.month)[1]
+
+# Dia final do filtro selecionado
+dia_hoje = data_fim_dt.day
+
+# Meta proporcional ideal até hoje
+df_base["Meta Até Hoje"] = (df_base["Meta"] / dias_mes) * dia_hoje
+
+# Percentual atingido sobre a meta proporcional
+df_base["%Meta Atingida"] = df_base[nome_col_acumulado] / df_base["Meta Até Hoje"]
+df_base["%Meta Atingida"] = df_base["%Meta Atingida"].replace([np.inf, -np.inf], np.nan).fillna(0).round(4)
+# Reorganiza a coluna Meta para vir após o acumulado
+col_acumulado = nome_col_acumulado
+colunas_base = ["Grupo", "Loja"]
+colunas_valores = [col for col in df_base.columns if col not in colunas_base]
+if "Meta" in colunas_valores and col_acumulado in colunas_valores:
+    colunas_valores.remove("Meta")
+    idx = colunas_valores.index(col_acumulado)
+    colunas_valores.insert(idx + 1, "Meta")
+# <-- aqui entra o ajuste da nova coluna
+if "%Meta Atingida" in colunas_valores:
+    colunas_valores.remove("%Meta Atingida")
+    idx_meta = colunas_valores.index("Meta")
+    colunas_valores.insert(idx_meta + 1, "%Meta Atingida")
+df_base = df_base[colunas_base + colunas_valores]
 
 # Reorganiza a coluna Meta para vir após o acumulado
 col_acumulado = nome_col_acumulado
