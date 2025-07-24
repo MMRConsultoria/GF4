@@ -75,7 +75,7 @@ aba1 = st.tabs([
 
 
 # ================================
-# Aba 4: Analise Lojas
+# Aba 1: Analise Lojas
 # ================================
 with aba1:
     from datetime import datetime, date
