@@ -321,6 +321,40 @@ with aba4:
     }
     </style>
     """, unsafe_allow_html=True)
+
+    /* 🔴 Estilo moderno para st.radio() */
+    .stRadio > div {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+        justify-content: start;
+        padding: 0.5rem 0;
+    }
+    
+    .stRadio label {
+        padding: 6px 14px;
+        border-radius: 8px;
+        background-color: #f4f4f4;
+        border: 1px solid #ccc;
+        cursor: pointer;
+        font-weight: 500;
+        color: #333;
+        transition: all 0.2s ease-in-out;
+    }
+    
+    /* Estado selecionado */
+    .stRadio input:checked + div > label {
+        background-color: #f44336 !important;  /* vermelho */
+        color: white !important;
+        border-color: #f44336 !important;
+        font-weight: bold;
+    }
+    
+    /* Remove sombra nativa */
+    input[type="radio"] {
+        box-shadow: none !important;
+    }
+
   
 
     # Normaliza dados
@@ -343,9 +377,7 @@ with aba4:
     todas_lojas = df_empresa[
         df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
     ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
- 
-
-    
+  
     # === FILTROS ===
     #anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
     #ano_opcao = st.multiselect("📅 Selecione ano/mês(s):", options=anos_disponiveis, default=anos_disponiveis, key="ano_aba3")
@@ -389,8 +421,6 @@ with aba4:
         data_minima = hoje
         data_maxima = hoje
 
-    
-
     # Filtros laterais lado a lado
     col1, col2, col3, col4 = st.columns([1.2, 2, 2, 2])  # col1 levemente mais estreita
 
@@ -427,17 +457,9 @@ with aba4:
         df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
      ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
-   
-
-
         # 🔄 Aplica o filtro principal com base no período
     if agrupamento == "Dia" and modo_visao == "Por Grupo":
         data_selecionada = pd.to_datetime(data_fim)
-
-       
-        
-
-        
 
         # 🧹 Trata colunas duplicadas de Grupo
         if "Grupo_x" in df_filtrado.columns:
@@ -489,17 +511,10 @@ with aba4:
 
             df_filtrado = pd.concat([df_filtrado, df_faltando], ignore_index=True)
 
-
-
         # Preenche colunas numéricas com 0 para lojas sem movimento
         for col in ["Fat.Total", "Fat.Real", "Serv/Tx", "Ticket"]:
             if col in df_filtrado.columns:
                 df_filtrado[col] = df_filtrado[col].fillna(0)
-
-        
-        
-
-
 
     # ✅ Só aplica o filtro de mês quando o agrupamento for "Mês" ou "Dia"
     if agrupamento in ["Mês", "Dia"]:
@@ -544,8 +559,6 @@ with aba4:
         
         data_fim_padrao = hoje
    
-   
-   
     # ✅ Aplica o filtro de datas corretamente conforme o agrupamento
     if agrupamento == "Dia":
         df_filtrado = df_filtrado[
@@ -560,9 +573,6 @@ with aba4:
             (df_filtrado["Data"].dt.to_period("M") <= periodo_fim)
         ]
    
-
-
-    
     # Criação do agrupador e ordem com base na escolha
     if agrupamento == "Ano":
         df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
@@ -590,11 +600,6 @@ with aba4:
    
     ordem = [c for c in ordem if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
 
-    
-
-
-
-
     if modo_visao == "Por Loja":
         lojas_com_venda = df_filtrado["Loja"].unique()
         lojas_sem_venda = todas_lojas[~todas_lojas["Loja"].isin(lojas_com_venda)]
@@ -617,7 +622,6 @@ with aba4:
             })
 
             df_filtrado = pd.concat([df_filtrado, df_sem_venda], ignore_index=True)
-
 
     if modo_visao == "Por Grupo":
         df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
@@ -657,9 +661,7 @@ with aba4:
                 for col in tabela.columns
             ]
             tabela = tabela.loc[:, tabela.columns != "Excluir"]
-
-
-            
+       
             colunas_intercaladas = []
             for col in ordem:
                 colunas_intercaladas.append(f"{col} (Bruto)")
@@ -668,8 +670,6 @@ with aba4:
          # 🔥 Aqui já remove qualquer None no processo de montar a lista
             colunas_intercaladas = [c for c in colunas_intercaladas if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
-
-     
 
 
     tabela = tabela[[col for col in tabela.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]]
@@ -714,9 +714,7 @@ with aba4:
             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             if isinstance(x, (float, int)) else x
         )
-
-
-    
+  
   
     # ✅ 🔥 Limpeza imediata e universal após criar tabela_final
     tabela_final.columns.name = None  # Remove nome do eixo das colunas
@@ -848,9 +846,6 @@ with aba4:
             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x
         )
 
-  
-    
-    
     if 'tabela_formatada' in locals():
         st.subheader("")
         st.dataframe(tabela_formatada, use_container_width=True)
@@ -875,8 +870,6 @@ df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title(
 todas_lojas = df_empresa[
     df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "Ativa"
 ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
-
-
 
 # 🔥 Verifica se deve calcular acumulado
 data_max = pd.to_datetime(data_fim)
@@ -938,9 +931,6 @@ elif modo_visao == "Por Grupo":
 
     if modo_visao == "Por Grupo":
         tabela_exportar["Tipo"] = df_empresa.groupby("Grupo")["Tipo"].agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None).reindex(tabela_exportar["Grupo"]).values
- 
-
-
  
     #st.write("🚧 Debug Grupo", tabela_exportar)
     #st.write("📄 df_empresa", df_empresa)
@@ -1009,10 +999,6 @@ tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns={
     "Acumulado no Mês": "Acumulado no Mês (Com Gorjeta)"
 })
-
-
-
-
 
 
 # 🔍 Ordenação pela data mais recente
@@ -1119,21 +1105,6 @@ if modo_visao == "Por Grupo":
         tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols]
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 if modo_visao == "Por Loja":
     base = "Acumulado no Mês (Com Gorjeta)"
     usar_base = base in tabela_exportar_sem_tipo.columns and tabela_exportar_sem_tipo[base].sum() > 0
@@ -1215,8 +1186,6 @@ mostrar_acumulado = (
 if not mostrar_acumulado and coluna_acumulado in tabela_exportar_sem_tipo.columns:
     tabela_exportar_sem_tipo.drop(columns=[coluna_acumulado], inplace=True)
 
-
-
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
@@ -1244,9 +1213,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     'bold': True  # ⬅️ negrito ativado
     })
 
-
-
-
     percent_formatado_totalgeral = workbook.add_format({
     'num_format': '0.00%',
     'align': 'right',
@@ -1269,25 +1235,14 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         else:
             worksheet.set_column(col_num, col_num, 25)
 
-            
-
-
-
-
-
-
-
     cores_grupo = itertools.cycle(["#D9EAD3", "#CFE2F3"])
-
-    
+ 
     subtotal_format = workbook.add_format({
         'bold': True, 'bg_color': '#FFE599', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
     totalgeral_format = workbook.add_format({
         'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
-
-    
 
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
@@ -1352,39 +1307,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             'border': 1,
             'bold': True
         })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     
     # 🔥 Subtotal por Tipo (Sempre aparece)
     for tipo_atual in sorted(tabela_exportar["Tipo"].dropna().unique()):
@@ -1603,15 +1525,6 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 else:
                     worksheet.write(linha, col_num, str(val), subtotal_format)
             linha += 1
-
-
-       
-
-
-
-
-
-
 
 
 worksheet.hide_gridlines(option=2)
