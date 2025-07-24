@@ -174,11 +174,12 @@ for grupo, _, df_grp in grupos_info:
 
 # Junta tudo (total + blocos por grupo)
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
+
 # ================================
-# 9. Cálculo das colunas %LojaXGrupo e %Grupo
+# Cálculo das colunas %LojaXGrupo e %Grupo
 # ================================
 
-# Identifica a coluna do acumulado (a última)
+# Identifica a coluna do acumulado
 col_acumulado = [col for col in df_final.columns if "Acumulado Mês" in col][0]
 
 # Filtra apenas linhas de loja reais (nem total nem subtotal)
@@ -191,29 +192,26 @@ df_lojas_reais = df_final[filtro_lojas].copy()
 
 # Soma por grupo
 soma_por_grupo = df_lojas_reais.groupby("Grupo")[col_acumulado].transform("sum")
-
-# Soma total geral
 soma_total_geral = df_lojas_reais[col_acumulado].sum()
 
-# Cria as duas novas colunas
-# Coluna %LojaXGrupo → apenas para lojas (linhas reais)
-df_final["%LojaXGrupo"] = np.where(
-    filtro_lojas,
-    (df_lojas_reais[col_acumulado] / soma_por_grupo).fillna(0),
-    np.nan
-)
+# Cria coluna %LojaXGrupo somente para lojas reais
+df_final["%LojaXGrupo"] = np.nan
+df_final.loc[filtro_lojas, "%LojaXGrupo"] = (
+    df_lojas_reais[col_acumulado].values / soma_por_grupo.values
+).round(4)
 
-# Coluna %Grupo → apenas para linhas SUBTOTAL
-df_final["%Grupo"] = np.where(
-    df_final["Grupo"].str.startswith("SUBTOTAL"),
-    df_final[col_acumulado] / soma_total_geral,
-    np.nan
-)
+# Cria coluna %Grupo somente para SUBTOTALs
+df_final["%Grupo"] = np.nan
+df_final.loc[df_final["Grupo"].str.startswith("SUBTOTAL"), "%Grupo"] = (
+    df_final.loc[df_final["Grupo"].str.startswith("SUBTOTAL"), col_acumulado]
+    / soma_total_geral
+).round(4)
 
-# 🔧 Reordena: Grupo e Loja à esquerda
+# 🔧 Agora reordene as colunas
 colunas_chave = ["Grupo", "Loja"]
 colunas_restantes = [col for col in df_final.columns if col not in colunas_chave]
 df_final = df_final[colunas_chave + colunas_restantes]
+
 
 # Atualiza colunas de valores
 colunas_valores = [col for col in df_final.columns if col not in ["Grupo", "Loja"]]
@@ -221,12 +219,13 @@ colunas_valores = [col for col in df_final.columns if col not in ["Grupo", "Loja
 # Reaplica formatação brasileira para R$ e percentual
 def formatar_brasileiro(valor):
     try:
-        if isinstance(valor, float) and 0 <= valor <= 1:
-            return f"{valor:.2%}".replace(".", ",")
-        return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        if isinstance(valor, float):
+            if 0 <= valor <= 1:
+                return f"{valor:.2%}".replace(".", ",")
+            return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        return valor
     except:
         return valor
-
 df_formatado = df_final.copy()
 df_formatado[colunas_valores] = df_formatado[colunas_valores].applymap(formatar_brasileiro)
 
