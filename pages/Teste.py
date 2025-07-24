@@ -193,8 +193,8 @@ for grupo, _, grupo_df in grupos_info:
 
     # Subtotal da linha
     subtotal = lojas_ordenadas.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
-    subtotal["Grupo"] = grupo
-    subtotal["Loja"] = f"SUBTOTAL {grupo}"
+    subtotal["Grupo"] = f"SUBTOTAL {grupo}"
+    subtotal["Loja"] = ""
 
     blocos_ordenados.append(lojas_ordenadas)
     blocos_ordenados.append(pd.DataFrame([subtotal]))
