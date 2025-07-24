@@ -132,7 +132,9 @@ colunas_restantes = [col for col in colunas_existentes if col not in colunas_cha
 df_final = df_final[colunas_chave + colunas_restantes]
 
 # Calcula total geral (somando apenas colunas de valores)
-total_geral = df_final.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+# Só remove as colunas que realmente existem
+colunas_para_remover = [col for col in ["Grupo", "Loja"] if col in df_final.columns]
+total_geral = df_final.drop(columns=colunas_para_remover).sum(numeric_only=True)
 total_geral["Grupo"] = "TOTAL"
 total_geral["Loja"] = ""
 df_final = pd.concat([pd.DataFrame([total_geral]), df_final], ignore_index=True)
