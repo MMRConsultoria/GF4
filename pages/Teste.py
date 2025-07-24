@@ -153,7 +153,7 @@ colunas_valores = [col for col in df_base.columns if col not in ["Grupo", "Loja"
 # Total geral
 linha_total = df_base[colunas_valores].sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
-linha_total["Loja"] = ""
+linha_total["Loja"] = f"Lojas: {df_base.shape[0]}"
 
 # Subtotais
 blocos = []
