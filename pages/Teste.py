@@ -21,16 +21,19 @@ planilha_empresa = gc.open("Vendas diarias")
 # Carrega dados
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
 df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
+# ================================
+# Carrega e trata a aba de Metas
+# ================================
 df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
 
-df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
-df_empresa["Grupo"] = df_empresa["Grupo"].str.strip()
-df_vendas.columns = df_vendas.columns.str.strip()
-df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], dayfirst=True, errors="coerce")
-df_vendas["Loja"] = df_vendas["Loja"].astype(str).str.strip().str.upper()
-df_vendas["Grupo"] = df_vendas["Grupo"].astype(str).str.strip()
-df_vendas["Fat.Total"] = (
-    df_vendas["Fat.Total"]
+# Padroniza colunas da aba Metas
+df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
+df_metas["Mês"] = df_metas["Mês"].astype(str).str.zfill(2)
+df_metas["Ano"] = df_metas["Ano"].astype(str).str.strip()
+
+# Trata a coluna de valor da Meta
+df_metas["Meta"] = (
+    df_metas["Meta"]
     .astype(str)
     .str.replace("R$", "", regex=False)
     .str.replace("(", "-", regex=False)
@@ -39,10 +42,8 @@ df_vendas["Fat.Total"] = (
     .str.replace(".", "", regex=False)
     .str.replace(",", ".", regex=False)
 )
-df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
+df_metas["Meta"] = pd.to_numeric(df_metas["Meta"], errors="coerce").fillna(0)
 
-# Trata metas
-df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
 
 # Filtros
 data_min = df_vendas["Data"].min()
@@ -132,6 +133,28 @@ for grupo, _, df_grp in grupos_info:
 
 # Concatena tudo
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
+
+# ================================
+# Pega mês e ano do filtro
+# ================================
+mes_filtro = data_fim_dt.strftime("%m")
+ano_filtro = data_fim_dt.strftime("%Y")
+
+# Filtra metas do mês/ano
+df_metas_filtrado = df_metas[(df_metas["Mês"] == mes_filtro) & (df_metas["Ano"] == ano_filtro)].copy()
+
+# Padroniza df_final['Loja'] antes do merge
+df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.upper()
+
+# Junta metas no df_final
+df_final = df_final.merge(
+    df_metas_filtrado[["Loja", "Meta"]],
+    on="Loja",
+    how="left"
+)
+
+df_final["Meta"] = df_final["Meta"].fillna(0)
+
 
 # ================================
 # Carrega a aba de Metas
