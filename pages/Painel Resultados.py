@@ -390,29 +390,23 @@ with aba4:
         data_maxima = hoje
 
     # Filtros laterais lado a lado
-    col1, col2, col3, col4 = st.columns([1.2, 2, 2, 2])  # col1 levemente mais estreita
-
+    # 🔄 Filtros reorganizados com selectbox estilizado
+    col1, col2, col3, col4 = st.columns([1.2, 2, 2, 2])  # mesma estrutura
+    
     with col1:
-        st.write("")  # Garante altura igual às outras colunas com título
-        exibir_total = st.radio(
-            " ", 
-            options=[True, False],
-            format_func=lambda x: "Total Sim" if x else "Total Não",
-            index=0,
-            horizontal=True
-        )
+        exibir_total = st.selectbox("Total:", ["Total Sim", "Total Não"])
+        exibir_total_bool = (exibir_total == "Total Sim")
     with col2:
-        modo_visao = st.radio(" ", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba4")
-
+        modo_visao = st.selectbox("Visão:", ["Por Loja", "Por Grupo"], key="visao_aba4")
+    
     with col3:
-        tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba4")
-
-
+        tipo_metrica = st.selectbox("Métrica:", ["Bruto", "Real", "Ambos"], key="metrica_aba4")
     hoje = date.today()
     with col4:
-        agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
-
-    meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
+        agrupamento = st.selectbox("Agrupamento:", ["Ano", "Mês", "Dia"], key="agrup_aba4")
+    
+    
+        meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
 
 
     # 📌 Define data_fim como a data mais recente do DataFrame
