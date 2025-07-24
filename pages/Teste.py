@@ -196,13 +196,19 @@ soma_por_grupo = df_lojas_reais.groupby("Grupo")[col_acumulado].transform("sum")
 soma_total_geral = df_lojas_reais[col_acumulado].sum()
 
 # Cria as duas novas colunas
-df_final.loc[filtro_lojas, "%LojaXGrupo"] = (
-    df_lojas_reais[col_acumulado] / soma_por_grupo
-).fillna(0)
+# Coluna %LojaXGrupo → apenas para lojas (linhas reais)
+df_final["%LojaXGrupo"] = np.where(
+    filtro_lojas,
+    (df_lojas_reais[col_acumulado] / soma_por_grupo).fillna(0),
+    np.nan
+)
 
-df_final.loc[filtro_lojas, "%Grupo"] = (
-    soma_por_grupo / soma_total_geral
-).fillna(0)
+# Coluna %Grupo → apenas para linhas SUBTOTAL
+df_final["%Grupo"] = np.where(
+    df_final["Grupo"].str.startswith("SUBTOTAL"),
+    df_final[col_acumulado] / soma_total_geral,
+    np.nan
+)
 
 # 🔧 Reordena: Grupo e Loja à esquerda
 colunas_chave = ["Grupo", "Loja"]
