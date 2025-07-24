@@ -321,38 +321,6 @@ with aba4:
     }
     
 
-    /* 🔴 Estilo moderno para st.radio() */
-    .stRadio > div {
-        display: flex;
-        gap: 2rem;
-        align-items: center;
-        justify-content: start;
-        padding: 0.5rem 0;
-    }
-    
-    .stRadio label {
-        padding: 6px 14px;
-        border-radius: 8px;
-        background-color: #f4f4f4;
-        border: 1px solid #ccc;
-        cursor: pointer;
-        font-weight: 500;
-        color: #333;
-        transition: all 0.2s ease-in-out;
-    }
-    
-    /* Estado selecionado */
-    .stRadio input:checked + div > label {
-        background-color: #f44336 !important;  /* vermelho */
-        color: white !important;
-        border-color: #f44336 !important;
-        font-weight: bold;
-    }
-    
-    /* Remove sombra nativa */
-    input[type="radio"] {
-        box-shadow: none !important;
-    }
 
     </style>
     """, unsafe_allow_html=True)
