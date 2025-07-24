@@ -68,7 +68,7 @@ st.markdown("""
 # ================================
 # 3. Separação em ABAS
 # ================================
-aba1, aba2, aba3, aba4 = st.tabs([
+aba1 = st.tabs([
    
   
     "📋 Analise Lojas"
