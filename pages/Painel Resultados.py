@@ -564,12 +564,11 @@ with aba4:
         })
     )
     
-    # Adiciona a coluna "Total"
-    df_resultado["Total"] = df_resultado["Fat.Total"] + df_resultado["Fat.Real"]  # ajuste conforme lógica real
-
-# ✅ Aplica o filtro: se "Total Não", remove a coluna
-if not exibir_total_bool and "Total" in df_resultado.columns:
-    df_resultado = df_resultado.drop(columns=["Total"])
+    df_resultado["Ordem"] = df_resultado["Agrupador"]
+    
+    # 🧮 Adiciona coluna Total apenas se "Total Sim"
+    if exibir_total_bool:
+        df_resultado["Total"] = df_resultado["Fat.Total"] + df_resultado["Fat.Real"]
 
 
 
