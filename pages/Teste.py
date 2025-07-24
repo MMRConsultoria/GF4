@@ -88,8 +88,8 @@ with col1:
         max_value=data_max
     )
 with col2:
-    opcao_filtro = st.selectbox("Filtrar por:", ["Loja","Grupo"])
-        
+    st.write("🔜 Filtros adicionais em breve")
+
 data_inicio_dt = pd.to_datetime(data_inicio)
 data_fim_dt = pd.to_datetime(data_fim)
 primeiro_dia_mes = data_fim_dt.replace(day=1)
@@ -153,7 +153,7 @@ colunas_valores = [col for col in df_base.columns if col not in ["Grupo", "Loja"
 # Total geral
 linha_total = df_base[colunas_valores].sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
-linha_total["Loja"] = f"Lojas: {df_base.shape[0]}"
+linha_total["Loja"] = ""
 
 # Subtotais
 blocos = []
@@ -168,24 +168,71 @@ for grupo, _, df_grp in grupos_info:
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"SUBTOTAL {grupo}"
-    subtotal["Loja"] = f"Lojas: {len(df_grp)}"
+    subtotal["Loja"] = ""
     blocos.append(df_grp_ord)
     blocos.append(pd.DataFrame([subtotal]))
 
 # Junta tudo (total + blocos por grupo)
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
-# ====================================
-# 🔎 Aplica filtro baseado no selectbox
-# ====================================
-if opcao_filtro == "Grupo":
-    df_final = df_final[df_final["Grupo"].str.startswith("SUBTOTAL") | (df_final["Grupo"] == "TOTAL")]
-elif opcao_filtro == "Loja":
-    pass  # Mantém tudo
+# ================================
+# Cálculo das colunas %LojaXGrupo e %Grupo
+# ================================
 
-# ====================================
-# 🎨 Atualiza estilos com base no df_final filtrado
-# ====================================
+# Identifica a coluna do acumulado
+col_acumulado = [col for col in df_final.columns if "Acumulado Mês" in col][0]
+
+# Filtra apenas linhas de loja reais (nem total nem subtotal)
+filtro_lojas = (
+    (df_final["Loja"] != "") &
+    (~df_final["Grupo"].str.startswith("SUBTOTAL")) &
+    (df_final["Grupo"] != "TOTAL")
+)
+df_lojas_reais = df_final[filtro_lojas].copy()
+
+# Soma por grupo
+soma_por_grupo = df_lojas_reais.groupby("Grupo")[col_acumulado].transform("sum")
+soma_total_geral = df_lojas_reais[col_acumulado].sum()
+
+# Cria coluna %LojaXGrupo somente para lojas reais
+df_final["%LojaXGrupo"] = np.nan
+df_final.loc[filtro_lojas, "%LojaXGrupo"] = (
+    df_lojas_reais[col_acumulado].values / soma_por_grupo.values
+).round(4)
+
+# Cria coluna %Grupo somente para SUBTOTALs
+df_final["%Grupo"] = np.nan
+df_final.loc[df_final["Grupo"].str.startswith("SUBTOTAL"), "%Grupo"] = (
+    df_final.loc[df_final["Grupo"].str.startswith("SUBTOTAL"), col_acumulado]
+    / soma_total_geral
+).round(4)
+
+# 🔧 Agora reordene as colunas
+colunas_chave = ["Grupo", "Loja"]
+colunas_restantes = [col for col in df_final.columns if col not in colunas_chave]
+df_final = df_final[colunas_chave + colunas_restantes]
+
+
+# Atualiza colunas de valores
+colunas_valores = [col for col in df_final.columns if col not in ["Grupo", "Loja"]]
+
+# Reaplica formatação brasileira para R$ e percentual
+def formatar_brasileiro(valor):
+    try:
+        if pd.isna(valor):
+            return ""
+        if isinstance(valor, float):
+            if 0 <= valor <= 1:
+                return f"{valor:.2%}".replace(".", ",")
+            return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        return valor
+    except:
+        return ""
+
+df_formatado = df_final.copy()
+df_formatado[colunas_valores] = df_formatado[colunas_valores].applymap(formatar_brasileiro)
+
+
 cores_grupos = ["#dce6f1", "#d9ead3"]
 estilos = []
 cor_idx = -1
@@ -208,18 +255,17 @@ for _, row in df_final.iterrows():
         cor = cores_grupos[cor_idx]
         estilos.append([f"background-color: {cor}"] * len(row))
 
-# ====================================
-# 📊 Exibe DataFrame com estilo
-# ====================================
+# ================================
+# Exibe
+# ================================
 st.markdown("### 📊 Relatório Final com Estilo")
+from pandas.io.formats.style import Styler
 
-# Define função ANTES de chamar
 def aplicar_estilo_final(df, estilos_linha):
     def apply_row_style(row):
         return estilos_linha[row.name]
     return df.style.apply(apply_row_style, axis=1)
 
-# Agora exibe o dataframe formatado com estilo
 st.dataframe(
     aplicar_estilo_final(df_formatado, estilos),
     use_container_width=True,
