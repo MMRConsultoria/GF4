@@ -139,13 +139,6 @@ df_base = df_base.merge(
 
 df_base["Meta"] = df_base["Meta"].fillna(0)
 
-# Debug: Visualiza o que foi carregado e o que foi unido
-with st.expander("🔍 Verificação de Metas (debug)"):
-    st.subheader("df_metas_filtrado")
-    st.dataframe(df_metas_filtrado[["Loja", "Meta"]])
-
-    st.subheader("df_base (lojas únicas)")
-    st.dataframe(pd.DataFrame(df_base["Loja"].unique(), columns=["Loja"]))
 
 # Reorganiza a coluna Meta para vir após o acumulado
 col_acumulado = nome_col_acumulado
