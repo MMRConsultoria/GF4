@@ -263,8 +263,7 @@ colunas_chave = ["Grupo", "Loja"]
 colunas_valores = [col for col in df_final.columns if col not in colunas_chave]
 
 if modo_exibicao == "Grupo":
-    # Oculta somente as colunas de percentuais irrelevantes para Grupo
-    colunas_valores = [col for col in colunas_valores if col not in ["%LojaXGrupo", "%Meta Atingida"]]
+    colunas_valores = [col for col in colunas_valores if col != "%LojaXGrupo"]
 
 df_final = df_final[colunas_chave + colunas_valores]
 
