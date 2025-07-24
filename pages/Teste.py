@@ -154,13 +154,38 @@ colunas_dias = sorted(
 colunas_finais = colunas_chave + colunas_dias + [nome_coluna_acumulado]
 df_final = df_final[colunas_finais]
 
-# ----------- Total geral -----------
+# ----------- Total geral e subtotal por grupo -----------
+
+# Calcula total geral e salva linha
 total_geral_dict = {
     "Grupo": "TOTAL",
     "Loja": "",
 }
-total_geral_dict.update(df_final.drop(columns=colunas_chave).sum(numeric_only=True).to_dict())
-df_final = pd.concat([pd.DataFrame([total_geral_dict]), df_final], ignore_index=True)
+total_geral_dict.update(df_final.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True).to_dict())
+linha_total = pd.DataFrame([total_geral_dict])
+
+# Remove total para inserirmos depois
+df_sem_total = df_final.copy()
+
+# Ordena por grupo e loja
+df_sem_total = df_sem_total.sort_values(by=["Grupo", "Loja"])
+
+# Monta blocos com subtotais
+linhas_com_subtotais = []
+
+for grupo, grupo_df in df_sem_total.groupby("Grupo"):
+    linhas_com_subtotais.append(grupo_df)
+
+    subtotal = grupo_df.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+    subtotal["Grupo"] = grupo
+    subtotal["Loja"] = "SUBTOTAL"
+
+    linhas_com_subtotais.append(pd.DataFrame([subtotal]))
+
+# Junta subtotais e reinsere total geral no topo
+df_final_com_subtotal = pd.concat(linhas_com_subtotais, ignore_index=True)
+df_final_com_subtotal = pd.concat([linha_total, df_final_com_subtotal], ignore_index=True)
+
 
 # ================================
 # 7. Exibição final
