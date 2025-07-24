@@ -126,8 +126,10 @@ df_pivot.columns = [
 df_final = df_pivot.reset_index().merge(df_empresa[["Loja", "Grupo"]], on="Loja", how="left")
 
 # Garante ordem: Grupo, Loja, [valores]
-cols_ordenadas = ["Grupo", "Loja"] + [col for col in df_final.columns if col not in ["Grupo", "Loja"]]
-df_final = df_final[cols_ordenadas]
+colunas_existentes = df_final.columns.tolist()
+colunas_chave = [col for col in ["Grupo", "Loja"] if col in colunas_existentes]
+colunas_restantes = [col for col in colunas_existentes if col not in colunas_chave]
+df_final = df_final[colunas_chave + colunas_restantes]
 
 # Calcula total geral (somando apenas colunas de valores)
 total_geral = df_final.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
