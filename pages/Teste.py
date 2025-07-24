@@ -82,13 +82,15 @@ data_max = df_vendas["Data"].max()
 col1, col2 = st.columns([2, 3])
 with col1:
     data_inicio, data_fim = st.date_input(
-        "Selecione o intervalo de datas:",
+        "📅 Intervalo de datas:",
         value=(data_max, data_max),
         min_value=data_min,
         max_value=data_max
     )
+
 with col2:
-    st.write("🔜 Filtros adicionais em breve")
+    modo_exibicao = st.selectbox("🧭 Ver por:", ["Loja", "Grupo"])
+
 
 data_inicio_dt = pd.to_datetime(data_inicio)
 data_fim_dt = pd.to_datetime(data_fim)
@@ -144,6 +146,51 @@ df_acumulado = df_acumulado.rename(columns={"Fat.Total": nome_col_acumulado})
 df_base = df_pivot.merge(df_acumulado, on=["Grupo", "Loja"], how="left")
 # Remove lojas com acumulado zero (sem venda no mês)
 df_base = df_base[df_base[nome_col_acumulado] != 0]
+
+# ================================
+# Filtro: Loja ou Grupo
+# ================================
+modo_exibicao = st.selectbox("🔍 Ver por:", ["Loja", "Grupo"])
+
+# Recalcula os blocos conforme a seleção
+col_acumulado = nome_col_acumulado
+colunas_valores = [col for col in df_base.columns if col not in ["Grupo", "Loja"]]
+
+linha_total = df_base[colunas_valores].sum(numeric_only=True)
+linha_total["Grupo"] = "TOTAL"
+linha_total["Loja"] = ""
+
+blocos = []
+grupos_info = []
+for grupo, df_grp in df_base.groupby("Grupo"):
+    total_grupo = df_grp[col_acumulado].sum()
+    grupos_info.append((grupo, total_grupo, df_grp))
+
+grupos_info.sort(key=lambda x: x[1], reverse=True)
+
+for grupo, _, df_grp in grupos_info:
+    df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
+    if modo_exibicao == "Loja":
+        subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+        subtotal["Grupo"] = f"SUBTOTAL {grupo}"
+        subtotal["Loja"] = ""
+        blocos.append(df_grp_ord)
+        blocos.append(pd.DataFrame([subtotal]))
+    else:
+        subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+        subtotal["Grupo"] = f"SUBTOTAL {grupo}"
+        subtotal["Loja"] = ""
+        blocos.append(pd.DataFrame([subtotal]))
+
+# Junta tudo
+df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
+
+
+
+
+
+
+
 # ================================
 # Subtotais e ordenação
 # ================================
