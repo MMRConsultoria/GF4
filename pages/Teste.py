@@ -142,7 +142,8 @@ nome_col_acumulado = f"Acumulado Mês (01/{data_fim_dt.strftime('%m')} até {dat
 df_acumulado = df_acumulado.rename(columns={"Fat.Total": nome_col_acumulado})
 
 df_base = df_pivot.merge(df_acumulado, on=["Grupo", "Loja"], how="left")
-
+# Remove lojas com acumulado zero (sem venda no mês)
+df_base = df_base[df_base[nome_coluna_acumulado] != 0]
 # ================================
 # Subtotais e ordenação
 # ================================
