@@ -21,6 +21,7 @@ planilha_empresa = gc.open("Vendas diarias")
 # Carrega dados
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
 df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
+df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
 
 df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
 df_empresa["Grupo"] = df_empresa["Grupo"].str.strip()
@@ -40,6 +41,9 @@ df_vendas["Fat.Total"] = (
 )
 df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
 
+# Trata metas
+df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
+
 # Filtros
 data_min = df_vendas["Data"].min()
 data_max = df_vendas["Data"].max()
@@ -55,6 +59,24 @@ data_inicio_dt = pd.to_datetime(data_inicio)
 data_fim_dt = pd.to_datetime(data_fim)
 primeiro_dia_mes = data_fim_dt.replace(day=1)
 datas_periodo = pd.date_range(start=data_inicio_dt, end=data_fim_dt)
+
+# Nome da coluna de meta
+mes_extenso = data_fim_dt.strftime("%B").capitalize()
+coluna_meta = f"Meta {mes_extenso}"
+if coluna_meta in df_metas.columns:
+    df_metas[coluna_meta] = (
+        df_metas[coluna_meta]
+        .astype(str)
+        .str.replace("R$", "", regex=False)
+        .str.replace("(", "-", regex=False)
+        .str.replace(")", "", regex=False)
+        .str.replace(" ", "", regex=False)
+        .str.replace(".", "", regex=False)
+        .str.replace(",", ".", regex=False)
+        .astype(float)
+    )
+else:
+    df_metas[coluna_meta] = np.nan
 
 # Base combinada
 df_lojas_grupos = df_empresa[["Loja", "Grupo"]].drop_duplicates()
@@ -84,19 +106,13 @@ df_acumulado = df_acumulado.rename(columns={"Fat.Total": nome_col_acumulado})
 df_base = df_pivot.merge(df_acumulado, on=["Grupo", "Loja"], how="left")
 df_base = df_base[df_base[nome_col_acumulado] != 0]
 
-# ================================
 # Subtotais e ordenação
-# ================================
-
 col_acumulado = nome_col_acumulado
 colunas_valores = [col for col in df_base.columns if col not in ["Grupo", "Loja"]]
-
-# Cria linha de total geral
 linha_total = df_base[colunas_valores].sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
 linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
 
-# Agrupa grupos e ordena do maior para o menor total acumulado
 blocos = []
 grupos_info = []
 for grupo, df_grp in df_base.groupby("Grupo"):
@@ -105,23 +121,15 @@ for grupo, df_grp in df_base.groupby("Grupo"):
 
 grupos_info.sort(key=lambda x: x[1], reverse=True)
 
-# Ordena lojas dentro dos grupos e adiciona subtotal
 for grupo, _, df_grp in grupos_info:
-    # Ordena lojas por acumulado do maior para o menor
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
-
-    # Calcula subtotal do grupo
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
-    qtde_lojas = df_grp_ord["Loja"].nunique()
-    subtotal["Loja"] = f"Lojas: {qtde_lojas:02d}"
-
+    subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord)
-
     blocos.append(pd.DataFrame([subtotal]))
 
-# Concatena tudo
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
 # Percentuais
@@ -152,17 +160,22 @@ df_final.loc[filtro_grupos, "%Grupo"] = (
     df_final.loc[filtro_grupos, col_acumulado] / soma_total_geral
 ).round(4)
 
-# Ocultar coluna %LojaXGrupo se modo for Grupo
+# Junta a coluna Meta
+df_final = df_final.merge(
+    df_metas[["Loja", coluna_meta]].rename(columns={coluna_meta: "Meta"}),
+    on="Loja", how="left"
+)
+
+# Posiciona Meta ao lado do Acumulado
 colunas_chave = ["Grupo", "Loja"]
 colunas_valores = [col for col in df_final.columns if col not in colunas_chave]
-if modo_exibicao == "Grupo":
-    colunas_valores = [col for col in colunas_valores if col != "%LojaXGrupo"]
+if "Meta" in colunas_valores and col_acumulado in colunas_valores:
+    colunas_valores.remove("Meta")
+    idx = colunas_valores.index(col_acumulado)
+    colunas_valores.insert(idx + 1, "Meta")
 df_final = df_final[colunas_chave + colunas_valores]
 
-# ================================
-# Formatação correta para R$ e %
-# ================================
-
+# Formatação
 colunas_percentuais = ["%LojaXGrupo", "%Grupo"]
 
 def formatar_brasileiro_com_coluna(valor, coluna):
@@ -212,7 +225,6 @@ else:
             estilos.append([f"background-color: {cor}"] * len(row))
 
 # Exibição
-
 def aplicar_estilo_final(df, estilos_linha):
     def apply_row_style(row):
         return estilos_linha[row.name]
