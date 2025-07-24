@@ -115,7 +115,7 @@ with aba1:
 #===========================================
     # --- Metas ---
     df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
-    df_metas["Fat.Total"] = df_metas["Fat.Total"].apply(parse_valor)
+    df_metas["Meta"] = df_metas["Meta"].apply(parse_valor)
     df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
     df_metas["Grupo"] = df_metas["Grupo"].astype(str).str.strip().str.upper()
     df_metas = df_metas[df_metas["Loja"] != ""]
