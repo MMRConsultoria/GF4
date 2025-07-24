@@ -347,8 +347,9 @@ with aba4:
     ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
   
     # === FILTROS ===
-    # 🔹 Cria duas colunas lado a lado
-    col1, col2 = st.columns(2)
+    # 🔹 Cria 6 colunas lado a lado (ajuste os pesos se quiser mais espaço em alguns)
+    col1, col2, col3, col4, col5, col6 = st.columns([1.2, 1.2, 1.2, 1.5, 1.5, 1.5])
+
     
     with col1:
         anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
@@ -374,7 +375,20 @@ with aba4:
         meses_selecionados = st.selectbox("Mês:", options=meses_nomes_disponiveis, index=default_index, key="meses_aba3")
         meses_numeros = [meses_dict_invertido[meses_selecionados]]
 
+    with col3:
+        exibir_total = st.selectbox("Total:", ["Total Sim", "Total Não"])
+        exibir_total_bool = (exibir_total == "Total Sim")
+    with col4:
+        modo_visao = st.selectbox("Visão:", ["Por Loja", "Por Grupo"], key="visao_aba4")
     
+    with col5:
+        tipo_metrica = st.selectbox("Métrica:", ["Bruto", "Real", "Ambos"], key="metrica_aba4")
+    hoje = date.today()
+    with col6:
+        agrupamento = st.selectbox("Agrupamento:", ["Ano", "Mês", "Dia"], key="agrup_aba4")
+    
+    
+        meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados] 
    
     # Garantir que "hoje" seja do tipo date
     hoje = date.today()
@@ -395,22 +409,9 @@ with aba4:
 
     # Filtros laterais lado a lado
     # 🔄 Filtros reorganizados com selectbox estilizado
-    col1, col2, col3, col4 = st.columns([1.2, 2, 2, 2])  # mesma estrutura
+    #col1, col2, col3, col4 = st.columns([1.2, 2, 2, 2])  # mesma estrutura
     
-    with col1:
-        exibir_total = st.selectbox("Total:", ["Total Sim", "Total Não"])
-        exibir_total_bool = (exibir_total == "Total Sim")
-    with col2:
-        modo_visao = st.selectbox("Visão:", ["Por Loja", "Por Grupo"], key="visao_aba4")
-    
-    with col3:
-        tipo_metrica = st.selectbox("Métrica:", ["Bruto", "Real", "Ambos"], key="metrica_aba4")
-    hoje = date.today()
-    with col4:
-        agrupamento = st.selectbox("Agrupamento:", ["Ano", "Mês", "Dia"], key="agrup_aba4")
-    
-    
-        meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
+   
 
 
     # 📌 Define data_fim como a data mais recente do DataFrame
