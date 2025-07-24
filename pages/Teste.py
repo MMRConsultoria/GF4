@@ -244,6 +244,18 @@ df_final.loc[filtro_grupos, "%Grupo"] = (
     df_final.loc[filtro_grupos, col_acumulado] / soma_total_geral
 ).round(4)
 
+
+# Recalcula %Meta Atingida para subtotais e total
+mascara_subtotal = df_final["Grupo"].astype(str).str.startswith("SUBTOTAL")
+mascara_total = df_final["Grupo"] == "TOTAL"
+mascara_recalcular = mascara_subtotal | mascara_total
+
+df_final.loc[mascara_recalcular, "%Meta Atingida"] = (
+    df_final.loc[mascara_recalcular, col_acumulado] /
+    df_final.loc[mascara_recalcular, "Meta"]
+).replace([np.inf, -np.inf], np.nan).fillna(0).round(4)
+
+
 # Ocultar coluna %LojaXGrupo se modo for Grupo
 colunas_chave = ["Grupo", "Loja"]
 colunas_valores = [col for col in df_final.columns if col not in colunas_chave]
