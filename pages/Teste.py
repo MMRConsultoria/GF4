@@ -55,7 +55,7 @@ st.markdown("""
 # ================================
 # 3. Carrega dados de vendas
 # ================================
-aba_vendas = "Faturamento Diario"
+aba_vendas = "Fat Sistema Externo"
 df_vendas = pd.DataFrame(planilha_empresa.worksheet(aba_vendas).get_all_records())
 
 df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], dayfirst=True, errors="coerce")
