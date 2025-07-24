@@ -243,15 +243,15 @@ for _, row in df_final_com_subtotal.iterrows():
 # Função de estilo por linha
 # ================================
 def aplicar_estilo_linha(row):
-    estilo = estilo_linhas[row.name]
-    if estilo == "total":
+    grupo = row["Grupo"]
+    if grupo == "TOTAL":
         return ["background-color: #eeeeee; font-weight: bold"] * len(row)
-    elif estilo == "subtotal":
+    elif isinstance(grupo, str) and grupo.startswith("SUBTOTAL"):
         return ["background-color: #ffe599; font-weight: bold"] * len(row)
-    elif estilo == "separador":
+    elif row["Loja"] == "":
         return ["background-color: #f9f9f9"] * len(row)
     else:
-        cor = cores_grupos[estilo]
+        cor = cores_grupos[estilo_linhas[row.name]]
         return [f"background-color: {cor}"] * len(row)
 
 # ================================
