@@ -141,6 +141,8 @@ with aba[0]:
 
     df_empresa["Grupo"] = df_empresa["Grupo"].astype(str).str.strip().str.upper()
     df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
+    df_anos = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
+    df_anos["Data"] = pd.to_datetime(df_anos["Data"], errors="coerce", dayfirst=True)
     df_anos["Grupo"] = df_anos["Grupo"].str.split("-").str[0].str.strip()
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title()
     df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower().str.title()
