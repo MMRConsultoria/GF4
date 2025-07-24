@@ -93,7 +93,18 @@ df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
 
 # Padroniza colunas da aba Metas
 df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
-df_metas["Mês"] = df_metas["Mês"].astype(str).str.zfill(2)
+# Converte mês texto para número (ex: Jan -> 01)
+mapa_meses = {
+    "JAN": "01", "FEV": "02", "MAR": "03", "ABR": "04", "MAI": "05", "JUN": "06",
+    "JUL": "07", "AGO": "08", "SET": "09", "OUT": "10", "NOV": "11", "DEZ": "12"
+}
+df_metas["Mês"] = (
+    df_metas["Mês"]
+    .astype(str)
+    .str.strip()
+    .str.upper()
+    .map(mapa_meses)
+)
 df_metas["Ano"] = df_metas["Ano"].astype(str).str.strip()
 
 # Trata os valores da coluna Meta
