@@ -140,14 +140,13 @@ df_base = df_base.merge(
 df_base["Meta"] = df_base["Meta"].fillna(0)
 
 # ================================
-# Coluna %Meta Atingida com cor
+# Coluna %Meta Atingida
 # ================================
-from calendar import monthrange
-
-# Número de dias no mês de referência
-# Calcula % da meta total já atingida
-df_base["%Meta Atingida"] = df_base[nome_col_acumulado] / df_base["Meta"]
-df_base["%Meta Atingida"] = df_base["%Meta Atingida"].replace([np.inf, -np.inf], np.nan).fillna(0).round(4)
+if modo_exibicao == "Loja":
+    df_base["%Meta Atingida"] = df_base[nome_col_acumulado] / df_base["Meta"]
+    df_base["%Meta Atingida"] = df_base["%Meta Atingida"].replace([np.inf, -np.inf], np.nan).fillna(0).round(4)
+else:
+    df_base["%Meta Atingida"] = ""
 # Reorganiza a coluna Meta para vir após o acumulado
 col_acumulado = nome_col_acumulado
 colunas_base = ["Grupo", "Loja"]
