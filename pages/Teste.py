@@ -245,17 +245,19 @@ df_final.loc[filtro_grupos, "%Grupo"] = (
 ).round(4)
 
 
-# Recalcula %Meta Atingida para subtotais e total
-mascara_subtotal = df_final["Grupo"].astype(str).str.startswith("SUBTOTAL")
-mascara_total = df_final["Grupo"] == "TOTAL"
-mascara_recalcular = mascara_subtotal | mascara_total
+# Recalcula %Meta Atingida apenas se modo for Loja
+if modo_exibicao == "Loja":
+    mascara_subtotal = df_final["Grupo"].astype(str).str.startswith("SUBTOTAL")
+    mascara_total = df_final["Grupo"] == "TOTAL"
+    mascara_recalcular = mascara_subtotal | mascara_total
 
-df_final.loc[mascara_recalcular, "%Meta Atingida"] = (
-    df_final.loc[mascara_recalcular, col_acumulado] /
-    df_final.loc[mascara_recalcular, "Meta"]
-).replace([np.inf, -np.inf], np.nan).fillna(0).round(4)
-
-
+    df_final.loc[mascara_recalcular, "%Meta Atingida"] = (
+        df_final.loc[mascara_recalcular, col_acumulado] /
+        df_final.loc[mascara_recalcular, "Meta"]
+    ).replace([np.inf, -np.inf], np.nan).fillna(0).round(4)
+else:
+    # Se estiver no modo Grupo, zera ou oculta a coluna %Meta Atingida
+    df_final["%Meta Atingida"] = ""
 # Ocultar coluna %LojaXGrupo se modo for Grupo
 colunas_chave = ["Grupo", "Loja"]
 colunas_valores = [col for col in df_final.columns if col not in colunas_chave]
