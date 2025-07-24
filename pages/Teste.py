@@ -55,8 +55,12 @@ st.markdown("""
 # ================================
 # 3. Carrega dados de vendas
 # ================================
+
 aba_vendas = "Fat Sistema Externo"
 df_vendas = pd.DataFrame(planilha_empresa.worksheet(aba_vendas).get_all_records())
+
+# 🔧 Limpa os nomes das colunas
+df_vendas.columns = df_vendas.columns.str.strip()
 
 df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], dayfirst=True, errors="coerce")
 df_vendas["Loja"] = df_vendas["Loja"].astype(str).str.strip().str.upper()
@@ -72,7 +76,6 @@ df_vendas["Fat.Total"] = (
     .str.replace(",", ".")
     .astype(float)
 )
-
 # ================================
 # 4. Seleção de intervalo de datas
 # ================================
