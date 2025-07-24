@@ -88,7 +88,11 @@ with col1:
         max_value=data_max
     )
 with col2:
-    st.write("🔜 Filtros adicionais em breve")
+    lojas_unicas = sorted(df_vendas["Loja"].unique())
+    grupos_unicos = sorted(df_vendas["Grupo"].unique())
+
+    lojas_selecionadas = st.multiselect("Filtrar por Loja(s):", options=lojas_unicas)
+    grupos_selecionados = st.multiselect("Filtrar por Grupo(s):", options=grupos_unicos)
 
 data_inicio_dt = pd.to_datetime(data_inicio)
 data_fim_dt = pd.to_datetime(data_fim)
