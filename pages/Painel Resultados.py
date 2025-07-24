@@ -485,7 +485,7 @@ with aba4:
         pass
     
     # 🧠 Garante seleção válida
-    anos_validos = [a for a in ano_opcao if isinstance(a, int)]
+    anos_validos = [ano_opcao] if isinstance(ano_opcao, int) else []
 
     # 📅 Define intervalo padrão com base no agrupamento
     if agrupamento == "Ano" and anos_validos:
