@@ -84,7 +84,7 @@ df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
 data_min = df_vendas["Data"].min()
 data_max = df_vendas["Data"].max()
 
-col1, col2 = st.columns([2, 3])  # col1 = calendário, col2 = futuros filtros
+col1, col2 = st.columns([2, 3])
 
 with col1:
     data_inicio, data_fim = st.date_input(
@@ -96,19 +96,25 @@ with col1:
 
 with col2:
     st.write("🔜 Aqui virão os filtros: Loja, Grupo, etc")
-    # exemplo:
-    # loja_selecionada = st.multiselect("Loja", options=sorted(df_vendas["Loja"].unique()))
+
 # ================================
-# 5. Filtro e pivoteamento
+# 5 e 6. Filtro, colunas diárias e acumulado
 # ================================
+
+# Converte datas
+data_inicio_dt = pd.to_datetime(data_inicio)
+data_fim_dt = pd.to_datetime(data_fim)
+primeiro_dia_mes = data_fim_dt.replace(day=1)
+
+# ----------- Filtra para colunas diárias ----------
 df_filtrado = df_vendas[
-    (df_vendas["Data"] >= pd.to_datetime(data_inicio)) & 
-    (df_vendas["Data"] <= pd.to_datetime(data_fim))
+    (df_vendas["Data"] >= data_inicio_dt) &
+    (df_vendas["Data"] <= data_fim_dt)
 ]
 
-df_agrupado = df_filtrado.groupby(["Data", "Loja", "Grupo"], as_index=False)["Fat.Total"].sum()
+df_agrupado_dias = df_filtrado.groupby(["Data", "Loja", "Grupo"], as_index=False)["Fat.Total"].sum()
 
-df_pivot = df_agrupado.pivot_table(
+df_pivot = df_agrupado_dias.pivot_table(
     index=["Grupo", "Loja"],
     columns="Data",
     values="Fat.Total",
@@ -116,40 +122,45 @@ df_pivot = df_agrupado.pivot_table(
     fill_value=0
 ).reset_index()
 
-# Renomeia colunas com a data
+# Renomeia colunas de data
 df_pivot.columns = [
-    col if isinstance(col, str) else f"Fat Total ({col.strftime('%d/%m/%Y')})"
+    col if isinstance(col, str) else col.strftime("%d/%m/%Y")
     for col in df_pivot.columns
 ]
 
-# ================================
-# 6. Reordena colunas e adiciona total
-# ================================
+# ----------- Calcula acumulado do mês até data final ----------
+df_mes = df_vendas[
+    (df_vendas["Data"] >= primeiro_dia_mes) &
+    (df_vendas["Data"] <= data_fim_dt)
+]
 
-# Garante que Grupo e Loja fiquem no início
-colunas_existentes = df_pivot.columns.tolist()
-colunas_chave = [col for col in ["Grupo", "Loja"] if col in colunas_existentes]
-colunas_restantes = [col for col in colunas_existentes if col not in colunas_chave]
-df_final = df_pivot[colunas_chave + colunas_restantes]
+df_acumulado = df_mes.groupby(["Grupo", "Loja"], as_index=False)["Fat.Total"].sum()
+nome_coluna_acumulado = f"Acumulado Mês (01/{data_fim_dt.strftime('%m')} até {data_fim_dt.strftime('%d/%m')})"
+df_acumulado = df_acumulado.rename(columns={"Fat.Total": nome_coluna_acumulado})
 
-# Total geral (mantém ordem correta das colunas)
-colunas_valores = [col for col in df_final.columns if col not in ["Grupo", "Loja"]]
+# ----------- Junta diário + acumulado ----------
+df_final = df_pivot.merge(df_acumulado, on=["Grupo", "Loja"], how="left")
+
+# Ordena colunas: Grupo, Loja, dias..., acumulado
+colunas_chave = ["Grupo", "Loja"]
+colunas_dias = sorted([col for col in df_pivot.columns if col not in colunas_chave], key=lambda x: datetime.strptime(x, "%d/%m/%Y"))
+colunas_finais = colunas_chave + colunas_dias + [nome_coluna_acumulado]
+df_final = df_final[colunas_finais]
+
+# ----------- Total geral -----------
 total_geral_dict = {
     "Grupo": "TOTAL",
     "Loja": "",
 }
-total_geral_dict.update(df_final[colunas_valores].sum(numeric_only=True).to_dict())
-
-# Adiciona linha de total no início
+total_geral_dict.update(df_final.drop(columns=colunas_chave).sum(numeric_only=True).to_dict())
 df_final = pd.concat([pd.DataFrame([total_geral_dict]), df_final], ignore_index=True)
-df_final = df_final[["Grupo", "Loja"] + colunas_valores]
 
 # ================================
 # 7. Exibição final
 # ================================
-st.markdown("### 📊 Resumo por Loja - Coluna por Dia")
+st.markdown("### 📊 Resumo por Loja - Coluna por Dia + Acumulado do Mês")
 st.dataframe(
-    df_final.style.format({col: "R$ {:,.2f}" for col in df_final.columns if "Fat Total" in col}),
+    df_final.style.format({col: "R$ {:,.2f}" for col in df_final.columns if col not in ["Grupo", "Loja"]}),
     use_container_width=True,
     height=600
 )
