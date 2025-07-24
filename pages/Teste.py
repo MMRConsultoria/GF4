@@ -150,7 +150,7 @@ df_base = df_base[df_base[nome_col_acumulado] != 0]
 # ================================
 # Filtro: Loja ou Grupo
 # ================================
-modo_exibicao = st.selectbox("🔍 Ver por:", ["Loja", "Grupo"])
+
 
 # Recalcula os blocos conforme a seleção
 col_acumulado = nome_col_acumulado
