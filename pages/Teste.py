@@ -115,7 +115,10 @@ df_final = df_pivot.reset_index().merge(df_empresa[["Loja", "Grupo"]], on="Loja"
 # Reorganiza colunas
 cols = ["Grupo", "Loja"] + [col for col in df_final.columns if col not in ["Grupo", "Loja"]]
 df_final = df_final[cols]
-
+total_geral = df_final.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+total_geral["Grupo"] = "TOTAL"
+total_geral["Loja"] = ""
+df_final = pd.concat([pd.DataFrame([total_geral]), df_final], ignore_index=True)
 # ================================
 # 6. Exibição
 # ================================
