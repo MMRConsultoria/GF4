@@ -174,18 +174,49 @@ for grupo, _, df_grp in grupos_info:
 
 # Junta tudo (total + blocos por grupo)
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
+# ================================
+# 9. Cálculo das colunas %LojaXGrupo e %Grupo
+# ================================
+
+# Identifica a coluna do acumulado (a última)
+col_acumulado = [col for col in df_final.columns if "Acumulado Mês" in col][0]
+
+# Filtra apenas linhas de loja reais (nem total nem subtotal)
+filtro_lojas = (
+    (df_final["Loja"] != "") &
+    (~df_final["Grupo"].str.startswith("SUBTOTAL")) &
+    (df_final["Grupo"] != "TOTAL")
+)
+df_lojas_reais = df_final[filtro_lojas].copy()
+
+# Soma por grupo
+soma_por_grupo = df_lojas_reais.groupby("Grupo")[col_acumulado].transform("sum")
+
+# Soma total geral
+soma_total_geral = df_lojas_reais[col_acumulado].sum()
+
+# Cria as duas novas colunas
+df_final.loc[filtro_lojas, "%LojaXGrupo"] = (
+    df_lojas_reais[col_acumulado] / soma_por_grupo
+).fillna(0)
+
+df_final.loc[filtro_lojas, "%Grupo"] = (
+    soma_por_grupo / soma_total_geral
+).fillna(0)
 
 # 🔧 Reordena: Grupo e Loja à esquerda
 colunas_chave = ["Grupo", "Loja"]
 colunas_restantes = [col for col in df_final.columns if col not in colunas_chave]
 df_final = df_final[colunas_chave + colunas_restantes]
 
-# 🔧 Agora sim define colunas de valor
-colunas_valores = [col for col in df_final.columns if col not in colunas_chave]
+# Atualiza colunas de valores
+colunas_valores = [col for col in df_final.columns if col not in ["Grupo", "Loja"]]
 
-# Formata valores
+# Reaplica formatação brasileira para R$ e percentual
 def formatar_brasileiro(valor):
     try:
+        if isinstance(valor, float) and 0 <= valor <= 1:
+            return f"{valor:.2%}".replace(".", ",")
         return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     except:
         return valor
