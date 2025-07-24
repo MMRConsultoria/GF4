@@ -347,27 +347,32 @@ with aba4:
     ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
   
     # === FILTROS ===
-    anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
-    ultimo_ano = anos_disponiveis[0] if anos_disponiveis else datetime.today().year
-    ano_opcao = st.selectbox("📅 Selecione o ano:", options=anos_disponiveis, index=0, key="ano_aba3")
+    # 🔹 Cria duas colunas lado a lado
+    col1, col2 = st.columns(2)
     
-    df_filtrado = df_anos[df_anos["Ano"] == ano_opcao].copy()
-    df_filtrado["Grupo"] = df_filtrado["Grupo"].astype(str).str.strip().str.upper()
-    df_filtrado["Loja"] = df_filtrado["Loja"].astype(str).str.strip().str.lower().str.title()
+    with col1:
+        anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
+        ultimo_ano = anos_disponiveis[0] if anos_disponiveis else datetime.today().year
+        ano_opcao = st.selectbox("📅 Selecione o ano:", options=anos_disponiveis, index=0, key="ano_aba3")
     
-    meses_dict = {
-        1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
-        7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
-    }
-    meses_dict_invertido = {v: k for k, v in meses_dict.items()}
-    
-    meses_disponiveis = sorted(df_filtrado["Mês Num"].unique())
-    meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
-    mes_atual_nome = meses_dict[datetime.today().month]
-    default_index = meses_nomes_disponiveis.index(mes_atual_nome) if mes_atual_nome in meses_nomes_disponiveis else 0
-    
-    meses_selecionados = st.selectbox("Mês:", options=meses_nomes_disponiveis, index=default_index, key="meses_aba3")
-    meses_numeros = [meses_dict_invertido[meses_selecionados]]
+        df_filtrado = df_anos[df_anos["Ano"] == ano_opcao].copy()
+        df_filtrado["Grupo"] = df_filtrado["Grupo"].astype(str).str.strip().str.upper()
+        df_filtrado["Loja"] = df_filtrado["Loja"].astype(str).str.strip().str.lower().str.title()
+
+    with col2:    
+        meses_dict = {
+            1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
+            7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
+        }
+        meses_dict_invertido = {v: k for k, v in meses_dict.items()}
+        
+        meses_disponiveis = sorted(df_filtrado["Mês Num"].unique())
+        meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
+        mes_atual_nome = meses_dict[datetime.today().month]
+        default_index = meses_nomes_disponiveis.index(mes_atual_nome) if mes_atual_nome in meses_nomes_disponiveis else 0
+        
+        meses_selecionados = st.selectbox("Mês:", options=meses_nomes_disponiveis, index=default_index, key="meses_aba3")
+        meses_numeros = [meses_dict_invertido[meses_selecionados]]
 
     
    
