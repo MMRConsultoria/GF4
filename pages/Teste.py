@@ -219,13 +219,16 @@ colunas_valores = [col for col in df_final.columns if col not in ["Grupo", "Loja
 # Reaplica formatação brasileira para R$ e percentual
 def formatar_brasileiro(valor):
     try:
+        if pd.isna(valor):
+            return ""
         if isinstance(valor, float):
             if 0 <= valor <= 1:
                 return f"{valor:.2%}".replace(".", ",")
             return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         return valor
     except:
-        return valor
+        return ""
+
 df_formatado = df_final.copy()
 df_formatado[colunas_valores] = df_formatado[colunas_valores].applymap(formatar_brasileiro)
 
