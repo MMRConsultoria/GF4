@@ -88,15 +88,7 @@ with col1:
         max_value=data_max
     )
 with col2:
-    opcao_filtro = st.selectbox("Filtrar por:", ["Nenhum", "Grupo", "Loja"])
-
-    grupos_selecionados = []
-    lojas_selecionadas = []
-
-    if opcao_filtro == "Grupo":
-        grupos_selecionados = st.multiselect("Selecione o(s) Grupo(s):", sorted(df_vendas["Grupo"].unique()))
-    elif opcao_filtro == "Loja":
-        lojas_selecionadas = st.multiselect("Selecione a(s) Loja(s):", sorted(df_vendas["Loja"].unique()))
+    opcao_filtro = st.selectbox("Filtrar por:", ["Loja","Grupo"])
         
 data_inicio_dt = pd.to_datetime(data_inicio)
 data_fim_dt = pd.to_datetime(data_fim)
@@ -203,6 +195,18 @@ if grupos_selecionados:
 
 elif lojas_selecionadas:
     df_final = df_final[df_final["Loja"].isin(lojas_selecionadas + [""])]  # Inclui subtotais e total
+
+# ====================================
+# 🔎 Aplica filtro automático baseado no selectbox
+# ====================================
+if opcao_filtro == "Grupo":
+    # Mantém apenas subtotais e total
+    df_final = df_final[df_final["Grupo"].str.startswith("SUBTOTAL") | (df_final["Grupo"] == "TOTAL")]
+
+elif opcao_filtro == "Loja":
+    # Mantém tudo como está (lojas + subtotais + total)
+    pass  # Nenhuma modificação necessária
+
 
 
 # ================================
