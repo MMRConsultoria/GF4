@@ -211,8 +211,15 @@ for _, row in df_final.iterrows():
 # Exibe
 # ================================
 st.markdown("### 📊 Relatório Final com Estilo")
+from pandas.io.formats.style import Styler
+
+def aplicar_estilo_final(df, estilos_linha):
+    def apply_row_style(row):
+        return estilos_linha[row.name]
+    return df.style.apply(apply_row_style, axis=1)
+
 st.dataframe(
-    df_formatado.style.apply(lambda _: estilos, axis=None),
+    aplicar_estilo_final(df_formatado, estilos),
     use_container_width=True,
     height=750
 )
