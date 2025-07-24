@@ -171,11 +171,18 @@ for grupo, _, df_grp in grupos_info:
     blocos.append(df_grp_ord)
     blocos.append(pd.DataFrame([subtotal]))
 
+# Junta tudo (total + blocos por grupo)
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
-# ================================
-# Estilo para exibição
-# ================================
+# 🔧 Reordena: Grupo e Loja à esquerda
+colunas_chave = ["Grupo", "Loja"]
+colunas_restantes = [col for col in df_final.columns if col not in colunas_chave]
+df_final = df_final[colunas_chave + colunas_restantes]
+
+# 🔧 Agora sim define colunas de valor
+colunas_valores = [col for col in df_final.columns if col not in colunas_chave]
+
+# Formata valores
 def formatar_brasileiro(valor):
     try:
         return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -184,6 +191,7 @@ def formatar_brasileiro(valor):
 
 df_formatado = df_final.copy()
 df_formatado[colunas_valores] = df_formatado[colunas_valores].applymap(formatar_brasileiro)
+
 
 cores_grupos = ["#dce6f1", "#d9ead3"]
 estilos = []
