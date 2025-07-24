@@ -86,9 +86,13 @@ data_max = df_vendas["Data"].max()
 
 col1, col2 = st.columns(2)
 with col1:
-    data_inicio = st.date_input("Data Inicial", value=data_max, min_value=data_min, max_value=data_max)
+    data_inicio, data_fim = st.date_input(
+        "Selecione o intervalo de datas:",
+        value=(data_max, data_max),
+        min_value=data_min,
+        max_value=data_max
 with col2:
-    data_fim = st.date_input("Data Final", value=data_max, min_value=data_min, max_value=data_max)
+    st.write("🔜 Aqui virão os filtros: Loja, Grupo, etc")        
 
 # ================================
 # 5. Filtro e pivoteamento
