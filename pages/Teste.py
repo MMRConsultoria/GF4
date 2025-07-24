@@ -151,7 +151,7 @@ dias_mes = monthrange(data_fim_dt.year, data_fim_dt.month)[1]
 dia_hoje = data_fim_dt.day
 
 # Meta proporcional ideal até hoje
-df_base["Meta Até Hoje"] = (df_base["Meta"] / dias_mes) * dia_hoje
+
 
 # Percentual atingido sobre a meta proporcional
 df_base["%Meta Atingida"] = df_base[nome_col_acumulado] / df_base["Meta Até Hoje"]
@@ -263,7 +263,7 @@ df_final = df_final[colunas_chave + colunas_valores]
 # Formatação correta para R$ e %
 # ================================
 
-colunas_percentuais = ["%LojaXGrupo", "%Grupo"]
+colunas_percentuais = ["%LojaXGrupo", "%Grupo", "%Meta Atingida"]
 
 def formatar_brasileiro_com_coluna(valor, coluna):
     try:
@@ -279,6 +279,7 @@ def formatar_brasileiro_com_coluna(valor, coluna):
 df_formatado = df_final.copy()
 for col in colunas_valores:
     df_formatado[col] = df_formatado[col].apply(lambda x: formatar_brasileiro_com_coluna(x, col))
+
 
 # Estilo
 cores_alternadas = ["#dce6f1", "#d9ead3"]
