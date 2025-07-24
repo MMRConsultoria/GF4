@@ -84,16 +84,20 @@ df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
 data_min = df_vendas["Data"].min()
 data_max = df_vendas["Data"].max()
 
-col1, col2 = st.columns(2)
+col1, col2 = st.columns([2, 3])  # col1 = calendário, col2 = futuros filtros
+
 with col1:
     data_inicio, data_fim = st.date_input(
         "Selecione o intervalo de datas:",
         value=(data_max, data_max),
         min_value=data_min,
         max_value=data_max
-with col2:
-    st.write("🔜 Aqui virão os filtros: Loja, Grupo, etc")        
+    )
 
+with col2:
+    st.write("🔜 Aqui virão os filtros: Loja, Grupo, etc")
+    # exemplo:
+    # loja_selecionada = st.multiselect("Loja", options=sorted(df_vendas["Loja"].unique()))
 # ================================
 # 5. Filtro e pivoteamento
 # ================================
