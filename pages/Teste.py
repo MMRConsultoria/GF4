@@ -125,19 +125,24 @@ df_pivot.columns = [
 # ================================
 # 6. Reordena colunas e adiciona total
 # ================================
+
 # Garante que Grupo e Loja fiquem no início
 colunas_existentes = df_pivot.columns.tolist()
 colunas_chave = [col for col in ["Grupo", "Loja"] if col in colunas_existentes]
 colunas_restantes = [col for col in colunas_existentes if col not in colunas_chave]
 df_final = df_pivot[colunas_chave + colunas_restantes]
 
+# Total geral (mantém ordem correta das colunas)
+colunas_valores = [col for col in df_final.columns if col not in ["Grupo", "Loja"]]
+total_geral_dict = {
+    "Grupo": "TOTAL",
+    "Loja": "",
+}
+total_geral_dict.update(df_final[colunas_valores].sum(numeric_only=True).to_dict())
 
-# Total geral
-colunas_para_remover = [col for col in ["Grupo", "Loja"] if col in df_final.columns]
-total_geral = df_final.drop(columns=colunas_para_remover).sum(numeric_only=True)
-total_geral["Grupo"] = "TOTAL"
-total_geral["Loja"] = ""
-df_final = pd.concat([pd.DataFrame([total_geral]), df_final], ignore_index=True)
+# Adiciona linha de total no início
+df_final = pd.concat([pd.DataFrame([total_geral_dict]), df_final], ignore_index=True)
+df_final = df_final[["Grupo", "Loja"] + colunas_valores]
 
 # ================================
 # 7. Exibição final
