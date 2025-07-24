@@ -687,17 +687,11 @@ with aba4:
                     tabela_final = tabela_final[cols]
         
         # Coloca a coluna Grupo antes da coluna Loja
-        cols = ["Grupo", "Loja"] + [col for col in tabela_final.columns if col not in ["Grupo", "Loja"]]
-        tabela_final = tabela_final[cols]
+        if all(col in tabela_final.columns for col in ["Grupo", "Loja"]):
+            cols = ["Grupo", "Loja"] + [col for col in tabela_final.columns if col not in ["Grupo", "Loja"]]
+            tabela_final = tabela_final[cols]
         
-        # (Opcional) se quiser manter o índice por loja, pode reativar isso:
-        # tabela_final = tabela_final.set_index("Loja")
-
-
-
-
-    
-
+      
     elif modo_visao == "Por Grupo":
         tabela = tabela.fillna(0)
         tabela.index.name = "Grupo"
