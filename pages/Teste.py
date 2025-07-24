@@ -185,24 +185,16 @@ for grupo, _, df_grp in grupos_info:
 # Junta tudo
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
-
-
-
-
-
-
 # ================================
-# Subtotais e ordenação
+# Subtotais e ordenação com base no modo exibicao
 # ================================
 col_acumulado = nome_col_acumulado
 colunas_valores = [col for col in df_base.columns if col not in ["Grupo", "Loja"]]
 
-# Total geral
 linha_total = df_base[colunas_valores].sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
 linha_total["Loja"] = ""
 
-# Subtotais
 blocos = []
 grupos_info = []
 for grupo, df_grp in df_base.groupby("Grupo"):
@@ -213,14 +205,20 @@ grupos_info.sort(key=lambda x: x[1], reverse=True)
 
 for grupo, _, df_grp in grupos_info:
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
-    subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
-    subtotal["Grupo"] = f"SUBTOTAL {grupo}"
-    subtotal["Loja"] = ""
-    blocos.append(df_grp_ord)
-    blocos.append(pd.DataFrame([subtotal]))
+    if modo_exibicao == "Loja":
+        subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+        subtotal["Grupo"] = f"SUBTOTAL {grupo}"
+        subtotal["Loja"] = ""
+        blocos.append(df_grp_ord)
+        blocos.append(pd.DataFrame([subtotal]))
+    else:  # Somente os subtotais por grupo
+        subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+        subtotal["Grupo"] = f"SUBTOTAL {grupo}"
+        subtotal["Loja"] = ""
+        blocos.append(pd.DataFrame([subtotal]))
 
-# Junta tudo (total + blocos por grupo)
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
+
 
 # ================================
 # Cálculo das colunas %LojaXGrupo e %Grupo
