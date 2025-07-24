@@ -157,7 +157,7 @@ colunas_finais = colunas_chave + colunas_dias + [nome_coluna_acumulado]
 df_final = df_final[colunas_finais]
 
 # ================================
-# 7. Subtotal por grupo + total geral
+# 7. Subtotal por grupo + total geral + ordenação por acumulado
 # ================================
 
 # Calcula total geral
@@ -170,21 +170,37 @@ linha_total = pd.DataFrame([total_geral_dict])
 
 # Remove total e ordena por grupo/loja
 df_sem_total = df_final.copy()
-df_sem_total = df_sem_total.sort_values(by=["Grupo", "Loja"])
 
-# Subtotais por grupo
-linhas_com_subtotais = []
+# Nome da coluna de acumulado (última da lista de colunas)
+coluna_acumulado = [col for col in df_final.columns if "Acumulado Mês" in col][0]
 
+# Subtotais e ordenação
+blocos_ordenados = []
+
+# Calcula subtotal por grupo e ordena os grupos do maior para o menor
+grupos_info = []
 for grupo, grupo_df in df_sem_total.groupby("Grupo"):
-    linhas_com_subtotais.append(grupo_df)
+    subtotal_grupo = grupo_df[coluna_acumulado].sum()
+    grupos_info.append((grupo, subtotal_grupo, grupo_df))
 
-    subtotal = grupo_df.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+# Ordena os grupos pelo subtotal do acumulado
+grupos_info.sort(key=lambda x: x[1], reverse=True)
+
+# Monta blocos ordenados
+for grupo, _, grupo_df in grupos_info:
+    # Ordena lojas do grupo pelo acumulado
+    lojas_ordenadas = grupo_df.sort_values(by=coluna_acumulado, ascending=False)
+
+    # Subtotal da linha
+    subtotal = lojas_ordenadas.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     subtotal["Grupo"] = grupo
     subtotal["Loja"] = "SUBTOTAL"
-    linhas_com_subtotais.append(pd.DataFrame([subtotal]))
+
+    blocos_ordenados.append(lojas_ordenadas)
+    blocos_ordenados.append(pd.DataFrame([subtotal]))
 
 # Junta com total geral no topo
-df_final_com_subtotal = pd.concat([linha_total] + linhas_com_subtotais, ignore_index=True)
+df_final_com_subtotal = pd.concat([linha_total] + blocos_ordenados, ignore_index=True)
 
 # ================================
 # 8. Exibição final com destaque para subtotais
