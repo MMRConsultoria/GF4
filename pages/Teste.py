@@ -130,7 +130,44 @@ for grupo, _, df_grp in grupos_info:
         blocos.append(df_grp_ord)
     blocos.append(pd.DataFrame([subtotal]))
 
+# Concatena tudo
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
+
+# ================================
+# Carrega a aba de Metas
+# ================================
+df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
+df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
+df_metas["Mês"] = df_metas["Mês"].astype(str).str.zfill(2)
+df_metas["Ano"] = df_metas["Ano"].astype(str)
+
+# Pega mês e ano do filtro
+mes_filtro = data_fim_dt.strftime("%m")
+ano_filtro = data_fim_dt.strftime("%Y")
+
+# Filtra metas do mês/ano
+df_metas_filtrado = df_metas[(df_metas["Mês"] == mes_filtro) & (df_metas["Ano"] == ano_filtro)].copy()
+
+# Trata os valores da meta
+df_metas_filtrado["Meta"] = (
+    df_metas_filtrado["Meta"]
+    .astype(str)
+    .str.replace("R$", "", regex=False)
+    .str.replace("(", "-", regex=False)
+    .str.replace(")", "", regex=False)
+    .str.replace(" ", "", regex=False)
+    .str.replace(".", "", regex=False)
+    .str.replace(",", ".", regex=False)
+)
+df_metas_filtrado["Meta"] = pd.to_numeric(df_metas_filtrado["Meta"], errors="coerce").fillna(0)
+
+# Junta com df_final
+df_final = df_final.merge(
+    df_metas_filtrado[["Loja", "Meta"]],
+    on="Loja",
+    how="left"
+)
+df_final["Meta"] = df_final["Meta"].fillna(0)
 
 # Percentuais
 df_final["%LojaXGrupo"] = np.nan
@@ -160,12 +197,6 @@ df_final.loc[filtro_grupos, "%Grupo"] = (
     df_final.loc[filtro_grupos, col_acumulado] / soma_total_geral
 ).round(4)
 
-# Junta a coluna Meta
-df_final = df_final.merge(
-    df_metas[["Loja", coluna_meta]].rename(columns={coluna_meta: "Meta"}),
-    on="Loja", how="left"
-)
-
 # Posiciona Meta ao lado do Acumulado
 colunas_chave = ["Grupo", "Loja"]
 colunas_valores = [col for col in df_final.columns if col not in colunas_chave]
@@ -174,6 +205,7 @@ if "Meta" in colunas_valores and col_acumulado in colunas_valores:
     idx = colunas_valores.index(col_acumulado)
     colunas_valores.insert(idx + 1, "Meta")
 df_final = df_final[colunas_chave + colunas_valores]
+
 
 # Formatação
 colunas_percentuais = ["%LojaXGrupo", "%Grupo"]
