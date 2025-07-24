@@ -213,11 +213,13 @@ for _, row in df_final.iterrows():
 # ====================================
 st.markdown("### 📊 Relatório Final com Estilo")
 
+# Define função ANTES de chamar
 def aplicar_estilo_final(df, estilos_linha):
     def apply_row_style(row):
         return estilos_linha[row.name]
     return df.style.apply(apply_row_style, axis=1)
 
+# Agora exibe o dataframe formatado com estilo
 st.dataframe(
     aplicar_estilo_final(df_formatado, estilos),
     use_container_width=True,
