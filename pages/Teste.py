@@ -88,16 +88,16 @@ with col1:
         max_value=data_max
     )
 with col2:
-    tipo_filtro = st.radio("Filtrar por:", ["Nenhum", "Grupo", "Loja"], horizontal=True)
+    opcao_filtro = st.selectbox("Filtrar por:", ["Nenhum", "Grupo", "Loja"])
 
     grupos_selecionados = []
     lojas_selecionadas = []
 
-    if tipo_filtro == "Grupo":
+    if opcao_filtro == "Grupo":
         grupos_selecionados = st.multiselect("Selecione o(s) Grupo(s):", sorted(df_vendas["Grupo"].unique()))
-    elif tipo_filtro == "Loja":
+    elif opcao_filtro == "Loja":
         lojas_selecionadas = st.multiselect("Selecione a(s) Loja(s):", sorted(df_vendas["Loja"].unique()))
-
+        
 data_inicio_dt = pd.to_datetime(data_inicio)
 data_fim_dt = pd.to_datetime(data_fim)
 primeiro_dia_mes = data_fim_dt.replace(day=1)
@@ -184,7 +184,7 @@ for grupo, _, df_grp in grupos_info:
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
 # ====================================
-#  🔎 FILTRA SAÍDA FINAL COM BASE NA ESCOLHA
+#  🔎 Aplica filtro final ao df_final
 # ====================================
 if grupos_selecionados:
     blocos_filtrados = []
@@ -193,7 +193,7 @@ if grupos_selecionados:
         if not subtotal.empty:
             blocos_filtrados.append(subtotal)
 
-    # Total geral com lojas desses grupos
+    # Recalcula total geral com lojas dos grupos filtrados
     lojas_dos_grupos = df_base[df_base["Grupo"].isin(grupos_selecionados)]
     linha_total = lojas_dos_grupos[colunas_valores].sum(numeric_only=True)
     linha_total["Grupo"] = "TOTAL"
@@ -202,9 +202,8 @@ if grupos_selecionados:
     df_final = pd.concat([pd.DataFrame([linha_total])] + blocos_filtrados, ignore_index=True)
 
 elif lojas_selecionadas:
-    df_final = df_final[df_final["Loja"].isin(lojas_selecionadas + [""])]  # Mantém subtotais e total
+    df_final = df_final[df_final["Loja"].isin(lojas_selecionadas + [""])]  # Inclui subtotais e total
 
-# Se nenhum filtro, mantém tudo
 
 # ================================
 # Cálculo das colunas %LojaXGrupo e %Grupo
