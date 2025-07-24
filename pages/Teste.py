@@ -203,7 +203,7 @@ for grupo, _, grupo_df in grupos_info:
 df_final_com_subtotal = pd.concat([linha_total] + blocos_ordenados, ignore_index=True)
 
 # ================================
-# 8. Exibição final com estilo intercalado por loja
+# 8. Exibição final com estilo intercalado por loja (corrigido)
 # ================================
 
 def formatar_brasileiro(valor):
@@ -217,37 +217,53 @@ df_formatado = df_final_com_subtotal.copy()
 df_formatado[colunas_valores] = df_formatado[colunas_valores].applymap(formatar_brasileiro)
 
 # ================================
-# Gera mapeamento de estilo por linha
+# Mapeia cor por linha com base no índice
 # ================================
-cores_lojas = ["#ffffff", "#dce6f1"]  # branco, azul claro
-estilos_linhas = []
 
+cores_lojas = ["#ffffff", "#dce6f1"]  # branco e azul claro
 grupo_atual = None
 alternador = 0
+estilo_por_linha = []
 
 for _, row in df_final_com_subtotal.iterrows():
     if row["Grupo"] == "TOTAL":
-        estilos_linhas.append(["background-color: #d9ead3; font-weight: bold"] * len(df_formatado.columns))
+        estilo_por_linha.append(("total", None))
     elif row["Loja"] == "SUBTOTAL":
-        estilos_linhas.append(["background-color: #ffe599; font-weight: bold"] * len(df_formatado.columns))
-        grupo_atual = None  # reinicia ao fim do grupo
+        estilo_por_linha.append(("subtotal", None))
+        grupo_atual = None
     elif row["Loja"] == "":
-        estilos_linhas.append([""] * len(df_formatado.columns))  # linha separadora
+        estilo_por_linha.append(("separador", None))
     else:
         if row["Grupo"] != grupo_atual:
             grupo_atual = row["Grupo"]
             alternador = 0
-        estilo = f"background-color: {cores_lojas[alternador]}"
-        estilos_linhas.append([estilo] * len(df_formatado.columns))
-        alternador = 1 - alternador  # alterna cor
+        estilo_por_linha.append(("loja", alternador))
+        alternador = 1 - alternador
 
 # ================================
-# Exibe com estilos aplicados
+# Função de estilo por linha
+# ================================
+def aplicar_estilo_linha(row):
+    tipo, cor_idx = estilo_por_linha[row.name]
+    if tipo == "total":
+        return ["background-color: #d9ead3; font-weight: bold"] * len(row)
+    elif tipo == "subtotal":
+        return ["background-color: #ffe599; font-weight: bold"] * len(row)
+    elif tipo == "separador":
+        return ["background-color: #f9f9f9"] * len(row)
+    elif tipo == "loja":
+        cor = cores_lojas[cor_idx]
+        return [f"background-color: {cor}"] * len(row)
+    else:
+        return [""] * len(row)
+
+# ================================
+# Exibe com estilo final
 # ================================
 st.markdown("### 📊 Relatório Final com Cores Intercaladas e Subtotais")
 
 st.dataframe(
-    df_formatado.style.apply(lambda _: estilos_linhas, axis=None),
+    df_formatado.style.apply(aplicar_estilo_linha, axis=1),
     use_container_width=True,
     height=700
 )
