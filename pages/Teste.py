@@ -122,9 +122,9 @@ df_pivot = df_agrupado_dias.pivot_table(
     fill_value=0
 ).reset_index()
 
-# Renomeia colunas de data
+# Renomeia colunas de data com prefixo "Fat Total"
 df_pivot.columns = [
-    col if isinstance(col, str) else col.strftime("%d/%m/%Y")
+    col if isinstance(col, str) else f"Fat Total {col.strftime('%d/%m/%Y')}"
     for col in df_pivot.columns
 ]
 
@@ -143,7 +143,14 @@ df_final = df_pivot.merge(df_acumulado, on=["Grupo", "Loja"], how="left")
 
 # Ordena colunas: Grupo, Loja, dias..., acumulado
 colunas_chave = ["Grupo", "Loja"]
-colunas_dias = sorted([col for col in df_pivot.columns if col not in colunas_chave], key=lambda x: datetime.strptime(x, "%d/%m/%Y"))
+# Extrai data da string "Fat Total dd/mm/aaaa" para ordenar corretamente
+def extrair_data(col):
+    return datetime.strptime(col.replace("Fat Total ", ""), "%d/%m/%Y")
+
+colunas_dias = sorted(
+    [col for col in df_pivot.columns if col not in colunas_chave],
+    key=extrair_data
+)
 colunas_finais = colunas_chave + colunas_dias + [nome_coluna_acumulado]
 df_final = df_final[colunas_finais]
 
