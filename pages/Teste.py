@@ -88,11 +88,15 @@ with col1:
         max_value=data_max
     )
 with col2:
-    lojas_unicas = sorted(df_vendas["Loja"].unique())
-    grupos_unicos = sorted(df_vendas["Grupo"].unique())
+    tipo_filtro = st.radio("Filtrar por:", ["Nenhum", "Grupo", "Loja"], horizontal=True)
 
-    lojas_selecionadas = st.multiselect("Filtrar por Loja(s):", options=lojas_unicas)
-    grupos_selecionados = st.multiselect("Filtrar por Grupo(s):", options=grupos_unicos)
+    grupos_selecionados = []
+    lojas_selecionadas = []
+
+    if tipo_filtro == "Grupo":
+        grupos_selecionados = st.multiselect("Selecione o(s) Grupo(s):", sorted(df_vendas["Grupo"].unique()))
+    elif tipo_filtro == "Loja":
+        lojas_selecionadas = st.multiselect("Selecione a(s) Loja(s):", sorted(df_vendas["Loja"].unique()))
 
 data_inicio_dt = pd.to_datetime(data_inicio)
 data_fim_dt = pd.to_datetime(data_fim)
@@ -180,18 +184,16 @@ for grupo, _, df_grp in grupos_info:
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
 # ====================================
-#  🔎 APLICA FILTROS FINAIS PARA A TABELA FINAL
+#  🔎 FILTRA SAÍDA FINAL COM BASE NA ESCOLHA
 # ====================================
-
 if grupos_selecionados:
-    # Mostra apenas SUBTOTALs dos grupos selecionados + TOTAL
     blocos_filtrados = []
     for grupo in grupos_selecionados:
         subtotal = df_final[df_final["Grupo"] == f"SUBTOTAL {grupo}"]
         if not subtotal.empty:
             blocos_filtrados.append(subtotal)
 
-    # Total geral com lojas pertencentes aos grupos selecionados
+    # Total geral com lojas desses grupos
     lojas_dos_grupos = df_base[df_base["Grupo"].isin(grupos_selecionados)]
     linha_total = lojas_dos_grupos[colunas_valores].sum(numeric_only=True)
     linha_total["Grupo"] = "TOTAL"
@@ -200,13 +202,9 @@ if grupos_selecionados:
     df_final = pd.concat([pd.DataFrame([linha_total])] + blocos_filtrados, ignore_index=True)
 
 elif lojas_selecionadas:
-    # Mantém tudo como está
-    pass
+    df_final = df_final[df_final["Loja"].isin(lojas_selecionadas + [""])]  # Mantém subtotais e total
 
-else:
-    # Nenhum filtro, segue como montado
-    pass
-
+# Se nenhum filtro, mantém tudo
 
 # ================================
 # Cálculo das colunas %LojaXGrupo e %Grupo
