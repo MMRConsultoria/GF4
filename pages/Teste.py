@@ -21,17 +21,31 @@ planilha_empresa = gc.open("Vendas diarias")
 # Carrega dados
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
 df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
-# ================================
-# Carrega e trata a aba de Metas
-# ================================
 df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
 
-# Padroniza colunas da aba Metas
+# Padroniza dados
+df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
+df_empresa["Grupo"] = df_empresa["Grupo"].str.strip()
+df_vendas.columns = df_vendas.columns.str.strip()
+df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], dayfirst=True, errors="coerce")
+df_vendas["Loja"] = df_vendas["Loja"].astype(str).str.strip().str.upper()
+df_vendas["Grupo"] = df_vendas["Grupo"].astype(str).str.strip()
+df_vendas["Fat.Total"] = (
+    df_vendas["Fat.Total"]
+    .astype(str)
+    .str.replace("R$", "", regex=False)
+    .str.replace("(", "-", regex=False)
+    .str.replace(")", "", regex=False)
+    .str.replace(" ", "", regex=False)
+    .str.replace(".", "", regex=False)
+    .str.replace(",", ".", regex=False)
+)
+df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
+
+# Trata Metas
 df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
 df_metas["Mês"] = df_metas["Mês"].astype(str).str.zfill(2)
 df_metas["Ano"] = df_metas["Ano"].astype(str).str.strip()
-
-# Trata a coluna de valor da Meta
 df_metas["Meta"] = (
     df_metas["Meta"]
     .astype(str)
@@ -43,7 +57,6 @@ df_metas["Meta"] = (
     .str.replace(",", ".", regex=False)
 )
 df_metas["Meta"] = pd.to_numeric(df_metas["Meta"], errors="coerce").fillna(0)
-
 
 # Filtros
 data_min = df_vendas["Data"].min()
@@ -60,24 +73,6 @@ data_inicio_dt = pd.to_datetime(data_inicio)
 data_fim_dt = pd.to_datetime(data_fim)
 primeiro_dia_mes = data_fim_dt.replace(day=1)
 datas_periodo = pd.date_range(start=data_inicio_dt, end=data_fim_dt)
-
-# Nome da coluna de meta
-mes_extenso = data_fim_dt.strftime("%B").capitalize()
-coluna_meta = f"Meta {mes_extenso}"
-if coluna_meta in df_metas.columns:
-    df_metas[coluna_meta] = (
-        df_metas[coluna_meta]
-        .astype(str)
-        .str.replace("R$", "", regex=False)
-        .str.replace("(", "-", regex=False)
-        .str.replace(")", "", regex=False)
-        .str.replace(" ", "", regex=False)
-        .str.replace(".", "", regex=False)
-        .str.replace(",", ".", regex=False)
-        .astype(float)
-    )
-else:
-    df_metas[coluna_meta] = np.nan
 
 # Base combinada
 df_lojas_grupos = df_empresa[["Loja", "Grupo"]].drop_duplicates()
@@ -134,65 +129,25 @@ for grupo, _, df_grp in grupos_info:
 # Concatena tudo
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
-# ================================
-# Pega mês e ano do filtro
-# ================================
+# Junta Meta
 mes_filtro = data_fim_dt.strftime("%m")
 ano_filtro = data_fim_dt.strftime("%Y")
-
-# Filtra metas do mês/ano
 df_metas_filtrado = df_metas[(df_metas["Mês"] == mes_filtro) & (df_metas["Ano"] == ano_filtro)].copy()
-
-# Padroniza df_final['Loja'] antes do merge
 df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.upper()
-
-# Junta metas no df_final
-df_final = df_final.merge(
-    df_metas_filtrado[["Loja", "Meta"]],
-    on="Loja",
-    how="left"
-)
-
+df_final = df_final.merge(df_metas_filtrado[["Loja", "Meta"]], on="Loja", how="left")
 df_final["Meta"] = df_final["Meta"].fillna(0)
 
-
-# ================================
-# Carrega a aba de Metas
-# ================================
-df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
-df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
-df_metas["Mês"] = df_metas["Mês"].astype(str).str.zfill(2)
-df_metas["Ano"] = df_metas["Ano"].astype(str)
-
-# Pega mês e ano do filtro
-mes_filtro = data_fim_dt.strftime("%m")
-ano_filtro = data_fim_dt.strftime("%Y")
-
-# Filtra metas do mês/ano
-df_metas_filtrado = df_metas[(df_metas["Mês"] == mes_filtro) & (df_metas["Ano"] == ano_filtro)].copy()
-
-# Trata os valores da meta
-df_metas_filtrado["Meta"] = (
-    df_metas_filtrado["Meta"]
-    .astype(str)
-    .str.replace("R$", "", regex=False)
-    .str.replace("(", "-", regex=False)
-    .str.replace(")", "", regex=False)
-    .str.replace(" ", "", regex=False)
-    .str.replace(".", "", regex=False)
-    .str.replace(",", ".", regex=False)
-)
-df_metas_filtrado["Meta"] = pd.to_numeric(df_metas_filtrado["Meta"], errors="coerce").fillna(0)
-
-# Junta com df_final
-df_final = df_final.merge(
-    df_metas_filtrado[["Loja", "Meta"]],
-    on="Loja",
-    how="left"
-)
-df_final["Meta"] = df_final["Meta"].fillna(0)
+# Posiciona a Meta ao lado do Acumulado
+colunas_chave = ["Grupo", "Loja"]
+colunas_valores = [col for col in df_final.columns if col not in colunas_chave]
+if "Meta" in colunas_valores and col_acumulado in colunas_valores:
+    colunas_valores.remove("Meta")
+    idx = colunas_valores.index(col_acumulado)
+    colunas_valores.insert(idx + 1, "Meta")
+df_final = df_final[colunas_chave + colunas_valores]
 
 # Percentuais
+colunas_percentuais = ["%LojaXGrupo", "%Grupo"]
 df_final["%LojaXGrupo"] = np.nan
 df_final["%Grupo"] = np.nan
 
@@ -201,7 +156,6 @@ filtro_lojas = (
     (~df_final["Grupo"].str.startswith("SUBTOTAL")) &
     (df_final["Grupo"] != "TOTAL")
 )
-
 df_lojas_reais = df_final[filtro_lojas].copy()
 soma_por_grupo = df_lojas_reais.groupby("Grupo")[col_acumulado].transform("sum")
 soma_total_geral = df_lojas_reais[col_acumulado].sum()
@@ -220,19 +174,12 @@ df_final.loc[filtro_grupos, "%Grupo"] = (
     df_final.loc[filtro_grupos, col_acumulado] / soma_total_geral
 ).round(4)
 
-# Posiciona Meta ao lado do Acumulado
-colunas_chave = ["Grupo", "Loja"]
-colunas_valores = [col for col in df_final.columns if col not in colunas_chave]
-if "Meta" in colunas_valores and col_acumulado in colunas_valores:
-    colunas_valores.remove("Meta")
-    idx = colunas_valores.index(col_acumulado)
-    colunas_valores.insert(idx + 1, "Meta")
+# Oculta %LojaXGrupo se modo Grupo
+if modo_exibicao == "Grupo":
+    colunas_valores = [col for col in colunas_valores if col != "%LojaXGrupo"]
 df_final = df_final[colunas_chave + colunas_valores]
 
-
 # Formatação
-colunas_percentuais = ["%LojaXGrupo", "%Grupo"]
-
 def formatar_brasileiro_com_coluna(valor, coluna):
     try:
         if pd.isna(valor):
@@ -251,7 +198,6 @@ for col in colunas_valores:
 # Estilo
 cores_alternadas = ["#dce6f1", "#d9ead3"]
 estilos = []
-
 if modo_exibicao == "Grupo":
     for i, row in df_final.iterrows():
         if row["Grupo"] == "TOTAL":
