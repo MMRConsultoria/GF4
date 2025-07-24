@@ -154,6 +154,10 @@ dia_hoje = data_fim_dt.day
 
 
 # Percentual atingido sobre a meta proporcional
+# Meta proporcional ideal até hoje
+df_base["Meta Até Hoje"] = (df_base["Meta"] / dias_mes) * dia_hoje
+
+# Percentual atingido sobre a meta proporcional
 df_base["%Meta Atingida"] = df_base[nome_col_acumulado] / df_base["Meta Até Hoje"]
 df_base["%Meta Atingida"] = df_base["%Meta Atingida"].replace([np.inf, -np.inf], np.nan).fillna(0).round(4)
 # Reorganiza a coluna Meta para vir após o acumulado
