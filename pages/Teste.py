@@ -144,9 +144,9 @@ if modo_exibicao != "Grupo":
     ).round(4)
 
 if modo_exibicao == "Grupo":
-    filtro_grupos = df_final["Loja"].str.startswith("Loja:")
+    filtro_grupos = df_final["Loja"].astype(str).str.startswith("Lojas:")
 else:
-    filtro_grupos = df_final["Grupo"].str.startswith("SUBTOTAL")
+    filtro_grupos = df_final["Grupo"].astype(str).str.startswith("SUBTOTAL")
 
 df_final.loc[filtro_grupos, "%Grupo"] = (
     df_final.loc[filtro_grupos, col_acumulado] / soma_total_geral
