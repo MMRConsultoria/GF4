@@ -77,7 +77,7 @@ aba1 = st.tabs([
 # ================================
 # Aba 4: Analise Lojas
 # ================================
-with aba4:
+with aba1:
     from datetime import datetime, date
     st.markdown("""
     <style>
