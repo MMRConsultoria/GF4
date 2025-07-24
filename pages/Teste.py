@@ -187,7 +187,7 @@ for grupo, grupo_df in df_sem_total.groupby("Grupo"):
 df_final_com_subtotal = pd.concat([linha_total] + linhas_com_subtotais, ignore_index=True)
 
 # ================================
-# 8. Exibição final (formato brasileiro)
+# 8. Exibição final com destaque para subtotais
 # ================================
 
 def formatar_brasileiro(valor):
@@ -196,13 +196,23 @@ def formatar_brasileiro(valor):
     except:
         return valor
 
+# Aplica formatação brasileira aos valores
 colunas_valores = [col for col in df_final_com_subtotal.columns if col not in ["Grupo", "Loja"]]
 df_formatado = df_final_com_subtotal.copy()
 df_formatado[colunas_valores] = df_formatado[colunas_valores].applymap(formatar_brasileiro)
 
+# Função de estilo para subtotais
+def estilo_subtotal(row):
+    if row["Loja"] == "SUBTOTAL":
+        return ["background-color: #ffe599; font-weight: bold"] * len(row)  # cor laranja clara + negrito
+    else:
+        return [""] * len(row)
+
+# Exibe com destaque
 st.markdown("### 📊 Resumo por Loja - Coluna por Dia + Acumulado do Mês + Subtotais")
+
 st.dataframe(
-    df_formatado,
+    df_formatado.style.apply(estilo_subtotal, axis=1),
     use_container_width=True,
     height=600
 )
