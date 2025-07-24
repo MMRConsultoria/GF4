@@ -319,11 +319,9 @@ with aba4:
         padding-top: 0.5rem !important;
         padding-bottom: 0.5rem !important;
     }
-    
-
-
     </style>
     """, unsafe_allow_html=True)
+  
 
     # Normaliza dados
     
@@ -345,56 +343,32 @@ with aba4:
     todas_lojas = df_empresa[
         df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
     ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
-  
+ 
+
+    
     # === FILTROS ===
-    # 🔹 Cria 6 colunas lado a lado (ajuste os pesos se quiser mais espaço em alguns)
-    col1, col2, col3, col4, col5, col6, col7 = st.columns([1.2, 1.2, 1.2, 1.5, 1.5, 1.5, 1.5])
-
     
-    with col1:
-        anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
-        ultimo_ano = anos_disponiveis[0] if anos_disponiveis else datetime.today().year
-        ano_opcao = st.selectbox("📅 Selecione o ano:", options=anos_disponiveis, index=0, key="ano_aba3")
+    anos_disponiveis = sorted(df_anos["Ano"].unique(), reverse=True)
+    ultimo_ano = anos_disponiveis[0] if anos_disponiveis else datetime.today().year
+    ano_opcao = st.multiselect("📅 Selecione ano/mês(s):", options=anos_disponiveis, default=[ultimo_ano], key="ano_aba3")
     
-        df_filtrado = df_anos[df_anos["Ano"] == ano_opcao].copy()
-        df_filtrado["Grupo"] = df_filtrado["Grupo"].astype(str).str.strip().str.upper()
-        df_filtrado["Loja"] = df_filtrado["Loja"].astype(str).str.strip().str.lower().str.title()
+   
+    df_filtrado = df_anos[df_anos["Ano"].isin(ano_opcao)]
+    df_filtrado["Grupo"] = df_filtrado["Grupo"].astype(str).str.strip().str.upper()
+    df_filtrado["Loja"] = df_filtrado["Loja"].astype(str).str.strip().str.lower().str.title()
 
-    with col2:    
-        meses_dict = {
-            1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
-            7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
-        }
-        meses_dict_invertido = {v: k for k, v in meses_dict.items()}
-        
-        meses_disponiveis = sorted(df_filtrado["Mês Num"].unique())
-        meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
-        mes_atual_nome = meses_dict[datetime.today().month]
-        default_index = meses_nomes_disponiveis.index(mes_atual_nome) if mes_atual_nome in meses_nomes_disponiveis else 0
-        
-        meses_selecionados = st.selectbox("Mês:", options=meses_nomes_disponiveis, index=default_index, key="meses_aba3")
-        meses_numeros = [meses_dict_invertido[meses_selecionados]]
+   
+    meses_dict = {1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
+                  7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"}
 
-    with col3:
-        exibir_total = st.selectbox("Total:", ["Total Sim", "Total Não"])
-        exibir_total_bool = (exibir_total == "Total Sim")
-    # 🔸 Visão (Loja ou Grupo)
-    with col4:
-        modo_visao = st.selectbox("Visão:", ["Por Loja", "Por Grupo"], key="visao_aba4")
+    meses_disponiveis = sorted(df_filtrado["Mês Num"].unique())
+    meses_nomes_disponiveis = [meses_dict[m] for m in meses_disponiveis]
+    mes_atual_nome = meses_dict[datetime.today().month]
+    default_mes = [mes_atual_nome] if mes_atual_nome in meses_nomes_disponiveis else meses_nomes_disponiveis
+    meses_selecionados = st.multiselect("", options=meses_nomes_disponiveis, default=default_mes, key="meses_aba3")
     
-    with col5:
-        tipo_metrica = st.selectbox("Métrica:", ["Bruto", "Real", "Ambos"], key="metrica_aba4")
-    hoje = date.today()
-    with col6:
-        agrupamento = st.selectbox("Agrupamento:", ["Dia", "Mês", "Ano"], key="agrup_aba4")
-    
-        meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados] 
-
-    with col7:
-        filtro_meta = st.selectbox("Meta:", ["Meta", "Sem Meta"], key="filtro_meta")
-
-    
-    # Garantir que "hoje" seja do tipo date
+   
+   # Garantir que "hoje" seja do tipo date
     hoje = date.today()
 
     # Verifica se df_filtrado tem dados válidos para datas
@@ -411,7 +385,34 @@ with aba4:
         data_minima = hoje
         data_maxima = hoje
 
- 
+    
+
+    # Filtros laterais lado a lado
+    col1, col2, col3, col4 = st.columns([1.2, 2, 2, 2])  # col1 levemente mais estreita
+
+    with col1:
+        st.write("")  # Garante altura igual às outras colunas com título
+        exibir_total = st.radio(
+            " ", 
+            options=[True, False],
+            format_func=lambda x: "Total Sim" if x else "Total Não",
+            index=0,
+            horizontal=True
+        )
+    with col2:
+        modo_visao = st.radio(" ", ["Por Loja", "Por Grupo"], horizontal=True, key="visao_aba4")
+
+    with col3:
+        tipo_metrica = st.radio(" ", ["Bruto", "Real", "Ambos"], horizontal=True, key="metrica_aba4")
+
+
+    hoje = date.today()
+    with col4:
+        agrupamento = st.radio(" ", ["Ano", "Mês", "Dia"], horizontal=True, key="agrup_aba4")
+
+    meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados]
+
+
     # 📌 Define data_fim como a data mais recente do DataFrame
     datas_disponiveis = sorted(pd.to_datetime(df_anos["Data"].dropna().unique()))
     data_fim = datas_disponiveis[-1].date() if datas_disponiveis else date.today()
@@ -422,9 +423,17 @@ with aba4:
         df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "ativa"
      ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
 
+   
+
+
         # 🔄 Aplica o filtro principal com base no período
     if agrupamento == "Dia" and modo_visao == "Por Grupo":
         data_selecionada = pd.to_datetime(data_fim)
+
+       
+        
+
+        
 
         # 🧹 Trata colunas duplicadas de Grupo
         if "Grupo_x" in df_filtrado.columns:
@@ -476,10 +485,17 @@ with aba4:
 
             df_filtrado = pd.concat([df_filtrado, df_faltando], ignore_index=True)
 
+
+
         # Preenche colunas numéricas com 0 para lojas sem movimento
         for col in ["Fat.Total", "Fat.Real", "Serv/Tx", "Ticket"]:
             if col in df_filtrado.columns:
                 df_filtrado[col] = df_filtrado[col].fillna(0)
+
+        
+        
+
+
 
     # ✅ Só aplica o filtro de mês quando o agrupamento for "Mês" ou "Dia"
     if agrupamento in ["Mês", "Dia"]:
@@ -489,7 +505,7 @@ with aba4:
         pass
     
     # 🧠 Garante seleção válida
-    anos_validos = [ano_opcao] if isinstance(ano_opcao, int) else []
+    anos_validos = [a for a in ano_opcao if isinstance(a, int)]
 
     # 📅 Define intervalo padrão com base no agrupamento
     if agrupamento == "Ano" and anos_validos:
@@ -512,7 +528,7 @@ with aba4:
     )
 
     if agrupamento == "Ano" and ano_opcao:
-        df_filtrado = df_filtrado[df_filtrado["Ano"] == ano_opcao]
+        df_filtrado = df_filtrado[df_filtrado["Ano"].isin(ano_opcao)]
 
     
     elif agrupamento == "Mês":
@@ -523,6 +539,8 @@ with aba4:
 
         
         data_fim_padrao = hoje
+   
+   
    
     # ✅ Aplica o filtro de datas corretamente conforme o agrupamento
     if agrupamento == "Dia":
@@ -538,6 +556,9 @@ with aba4:
             (df_filtrado["Data"].dt.to_period("M") <= periodo_fim)
         ]
    
+
+
+    
     # Criação do agrupador e ordem com base na escolha
     if agrupamento == "Ano":
         df_filtrado["Agrupador"] = df_filtrado["Ano"].astype(str)
@@ -554,25 +575,6 @@ with aba4:
     # 🔥 Remove agrupadores inválidos (None, nan, vazio)
     df_filtrado = df_filtrado[~df_filtrado["Agrupador"].isin([None, "None", "nan", "NaN", ""])]
 
-    # Agrupa os dados com base no agrupador definido
-    df_resultado = (
-        df_filtrado
-        .groupby("Agrupador", as_index=False)
-        .agg({
-            "Fat.Total": "sum",
-            "Fat.Real": "sum"
-        })
-    )
-    
-    df_resultado["Ordem"] = df_resultado["Agrupador"]
-    
-    # 🧮 Adiciona coluna Total apenas se "Total Sim"
-    if exibir_total_bool:
-        df_resultado["Total"] = df_resultado["Fat.Total"] + df_resultado["Fat.Real"]
-
-
-
-    
 
   # Garante a ordem correta
     ordem = (
@@ -583,6 +585,11 @@ with aba4:
     )["Agrupador"].tolist()
    
     ordem = [c for c in ordem if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
+
+    
+
+
+
 
     if modo_visao == "Por Loja":
         lojas_com_venda = df_filtrado["Loja"].unique()
@@ -606,6 +613,7 @@ with aba4:
             })
 
             df_filtrado = pd.concat([df_filtrado, df_sem_venda], ignore_index=True)
+
 
     if modo_visao == "Por Grupo":
         df_grouped = df_filtrado.groupby(["Grupo", "Agrupador"]).agg(
@@ -645,7 +653,9 @@ with aba4:
                 for col in tabela.columns
             ]
             tabela = tabela.loc[:, tabela.columns != "Excluir"]
-       
+
+
+            
             colunas_intercaladas = []
             for col in ordem:
                 colunas_intercaladas.append(f"{col} (Bruto)")
@@ -655,6 +665,8 @@ with aba4:
             colunas_intercaladas = [c for c in colunas_intercaladas if pd.notnull(c) and str(c).strip().lower() not in ["none", "nan", ""]]
             tabela = tabela[[c for c in colunas_intercaladas if c in tabela.columns]]
 
+     
+
 
     tabela = tabela[[col for col in tabela.columns if pd.notnull(col) and str(col).strip().lower() not in ["none", "nan", ""]]]
 
@@ -662,35 +674,15 @@ with aba4:
         tabela = tabela.fillna(0)
         tabela.index.name = "Loja"
 
-        if exibir_total_bool:
+        if exibir_total:
             tabela["Total"] = tabela.sum(axis=1)
             colunas_finais = ["Total"] + [col for col in tabela.columns if col != "Total"]
             tabela = tabela[colunas_finais]
-        elif "Total" in tabela.columns:
-            tabela = tabela.drop(columns=["Total"])
 
         total_geral = pd.DataFrame(tabela.sum(numeric_only=True)).T
         total_geral.index = ["Total Geral"]
+
         tabela_final = pd.concat([total_geral, tabela])
-
-
-        # Adiciona Grupo ao lado da Loja
-        tabela_final = tabela_final.reset_index()
-        
-        # Junta com os dados da empresa para obter o Grupo da Loja
-        tabela_final = tabela_final.merge(df_empresa[["Loja", "Grupo"]], on="Loja", how="left")
-        
-        # Coloca a coluna Grupo antes da coluna Loja
-        cols = ["Grupo", "Loja"] + [col for col in tabela_final.columns if col not in ["Grupo", "Loja"]]
-        tabela_final = tabela_final[cols]
-        
-        # (Opcional) se quiser manter o índice por loja, pode reativar isso:
-        # tabela_final = tabela_final.set_index("Loja")
-
-
-
-
-    
 
     elif modo_visao == "Por Grupo":
         tabela = tabela.fillna(0)
@@ -713,17 +705,14 @@ with aba4:
             if "Total" in col_mais_recente and len(colunas_numericas) > 1:
                 col_mais_recente = colunas_numericas[1]
             tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
-        # Reorganiza colunas para exibir 'Grupo' antes de 'Loja'
-        colunas = list(tabela_final.columns)
-        if "Grupo" in colunas and "Loja" in colunas:
-            colunas_reordenadas = ["Grupo", "Loja"] + [col for col in colunas if col not in ["Grupo", "Loja"]]
-            tabela_final = tabela_final[colunas_reordenadas]
 
         tabela_formatada = tabela_final.applymap(
             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             if isinstance(x, (float, int)) else x
         )
-  
+
+
+    
   
     # ✅ 🔥 Limpeza imediata e universal após criar tabela_final
     tabela_final.columns.name = None  # Remove nome do eixo das colunas
@@ -757,49 +746,31 @@ with aba4:
         tabela = tabela.loc[:, ~tabela.columns.isnull()]  # Remove colunas None (NaN real)
   
         tabela = tabela[todas_colunas]
-
         if tipo_metrica == "Ambos":
             cols_bruto = [col for col in tabela.columns if "(Bruto)" in col]
             cols_real = [col for col in tabela.columns if "(Real)" in col]
-        
-            if exibir_total_bool:
-                tabela["Total"] = tabela.sum(axis=1)
-                colunas_finais = ["Total"] + [col for col in tabela.columns if col != "Total"]
+
+            if exibir_total:
+                tabela["Total Bruto"] = tabela[cols_bruto].sum(axis=1)
+                tabela["Total Real"] = tabela[cols_real].sum(axis=1)
+                colunas_finais = ["Total Bruto", "Total Real"] + [col for col in tabela.columns if col not in ["Total Bruto", "Total Real"]]
                 tabela = tabela[colunas_finais]
-            elif "Total" in tabela.columns:
-                tabela = tabela.drop(columns=["Total"])
-        
+
             total_row = pd.DataFrame(tabela.sum(numeric_only=True)).T
             total_row.index = ["Total Geral"]
             tabela_final = pd.concat([total_row, tabela])
-        
         else:
             cols_validas = [col for col in tabela.columns if col != "Total"]
-        
-            if exibir_total_bool:
-                tabela["Total"] = tabela.sum(axis=1)
-                colunas_finais = ["Total"] + [col for col in tabela.columns if col != "Total"]
-                tabela = tabela[colunas_finais]
-            elif "Total" in tabela.columns:
-                tabela = tabela.drop(columns=["Total"])
+            if exibir_total:
+                tabela["Total"] = tabela[cols_validas].sum(axis=1)
+                tabela = tabela[["Total"] + cols_validas]
             else:
                 tabela = tabela[cols_validas]
+
         
             total_geral = pd.DataFrame(tabela.sum(numeric_only=True)).T
             total_geral.index = ["Total Geral"]
             tabela_final = pd.concat([total_geral, tabela])
-        
-        # ✅ Junta o grupo à loja e posiciona à esquerda
-        if tabela_final.index.name == "Loja" and "Grupo" in df_empresa.columns:
-            tabela_final = tabela_final.reset_index()
-            df_lojas_grupo = df_empresa[["Loja", "Grupo"]].drop_duplicates()
-            tabela_final = tabela_final.merge(df_lojas_grupo, on="Loja", how="left")
-            colunas = list(tabela_final.columns)
-            if "Grupo" in colunas and "Loja" in colunas:
-                colunas_reordenadas = ["Grupo", "Loja"] + [col for col in colunas if col not in ["Grupo", "Loja"]]
-                tabela_final = tabela_final[colunas_reordenadas]
-            tabela_final = tabela_final.set_index("Loja")
-
 
         quantidade = tabela.shape[0]
         nome = "Grupos" if modo_visao == "Por Grupo" else "Lojas"
@@ -873,6 +844,9 @@ with aba4:
             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if isinstance(x, (float, int)) else x
         )
 
+  
+    
+    
     if 'tabela_formatada' in locals():
         st.subheader("")
         st.dataframe(tabela_formatada, use_container_width=True)
@@ -897,6 +871,8 @@ df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower().str.title(
 todas_lojas = df_empresa[
     df_empresa["Lojas Ativas"].astype(str).str.strip().str.lower() == "Ativa"
 ][["Loja", "Grupo", "Tipo"]].drop_duplicates()
+
+
 
 # 🔥 Verifica se deve calcular acumulado
 data_max = pd.to_datetime(data_fim)
@@ -959,7 +935,11 @@ elif modo_visao == "Por Grupo":
     if modo_visao == "Por Grupo":
         tabela_exportar["Tipo"] = df_empresa.groupby("Grupo")["Tipo"].agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None).reindex(tabela_exportar["Grupo"]).values
  
-   
+
+
+ 
+    #st.write("🚧 Debug Grupo", tabela_exportar)
+    #st.write("📄 df_empresa", df_empresa)
 
 # 🔥 Define qual coluna usar para o acumulado (Bruto ou Real)
 coluna_acumulado = "Fat.Total"  # 🔥 Para Acumulado no mês pelo Bruto (com gorjeta)
@@ -1025,6 +1005,10 @@ tabela_exportar_sem_tipo = tabela_exportar.drop(columns=["Acumulado no Mês Tipo
 tabela_exportar_sem_tipo = tabela_exportar_sem_tipo.rename(columns={
     "Acumulado no Mês": "Acumulado no Mês (Com Gorjeta)"
 })
+
+
+
+
 
 
 # 🔍 Ordenação pela data mais recente
@@ -1131,6 +1115,21 @@ if modo_visao == "Por Grupo":
         tabela_exportar_sem_tipo = tabela_exportar_sem_tipo[cols]
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 if modo_visao == "Por Loja":
     base = "Acumulado no Mês (Com Gorjeta)"
     usar_base = base in tabela_exportar_sem_tipo.columns and tabela_exportar_sem_tipo[base].sum() > 0
@@ -1212,6 +1211,8 @@ mostrar_acumulado = (
 if not mostrar_acumulado and coluna_acumulado in tabela_exportar_sem_tipo.columns:
     tabela_exportar_sem_tipo.drop(columns=[coluna_acumulado], inplace=True)
 
+
+
 # 🔥 Geração do Excel
 with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     tabela_exportar_sem_tipo.to_excel(writer, sheet_name="Faturamento", index=False, startrow=0)
@@ -1239,6 +1240,9 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     'bold': True  # ⬅️ negrito ativado
     })
 
+
+
+
     percent_formatado_totalgeral = workbook.add_format({
     'num_format': '0.00%',
     'align': 'right',
@@ -1261,14 +1265,25 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
         else:
             worksheet.set_column(col_num, col_num, 25)
 
+            
+
+
+
+
+
+
+
     cores_grupo = itertools.cycle(["#D9EAD3", "#CFE2F3"])
- 
+
+    
     subtotal_format = workbook.add_format({
         'bold': True, 'bg_color': '#FFE599', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
     totalgeral_format = workbook.add_format({
         'bold': True, 'bg_color': '#A9D08E', 'border': 1, 'num_format': 'R$ #,##0.00'
     })
+
+    
 
     linha = 1
     num_colunas = len(tabela_exportar_sem_tipo.columns)
@@ -1333,6 +1348,39 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             'border': 1,
             'bold': True
         })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
     # 🔥 Subtotal por Tipo (Sempre aparece)
     for tipo_atual in sorted(tabela_exportar["Tipo"].dropna().unique()):
@@ -1551,6 +1599,15 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
                 else:
                     worksheet.write(linha, col_num, str(val), subtotal_format)
             linha += 1
+
+
+       
+
+
+
+
+
+
 
 
 worksheet.hide_gridlines(option=2)
