@@ -125,10 +125,12 @@ df_pivot.columns = [
 # ================================
 # 6. Reordena colunas e adiciona total
 # ================================
+# Garante que Grupo e Loja fiquem no início
 colunas_existentes = df_pivot.columns.tolist()
 colunas_chave = [col for col in ["Grupo", "Loja"] if col in colunas_existentes]
 colunas_restantes = [col for col in colunas_existentes if col not in colunas_chave]
 df_final = df_pivot[colunas_chave + colunas_restantes]
+
 
 # Total geral
 colunas_para_remover = [col for col in ["Grupo", "Loja"] if col in df_final.columns]
