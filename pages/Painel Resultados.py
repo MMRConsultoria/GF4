@@ -390,7 +390,7 @@ with aba4:
         meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados] 
 
     with col7:
-        filtro_meta = st.selectbox("Meta:", ["Com Meta", "Sem Meta", "Todos"], key="filtro_meta")
+        filtro_meta = st.selectbox("Meta:", ["Meta", "Sem Meta"], key="filtro_meta")
 
     
     # Garantir que "hoje" seja do tipo date
