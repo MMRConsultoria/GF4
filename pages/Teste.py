@@ -141,21 +141,26 @@ if modo_exibicao == "Grupo":
     colunas_valores = [col for col in colunas_valores if col != "%LojaXGrupo"]
 df_final = df_final[colunas_chave + colunas_valores]
 
-# Formatação
-def formatar_brasileiro(valor):
+# ================================
+# Formatação correta para R$ e %
+# ================================
+
+colunas_percentuais = ["%LojaXGrupo", "%Grupo"]
+
+def formatar_brasileiro_com_coluna(valor, coluna):
     try:
         if pd.isna(valor):
             return ""
-        if isinstance(valor, float):
-            if 0 <= valor <= 1:
-                return f"{valor:.2%}".replace(".", ",")
+        if coluna in colunas_percentuais:
+            return f"{valor:.2%}".replace(".", ",") if valor >= 0 else ""
+        else:
             return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        return valor
     except:
         return ""
 
 df_formatado = df_final.copy()
-df_formatado[colunas_valores] = df_formatado[colunas_valores].applymap(formatar_brasileiro)
+for col in colunas_valores:
+    df_formatado[col] = df_formatado[col].apply(lambda x: formatar_brasileiro_com_coluna(x, col))
 
 # Estilo
 cores_alternadas = ["#dce6f1", "#d9ead3"]
