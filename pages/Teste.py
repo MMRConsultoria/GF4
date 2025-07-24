@@ -175,6 +175,35 @@ for grupo, _, df_grp in grupos_info:
 # Junta tudo (total + blocos por grupo)
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
+# ====================================
+#  🔎 APLICA FILTROS FINAIS PARA A TABELA FINAL
+# ====================================
+
+if grupos_selecionados:
+    # Mostra apenas SUBTOTALs dos grupos selecionados + TOTAL
+    blocos_filtrados = []
+    for grupo in grupos_selecionados:
+        subtotal = df_final[df_final["Grupo"] == f"SUBTOTAL {grupo}"]
+        if not subtotal.empty:
+            blocos_filtrados.append(subtotal)
+
+    # Total geral com lojas pertencentes aos grupos selecionados
+    lojas_dos_grupos = df_base[df_base["Grupo"].isin(grupos_selecionados)]
+    linha_total = lojas_dos_grupos[colunas_valores].sum(numeric_only=True)
+    linha_total["Grupo"] = "TOTAL"
+    linha_total["Loja"] = f"Lojas: {lojas_dos_grupos.shape[0]}"
+
+    df_final = pd.concat([pd.DataFrame([linha_total])] + blocos_filtrados, ignore_index=True)
+
+elif lojas_selecionadas:
+    # Mantém tudo como está
+    pass
+
+else:
+    # Nenhum filtro, segue como montado
+    pass
+
+
 # ================================
 # Cálculo das colunas %LojaXGrupo e %Grupo
 # ================================
