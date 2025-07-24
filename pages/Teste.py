@@ -161,7 +161,8 @@ for grupo, _, df_grp in grupos_info:
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
-    subtotal["Loja"] = ""
+    qtde_lojas = df_grp_ord["Loja"].nunique()
+    subtotal["Loja"] = f"Loja: {qtde_lojas:02d}"
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord)
     blocos.append(pd.DataFrame([subtotal]))
