@@ -518,7 +518,7 @@ with aba4:
     )
 
     if agrupamento == "Ano" and ano_opcao:
-        df_filtrado = df_filtrado[df_filtrado["Ano"].isin(ano_opcao)]
+        df_filtrado = df_filtrado[df_filtrado["Ano"] == ano_opcao]
 
     
     elif agrupamento == "Mês":
