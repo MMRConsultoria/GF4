@@ -411,13 +411,7 @@ with aba4:
         data_minima = hoje
         data_maxima = hoje
 
-    # Filtros laterais lado a lado
-    # 🔄 Filtros reorganizados com selectbox estilizado
-    #col1, col2, col3, col4 = st.columns([1.2, 2, 2, 2])  # mesma estrutura
-    
-   
-
-
+ 
     # 📌 Define data_fim como a data mais recente do DataFrame
     datas_disponiveis = sorted(pd.to_datetime(df_anos["Data"].dropna().unique()))
     data_fim = datas_disponiveis[-1].date() if datas_disponiveis else date.today()
@@ -560,6 +554,26 @@ with aba4:
     # 🔥 Remove agrupadores inválidos (None, nan, vazio)
     df_filtrado = df_filtrado[~df_filtrado["Agrupador"].isin([None, "None", "nan", "NaN", ""])]
 
+    # Agrupa os dados com base no agrupador definido
+    df_resultado = (
+        df_filtrado
+        .groupby("Agrupador", as_index=False)
+        .agg({
+            "Fat.Total": "sum",
+            "Fat.Real": "sum"
+        })
+    )
+    
+    # Adiciona a coluna "Total"
+    df_resultado["Total"] = df_resultado["Fat.Total"] + df_resultado["Fat.Real"]  # ajuste conforme lógica real
+
+# ✅ Aplica o filtro: se "Total Não", remove a coluna
+if not exibir_total_bool and "Total" in df_resultado.columns:
+    df_resultado = df_resultado.drop(columns=["Total"])
+
+
+
+    
 
   # Garante a ordem correta
     ordem = (
