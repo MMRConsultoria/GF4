@@ -100,14 +100,27 @@ df_filtrado = df_vendas[
     (df_vendas["Data"] <= pd.to_datetime(data_fim))
 ]
 
-df_pivot = (
+# Mantém Grupo no agrupamento
+df_agrupado = (
     df_filtrado
-    .groupby(["Data", "Loja"], as_index=False)["Fat.Total"].sum()
-    .pivot(index="Loja", columns="Data", values="Fat.Total")
+    .groupby(["Data", "Loja", "Grupo"], as_index=False)["Fat.Total"].sum()
 )
 
-# Renomeia colunas com formato desejado
-df_pivot.columns = [f"Fat Total ({d.strftime('%d/%m/%Y')})" for d in df_pivot.columns]
+# Pivoteia incluindo Grupo
+df_pivot = df_agrupado.pivot_table(
+    index=["Grupo", "Loja"],
+    columns="Data",
+    values="Fat.Total",
+    aggfunc="sum",
+    fill_value=0
+).reset_index()
+
+
+# Corrige os nomes das colunas: mantemos "Grupo" e "Loja", formatamos datas
+df_pivot.columns = [
+    col if isinstance(col, str) else f"Fat Total ({col.strftime('%d/%m/%Y')})"
+    for col in df_pivot.columns
+]
 
 # Junta com Grupo
 df_final = df_pivot.reset_index().merge(df_empresa[["Loja", "Grupo"]], on="Loja", how="left")
