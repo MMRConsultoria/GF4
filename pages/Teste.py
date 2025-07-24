@@ -74,8 +74,10 @@ df_vendas["Fat.Total"] = (
     .str.replace(" ", "")
     .str.replace(".", "")
     .str.replace(",", ".")
-    .astype(float)
 )
+
+# ✅ Converte com segurança, transformando erros em NaN
+df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
 # ================================
 # 4. Seleção de intervalo de datas
 # ================================
