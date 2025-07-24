@@ -662,10 +662,12 @@ with aba4:
         tabela = tabela.fillna(0)
         tabela.index.name = "Loja"
 
-        if exibir_total:
+        if exibir_total_bool:
             tabela["Total"] = tabela.sum(axis=1)
             colunas_finais = ["Total"] + [col for col in tabela.columns if col != "Total"]
             tabela = tabela[colunas_finais]
+        elif "Total" in tabela.columns:
+            tabela = tabela.drop(columns=["Total"])
 
         total_geral = pd.DataFrame(tabela.sum(numeric_only=True)).T
         total_geral.index = ["Total Geral"]
@@ -732,26 +734,34 @@ with aba4:
         tabela = tabela.loc[:, ~tabela.columns.isnull()]  # Remove colunas None (NaN real)
   
         tabela = tabela[todas_colunas]
+
         if tipo_metrica == "Ambos":
             cols_bruto = [col for col in tabela.columns if "(Bruto)" in col]
             cols_real = [col for col in tabela.columns if "(Real)" in col]
-
-            if exibir_total:
-                tabela["Total Bruto"] = tabela[cols_bruto].sum(axis=1)
-                tabela["Total Real"] = tabela[cols_real].sum(axis=1)
-                colunas_finais = ["Total Bruto", "Total Real"] + [col for col in tabela.columns if col not in ["Total Bruto", "Total Real"]]
+        
+            if exibir_total_bool:
+                tabela["Total"] = tabela.sum(axis=1)
+                colunas_finais = ["Total"] + [col for col in tabela.columns if col != "Total"]
                 tabela = tabela[colunas_finais]
-
+            elif "Total" in tabela.columns:
+                tabela = tabela.drop(columns=["Total"])
+        
             total_row = pd.DataFrame(tabela.sum(numeric_only=True)).T
             total_row.index = ["Total Geral"]
             tabela_final = pd.concat([total_row, tabela])
+        
         else:
             cols_validas = [col for col in tabela.columns if col != "Total"]
-            if exibir_total:
-                tabela["Total"] = tabela[cols_validas].sum(axis=1)
-                tabela = tabela[["Total"] + cols_validas]
+        
+            if exibir_total_bool:
+                tabela["Total"] = tabela.sum(axis=1)
+                colunas_finais = ["Total"] + [col for col in tabela.columns if col != "Total"]
+                tabela = tabela[colunas_finais]
+            elif "Total" in tabela.columns:
+                tabela = tabela.drop(columns=["Total"])
             else:
                 tabela = tabela[cols_validas]
+
 
         
             total_geral = pd.DataFrame(tabela.sum(numeric_only=True)).T
