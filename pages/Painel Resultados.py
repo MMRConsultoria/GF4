@@ -386,7 +386,7 @@ with aba4:
         tipo_metrica = st.selectbox("Métrica:", ["Bruto", "Real", "Ambos"], key="metrica_aba4")
     hoje = date.today()
     with col6:
-        agrupamento = st.selectbox("Agrupamento:", ["Ano", "Mês", "Dia"], key="agrup_aba4")
+        agrupamento = st.selectbox("Agrupamento:", ["Dia", "Mês", "Ano"], key="agrup_aba4")
     
         meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados] 
 
