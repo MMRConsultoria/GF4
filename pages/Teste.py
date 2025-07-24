@@ -168,7 +168,7 @@ for grupo, _, df_grp in grupos_info:
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"SUBTOTAL {grupo}"
-    subtotal["Loja"] = ""
+    subtotal["Loja"] = f"Lojas: {len(df_grp)}"
     blocos.append(df_grp_ord)
     blocos.append(pd.DataFrame([subtotal]))
 
