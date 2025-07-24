@@ -348,7 +348,7 @@ with aba4:
   
     # === FILTROS ===
     # 🔹 Cria 6 colunas lado a lado (ajuste os pesos se quiser mais espaço em alguns)
-    col1, col2, col3, col4, col5, col6 = st.columns([1.2, 1.2, 1.2, 1.5, 1.5, 1.5])
+    col1, col2, col3, col4, col5, col6, col7 = st.columns([1.2, 1.2, 1.2, 1.5, 1.5, 1.5, 1.5])
 
     
     with col1:
@@ -387,9 +387,12 @@ with aba4:
     with col6:
         agrupamento = st.selectbox("Agrupamento:", ["Ano", "Mês", "Dia"], key="agrup_aba4")
     
-    
         meses_numeros = [k for k, v in meses_dict.items() if v in meses_selecionados] 
-   
+
+    with col7:
+        filtro_meta = st.selectbox("Meta:", ["Com Meta", "Sem Meta", "Todos"], key="filtro_meta")
+
+    
     # Garantir que "hoje" seja do tipo date
     hoje = date.today()
 
