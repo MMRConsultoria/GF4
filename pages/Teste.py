@@ -674,14 +674,17 @@ with aba4:
         tabela_final = pd.concat([total_geral, tabela])
 
 
-        # Adiciona Grupo ao lado da Loja apenas se a coluna 'Loja' existir
-        if "Loja" in tabela_final.columns:
-            tabela_final = tabela_final.reset_index() if tabela_final.index.name == "Loja" else tabela_final
-            tabela_final = tabela_final.merge(df_empresa[["Loja", "Grupo"]], on="Loja", how="left")
+        # ✅ Adiciona Grupo ao lado da Loja apenas se estiver em modo "Por Loja"
+        if modo_visao == "Por Loja":
+            if "Loja" in tabela_final.columns:
+                tabela_final = tabela_final.reset_index() if tabela_final.index.name == "Loja" else tabela_final
         
-            # Coloca a coluna Grupo antes da coluna Loja
-            cols = ["Grupo", "Loja"] + [col for col in tabela_final.columns if col not in ["Grupo", "Loja"]]
-            tabela_final = tabela_final[cols]
+                if "Grupo" not in tabela_final.columns:
+                    tabela_final = tabela_final.merge(df_empresa[["Loja", "Grupo"]], on="Loja", how="left")
+        
+                if all(col in tabela_final.columns for col in ["Grupo", "Loja"]):
+                    cols = ["Grupo", "Loja"] + [col for col in tabela_final.columns if col not in ["Grupo", "Loja"]]
+                    tabela_final = tabela_final[cols]
         
         # Coloca a coluna Grupo antes da coluna Loja
         cols = ["Grupo", "Loja"] + [col for col in tabela_final.columns if col not in ["Grupo", "Loja"]]
