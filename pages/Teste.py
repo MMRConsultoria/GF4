@@ -84,26 +84,44 @@ df_acumulado = df_acumulado.rename(columns={"Fat.Total": nome_col_acumulado})
 df_base = df_pivot.merge(df_acumulado, on=["Grupo", "Loja"], how="left")
 df_base = df_base[df_base[nome_col_acumulado] != 0]
 
-# Subtotais
+# ================================
+# Subtotais e ordenação
+# ================================
+
 col_acumulado = nome_col_acumulado
 colunas_valores = [col for col in df_base.columns if col not in ["Grupo", "Loja"]]
+
+# Cria linha de total geral
 linha_total = df_base[colunas_valores].sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
-linha_total["Loja"] = ""
+linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
 
+# Agrupa grupos e ordena do maior para o menor total acumulado
 blocos = []
 grupos_info = []
 for grupo, df_grp in df_base.groupby("Grupo"):
     total_grupo = df_grp[col_acumulado].sum()
+    grupos_info.append((grupo, total_grupo, df_grp))
+
+grupos_info.sort(key=lambda x: x[1], reverse=True)
+
+# Ordena lojas dentro dos grupos e adiciona subtotal
+for grupo, _, df_grp in grupos_info:
+    # Ordena lojas por acumulado do maior para o menor
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
+
+    # Calcula subtotal do grupo
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
     qtde_lojas = df_grp_ord["Loja"].nunique()
-    subtotal["Loja"] = f"Loja: {qtde_lojas:02d}"
+    subtotal["Loja"] = f"Lojas: {qtde_lojas:02d}"
+
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord)
+
     blocos.append(pd.DataFrame([subtotal]))
 
+# Concatena tudo
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
 # Percentuais
