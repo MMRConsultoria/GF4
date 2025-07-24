@@ -376,8 +376,8 @@ with aba4:
         meses_numeros = [meses_dict_invertido[meses_selecionados]]
 
     with col3:
-        exibir_total = st.selectbox("Total:", ["Total Sim", "Total Não"])
-        exibir_total_bool = (exibir_total == "Total Sim")
+        exibir_total = st.selectbox("Total:", ["Total", "Total Não"])
+        exibir_total_bool = (exibir_total == "Total")
     with col4:
         modo_visao = st.selectbox("Visão:", ["Por Loja", "Por Grupo"], key="visao_aba4")
     
