@@ -695,6 +695,11 @@ with aba4:
             if "Total" in col_mais_recente and len(colunas_numericas) > 1:
                 col_mais_recente = colunas_numericas[1]
             tabela_final = tabela_final.sort_values(by=col_mais_recente, ascending=False)
+        # Reorganiza colunas para exibir 'Grupo' antes de 'Loja'
+        colunas = list(tabela_final.columns)
+        if "Grupo" in colunas and "Loja" in colunas:
+            colunas_reordenadas = ["Grupo", "Loja"] + [col for col in colunas if col not in ["Grupo", "Loja"]]
+            tabela_final = tabela_final[colunas_reordenadas]
 
         tabela_formatada = tabela_final.applymap(
             lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
