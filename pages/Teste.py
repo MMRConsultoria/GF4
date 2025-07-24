@@ -69,16 +69,15 @@ st.markdown("""
 # 3. Separação em ABAS
 # ================================
 aba1, aba2, aba3, aba4 = st.tabs([
-    "📈 Graficos Anuais",
-    "📊 Graficos Trimestrais",
-    "📆 Relatório Analitico",
+   
+  
     "📋 Analise Lojas"
 ])
 
 # ================================
-# Aba 4: Analise Lojas
+# Aba 1: Analise Lojas
 # ================================
-with aba4:
+with aba1:
     from datetime import datetime, date
     st.markdown("""
     <style>
