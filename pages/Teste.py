@@ -203,7 +203,7 @@ for grupo, _, grupo_df in grupos_info:
 df_final_com_subtotal = pd.concat([linha_total] + blocos_ordenados, ignore_index=True)
 
 # ================================
-# 8. Exibição final com destaque para subtotais
+# 8. Exibição final com estilo intercalado por loja
 # ================================
 
 def formatar_brasileiro(valor):
@@ -212,23 +212,42 @@ def formatar_brasileiro(valor):
     except:
         return valor
 
-# Aplica formatação brasileira aos valores
 colunas_valores = [col for col in df_final_com_subtotal.columns if col not in ["Grupo", "Loja"]]
 df_formatado = df_final_com_subtotal.copy()
 df_formatado[colunas_valores] = df_formatado[colunas_valores].applymap(formatar_brasileiro)
 
-# Função de estilo para subtotais
-def estilo_subtotal(row):
-    if row["Loja"] == "SUBTOTAL":
-        return ["background-color: #ffe599; font-weight: bold"] * len(row)  # cor laranja clara + negrito
-    else:
-        return [""] * len(row)
+# ================================
+# Gera mapeamento de estilo por linha
+# ================================
+cores_lojas = ["#ffffff", "#dce6f1"]  # branco, azul claro
+estilos_linhas = []
 
-# Exibe com destaque
-st.markdown("### 📊 Resumo por Loja - Coluna por Dia + Acumulado do Mês + Subtotais")
+grupo_atual = None
+alternador = 0
+
+for _, row in df_final_com_subtotal.iterrows():
+    if row["Grupo"] == "TOTAL":
+        estilos_linhas.append(["background-color: #d9ead3; font-weight: bold"] * len(df_formatado.columns))
+    elif row["Loja"] == "SUBTOTAL":
+        estilos_linhas.append(["background-color: #ffe599; font-weight: bold"] * len(df_formatado.columns))
+        grupo_atual = None  # reinicia ao fim do grupo
+    elif row["Loja"] == "":
+        estilos_linhas.append([""] * len(df_formatado.columns))  # linha separadora
+    else:
+        if row["Grupo"] != grupo_atual:
+            grupo_atual = row["Grupo"]
+            alternador = 0
+        estilo = f"background-color: {cores_lojas[alternador]}"
+        estilos_linhas.append([estilo] * len(df_formatado.columns))
+        alternador = 1 - alternador  # alterna cor
+
+# ================================
+# Exibe com estilos aplicados
+# ================================
+st.markdown("### 📊 Relatório Final com Cores Intercaladas e Subtotais")
 
 st.dataframe(
-    df_formatado.style.apply(estilo_subtotal, axis=1),
+    df_formatado.style.apply(lambda _: estilos_linhas, axis=None),
     use_container_width=True,
-    height=600
+    height=700
 )
