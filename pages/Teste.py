@@ -269,30 +269,58 @@ cor_idx = -1
 grupo_atual = None
 
 # RESUMO POR TIPO (antes de aplicar estilos)
+# RESUMO POR TIPO
 df_tipo = df_empresa[["Loja", "Tipo"]].drop_duplicates()
-df_tmp = df_final.copy()
-df_tmp = df_tmp.merge(df_tipo, on="Loja", how="left")
-df_tmp = df_tmp[df_tmp["Grupo"].astype(str).str.startswith("SUBTOTAL")].copy()
+df_merge_tipo = df_final.merge(df_tipo, on="Loja", how="left")
 
-# Agrupamento
-df_resumo_tipo = (
-# Colunas adicionais
-df_resumo_tipo["Grupo"] = df_resumo_tipo["Tipo"]
-df_resumo_tipo["Loja"] = df_tmp.groupby("Tipo")["Loja"].nunique().apply(lambda x: f"Lojas: {x:02d}").values
+# Filtro apenas linhas reais (sem subtotais nem TOTAL)
+df_merge_tipo = df_merge_tipo[
+    (~df_merge_tipo["Grupo"].astype(str).str.startswith("SUBTOTAL")) &
+    (df_merge_tipo["Grupo"] != "TOTAL") &
+    (~df_merge_tipo["Loja"].astype(str).str.startswith("Lojas:"))
+]
 
-# Preenche colunas faltantes com ""
-for col in df_formatado.columns:
-    if col not in df_resumo_tipo.columns:
-        df_resumo_tipo[col] = ""
+# Garante que Meta e %Atingido estejam em formato numérico
+df_merge_tipo["Meta"] = pd.to_numeric(df_merge_tipo["Meta"], errors="coerce").fillna(0)
+df_merge_tipo["%Atingido"] = pd.to_numeric(df_merge_tipo["%Atingido"], errors="coerce").fillna(0)
 
-# Ordena colunas na mesma ordem do relatório
-df_resumo_tipo = df_resumo_tipo[df_formatado.columns]
+# Gera as linhas de resumo por Tipo
+linhas_resumo_tipo = []
+tipos_ordenados = df_merge_tipo.groupby("Tipo")[col_acumulado].sum().sort_values(ascending=False).index.tolist()
+
+for tipo in tipos_ordenados:
+    df_tipo_filtro = df_merge_tipo[df_merge_tipo["Tipo"] == tipo]
+    if df_tipo_filtro.empty:
+        continue
+
+    linha = {}
+    linha["Grupo"] = tipo
+    linha["Loja"] = f"Lojas: {df_tipo_filtro['Loja'].nunique():02d}"
+    
+    soma_meta = df_tipo_filtro["Meta"].sum()
+    soma_realizado = df_tipo_filtro[col_acumulado].sum()
+    
+    for col in df_formatado.columns:
+        if col in ["Grupo", "Loja"]:
+            continue
+        elif col == "%Atingido":
+            valor = soma_realizado / soma_meta if soma_meta != 0 else 0
+            linha[col] = valor
+        elif col in df_tipo_filtro.columns and pd.api.types.is_numeric_dtype(df_tipo_filtro[col]):
+            linha[col] = df_tipo_filtro[col].sum()
+        else:
+            linha[col] = ""
+
+    linhas_resumo_tipo.append(linha)
+
+df_resumo_tipo = pd.DataFrame(linhas_resumo_tipo)
 
 # Formata
 df_resumo_tipo_formatado = df_resumo_tipo.copy()
-for col in df_resumo_tipo.columns:
+for col in df_resumo_tipo_formatado.columns:
     if col not in ["Grupo", "Loja"]:
         df_resumo_tipo_formatado[col] = df_resumo_tipo_formatado[col].apply(lambda x: formatar(x, col))
+
 
 
 df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
