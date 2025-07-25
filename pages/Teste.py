@@ -40,7 +40,7 @@ df_vendas["Fat.Total"] = (
 )
 df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
 
-st.write("📌 Amostra da Tabela Empresa:", df_empresa[["Loja", "Tipo"]].drop_duplicates().sort_values("Loja"))
+
 
 # Filtros
 data_min = df_vendas["Data"].min()
