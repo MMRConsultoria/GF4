@@ -205,7 +205,9 @@ for _, _, grupo, df_grp in grupos_ordenados:
 # Junta tudo com total
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
-
+# Agora sim pode remover a coluna 'Tipo' se ainda existir
+if "Tipo" in df_base.columns:
+    df_base = df_base.drop(columns=["Tipo"])
 
 
 # Percentuais
