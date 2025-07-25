@@ -277,6 +277,9 @@ def formatar(valor, col):
         return f"{valor:.2%}".replace(".", ",") if col in colunas_percentuais else f"R$ {valor:,.2f}".replace(".", "X").replace(",", ".").replace("X", ",")
     except:
         return ""
+# Soma total da meta do mês filtrado
+total_meta_mes = df_metas_filtrado["Meta"].sum()
+
 df_formatado = df_final.copy()
 for col in colunas_visiveis:
     if col in colunas_percentuais:
