@@ -262,26 +262,23 @@ with aba2:
 # ================================
 # Aba 3: Relatorio Analitico
 # ================================
-with aba3:
+with aba4:
     import pandas as pd
     import numpy as np
     import streamlit as st
     from datetime import datetime
-    from calendar import monthrange
 
     # Carrega dados
     df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
     df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
 
-    # Normaliza
+    # Normalização
     df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
     df_empresa["Grupo"] = df_empresa["Grupo"].str.strip()
     df_vendas.columns = df_vendas.columns.str.strip()
     df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], dayfirst=True, errors="coerce")
     df_vendas["Loja"] = df_vendas["Loja"].astype(str).str.strip().str.upper()
     df_vendas["Grupo"] = df_vendas["Grupo"].astype(str).str.strip()
-
-    # Trata valores
     df_vendas["Fat.Total"] = (
         df_vendas["Fat.Total"]
         .astype(str)
@@ -305,17 +302,16 @@ with aba3:
     with col3:
         modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"])
 
-    # Aplica filtro de datas
     data_inicio_dt = pd.to_datetime(data_inicio)
     data_fim_dt = pd.to_datetime(data_fim)
     df_filtrado = df_vendas[(df_vendas["Data"] >= data_inicio_dt) & (df_vendas["Data"] <= data_fim_dt)]
 
-    # Criação da coluna de período
+    # Cria coluna de período
     if modo_periodo == "Diário":
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
     elif modo_periodo == "Mensal":
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
-    elif modo_periodo == "Anual":
+    else:
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%Y")
 
     # Agrupamento
@@ -336,14 +332,22 @@ with aba3:
                 return datetime.strptime("01/01/" + col, "%d/%m/%Y")
 
     colunas_periodo = sorted([c for c in df_pivot.columns if c not in chaves], key=ordenar_datas)
-    colunas_finais = chaves + colunas_periodo
+
+    # Reordena: Loja, Grupo, depois as datas
+    if modo_exibicao == "Loja":
+        colunas_finais = ["Loja", "Grupo"] + colunas_periodo
+    else:
+        colunas_finais = ["Grupo"] + colunas_periodo
+
     df_final = df_pivot[colunas_finais]
 
-    # Totais
-    linha_total = df_final.drop(columns=chaves).sum(numeric_only=True)
-    linha_total[chaves[0]] = "TOTAL"
+    # Adiciona linha TOTAL
+    linha_total = df_final.drop(columns=colunas_finais[:2 if modo_exibicao == "Loja" else 1]).sum(numeric_only=True)
     if modo_exibicao == "Loja":
+        linha_total["Loja"] = "TOTAL"
         linha_total["Grupo"] = ""
+    else:
+        linha_total["Grupo"] = "TOTAL"
     df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
 
     # Formata valores
@@ -357,31 +361,9 @@ with aba3:
     for col in colunas_periodo:
         df_formatado[col] = df_formatado[col].apply(formatar)
 
-    # Estilo visual
-    cores_alternadas = ["#eef4fa", "#f5fbf3"]
-    estilos_linha = []
-    cor_idx = -1
-    grupo_atual = None
-    for _, row in df_formatado.iterrows():
-        if row[chaves[0]] == "TOTAL":
-            estilos_linha.append(["background-color: #f2f2f2; font-weight: bold"] * len(row))
-        else:
-            if modo_exibicao == "Loja":
-                grupo = row["Grupo"]
-            else:
-                grupo = row["Grupo"]
-            if grupo != grupo_atual:
-                cor_idx = (cor_idx + 1) % len(cores_alternadas)
-                grupo_atual = grupo
-            cor = cores_alternadas[cor_idx]
-            estilos_linha.append([f"background-color: {cor}"] * len(row))
-
-    # Exibe na tela
-    def aplicar_estilo(df, estilos_linha):
-        return df.style.apply(lambda row: estilos_linha[row.name], axis=1)
-
+    # Exibe sem estilos
     st.dataframe(
-        aplicar_estilo(df_formatado, estilos_linha),
+        df_formatado,
         use_container_width=True,
         height=750
     )
