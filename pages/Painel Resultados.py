@@ -16,6 +16,8 @@ import io
 from st_aggrid import AgGrid, GridOptionsBuilder
 from datetime import datetime, date
 from datetime import datetime, date, timedelta
+from calendar import monthrange
+
 
 #st.set_page_config(page_title="Painel Agrupado", layout="wide")
 #st.set_page_config(page_title="Vendas Diarias", layout="wide")
