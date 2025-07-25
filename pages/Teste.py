@@ -242,8 +242,12 @@ for col in colunas_visiveis:  # ✅ CORRETO
 # ================================
 # ➕ Linhas de resumo por Tipo
 # ================================
-df_tipo = df_empresa[["Loja", "Tipo"]].drop_duplicates()
-df_base_tipo = df_base.merge(df_tipo, on="Loja", how="left")
+df_base_tipo = df_base.copy()
+
+# Garante que a coluna 'Tipo' existe (prevenção)
+if "Tipo" not in df_base_tipo.columns:
+    st.error("❌ A coluna 'Tipo' não foi encontrada no df_base.")
+    st.stop()
 
 # Ignora lojas sem tipo
 df_base_tipo = df_base_tipo[~df_base_tipo["Tipo"].isna()]
