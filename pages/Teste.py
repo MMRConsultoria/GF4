@@ -284,6 +284,10 @@ for col in colunas_visiveis:
 df_tipo = df_empresa[["Loja", "Tipo"]].drop_duplicates()
 df_base_tipo = df_base.merge(df_tipo, on="Loja", how="left")
 
+# Garante que a coluna 'Tipo' exista mesmo após o merge
+if "Tipo" not in df_base_tipo.columns:
+    df_base_tipo["Tipo"] = ""
+
 # Ignora lojas sem tipo
 df_base_tipo = df_base_tipo[~df_base_tipo["Tipo"].isna()]
 
