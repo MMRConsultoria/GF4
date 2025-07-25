@@ -206,6 +206,12 @@ for col in colunas_exibir:
     if col not in ["Grupo", "Loja"]:
         df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
 
+# Calcula o percentual desejável até o dia selecionado
+dia_hoje = data_fim_dt.day
+dias_mes = monthrange(data_fim_dt.year, data_fim_dt.month)[1]
+perc_desejavel = dia_hoje / dias_mes
+
+
 # Faturamento desejável (com ordem correta das colunas)
 linha_desejavel_dict = {}
 for col in colunas_exibir:
