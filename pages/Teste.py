@@ -207,6 +207,7 @@ for col in colunas_exibir:
         df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
 
 # Faturamento desejável
+# Faturamento desejável
 dia_hoje = data_fim_dt.day
 dias_mes = monthrange(data_fim_dt.year, data_fim_dt.month)[1]
 perc_desejavel = dia_hoje / dias_mes
@@ -216,6 +217,7 @@ linha_desejavel = pd.DataFrame([{
     "Loja": f"FATURAMENTO DESEJÁVEL ATÉ {data_fim_dt.strftime('%d/%m')}",
     "%Atingido": formatar(perc_desejavel, "%Atingido")
 } | {col: "" for col in df_formatado.columns if col not in ["Grupo", "Loja", "%Atingido"]}])
+
 
 # Estilo visual
 def aplicar_estilo_final(df, estilos_linha):
