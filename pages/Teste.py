@@ -123,7 +123,14 @@ df_base["%Atingido"] = df_base["%Atingido"].replace([np.inf, -np.inf], np.nan).f
 
 # Reordena colunas
 colunas_base = ["Grupo", "Loja"]
-col_diarias = sorted([col for col in df_base.columns if col.startswith("Fat Total")])
+from datetime import datetime
+
+col_diarias = [
+    col for col in df_base.columns if col.startswith("Fat Total")
+]
+
+# Extrai a data do nome da coluna e ordena corretamente
+col_diarias.sort(key=lambda x: datetime.strptime(x.replace("Fat Total ", ""), "%d/%m/%Y"))
 colunas_finais = colunas_base + col_diarias + [col_acumulado, "Meta", "%Atingido", "%LojaXGrupo", "%Grupo"]
 for col in ["%LojaXGrupo", "%Grupo"]:
     if col not in df_base.columns:
