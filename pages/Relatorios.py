@@ -341,7 +341,7 @@ with aba3:
 
     colunas_periodo = sorted([c for c in df_pivot.columns if c not in ["Loja", "Grupo"]], key=ordenar_datas)
 
-    # Garante que ambas colunas existam (mesmo que estejam vazias)
+    # Garante que colunas existam
     if "Loja" not in df_pivot.columns:
         df_pivot["Loja"] = ""
     if "Grupo" not in df_pivot.columns:
@@ -349,7 +349,14 @@ with aba3:
 
     # Define ordem final: Grupo, Loja, depois períodos
     colunas_finais = ["Grupo", "Loja"] + colunas_periodo
-    df_final = df_pivot[colunas_finais]
+    df_final = df_pivot[colunas_finais].copy()
+
+    # Total acumulado (última coluna)
+    ultima_coluna_valor = colunas_periodo[-1]
+    df_final["__ordem"] = df_final[ultima_coluna_valor]
+
+    # Ordena do maior para o menor
+    df_final = df_final.sort_values(by="__ordem", ascending=False).drop(columns="__ordem").reset_index(drop=True)
 
     # Linha TOTAL
     linha_total = df_final.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
@@ -357,7 +364,7 @@ with aba3:
     linha_total["Loja"] = ""
     df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
 
-    # Formatação monetária
+    # Formatação
     def formatar(valor):
         try:
             return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -367,16 +374,24 @@ with aba3:
     df_formatado = df_final.copy()
     for col in colunas_periodo:
         df_formatado[col] = df_formatado[col].apply(formatar)
-    # 🔧 Garante ordem correta das colunas
+
     df_formatado = df_formatado[["Grupo", "Loja"] + colunas_periodo]
-    
-    # Exibição final
+
+    # Estilo para destacar TOTAL
+    def aplicar_estilo(df):
+        def estilo_linha(row):
+            if row["Grupo"] == "TOTAL":
+                return ["background-color: #f0f0f0; font-weight: bold"] * len(row)
+            else:
+                return ["" for _ in row]
+        return df.style.apply(estilo_linha, axis=1)
+
+    # Exibição
     st.dataframe(
-        df_formatado,
+        aplicar_estilo(df_formatado),
         use_container_width=True,
         height=750
     )
-
 
 # ================================
 # Aba 4: Analise Lojas
