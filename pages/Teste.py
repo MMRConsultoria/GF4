@@ -204,7 +204,7 @@ for grupo, _, df_grp in grupos_info:
 
     # 🟦 Adiciona lojas reais com Tipo preservado
     if modo_exibicao == "Loja":
-        blocos.append(df_grp_ord)
+        blocos.append(df_grp_ord[colunas_visiveis])
     blocos.append(pd.DataFrame([subtotal]))
 
 
