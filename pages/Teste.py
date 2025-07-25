@@ -22,7 +22,14 @@ planilha_empresa = gc.open("Vendas diarias")
 # Carrega dados
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
 df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
-df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
+df_empresa["Loja"] = (
+    df_empresa["Loja"]
+    .astype(str)
+    .str.replace(r"\s+", " ", regex=True)  # substitui múltiplos espaços internos
+    .str.replace(u"\xa0", " ")             # remove espaços não quebráveis
+    .str.strip()
+    .str.upper()
+)
 df_empresa["Grupo"] = df_empresa["Grupo"].str.strip()
 df_vendas.columns = df_vendas.columns.str.strip()
 df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], dayfirst=True, errors="coerce")
