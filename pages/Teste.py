@@ -146,14 +146,18 @@ df_tipo = df_empresa[["Loja", "Tipo"]].drop_duplicates()
 df_base = df_base.merge(df_tipo, on="Loja", how="left")
 
 # Define prioridade de tipos
-tipos_prioritarios = ["AIRPORTS", "Airports - Kopp"]
+tipos_prioritarios = ["AIRPORTS", "Airports - Kopp","On-Premise"]
 df_base["PrioridadeTipo"] = df_base["Tipo"].apply(lambda x: tipos_prioritarios.index(x) if x in tipos_prioritarios else 999)
 
-# Ordena: primeiro pelos Tipos, depois por Grupo, depois Acumulado
-df_base = df_base.sort_values(by=["PrioridadeTipo", "Grupo", col_acumulado], ascending=[True, True, False]).reset_index(drop=True)
+# Ordena primeiro por tipo prioritário, depois por grupo acumulado, depois loja acumulado
+df_base["AcumuladoGrupo"] = df_base.groupby("Grupo")[col_acumulado].transform("sum")
+df_base = df_base.sort_values(
+    by=["PrioridadeTipo", "AcumuladoGrupo", "Grupo", col_acumulado],
+    ascending=[True, False, True, False]
+).reset_index(drop=True)
 
 # Remove colunas auxiliares
-df_base = df_base.drop(columns=["PrioridadeTipo", "Tipo"], errors="ignore")
+df_base = df_base.drop(columns=["PrioridadeTipo", "Tipo", "AcumuladoGrupo"], errors="ignore")
 
 # Calcula linha TOTAL
 linha_total = df_base.drop(columns=colunas_base).sum(numeric_only=True)
