@@ -335,6 +335,12 @@ for col in df_resumo_tipo.columns:
     if col not in ["Grupo", "Loja"]:
         df_resumo_tipo_formatado[col] = df_resumo_tipo[col].apply(lambda x: formatar(x, col))
 
+# 🔽 Remove "Tipo" apenas da visualização final
+for df_temp in [df_resumo_tipo_formatado, df_formatado, linha_desejavel]:
+    if "Tipo" in df_temp.columns:
+        df_temp.drop(columns=["Tipo"], inplace=True)
+
+
 # Junta com dados formatados
 df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
 
