@@ -177,7 +177,13 @@ for grupo, _, df_grp_ord in grupos_info:
         blocos.append(df_grp_ord)
     blocos.append(pd.DataFrame([subtotal]))
 
-df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
+df_dados_lojas = pd.concat([df_grp_ord for _, _, df_grp_ord in grupos_info], ignore_index=True)
+df_final = pd.concat(
+    [pd.DataFrame([linha_total])] +
+    [pd.DataFrame([subtotal]) for _, _, df_grp_ord in grupos_info for subtotal in [df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True).assign(Grupo=f"SUBTOTAL {df_grp_ord['Grupo'].iloc[0]}", Loja=f"Lojas: {df_grp_ord['Loja'].nunique():02d}", Tipo=df_grp_ord['Tipo'].dropna().unique()[0] if df_grp_ord['Tipo'].nunique() == 1 else "")]] +
+    [df_dados_lojas],
+    ignore_index=True
+)
 
 # Percentuais
 filtro_lojas = (
