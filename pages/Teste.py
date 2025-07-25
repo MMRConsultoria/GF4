@@ -137,68 +137,25 @@ for col in ["%LojaXGrupo", "%Grupo"]:
         df_base[col] = np.nan
 df_base = df_base[colunas_finais]
 
-# ================================
-# 🧮 Subtotais por Grupo e Total Geral (ordenados por Tipo)
-# ================================
-
-# Junta com Tipo para ordenar corretamente
-df_tipo = df_empresa[["Loja", "Tipo"]].drop_duplicates()
-df_base = df_base.merge(df_tipo, on="Loja", how="left")
-
-# Define prioridade de tipos
-tipos_prioritarios = ["AIRPORTS", "Airports - Kopp","On-Premise"]
-df_base["PrioridadeTipo"] = df_base["Tipo"].apply(lambda x: tipos_prioritarios.index(x) if x in tipos_prioritarios else 999)
-
-# Ordena primeiro por tipo prioritário, depois por grupo acumulado, depois loja acumulado
-df_base["AcumuladoGrupo"] = df_base.groupby("Grupo")[col_acumulado].transform("sum")
-df_base = df_base.sort_values(
-    by=["PrioridadeTipo", "AcumuladoGrupo", "Grupo", col_acumulado],
-    ascending=[True, False, True, False]
-).reset_index(drop=True)
-
-# Remove colunas auxiliares
-df_base = df_base.drop(columns=["PrioridadeTipo", "Tipo", "AcumuladoGrupo"], errors="ignore")
-
-# Calcula linha TOTAL
-# Já está ordenado por tipo prioritário e acumulado
-# Agora criamos os blocos respeitando essa ordem
-
-df_base["Grupo_Loja"] = df_base["Grupo"] + " | " + df_base["Loja"]
-
-blocos = []
-# Prioridade de tipo para definir ordem dos grupos
-tipos_prioritarios = ["AIRPORTS", "Airports - Kopp"]
-
-# Pega os tipos dos grupos pelas lojas
-df_grupo_tipo = df_base.groupby("Grupo")["Loja"].first().reset_index()
-df_grupo_tipo = df_grupo_tipo.merge(df_empresa[["Loja", "Tipo"]], on="Loja", how="left")
-df_grupo_tipo["PrioridadeTipo"] = df_grupo_tipo["Tipo"].apply(
-    lambda x: tipos_prioritarios.index(x) if x in tipos_prioritarios else 999
-)
-
-# Ordena os grupos por prioridade do tipo
-grupos_ordem = df_grupo_tipo.sort_values(by="PrioridadeTipo")["Grupo"].tolist()
-for grupo in grupos_ordem:
-    df_grp = df_base[df_base["Grupo"] == grupo].copy()
-    df_grp = df_grp.sort_values(by=col_acumulado, ascending=False)
-
-    subtotal = df_grp.drop(columns=["Grupo", "Loja", "Grupo_Loja"]).sum(numeric_only=True)
-    subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
-    subtotal["Loja"] = f"Lojas: {df_grp['Loja'].nunique():02d}"
-
-    if modo_exibicao == "Loja":
-        blocos.append(df_grp.drop(columns="Grupo_Loja"))
-    blocos.append(pd.DataFrame([subtotal]))
-
-# Linha total geral
-linha_total = df_base.drop(columns=["Grupo", "Loja", "Grupo_Loja"]).sum(numeric_only=True)
+# Subtotais e totais
+linha_total = df_base.drop(columns=colunas_base).sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
 linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
-
-# Junta tudo com linha total primeiro
+blocos = []
+grupos_info = []
+for grupo, df_grp in df_base.groupby("Grupo"):
+    total_grupo = df_grp[col_acumulado].sum()
+    grupos_info.append((grupo, total_grupo, df_grp))
+grupos_info.sort(key=lambda x: x[1], reverse=True)
+for grupo, _, df_grp in grupos_info:
+    df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
+    subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+    subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
+    subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
+    if modo_exibicao == "Loja":
+        blocos.append(df_grp_ord)
+    blocos.append(pd.DataFrame([subtotal]))
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
-
-
 
 # Percentuais
 filtro_lojas = (
@@ -274,7 +231,7 @@ df_tipo = df_empresa[["Loja", "Tipo"]].drop_duplicates()
 df_base_tipo = df_base.merge(df_tipo, on="Loja", how="left")
 
 # Ignora lojas sem tipo
-df_base_tipo = df_base_tipo[~df_base_tipo["Tipo"].isna()].copy()
+df_base_tipo = df_base_tipo[~df_base_tipo["Tipo"].isna()]
 
 linhas_resumo_tipo = []
 tipos_ordenados = df_base_tipo.groupby("Tipo")[col_acumulado].sum().sort_values(ascending=False).index.tolist()
@@ -288,11 +245,9 @@ for tipo in tipos_ordenados:
     linha["Grupo"] = tipo
     linha["Loja"] = f"Lojas: {df_tipo_filtro['Loja'].nunique():02d}"
 
-    # Soma das diárias
     for col in col_diarias:
         linha[col] = df_tipo_filtro[col].sum()
 
-    # Acumulado
     linha[col_acumulado] = df_tipo_filtro[col_acumulado].sum()
 
     if filtro_meta == "Meta":
@@ -303,30 +258,31 @@ for tipo in tipos_ordenados:
     elif filtro_meta == "Sem Meta":
         if modo_exibicao == "Loja":
             soma_grupo = df_lojas_reais[col_acumulado].sum()
-            linha["%LojaXGrupo"] = linha[col_acumulado] / soma_grupo if soma_grupo > 0 else ""
-        linha["%Grupo"] = linha[col_acumulado] / soma_total_geral if soma_total_geral > 0 else ""
+            linha["%LojaXGrupo"] = linha[col_acumulado] / soma_grupo if soma_grupo > 0 else 0
+        linha["%Grupo"] = linha[col_acumulado] / soma_total_geral if soma_total_geral > 0 else 0
 
     linhas_resumo_tipo.append(linha)
 
-# Converte para DataFrame
 df_resumo_tipo = pd.DataFrame(linhas_resumo_tipo)
 
-# Formata os valores como no restante
+# Formata
 df_resumo_tipo_formatado = df_resumo_tipo.copy()
 for col in df_resumo_tipo.columns:
     if col not in ["Grupo", "Loja"]:
         df_resumo_tipo_formatado[col] = df_resumo_tipo[col].apply(lambda x: formatar(x, col))
 
-# Junta com o restante dos dados
+# Junta com dados formatados
 df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
 
-# ================================
-# 🎯 Calcula o percentual desejável até o dia selecionado
-# ================================
+
+
+
+
+
+# Calcula o percentual desejável até o dia selecionado
 dia_hoje = data_fim_dt.day
 dias_mes = monthrange(data_fim_dt.year, data_fim_dt.month)[1]
 perc_desejavel = dia_hoje / dias_mes
-
 
 
 # Faturamento desejável (com ordem correta das colunas)
