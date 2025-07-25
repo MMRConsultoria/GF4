@@ -442,18 +442,8 @@ import openpyxl
 from openpyxl.styles import PatternFill, Font, Alignment
 from io import BytesIO
 
-# Botão de download
-# Gatilho de geração do Excel
 if st.button("📥 Baixar Excel idêntico à tela"):
-    st.session_state.gerar_excel_idêntico = True
-
-# Gera e exibe o botão de download somente se foi clicado
-if st.session_state.get("gerar_excel_idêntico"):
-    import openpyxl
-    from openpyxl.styles import PatternFill, Font, Alignment
-    from io import BytesIO
-
-    # Cria workbook e planilha
+    # Cria workbook
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Vendas"
