@@ -166,15 +166,26 @@ for grupo, _, df_grp in grupos_info:
     blocos.append(pd.DataFrame([subtotal]))
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
-# Mapeia Tipo por Grupo para subtotais
-df_tipo_grupo = df_empresa[["Grupo", "Tipo"]].dropna().drop_duplicates()
-df_tipo_grupo = df_tipo_grupo.groupby("Grupo")["Tipo"].agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None).reset_index()
-df_final = df_final.merge(df_tipo_grupo, on="Grupo", how="left")
+# Junta o Tipo real das lojas (sem sobrescrever)
+df_final = df_final.merge(df_empresa[["Loja", "Tipo"]], on="Loja", how="left")
 
-# Ordena por Tipo > Grupo > Acumulado
+# Só preenche Tipo onde está ausente (SUBTOTALS e TOTAL)
+mascara_nulo = df_final["Tipo"].isna()
+
+# Mapeia Tipo por Grupo com base nas lojas válidas
+df_tipo_grupo = (
+    df_final[~df_final["Tipo"].isna() & ~df_final["Grupo"].str.startswith("SUBTOTAL")]
+    .groupby("Grupo")["Tipo"]
+    .agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None)
+)
+
+df_final.loc[mascara_nulo, "Tipo"] = df_final.loc[mascara_nulo, "Grupo"].map(df_tipo_grupo)
+
+# Ordenação final
 ordem_tipos = ["AIRPORTS", "Airports - Kopp", "On-Premise"]
 df_final["Tipo"] = pd.Categorical(df_final["Tipo"], categories=ordem_tipos, ordered=True)
 df_final = df_final.sort_values(by=["Tipo", "Grupo", col_acumulado], ascending=[True, True, False])
+
 
 # Percentuais
 filtro_lojas = (
