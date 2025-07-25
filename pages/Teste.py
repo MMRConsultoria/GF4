@@ -201,13 +201,17 @@ for grupo, _, df_grp in grupos_info:
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
     subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
-    subtotal["Tipo"] = tipo_valor
+    subtotal["Tipo"] = tipo_valor if tipo_valor else "—"  # 👈 força tipo
 
-    # ✅ Linhas de loja reais com 'Tipo'
+    # 🛡️ Garante todas as colunas visíveis
+    for col in colunas_visiveis:
+        if col not in subtotal:
+            subtotal[col] = np.nan
+    subtotal = subtotal[colunas_visiveis]
+
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord[colunas_visiveis])
-
-    blocos.append(pd.DataFrame([subtotal], columns=colunas_visiveis))
+    blocos.append(pd.DataFrame([subtotal]))
 
 # ✅ Junta linha total e blocos
 df_final = pd.concat([pd.DataFrame([linha_total], columns=colunas_visiveis)] + blocos, ignore_index=True)
