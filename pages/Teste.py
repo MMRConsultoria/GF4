@@ -269,7 +269,8 @@ for tipo in tipos_ordenados:
 
 # Converte e formata
 df_resumo_tipo = pd.DataFrame(linhas_resumo_tipo)
-df_resumo_tipo = df_resumo_tipo[df_resumo_tipo["Loja"] != ""]
+if not df_resumo_tipo.empty and "Loja" in df_resumo_tipo.columns:
+    df_resumo_tipo = df_resumo_tipo[df_resumo_tipo["Loja"] != ""]
 
 # Formata os valores como no restante
 df_resumo_tipo_formatado = df_resumo_tipo.copy()
