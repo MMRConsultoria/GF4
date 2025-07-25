@@ -49,7 +49,7 @@ with col1:
 with col2:
     modo_exibicao = st.selectbox("🧭 Ver por:", ["Loja", "Grupo"])
 with col3:
-    st.write(" ")
+    filtro_meta = st.selectbox("🎯 Mostrar:", ["Meta", "Sem Meta"])
 
 data_inicio_dt = pd.to_datetime(data_inicio)
 data_fim_dt = pd.to_datetime(data_fim)
