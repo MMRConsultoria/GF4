@@ -359,6 +359,91 @@ df_exibir = pd.concat([linha_desejavel, df_linhas_visiveis], ignore_index=True)
 # Aplica o estilo atualizado
 st.dataframe(
     aplicar_estilo_final(df_exibir, estilos_final),
+
+
+
+import io
+
+# 📤 Exportação para Excel com formatação
+output = io.BytesIO()
+with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+    df_exibir.to_excel(writer, index=False, sheet_name="Relatório")
+    workbook = writer.book
+    worksheet = writer.sheets["Relatório"]
+
+    # Formatos
+    fmt_negrito = workbook.add_format({"bold": True})
+    fmt_total = workbook.add_format({"bg_color": "#f2f2f2", "bold": True})
+    fmt_subtotal = workbook.add_format({"bg_color": "#fff8dc", "bold": True})
+    fmt_tipo = workbook.add_format({"bg_color": "#fffbea", "bold": True})
+    fmt_desejavel = workbook.add_format({"bg_color": "#dddddd", "bold": True})
+    fmt_branco = workbook.add_format({"bg_color": "#fdfdfd"})
+    fmt_azul = workbook.add_format({"bg_color": "#eef4fa"})
+    fmt_verde = workbook.add_format({"bg_color": "#f5fbf3"})
+    fmt_pct = workbook.add_format({"num_format": "0,00%", "align": "right"})
+    fmt_moeda = workbook.add_format({"num_format": "R$ #.##0,00", "align": "right"})
+    fmt_pct_verde = workbook.add_format({"num_format": "0,00%", "font_color": "green", "bold": True})
+    fmt_pct_vermelho = workbook.add_format({"num_format": "0,00%", "font_color": "red", "bold": True})
+
+    # Aplica formatação linha a linha
+    for row_idx, row in df_exibir.iterrows():
+        grupo = row["Grupo"]
+        loja = row["Loja"]
+
+        # Determina o estilo da linha
+        if str(loja).startswith("FATURAMENTO"):
+            fmt = fmt_desejavel
+        elif grupo == "TOTAL":
+            fmt = fmt_total
+        elif str(grupo).startswith("SUBTOTAL"):
+            fmt = fmt_subtotal
+        elif grupo in df_resumo_tipo_formatado["Grupo"].values:
+            fmt = fmt_tipo
+        elif loja == "":
+            fmt = fmt_branco
+        else:
+            # Alternância de cor por grupo
+            cor_idx = row_idx % 2
+            fmt = fmt_azul if cor_idx == 0 else fmt_verde
+
+        for col_idx, col in enumerate(df_exibir.columns):
+            valor = row[col]
+
+            # Aplica formatação específica
+            if col in colunas_percentuais:
+                if col == "%Atingido" and isinstance(valor, str) and "%" in valor:
+                    try:
+                        valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
+                        fmt_pct_color = fmt_pct_verde if valor_float >= perc_desejavel else fmt_pct_vermelho
+                        worksheet.write(row_idx + 1, col_idx, valor_float, fmt_pct_color)
+                    except:
+                        worksheet.write(row_idx + 1, col_idx, valor, fmt)
+                else:
+                    try:
+                        valor_float = float(str(valor).replace("%", "").replace(",", ".")) / 100
+                        worksheet.write(row_idx + 1, col_idx, valor_float, fmt_pct)
+                    except:
+                        worksheet.write(row_idx + 1, col_idx, valor, fmt)
+            elif "R$" in str(valor):
+                try:
+                    valor_float = float(str(valor).replace("R$", "").replace(".", "").replace(",", "."))
+                    worksheet.write(row_idx + 1, col_idx, valor_float, fmt_moeda)
+                except:
+                    worksheet.write(row_idx + 1, col_idx, valor, fmt)
+            else:
+                worksheet.write(row_idx + 1, col_idx, valor, fmt)
+
+    worksheet.freeze_panes(1, 2)  # Congela cabeçalho
+
+# Botão para download
+st.download_button(
+    "📥 Exportar para Excel",
+    data=output.getvalue(),
+    file_name=f"Vendas_{data_fim_dt.strftime('%Y-%m-%d')}.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+)
+
+    
     use_container_width=True,
     height=750
 )
