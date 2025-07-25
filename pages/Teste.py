@@ -359,6 +359,9 @@ df_exibir = pd.concat([linha_desejavel, df_linhas_visiveis], ignore_index=True)
 # Aplica o estilo atualizado
 st.dataframe(
     aplicar_estilo_final(df_exibir, estilos_final),
+    use_container_width=True,
+    height=750
+)
 
 
 
