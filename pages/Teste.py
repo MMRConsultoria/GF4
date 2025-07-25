@@ -153,13 +153,18 @@ linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
 linha_total["Tipo"] = "TOTAL"
 blocos = []
 grupos_info = []
-for grupo, df_grp in df_base.groupby("Grupo"):
+
+# Agrupa a versão FINAL de df_base com Tipo já presente
+df_ordenado = df_base.sort_values(by=col_acumulado, ascending=False)
+
+for grupo, df_grp in df_ordenado.groupby("Grupo"):
     total_grupo = df_grp[col_acumulado].sum()
     grupos_info.append((grupo, total_grupo, df_grp))
+
+# Ordena os grupos
 grupos_info.sort(key=lambda x: x[1], reverse=True)
-for grupo, _, df_grp in grupos_info:
-    df_grp = df_base[df_base["Grupo"] == grupo].copy()
-    df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
+
+for grupo, _, df_grp_ord in grupos_info:
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
     subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
@@ -171,6 +176,7 @@ for grupo, _, df_grp in grupos_info:
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord)
     blocos.append(pd.DataFrame([subtotal]))
+
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
 # Percentuais
