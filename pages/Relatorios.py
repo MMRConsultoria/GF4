@@ -263,7 +263,129 @@ with aba2:
 # Aba 3: Relatorio Analitico
 # ================================
 with aba3:
-    st.info("em desenvolvimento.")
+    import pandas as pd
+    import numpy as np
+    import streamlit as st
+    from datetime import datetime
+    from calendar import monthrange
+
+    # Carrega dados
+    df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
+    df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
+
+    # Normaliza
+    df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
+    df_empresa["Grupo"] = df_empresa["Grupo"].str.strip()
+    df_vendas.columns = df_vendas.columns.str.strip()
+    df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], dayfirst=True, errors="coerce")
+    df_vendas["Loja"] = df_vendas["Loja"].astype(str).str.strip().str.upper()
+    df_vendas["Grupo"] = df_vendas["Grupo"].astype(str).str.strip()
+
+    # Trata valores
+    df_vendas["Fat.Total"] = (
+        df_vendas["Fat.Total"]
+        .astype(str)
+        .str.replace("R$", "", regex=False)
+        .str.replace("(", "-", regex=False)
+        .str.replace(")", "", regex=False)
+        .str.replace(" ", "", regex=False)
+        .str.replace(".", "", regex=False)
+        .str.replace(",", ".", regex=False)
+    )
+    df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
+
+    # Filtros
+    data_min = df_vendas["Data"].min()
+    data_max = df_vendas["Data"].max()
+    col1, col2, col3 = st.columns([2, 2, 2])
+    with col1:
+        data_inicio, data_fim = st.date_input("📅 Intervalo de datas:", (data_max, data_max), data_min, data_max)
+    with col2:
+        modo_exibicao = st.selectbox("🔀 Ver por:", ["Loja", "Grupo"])
+    with col3:
+        modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"])
+
+    # Aplica filtro de datas
+    data_inicio_dt = pd.to_datetime(data_inicio)
+    data_fim_dt = pd.to_datetime(data_fim)
+    df_filtrado = df_vendas[(df_vendas["Data"] >= data_inicio_dt) & (df_vendas["Data"] <= data_fim_dt)]
+
+    # Criação da coluna de período
+    if modo_periodo == "Diário":
+        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
+    elif modo_periodo == "Mensal":
+        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
+    elif modo_periodo == "Anual":
+        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%Y")
+
+    # Agrupamento
+    chaves = ["Loja", "Grupo"] if modo_exibicao == "Loja" else ["Grupo"]
+    df_agrupado = df_filtrado.groupby(chaves + ["Período"], as_index=False)["Fat.Total"].sum()
+
+    # Pivot
+    df_pivot = df_agrupado.pivot_table(index=chaves, columns="Período", values="Fat.Total", fill_value=0).reset_index()
+
+    # Ordena colunas de período corretamente
+    def ordenar_datas(col):
+        try:
+            return datetime.strptime(col, "%d/%m/%Y")
+        except:
+            try:
+                return datetime.strptime("01/" + col, "%d/%m/%Y")
+            except:
+                return datetime.strptime("01/01/" + col, "%d/%m/%Y")
+
+    colunas_periodo = sorted([c for c in df_pivot.columns if c not in chaves], key=ordenar_datas)
+    colunas_finais = chaves + colunas_periodo
+    df_final = df_pivot[colunas_finais]
+
+    # Totais
+    linha_total = df_final.drop(columns=chaves).sum(numeric_only=True)
+    linha_total[chaves[0]] = "TOTAL"
+    if modo_exibicao == "Loja":
+        linha_total["Grupo"] = ""
+    df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
+
+    # Formata valores
+    def formatar(valor):
+        try:
+            return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        except:
+            return valor
+
+    df_formatado = df_final.copy()
+    for col in colunas_periodo:
+        df_formatado[col] = df_formatado[col].apply(formatar)
+
+    # Estilo visual
+    cores_alternadas = ["#eef4fa", "#f5fbf3"]
+    estilos_linha = []
+    cor_idx = -1
+    grupo_atual = None
+    for _, row in df_formatado.iterrows():
+        if row[chaves[0]] == "TOTAL":
+            estilos_linha.append(["background-color: #f2f2f2; font-weight: bold"] * len(row))
+        else:
+            if modo_exibicao == "Loja":
+                grupo = row["Grupo"]
+            else:
+                grupo = row["Grupo"]
+            if grupo != grupo_atual:
+                cor_idx = (cor_idx + 1) % len(cores_alternadas)
+                grupo_atual = grupo
+            cor = cores_alternadas[cor_idx]
+            estilos_linha.append([f"background-color: {cor}"] * len(row))
+
+    # Exibe na tela
+    def aplicar_estilo(df, estilos_linha):
+        return df.style.apply(lambda row: estilos_linha[row.name], axis=1)
+
+    st.dataframe(
+        aplicar_estilo(df_formatado, estilos_linha),
+        use_container_width=True,
+        height=750
+    )
+
 
 # ================================
 # Aba 4: Analise Lojas
