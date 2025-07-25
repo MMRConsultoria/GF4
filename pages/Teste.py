@@ -157,6 +157,20 @@ for grupo, _, df_grp in grupos_info:
     blocos.append(pd.DataFrame([subtotal]))
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
+# Cria coluna Tipo para todas as linhas: lojas, subtotal e total
+
+# 1. Adiciona Tipo para lojas reais
+df_final = df_final.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
+
+# 2. Preenche Tipo nas linhas de subtotal e total com base na maioria do grupo
+mascara_nulo = df_final["Tipo"].isna()
+mapa_tipo_grupo = (
+    df_final[~df_final["Tipo"].isna() & ~df_final["Grupo"].astype(str).str.startswith("SUBTOTAL")]
+    .groupby("Grupo")["Tipo"]
+    .agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None)
+)
+df_final.loc[mascara_nulo, "Tipo"] = df_final.loc[mascara_nulo, "Grupo"].map(mapa_tipo_grupo)
+
 # Percentuais
 filtro_lojas = (
     (df_final["Loja"] != "") &
