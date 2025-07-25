@@ -206,18 +206,18 @@ for col in colunas_exibir:
     if col not in ["Grupo", "Loja"]:
         df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
 
-# Faturamento desejável
-# Faturamento desejável
-dia_hoje = data_fim_dt.day
-dias_mes = monthrange(data_fim_dt.year, data_fim_dt.month)[1]
-perc_desejavel = dia_hoje / dias_mes
-meta_total = df_final.loc[df_final["Grupo"] == "TOTAL", "Meta"].values[0]
-linha_desejavel = pd.DataFrame([{
-    "Grupo": "",
-    "Loja": f"FATURAMENTO DESEJÁVEL ATÉ {data_fim_dt.strftime('%d/%m')}",
-    "%Atingido": formatar(perc_desejavel, "%Atingido")
-} | {col: "" for col in df_formatado.columns if col not in ["Grupo", "Loja", "%Atingido"]}])
-
+# Faturamento desejável (com ordem correta das colunas)
+linha_desejavel_dict = {}
+for col in colunas_exibir:
+    if col == "Grupo":
+        linha_desejavel_dict[col] = ""
+    elif col == "Loja":
+        linha_desejavel_dict[col] = f"FATURAMENTO DESEJÁVEL ATÉ {data_fim_dt.strftime('%d/%m')}"
+    elif col == "%Atingido":
+        linha_desejavel_dict[col] = formatar(perc_desejavel, "%Atingido")
+    else:
+        linha_desejavel_dict[col] = ""
+linha_desejavel = pd.DataFrame([linha_desejavel_dict])
 
 # Estilo visual
 def aplicar_estilo_final(df, estilos_linha):
