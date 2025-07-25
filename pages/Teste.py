@@ -349,10 +349,9 @@ for _, row in df_final.iterrows():
         cor = cores_alternadas[cor_idx]
         estilos.append([f"background-color: {cor}"] * len(row))
 
-estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_linhas_visiveis.columns)] + estilos
-
+estilos = [["background-color: #dddddd; font-weight: bold"] * len(df_formatado.columns)] + estilos  # adiciona linha desejável
 df_exibir = pd.concat([linha_desejavel, df_linhas_visiveis], ignore_index=True)
-
+estilos_final = estilos
 # Exibe na tela
 st.dataframe(
     aplicar_estilo_final(df_exibir, estilos_final),
