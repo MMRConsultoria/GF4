@@ -128,11 +128,7 @@ df_base = df_base.merge(
     validate="many_to_one"
 )
 
-# Checagem imediata
-if "Tipo" not in df_base.columns:
-    st.error("❌ Coluna 'Tipo' não foi adicionada ao df_base após o merge.")
-else:
-    st.success("✅ Coluna 'Tipo' adicionada com sucesso ao df_base.")
+
 df_base["Meta"] = df_base["Meta"].fillna(0)
 
 
