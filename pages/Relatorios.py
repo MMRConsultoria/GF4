@@ -293,11 +293,10 @@ with aba3:
     df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
 
     # ================== FILTROS ===================
-    data_ultima_disponivel = df_vendas["Data"].max()
-    data_min_disponivel = df_vendas["Data"].min()
-    mes_ultimo = data_ultima_disponivel.strftime("%m/%Y")
-    ano_ultimo = data_ultima_disponivel.strftime("%Y")
-
+    # Filtros
+    df_vendas["AnoMes"] = df_vendas["Data"].dt.to_period("M")
+    df_vendas["Ano"] = df_vendas["Data"].dt.year.astype(str)
+    df_vendas["Mes"] = df_vendas["Data"].dt.month.astype(str).str.zfill(2)
     nomes_meses = {
         "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
         "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
@@ -305,47 +304,50 @@ with aba3:
     }
 
     col1, col2 = st.columns([2, 2])
-    with col1:
-        modo_exibicao = st.selectbox("🔀 Ver por:", ["Loja", "Grupo"], index=0, key="modo_exibicao_relatorio")
-    with col2:
-        modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"], index=0, key="modo_periodo_relatorio")
+    modo_visualizacao = col1.radio("📊 Tipo de relatório:", ["Dia", "Mês", "Ano"], index=0, horizontal=True)
 
-    if modo_periodo == "Diário":
-        data_inicio, data_fim = st.date_input(
-            "🗕️ Selecione o intervalo de datas:",
-            value=(data_ultima_disponivel, data_ultima_disponivel),
-            min_value=data_min_disponivel,
-            max_value=data_ultima_disponivel,
-            key="data_filtro_dia"
+    data_max = df_vendas["Data"].max()
+    data_min = df_vendas["Data"].min()
+
+    if modo_visualizacao == "Dia":
+        data_inicio, data_fim = col2.date_input(
+            "📅 Intervalo de datas:",
+            (data_max, data_max),
+            min_value=data_min,
+            max_value=data_max
         )
-        df_filtrado = df_vendas[(df_vendas["Data"] >= pd.to_datetime(data_inicio)) & (df_vendas["Data"] <= pd.to_datetime(data_fim))].copy()
-        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
+        df_filtrado = df_vendas[
+            (df_vendas["Data"] >= pd.to_datetime(data_inicio)) &
+            (df_vendas["Data"] <= pd.to_datetime(data_fim))
+        ]
 
-    elif modo_periodo == "Mensal":
-        df_vendas["AnoMes"] = df_vendas["Data"].dt.to_period("M")
-        meses_disponiveis = sorted(df_vendas["AnoMes"].unique())
-
+    elif modo_visualizacao == "Mês":
+        meses_disponiveis = sorted(df_vendas["AnoMes"].dropna().unique().astype(str))
+        mes_ultimo = data_max.strftime("%Y-%m")
         opcoes_formatadas = []
-        map_label_to_period = {}
+        mapa_mes_original = {}
         for m in meses_disponiveis:
-            mes_ano_str = str(m)
-            ano, mes = mes_ano_str.split("-")
+            ano, mes = m.split("-")
             label = f"{nomes_meses[mes]}/{ano}"
             opcoes_formatadas.append(label)
-            map_label_to_period[label] = m
+            mapa_mes_original[label] = m
+        meses_escolhidos_label = col2.multiselect(
+            "📅 Selecione o(s) mês(es):",
+            options=opcoes_formatadas,
+            default=[label for label in opcoes_formatadas if mapa_mes_original[label] == mes_ultimo]
+        )
+        meses_escolhidos = [mapa_mes_original[label] for label in meses_escolhidos_label]
+        df_filtrado = df_vendas[df_vendas["AnoMes"].astype(str).isin(meses_escolhidos)]
 
-        mes_default = [label for label in opcoes_formatadas if label.endswith(f"/{ano_ultimo}") and label.startswith(nomes_meses[mes_ultimo[:2]])]
-        meses_selecionados = st.multiselect("📅 Selecione o(s) mês(es):", opcoes_formatadas, default=mes_default)
-        periodos_escolhidos = [map_label_to_period[m] for m in meses_selecionados]
-        df_filtrado = df_vendas[df_vendas["AnoMes"].isin(periodos_escolhidos)].copy()
-        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
-
-    elif modo_periodo == "Anual":
-        df_vendas["Ano"] = df_vendas["Data"].dt.year
-        anos_disponiveis = sorted(df_vendas["Ano"].unique())
-        ano_escolhido = st.multiselect("📅 Selecione o(s) ano(s):", anos_disponiveis, default=[int(ano_ultimo)])
-        df_filtrado = df_vendas[df_vendas["Ano"].isin(ano_escolhido)].copy()
-        df_filtrado["Período"] = df_filtrado["Ano"].astype(str)
+    elif modo_visualizacao == "Ano":
+        anos_disponiveis = sorted(df_vendas["Ano"].dropna().unique())
+        ano_ultimo = data_max.strftime("%Y")
+        anos_escolhidos = col2.multiselect(
+            "📅 Selecione o(s) ano(s):",
+            options=anos_disponiveis,
+            default=[ano_ultimo]
+        )
+        df_filtrado = df_vendas[df_vendas["Ano"].isin(anos_escolhidos)]
 
     # ================== AGRUPAMENTO ===================
     chaves = ["Loja", "Grupo"] if modo_exibicao == "Loja" else ["Grupo"]
