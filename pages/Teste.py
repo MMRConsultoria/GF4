@@ -352,8 +352,9 @@ perc_desejavel = dia_hoje / dias_mes
 
 
 # Faturamento desejável (com ordem correta das colunas)
+# Faturamento desejável (com ordem correta das colunas)
 linha_desejavel_dict = {}
-for col in colunas_visiveis:  # ✅ CORRETO
+for col in colunas_visiveis:
     if col == "Grupo":
         linha_desejavel_dict[col] = ""
     elif col == "Loja":
@@ -362,7 +363,7 @@ for col in colunas_visiveis:  # ✅ CORRETO
         linha_desejavel_dict[col] = formatar(perc_desejavel, "%Atingido")
     else:
         linha_desejavel_dict[col] = ""
-# Cria DataFrame da linha desejável
+
 linha_desejavel = pd.DataFrame([linha_desejavel_dict])
 
 # 🔽 Remove "Tipo" da visualização final
@@ -370,11 +371,33 @@ for df_temp in [df_resumo_tipo_formatado, df_formatado, linha_desejavel]:
     if "Tipo" in df_temp.columns:
         df_temp.drop(columns=["Tipo"], inplace=True)
 
-# 🔁 Junta tudo
+# 🔁 Junta tudo para exibir
 df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
 df_exibir = pd.concat([linha_desejavel, df_linhas_visiveis], ignore_index=True)
 
-# 🎨 Estilo visual
+# 🎨 Define função de estilo
+def aplicar_estilo_final(df, estilos_linha):
+    def apply_row_style(row):
+        base_style = estilos_linha[row.name].copy()
+        if "%Atingido" in df.columns and row.name > 0:
+            try:
+                valor = row["%Atingido"]
+                if isinstance(valor, str) and "%" in valor:
+                    valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
+                else:
+                    valor_float = float(valor)
+                if not pd.isna(valor_float):
+                    idx = df.columns.get_loc("%Atingido")
+                    if valor_float >= perc_desejavel:
+                        base_style[idx] += "; color: green; font-weight: bold"
+                    else:
+                        base_style[idx] += "; color: red; font-weight: bold"
+            except:
+                pass
+        return base_style
+    return df.style.apply(apply_row_style, axis=1)
+
+# 🎨 Estilo visual por linha
 cores_alternadas = ["#eef4fa", "#f5fbf3"]
 estilos_linha = []
 cor_idx = -1
@@ -391,13 +414,13 @@ for _, row in df_linhas_visiveis.iterrows():
     loja = row["Loja"]
 
     if isinstance(grupo, str) and tem_grupo_resumo and grupo in df_resumo_tipo_formatado["Grupo"].values:
-        estilos_linha.append(["background-color: #fffbea; font-weight: bold"] * len(row))  # amarelo claro
+        estilos_linha.append(["background-color: #fffbea; font-weight: bold"] * len(row))
     elif grupo == "TOTAL":
-        estilos_linha.append(["background-color: #f2f2f2; font-weight: bold"] * len(row))  # cinza claro
+        estilos_linha.append(["background-color: #f2f2f2; font-weight: bold"] * len(row))
     elif isinstance(grupo, str) and grupo.startswith("SUBTOTAL"):
-        estilos_linha.append(["background-color: #fff8dc; font-weight: bold"] * len(row))  # amarelo pastel
+        estilos_linha.append(["background-color: #fff8dc; font-weight: bold"] * len(row))
     elif loja == "":
-        estilos_linha.append(["background-color: #fdfdfd"] * len(row))  # quase branco
+        estilos_linha.append(["background-color: #fdfdfd"] * len(row))
     else:
         if grupo != grupo_atual:
             cor_idx = (cor_idx + 1) % len(cores_alternadas)
@@ -409,7 +432,7 @@ for _, row in df_linhas_visiveis.iterrows():
 estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_linhas_visiveis.columns)]
 estilos_final += estilos_linha
 
-# Aplica estilo e exibe
+# 📊 Exibe resultado final
 st.dataframe(
     aplicar_estilo_final(df_exibir, estilos_final),
     use_container_width=True,
