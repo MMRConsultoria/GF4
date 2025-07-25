@@ -116,15 +116,6 @@ df_metas_filtrado = df_metas[(df_metas["Mês"] == mes_filtro) & (df_metas["Ano"]
 df_base["Loja"] = df_base["Loja"].astype(str).str.strip().str.upper()
 df_base = df_base.merge(df_metas_filtrado[["Loja", "Meta"]], on="Loja", how="left")
 df_base["Meta"] = df_base["Meta"].fillna(0)
-df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
-# Ordena os tipos manualmente
-ordem_tipos = ["AIRPORTS", "Airports - Kopp", "On-Premise"]
-df_base["Tipo"] = pd.Categorical(df_base["Tipo"], categories=ordem_tipos, ordered=True)
-
-# Ordena o dataframe
-df_base = df_base.sort_values(by=["Tipo", "Grupo", col_acumulado], ascending=[True, True, False])
-
-
 
 # %Atingido
 df_base["%Atingido"] = df_base[col_acumulado] / df_base["Meta"]
@@ -166,27 +157,6 @@ for grupo, _, df_grp in grupos_info:
     blocos.append(pd.DataFrame([subtotal]))
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
-# Junta o Tipo real das lojas (sem sobrescrever)
-df_final = df_final.merge(df_empresa[["Loja", "Tipo"]], on="Loja", how="left")
-
-# Só preenche Tipo onde está ausente (SUBTOTALS e TOTAL)
-mascara_nulo = df_final["Tipo"].isna()
-
-# Mapeia Tipo por Grupo com base nas lojas válidas
-df_tipo_grupo = (
-    df_final[~df_final["Tipo"].isna() & ~df_final["Grupo"].str.startswith("SUBTOTAL")]
-    .groupby("Grupo")["Tipo"]
-    .agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None)
-)
-
-df_final.loc[mascara_nulo, "Tipo"] = df_final.loc[mascara_nulo, "Grupo"].map(df_tipo_grupo)
-
-# Ordenação final
-ordem_tipos = ["AIRPORTS", "Airports - Kopp", "On-Premise"]
-df_final["Tipo"] = pd.Categorical(df_final["Tipo"], categories=ordem_tipos, ordered=True)
-df_final = df_final.sort_values(by=["Tipo", "Grupo", col_acumulado], ascending=[True, True, False])
-
-
 # Percentuais
 filtro_lojas = (
     (df_final["Loja"] != "") &
@@ -227,7 +197,7 @@ else:
 
 # Oculta coluna %LojaXGrupo se for modo Grupo
 # Define colunas com base no filtro "Meta" ou "Sem Meta"
-colunas_visiveis = ["Tipo", "Grupo", "Loja"] + col_diarias + [col_acumulado]
+colunas_visiveis = ["Grupo", "Loja"] + col_diarias + [col_acumulado]
 
 if filtro_meta == "Meta":
     colunas_visiveis += ["Meta", "%Atingido"]
@@ -236,9 +206,7 @@ elif filtro_meta == "Sem Meta":
         colunas_visiveis += ["%LojaXGrupo", "%Grupo"]
     else:  # Grupo
         colunas_visiveis += ["%Grupo"]
-# Garante que 'Tipo' esteja presente
-if "Tipo" not in df_final.columns:
-    df_final = df_final.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
+
 df_final = df_final[colunas_visiveis]
 
 # Formata valores
@@ -252,7 +220,7 @@ def formatar(valor, col):
         return ""
 df_formatado = df_final.copy()
 for col in colunas_visiveis:  # ✅ CORRETO
-    if col not in ["Tipo", "Grupo", "Loja"]:
+    if col not in ["Grupo", "Loja"]:
         df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
 
 
@@ -395,3 +363,80 @@ st.dataframe(
     height=750
 )
 
+import io
+
+buffer = io.BytesIO()
+with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+    df_exportar = df_exibir.copy()
+    df_exportar.to_excel(writer, sheet_name="Relatório", index=False, startrow=1, header=False)
+
+    workbook  = writer.book
+    worksheet = writer.sheets["Relatório"]
+
+    # === Formatos ===
+    formato_valor = workbook.add_format({"num_format": "R$ #,##0.00", "align": "right"})
+    formato_pct   = workbook.add_format({"num_format": "0.00%", "align": "right"})
+    formato_cabecalho = workbook.add_format({"bold": True, "bg_color": "#d9d9d9", "border": 1, "align": "center"})
+    formato_total = workbook.add_format({"bold": True, "bg_color": "#f2f2f2"})
+    formato_subtotal = workbook.add_format({"bold": True, "bg_color": "#fff8dc"})
+    formato_resumo_tipo = workbook.add_format({"bold": True, "bg_color": "#fffbea"})
+    formato_desejavel = workbook.add_format({"bold": True, "bg_color": "#dddddd"})
+    formato_verde = workbook.add_format({"font_color": "green", "num_format": "0.00%", "bold": True})
+    formato_vermelho = workbook.add_format({"font_color": "red", "num_format": "0.00%", "bold": True})
+    formato_padrao = workbook.add_format({"align": "left"})
+
+    # === Cabeçalhos ===
+    for col_num, value in enumerate(df_exportar.columns):
+        worksheet.write(0, col_num, value, formato_cabecalho)
+
+    # === Estilo de linhas
+    for row_num, row in df_exportar.iterrows():
+        grupo = row["Grupo"]
+        loja = row["Loja"]
+
+        # Detecta tipo de linha
+        if isinstance(grupo, str) and grupo in df_resumo_tipo_formatado["Grupo"].values:
+            estilo = formato_resumo_tipo
+        elif isinstance(loja, str) and loja.startswith("FATURAMENTO"):
+            estilo = formato_desejavel
+        elif isinstance(grupo, str) and grupo == "TOTAL":
+            estilo = formato_total
+        elif isinstance(grupo, str) and grupo.startswith("SUBTOTAL"):
+            estilo = formato_subtotal
+        else:
+            cor = cores_alternadas[row_num % 2]
+            estilo = workbook.add_format({"bg_color": cor})
+
+        for col_num, col_name in enumerate(df_exportar.columns):
+            valor = row[col_name]
+
+            # Coluna %Atingido com condicional
+            if col_name == "%Atingido":
+                try:
+                    val_pct = float(str(valor).replace("%", "").replace(",", ".")) / 100
+                    formato_pct_cor = formato_verde if val_pct >= perc_desejavel else formato_vermelho
+                    worksheet.write(row_num + 1, col_num, val_pct, formato_pct_cor)
+                except:
+                    worksheet.write(row_num + 1, col_num, valor, estilo)
+            elif col_name.startswith("Fat") or col_name.startswith("Acumulado") or col_name == "Meta":
+                try:
+                    val = float(str(valor).replace("R$", "").replace(".", "").replace(",", "."))
+                    worksheet.write(row_num + 1, col_num, val, formato_valor)
+                except:
+                    worksheet.write(row_num + 1, col_num, valor, estilo)
+            elif col_name.startswith("%") and valor != "":
+                try:
+                    val = float(str(valor).replace("%", "").replace(",", ".")) / 100
+                    worksheet.write(row_num + 1, col_num, val, formato_pct)
+                except:
+                    worksheet.write(row_num + 1, col_num, valor, estilo)
+            else:
+                worksheet.write(row_num + 1, col_num, valor, estilo)
+
+# Botão para download
+st.download_button(
+    label="📥 Baixar Excel Igual à Tela",
+    data=buffer.getvalue(),
+    file_name=f"Relatorio_Vendas_{data_fim_dt.strftime('%d%m%Y')}.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
