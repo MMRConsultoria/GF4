@@ -264,7 +264,8 @@ elif filtro_meta == "Sem Meta":
         colunas_visiveis += ["%LojaXGrupo", "%Grupo"]
     else:  # Grupo
         colunas_visiveis += ["%Grupo"]
-
+if "Tipo" in colunas_visiveis:
+    colunas_visiveis.remove("Tipo")
 df_final = df_final[colunas_visiveis]
 
 # Formata valores
