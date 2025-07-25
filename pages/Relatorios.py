@@ -272,7 +272,7 @@ with aba3:
     df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
     df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
 
-    # Normaliza campos
+    # Normalização
     df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
     df_empresa["Grupo"] = df_empresa["Grupo"].str.strip()
     df_vendas.columns = df_vendas.columns.str.strip()
@@ -292,71 +292,44 @@ with aba3:
     )
     df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
 
-    # ================== FILTROS ===================
     # Filtros
-    df_vendas["AnoMes"] = df_vendas["Data"].dt.to_period("M")
-    df_vendas["Ano"] = df_vendas["Data"].dt.year.astype(str)
-    df_vendas["Mes"] = df_vendas["Data"].dt.month.astype(str).str.zfill(2)
-    nomes_meses = {
-        "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
-        "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
-        "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
-    }
-
-    col1, col2 = st.columns([2, 2])
-    modo_visualizacao = col1.radio("📊 Tipo de relatório:", ["Dia", "Mês", "Ano"], index=0, horizontal=True)
-
-    data_max = df_vendas["Data"].max()
     data_min = df_vendas["Data"].min()
-
-    if modo_visualizacao == "Dia":
-        data_inicio, data_fim = col2.date_input(
+    data_max = df_vendas["Data"].max()
+    col1, col2, col3 = st.columns([2, 2, 2])
+    with col1:
+        data_inicio, data_fim = st.date_input(
             "📅 Intervalo de datas:",
             (data_max, data_max),
-            min_value=data_min,
-            max_value=data_max
+            data_min,
+            data_max,
+            key="data_vendas_relatorio"
         )
-        df_filtrado = df_vendas[
-            (df_vendas["Data"] >= pd.to_datetime(data_inicio)) &
-            (df_vendas["Data"] <= pd.to_datetime(data_fim))
-        ]
+    with col2:
+        modo_exibicao = st.selectbox("🔀 Ver por:", ["Loja", "Grupo"], key="modo_exibicao_relatorio")
+    with col3:
+        modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"], key="modo_periodo_relatorio")
 
-    elif modo_visualizacao == "Mês":
-        meses_disponiveis = sorted(df_vendas["AnoMes"].dropna().unique().astype(str))
-        mes_ultimo = data_max.strftime("%Y-%m")
-        opcoes_formatadas = []
-        mapa_mes_original = {}
-        for m in meses_disponiveis:
-            ano, mes = m.split("-")
-            label = f"{nomes_meses[mes]}/{ano}"
-            opcoes_formatadas.append(label)
-            mapa_mes_original[label] = m
-        meses_escolhidos_label = col2.multiselect(
-            "📅 Selecione o(s) mês(es):",
-            options=opcoes_formatadas,
-            default=[label for label in opcoes_formatadas if mapa_mes_original[label] == mes_ultimo]
-        )
-        meses_escolhidos = [mapa_mes_original[label] for label in meses_escolhidos_label]
-        df_filtrado = df_vendas[df_vendas["AnoMes"].astype(str).isin(meses_escolhidos)]
+    # Filtro de datas
+    data_inicio_dt = pd.to_datetime(data_inicio)
+    data_fim_dt = pd.to_datetime(data_fim)
+    df_filtrado = df_vendas[(df_vendas["Data"] >= data_inicio_dt) & (df_vendas["Data"] <= data_fim_dt)]
 
-    elif modo_visualizacao == "Ano":
-        anos_disponiveis = sorted(df_vendas["Ano"].dropna().unique())
-        ano_ultimo = data_max.strftime("%Y")
-        anos_escolhidos = col2.multiselect(
-            "📅 Selecione o(s) ano(s):",
-            options=anos_disponiveis,
-            default=[ano_ultimo]
-        )
-        df_filtrado = df_vendas[df_vendas["Ano"].isin(anos_escolhidos)]
+    # Coluna de período
+    if modo_periodo == "Diário":
+        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
+    elif modo_periodo == "Mensal":
+        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
+    else:
+        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%Y")
 
-    # ================== AGRUPAMENTO ===================
-
-    modo_exibicao = st.selectbox("👥 Agrupar por:", ["Loja", "Grupo"], index=0)
+    # Agrupamento
     chaves = ["Loja", "Grupo"] if modo_exibicao == "Loja" else ["Grupo"]
     df_agrupado = df_filtrado.groupby(chaves + ["Período"], as_index=False)["Fat.Total"].sum()
 
+    # Pivot
     df_pivot = df_agrupado.pivot_table(index=chaves, columns="Período", values="Fat.Total", fill_value=0).reset_index()
 
+    # Ordenação das datas
     def ordenar_datas(col):
         try:
             return datetime.strptime(col, "%d/%m/%Y")
@@ -367,21 +340,31 @@ with aba3:
                 return datetime.strptime("01/01/" + col, "%d/%m/%Y")
 
     colunas_periodo = sorted([c for c in df_pivot.columns if c not in ["Loja", "Grupo"]], key=ordenar_datas)
-    if "Loja" not in df_pivot.columns: df_pivot["Loja"] = ""
-    if "Grupo" not in df_pivot.columns: df_pivot["Grupo"] = ""
 
+    # Garante que colunas existam
+    if "Loja" not in df_pivot.columns:
+        df_pivot["Loja"] = ""
+    if "Grupo" not in df_pivot.columns:
+        df_pivot["Grupo"] = ""
+
+    # Define ordem final: Grupo, Loja, depois períodos
     colunas_finais = ["Grupo", "Loja"] + colunas_periodo
     df_final = df_pivot[colunas_finais].copy()
 
+    # Total acumulado (última coluna)
     ultima_coluna_valor = colunas_periodo[-1]
     df_final["__ordem"] = df_final[ultima_coluna_valor]
+
+    # Ordena do maior para o menor
     df_final = df_final.sort_values(by="__ordem", ascending=False).drop(columns="__ordem").reset_index(drop=True)
 
+    # Linha TOTAL
     linha_total = df_final.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     linha_total["Grupo"] = "TOTAL"
     linha_total["Loja"] = ""
     df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
 
+    # Formatação
     def formatar(valor):
         try:
             return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -391,8 +374,10 @@ with aba3:
     df_formatado = df_final.copy()
     for col in colunas_periodo:
         df_formatado[col] = df_formatado[col].apply(formatar)
+
     df_formatado = df_formatado[["Grupo", "Loja"] + colunas_periodo]
 
+    # Estilo para destacar TOTAL
     def aplicar_estilo(df):
         def estilo_linha(row):
             if row["Grupo"] == "TOTAL":
@@ -401,11 +386,13 @@ with aba3:
                 return ["" for _ in row]
         return df.style.apply(estilo_linha, axis=1)
 
+    # Exibição
     st.dataframe(
         aplicar_estilo(df_formatado),
         use_container_width=True,
         height=750
     )
+
 
 
 # ================================
