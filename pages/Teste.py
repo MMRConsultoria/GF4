@@ -362,57 +362,42 @@ for col in colunas_visiveis:  # ✅ CORRETO
         linha_desejavel_dict[col] = formatar(perc_desejavel, "%Atingido")
     else:
         linha_desejavel_dict[col] = ""
+# Cria DataFrame da linha desejável
 linha_desejavel = pd.DataFrame([linha_desejavel_dict])
 
-# 🔽 Remove "Tipo" apenas da visualização final
+# 🔽 Remove "Tipo" da visualização final
 for df_temp in [df_resumo_tipo_formatado, df_formatado, linha_desejavel]:
     if "Tipo" in df_temp.columns:
         df_temp.drop(columns=["Tipo"], inplace=True)
 
-# Estilo visual
-def aplicar_estilo_final(df, estilos_linha):
-    def apply_row_style(row):
-        base_style = estilos_linha[row.name].copy()
-        if "%Atingido" in df.columns and row.name > 0:
-            try:
-                valor = row["%Atingido"]
-                if isinstance(valor, str) and "%" in valor:
-                    valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
-                else:
-                    valor_float = float(valor)
-                if not pd.isna(valor_float):
-                    if valor_float >= perc_desejavel:
-                        idx = df.columns.get_loc("%Atingido")
-                        base_style[idx] = base_style[idx] + "; color: green; font-weight: bold"
-                    else:
-                        idx = df.columns.get_loc("%Atingido")
-                        base_style[idx] = base_style[idx] + "; color: red; font-weight: bold"
-            except:
-                pass
-        return base_style
-    return df.style.apply(apply_row_style, axis=1)
+# 🔁 Junta tudo
+df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
+df_exibir = pd.concat([linha_desejavel, df_linhas_visiveis], ignore_index=True)
 
-
-# ⚠️ Calcula os estilos com base em df_linhas_visiveis (já inclui linhas de tipo + dados)
-cores_alternadas = ["#eef4fa", "#f5fbf3"]  # azul e verde bem suaves
+# 🎨 Estilo visual
+cores_alternadas = ["#eef4fa", "#f5fbf3"]
 estilos_linha = []
 cor_idx = -1
 grupo_atual = None
 
-tem_grupo_resumo = 'df_resumo_tipo_formatado' in locals() and not df_resumo_tipo_formatado.empty and "Grupo" in df_resumo_tipo_formatado.columns
+tem_grupo_resumo = (
+    'df_resumo_tipo_formatado' in locals()
+    and not df_resumo_tipo_formatado.empty
+    and "Grupo" in df_resumo_tipo_formatado.columns
+)
 
 for _, row in df_linhas_visiveis.iterrows():
     grupo = row["Grupo"]
     loja = row["Loja"]
 
     if isinstance(grupo, str) and tem_grupo_resumo and grupo in df_resumo_tipo_formatado["Grupo"].values:
-        estilos_linha.append(["background-color: #fffbea; font-weight: bold"] * len(row))  # amarelo bem clarinho
+        estilos_linha.append(["background-color: #fffbea; font-weight: bold"] * len(row))  # amarelo claro
     elif grupo == "TOTAL":
         estilos_linha.append(["background-color: #f2f2f2; font-weight: bold"] * len(row))  # cinza claro
     elif isinstance(grupo, str) and grupo.startswith("SUBTOTAL"):
         estilos_linha.append(["background-color: #fff8dc; font-weight: bold"] * len(row))  # amarelo pastel
     elif loja == "":
-        estilos_linha.append(["background-color: #fdfdfd"] * len(row))  # branco quase puro
+        estilos_linha.append(["background-color: #fdfdfd"] * len(row))  # quase branco
     else:
         if grupo != grupo_atual:
             cor_idx = (cor_idx + 1) % len(cores_alternadas)
@@ -420,19 +405,13 @@ for _, row in df_linhas_visiveis.iterrows():
         cor = cores_alternadas[cor_idx]
         estilos_linha.append([f"background-color: {cor}"] * len(row))
 
+# ➕ Linha desejável no topo
+estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_linhas_visiveis.columns)]
+estilos_final += estilos_linha
 
-# Adiciona a linha FATURAMENTO DESEJÁVEL no topo
-estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_linhas_visiveis.columns)] + estilos_linha
-
-# Atualiza o dataframe com a linha no topo
-# Junta com dados formatados
-df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
-df_exibir = pd.concat([linha_desejavel, df_linhas_visiveis], ignore_index=True)
-
-# Aplica o estilo atualizado
+# Aplica estilo e exibe
 st.dataframe(
     aplicar_estilo_final(df_exibir, estilos_final),
     use_container_width=True,
     height=750
 )
-
