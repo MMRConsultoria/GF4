@@ -233,9 +233,25 @@ elif filtro_meta == "Sem Meta":
         colunas_visiveis += ["%LojaXGrupo", "%Grupo"]
     else:  # Grupo
         colunas_visiveis += ["%Grupo"]
-# Garante que 'Tipo' esteja presente
+# Garante que a coluna 'Tipo' existe
 if "Tipo" not in df_final.columns:
-    df_final = df_final.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
+    df_final["Tipo"] = ""
+
+# Preenche Tipo nas lojas reais
+df_final.loc[df_final["Tipo"] == "", "Tipo"] = df_final.loc[df_final["Tipo"] == "", "Loja"].map(
+    df_empresa.set_index("Loja")["Tipo"]
+)
+
+# Preenche Tipo nos subtotais (com base na moda do grupo)
+mascara_nulo = df_final["Tipo"].isna() | (df_final["Tipo"] == "")
+mapa_tipo_grupo = (
+    df_final[~df_final["Tipo"].isna() & ~df_final["Grupo"].astype(str).str.startswith("SUBTOTAL")]
+    .groupby("Grupo")["Tipo"]
+    .agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None)
+)
+df_final.loc[mascara_nulo, "Tipo"] = df_final.loc[mascara_nulo, "Grupo"].map(mapa_tipo_grupo)
+
+# Só depois filtra as colunas visíveis
 df_final = df_final[colunas_visiveis]
 
 # Formata valores
