@@ -442,13 +442,13 @@ import openpyxl
 from openpyxl.styles import PatternFill, Font, Alignment
 from io import BytesIO
 
-if st.button("📥 Baixar Excel"):
+if st.button("📥 Baixar Excel idêntico à tela"):
     # Cria workbook
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Vendas"
 
-    # Largura das colunas
+    # Largura de coluna automática
     for i, col in enumerate(df_exibir.columns, start=1):
         ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = max(14, len(col) + 2)
 
@@ -461,11 +461,12 @@ if st.button("📥 Baixar Excel"):
         cell.font = header_font
         cell.alignment = Alignment(horizontal="center", vertical="center")
 
-    # Conteúdo com estilos
+    # Conteúdo com estilo
     for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
-        estilo_linha = estilos_final[row_idx - 2]  # -2 pois header é linha 1
+        estilo_linha = estilos_final[row_idx - 2]  # -2 porque cabeçalho é linha 1
         for col_idx, (col, valor) in enumerate(row.items(), start=1):
             cell = ws.cell(row=row_idx, column=col_idx, value=valor)
+
             estilo = estilo_linha[col_idx - 1]
             if "background-color" in estilo:
                 cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
@@ -477,12 +478,12 @@ if st.button("📥 Baixar Excel"):
                 vertical="center"
             )
 
-    # Exporta como arquivo
+    # Exporta para BytesIO
     buffer = BytesIO()
     wb.save(buffer)
     buffer.seek(0)
 
-    # Download
+    # 🔽 Download direto
     st.download_button(
         label="📤 Clique para baixar o Excel",
         data=buffer,
