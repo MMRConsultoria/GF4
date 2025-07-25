@@ -328,26 +328,27 @@ estilos_linha = []
 cor_idx = -1
 grupo_atual = None
 
-tem_grupo_resumo = not df_resumo_tipo.empty and "Grupo" in df_resumo_tipo.columns
+tem_grupo_resumo = 'df_resumo_tipo_formatado' in locals() and not df_resumo_tipo_formatado.empty and "Grupo" in df_resumo_tipo_formatado.columns
 
 for _, row in df_linhas_visiveis.iterrows():
     grupo = row["Grupo"]
     loja = row["Loja"]
 
-    if isinstance(grupo, str) and tem_grupo_resumo and grupo in df_resumo_tipo["Grupo"].values:
-        estilos_linha.append(["background-color: #f0f8ff; font-weight: bold"] * len(row))  # azul claro (linhas de tipo)
+    if isinstance(grupo, str) and tem_grupo_resumo and grupo in df_resumo_tipo_formatado["Grupo"].values:
+        estilos_linha.append(["background-color: #fffbea; font-weight: bold"] * len(row))  # amarelo bem clarinho
     elif grupo == "TOTAL":
-        estilos_linha.append(["background-color: #f2f2f2; font-weight: bold"] * len(row))
+        estilos_linha.append(["background-color: #f2f2f2; font-weight: bold"] * len(row))  # cinza claro
     elif isinstance(grupo, str) and grupo.startswith("SUBTOTAL"):
-        estilos_linha.append(["background-color: #fff8dc; font-weight: bold"] * len(row))
+        estilos_linha.append(["background-color: #fff8dc; font-weight: bold"] * len(row))  # amarelo pastel
     elif loja == "":
-        estilos_linha.append(["background-color: #fdfdfd"] * len(row))
+        estilos_linha.append(["background-color: #fdfdfd"] * len(row))  # branco quase puro
     else:
         if grupo != grupo_atual:
             cor_idx = (cor_idx + 1) % len(cores_alternadas)
             grupo_atual = grupo
         cor = cores_alternadas[cor_idx]
         estilos_linha.append([f"background-color: {cor}"] * len(row))
+
 
 # Adiciona a linha FATURAMENTO DESEJÁVEL no topo
 estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_linhas_visiveis.columns)] + estilos_linha
