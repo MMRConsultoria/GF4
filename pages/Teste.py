@@ -142,6 +142,7 @@ df_base = df_base[colunas_finais]
 linha_total = df_base.drop(columns=colunas_base).sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
 linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
+linha_total["Tipo"] = "TOTAL"
 blocos = []
 grupos_info = []
 for grupo, df_grp in df_base.groupby("Grupo"):
@@ -153,6 +154,11 @@ for grupo, _, df_grp in grupos_info:
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
     subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
+    tipo_subtotal = df_grp_ord["Tipo"].dropna().unique()
+    if len(tipo_subtotal) == 1:
+        subtotal["Tipo"] = tipo_subtotal[0]
+    else:
+        subtotal["Tipo"] = ""
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord)
     blocos.append(pd.DataFrame([subtotal]))
@@ -253,6 +259,7 @@ for tipo in tipos_ordenados:
     linha = {}
     linha["Grupo"] = tipo
     linha["Loja"] = f"Lojas: {df_tipo_filtro['Loja'].nunique():02d}"
+    linha["Tipo"] = tipo
 
     for col in col_diarias:
         linha[col] = df_tipo_filtro[col].sum()
@@ -301,10 +308,14 @@ for col in colunas_visiveis:  # ✅ CORRETO
         linha_desejavel_dict[col] = ""
     elif col == "Loja":
         linha_desejavel_dict[col] = f"FATURAMENTO DESEJÁVEL ATÉ {data_fim_dt.strftime('%d/%m')}"
+    elif col == "Tipo":
+        linha_desejavel_dict[col] = ""
     elif col == "%Atingido":
         linha_desejavel_dict[col] = formatar(perc_desejavel, "%Atingido")
+    
     else:
         linha_desejavel_dict[col] = ""
+        
 linha_desejavel = pd.DataFrame([linha_desejavel_dict])
 
 # Estilo visual
