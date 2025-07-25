@@ -442,6 +442,7 @@ import openpyxl
 from openpyxl.styles import PatternFill, Font, Alignment
 from io import BytesIO
 from openpyxl.utils import get_column_letter
+from openpyxl.styles import Border, Side
 
 # Gera o Excel já na memória
 wb = openpyxl.Workbook()
@@ -457,9 +458,10 @@ for col_idx, col in enumerate(df_exibir.columns, start=1):
 
 # Preenche os dados na planilha
 for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
-    estilo_linha = estilos_final[row_idx - 2]  # -2 porque o header está na linha 1
+    estilo_linha = estilos_final[row_idx - 2]
+    is_subtotal = "SUBTOTAL" in str(row["Grupo"]).upper()
+
     for col_idx, (col, valor) in enumerate(row.items(), start=1):
-        # Aplica valor e formatação numérica
         if isinstance(valor, str) and "%" in valor:
             try:
                 valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
@@ -469,15 +471,26 @@ for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
                 cell = ws.cell(row=row_idx, column=col_idx, value=valor)
         elif isinstance(valor, str) and "R$" in valor:
             try:
-                valor_float = float(
-                    valor.replace("R$", "").replace(".", "").replace(",", ".")
-                )
+                valor_float = float(valor.replace("R$", "").replace(".", "").replace(",", "."))
                 cell = ws.cell(row=row_idx, column=col_idx, value=valor_float)
                 cell.number_format = 'R$ #,##0.00'
             except:
                 cell = ws.cell(row=row_idx, column=col_idx, value=valor)
         else:
             cell = ws.cell(row=row_idx, column=col_idx, value=valor)
+
+        # Estilo visual
+        estilo = estilo_linha[col_idx - 1]
+        if "background-color" in estilo:
+            cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
+            cell.fill = PatternFill("solid", fgColor=cor)
+        if "font-weight: bold" in estilo:
+            cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
+
+        # ⬛️ Aplique borda aqui
+        cell.border = border_grossa if is_subtotal else border_padrao
+
 
         # ✅ Aplica o estilo visual (cor, negrito, alinhamento)
         estilo = estilo_linha[col_idx - 1]
