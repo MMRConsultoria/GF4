@@ -90,6 +90,24 @@ df_acumulado = df_acumulado.rename(columns={"Fat.Total": col_acumulado})
 df_base = df_pivot.merge(df_acumulado, on=["Grupo", "Loja"], how="left")
 df_base = df_base[df_base[col_acumulado] != 0]
 
+# ================================
+# 📌 Ordena por Tipo: AIRPORTS > Airports - Kopp > outros
+# ================================
+df_tipo_ordem = df_empresa[["Loja", "Tipo"]].drop_duplicates()
+df_base = df_base.merge(df_tipo_ordem, on="Loja", how="left")
+
+tipos_prioritarios = ["AIRPORTS", "Airports - Kopp"]
+df_base["PrioridadeTipo"] = df_base["Tipo"].apply(lambda x: tipos_prioritarios.index(x) if x in tipos_prioritarios else 999)
+
+# Ordena: primeiro por tipo prioritário, depois por acumulado (desc)
+df_base = df_base.sort_values(by=["PrioridadeTipo", "Grupo", col_acumulado], ascending=[True, True, False])
+
+# Remove colunas auxiliares
+df_base = df_base.drop(columns=["PrioridadeTipo", "Tipo"])
+
+
+
+
 # Adiciona coluna de Meta
 df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
 df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
