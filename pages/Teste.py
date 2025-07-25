@@ -456,6 +456,21 @@ for col_idx, col in enumerate(df_exibir.columns, start=1):
     cell.font = Font(bold=True)
     cell.alignment = Alignment(horizontal="center")
 
+# Define bordas
+border_padrao = Border(
+    left=Side(style="thin"),
+    right=Side(style="thin"),
+    top=Side(style="thin"),
+    bottom=Side(style="thin"),
+)
+
+border_grossa = Border(
+    left=Side(style="medium"),
+    right=Side(style="medium"),
+    top=Side(style="medium"),
+    bottom=Side(style="medium"),
+)
+
 # Preenche os dados na planilha
 for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
     estilo_linha = estilos_final[row_idx - 2]
