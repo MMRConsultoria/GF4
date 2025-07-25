@@ -276,19 +276,6 @@ df_tmp = df_tmp[df_tmp["Grupo"].astype(str).str.startswith("SUBTOTAL")].copy()
 
 # Agrupamento
 df_resumo_tipo = (
-    df_tmp.groupby("Tipo", as_index=False)
-    .agg({
-        col_acumulado: "sum",
-        "Meta": "sum" if "Meta" in df_tmp.columns else "first",
-    })
-)
-
-df_resumo_tipo["%Grupo"] = df_resumo_tipo[col_acumulado] / df_resumo_tipo[col_acumulado].sum()
-if "Meta" in df_resumo_tipo.columns:
-    df_resumo_tipo["%Atingido"] = df_resumo_tipo[col_acumulado] / df_resumo_tipo["Meta"]
-else:
-    df_resumo_tipo["%Atingido"] = ""
-
 # Colunas adicionais
 df_resumo_tipo["Grupo"] = df_resumo_tipo["Tipo"]
 df_resumo_tipo["Loja"] = df_tmp.groupby("Tipo")["Loja"].nunique().apply(lambda x: f"Lojas: {x:02d}").values
