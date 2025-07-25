@@ -442,7 +442,7 @@ import openpyxl
 from openpyxl.styles import PatternFill, Font, Alignment
 from io import BytesIO
 
-# Gera o Excel já na memória (sem precisar clicar antes)
+# Gera o Excel já na memória
 wb = openpyxl.Workbook()
 ws = wb.active
 ws.title = "Vendas"
@@ -478,8 +478,16 @@ for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
         else:
             cell = ws.cell(row=row_idx, column=col_idx, value=valor)
 
-# ⬇️ COLE AQUI ⬇️
-# Ajusta automaticamente a largura das colunas
+        # ✅ Aplica o estilo visual (cor, negrito, alinhamento)
+        estilo = estilo_linha[col_idx - 1]
+        if "background-color" in estilo:
+            cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
+            cell.fill = PatternFill("solid", fgColor=cor)
+        if "font-weight: bold" in estilo:
+            cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
+
+# ⬇️ Ajusta automaticamente a largura das colunas
 for col_idx, column_cells in enumerate(ws.columns, start=1):
     max_length = 0
     for cell in column_cells:
@@ -489,18 +497,9 @@ for col_idx, column_cells in enumerate(ws.columns, start=1):
                 max_length = max(max_length, len(cell_value))
         except:
             pass
-    adjusted_width = max_length + 2  # margem extra
+    adjusted_width = max_length + 2
     col_letter = openpyxl.utils.get_column_letter(col_idx)
     ws.column_dimensions[col_letter].width = adjusted_width
-
-
-        estilo = estilo_linha[col_idx - 1]
-        if "background-color" in estilo:
-            cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
-            cell.fill = PatternFill("solid", fgColor=cor)
-        if "font-weight: bold" in estilo:
-            cell.font = Font(bold=True)
-        cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
 
 # Salva em memória
 buffer = BytesIO()
