@@ -442,51 +442,41 @@ import openpyxl
 from openpyxl.styles import PatternFill, Font, Alignment
 from io import BytesIO
 
-if st.button("📥 Baixar Excel idêntico à tela"):
-    # Cria workbook
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Vendas"
+# Gera o Excel já na memória (sem precisar clicar antes)
+wb = openpyxl.Workbook()
+ws = wb.active
+ws.title = "Vendas"
 
-    # Largura de coluna automática
-    for i, col in enumerate(df_exibir.columns, start=1):
-        ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = max(14, len(col) + 2)
+# Cabeçalho
+for col_idx, col in enumerate(df_exibir.columns, start=1):
+    cell = ws.cell(row=1, column=col_idx, value=col)
+    cell.fill = PatternFill("solid", fgColor="DDDDDD")
+    cell.font = Font(bold=True)
+    cell.alignment = Alignment(horizontal="center")
 
-    # Cabeçalho
-    header_fill = PatternFill("solid", fgColor="DDDDDD")
-    header_font = Font(bold=True)
-    for col_idx, col in enumerate(df_exibir.columns, start=1):
-        cell = ws.cell(row=1, column=col_idx, value=col)
-        cell.fill = header_fill
-        cell.font = header_font
-        cell.alignment = Alignment(horizontal="center", vertical="center")
+# Dados
+for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
+    estilo_linha = estilos_final[row_idx - 2]  # -2 porque o header está na linha 1
+    for col_idx, (col, valor) in enumerate(row.items(), start=1):
+        cell = ws.cell(row=row_idx, column=col_idx, value=valor)
 
-    # Conteúdo com estilo
-    for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
-        estilo_linha = estilos_final[row_idx - 2]  # -2 porque cabeçalho é linha 1
-        for col_idx, (col, valor) in enumerate(row.items(), start=1):
-            cell = ws.cell(row=row_idx, column=col_idx, value=valor)
+        estilo = estilo_linha[col_idx - 1]
+        if "background-color" in estilo:
+            cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
+            cell.fill = PatternFill("solid", fgColor=cor)
+        if "font-weight: bold" in estilo:
+            cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
 
-            estilo = estilo_linha[col_idx - 1]
-            if "background-color" in estilo:
-                cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
-                cell.fill = PatternFill("solid", fgColor=cor)
-            if "font-weight: bold" in estilo:
-                cell.font = Font(bold=True)
-            cell.alignment = Alignment(
-                horizontal="left" if col in ["Grupo", "Loja"] else "right",
-                vertical="center"
-            )
+# Salva em memória
+buffer = BytesIO()
+wb.save(buffer)
+buffer.seek(0)
 
-    # Exporta para BytesIO
-    buffer = BytesIO()
-    wb.save(buffer)
-    buffer.seek(0)
-
-    # 🔽 Download direto
-    st.download_button(
-        label="📤 Clique para baixar o Excel",
-        data=buffer,
-        file_name="vendas_formatado.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+# Botão direto de download
+st.download_button(
+    label="📥 Baixar Excel idêntico à tela",
+    data=buffer,
+    file_name="vendas_formatado.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
