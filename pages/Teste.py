@@ -441,6 +441,7 @@ st.dataframe(
 import openpyxl
 from openpyxl.styles import PatternFill, Font, Alignment
 from io import BytesIO
+from openpyxl.utils import get_column_letter
 
 # Gera o Excel já na memória
 wb = openpyxl.Workbook()
@@ -488,26 +489,26 @@ for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
         cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
 
 # ⬇️ Ajusta automaticamente a largura das colunas
+# Ajuste refinado de largura das colunas
 for col_idx, column_cells in enumerate(ws.columns, start=1):
     max_length = 0
     for cell in column_cells:
         try:
-            if cell.number_format in ["0.00%", 'R$ #,##0.00']:
-                # Simula tamanho com máscara (mais largo)
-                cell_str = cell.number_format.replace("0", "0").replace("#", "0")
-                if "R$" in cell.number_format:
-                    cell_str = "R$ 00.000,00"
-                elif "%" in cell.number_format:
-                    cell_str = "100,00%"
+            if cell.number_format == 'R$ #,##0.00' and isinstance(cell.value, (float, int)):
+                cell_str = f'R$ {cell.value:,.2f}'.replace(",", "X").replace(".", ",").replace("X", ".")
+                length = len(cell_str)
+            elif cell.number_format == '0.00%' and isinstance(cell.value, (float, int)):
+                cell_str = f'{cell.value:.2%}'.replace(".", ",")
                 length = len(cell_str)
             else:
-                cell_value = str(cell.value)
-                length = len(cell_value) if cell_value else 0
+                cell_str = str(cell.value) if cell.value is not None else ""
+                length = len(cell_str)
             max_length = max(max_length, length)
         except:
             pass
+
     adjusted_width = max_length + 2  # margem extra
-    col_letter = openpyxl.utils.get_column_letter(col_idx)
+    col_letter = get_column_letter(col_idx)
     ws.column_dimensions[col_letter].width = adjusted_width
 
 # Salva em memória
