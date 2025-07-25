@@ -454,7 +454,7 @@ for col_idx, col in enumerate(df_exibir.columns, start=1):
     cell.font = Font(bold=True)
     cell.alignment = Alignment(horizontal="center")
 
-# Dados
+# Preenche os dados na planilha
 for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
     estilo_linha = estilos_final[row_idx - 2]  # -2 porque o header está na linha 1
     for col_idx, (col, valor) in enumerate(row.items(), start=1):
@@ -477,6 +477,22 @@ for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
                 cell = ws.cell(row=row_idx, column=col_idx, value=valor)
         else:
             cell = ws.cell(row=row_idx, column=col_idx, value=valor)
+
+# ⬇️ COLE AQUI ⬇️
+# Ajusta automaticamente a largura das colunas
+for col_idx, column_cells in enumerate(ws.columns, start=1):
+    max_length = 0
+    for cell in column_cells:
+        try:
+            cell_value = str(cell.value)
+            if cell_value:
+                max_length = max(max_length, len(cell_value))
+        except:
+            pass
+    adjusted_width = max_length + 2  # margem extra
+    col_letter = openpyxl.utils.get_column_letter(col_idx)
+    ws.column_dimensions[col_letter].width = adjusted_width
+
 
         estilo = estilo_linha[col_idx - 1]
         if "background-color" in estilo:
