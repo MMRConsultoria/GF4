@@ -442,7 +442,7 @@ import openpyxl
 from openpyxl.styles import PatternFill, Font, Alignment
 from io import BytesIO
 
-if st.button("📥 Baixar Excel idêntico à tela"):
+if st.button("📥 Baixar Excel"):
     # Cria workbook
     wb = openpyxl.Workbook()
     ws = wb.active
