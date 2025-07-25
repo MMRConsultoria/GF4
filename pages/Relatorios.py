@@ -327,11 +327,12 @@ with aba3:
         df_vendas["AnoMes"] = df_vendas["Data"].dt.to_period("M")
         meses_disponiveis = sorted(df_vendas["AnoMes"].unique())
         opcoes_formatadas = []
-            for m in meses_disponiveis:
-                mes_ano_str = str(m)  # ex: '2025-07'
-                ano, mes = mes_ano_str.split("-")
-                label = f"{nomes_meses[mes]}/{ano}"
-    opcoes_formatadas.append(label)
+        for m in meses_disponiveis:
+            mes_ano_str = str(m)  # ex: '2025-07'
+            ano, mes = mes_ano_str.split("-")
+            label = f"{nomes_meses[mes]}/{ano}"
+            opcoes_formatadas.append(label)
+            opcoes_formatadas.append(label)
         idx_ultimo = len(meses_disponiveis) - 1
         mes_escolhido = st.selectbox("🗕️ Selecione o mês:", opcoes_formatadas, index=idx_ultimo, key="filtro_mes_pt")
         mes_dt = pd.to_datetime(meses_disponiveis[opcoes_formatadas.index(mes_escolhido)].to_timestamp())
