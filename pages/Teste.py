@@ -40,7 +40,7 @@ df_vendas["Fat.Total"] = (
 )
 df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
 
-
+st.write("📌 Amostra da Tabela Empresa:", df_empresa[["Loja", "Tipo"]].drop_duplicates().sort_values("Loja"))
 
 # Filtros
 data_min = df_vendas["Data"].min()
@@ -165,33 +165,18 @@ linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
 linha_total["Tipo"] = ""
 
 # 🧱 Agrupa por grupo
-# 🧱 Agrupa por grupo e considera Tipo para ordenar os blocos
-ordem_tipos = ["Airports", "Airports - Kopp", "On-Premise"]
 grupos_info = []
-
 for grupo, df_grp in df_base.groupby("Grupo"):
-    df_grp = df_grp.copy()
-    tipo_mais_frequente = (
-        df_grp["Tipo"].dropna().mode().iloc[0]
-        if not df_grp["Tipo"].dropna().empty else "—"
-    )
-    df_grp["Tipo"] = tipo_mais_frequente  # força o tipo do grupo inteiro
     total_grupo = df_grp[col_acumulado].sum()
-    grupos_info.append((grupo, tipo_mais_frequente, total_grupo, df_grp))
+    grupos_info.append((grupo, total_grupo, df_grp))
 
-# 📊 Ordena por Tipo (manual) e depois pelo valor total
-ordem_tipo_dict = {tipo: i for i, tipo in enumerate(ordem_tipos)}
-grupos_info.sort(key=lambda x: (ordem_tipo_dict.get(x[1], 999), -x[2]))
-# 🔁 Monta blocos
+# 📊 Ordena grupos
+grupos_info.sort(key=lambda x: x[1], reverse=True)
+
 # 🔁 Monta blocos
 blocos = []
-
-# Define ordem desejada
-ordem_tipos = ["Airports", "Airports - Kopp", "On-Premise"]
-
-for grupo, tipo, _, df_grp in grupos_info:
-    df_grp["Tipo"] = pd.Categorical(df_grp["Tipo"], categories=ordem_tipos, ordered=True)
-    df_grp_ord = df_grp.sort_values(by=["Tipo", col_acumulado], ascending=[True, False])  # 👈 aqui aplica ordenação por Tipo + acumulado
+for grupo, _, df_grp in grupos_info:
+    df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
 
     # Subtotal
     tipo_unico = df_grp_ord["Tipo"].dropna().unique()
@@ -202,28 +187,24 @@ for grupo, tipo, _, df_grp in grupos_info:
     subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
     subtotal["Tipo"] = tipo_valor
 
+    # ✅ Garante todas as colunas
     for col in colunas_visiveis:
         if col not in subtotal:
             subtotal[col] = np.nan
     subtotal = subtotal[colunas_visiveis]
 
+    # 🟦 Lojas
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord[colunas_visiveis])
-    blocos.append(pd.DataFrame([subtotal], columns=colunas_visiveis))
 
+    # 🟨 Subtotal
+    blocos.append(pd.DataFrame([subtotal], columns=colunas_visiveis))
 
 # 🔚 Junta tudo
 linha_total = pd.DataFrame([linha_total], columns=colunas_visiveis)
 df_final = pd.concat([linha_total] + blocos, ignore_index=True)
 
-# 🔽 Ordenação dos blocos por Tipo
-ordem_tipos = ["Airports", "Airports - Kopp", "On-Premise"]
-df_final["Tipo"] = pd.Categorical(df_final["Tipo"], categories=ordem_tipos, ordered=True)
-
-# Ordena pelos tipos definidos e depois por Grupo
-df_final = df_final.sort_values(by=["Tipo", "Grupo"], na_position="last")
-
-
+#st.write("🔍 Diagnóstico: Linhas de loja sem Tipo", df_final[(df_final["Tipo"].isna()) & (~df_final["Loja"].str.startswith("Lojas:"))])
 # Percentuais
 filtro_lojas = (
     (df_final["Loja"] != "") &
@@ -292,11 +273,7 @@ for col in colunas_visiveis:
     elif col not in ["Grupo", "Loja", "Tipo"]:
         df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
     else:
-        # Se for coluna do tipo Categorical, adiciona "" como categoria antes de preencher
-        if pd.api.types.is_categorical_dtype(df_formatado[col]):
-            if "" not in df_formatado[col].cat.categories:
-                df_formatado[col] = df_formatado[col].cat.add_categories([""])
-        df_formatado[col] = df_formatado[col].fillna("")
+        df_formatado[col] = df_formatado[col].fillna("")  # 👈 tipo e loja não numéricos
 
 # ================================
 # ➕ Linhas de resumo por Tipo
