@@ -208,12 +208,16 @@ elif filtro_meta == "Sem Meta":
     else:  # Grupo
         colunas_visiveis += ["%Grupo"]
 # Garante que a coluna Tipo esteja presente no df_final antes de selecionar colunas
-if "Tipo" not in df_final.columns:
+# Garante que "Tipo" esteja presente, se necessário
+if "Tipo" not in df_final.columns and "Tipo" in df_empresa.columns:
     df_final = df_final.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
 
-# Agora filtra somente as colunas visíveis (Tipo incluso, se existir)
+# Remove colunas ausentes da lista antes de selecionar
 colunas_visiveis = [col for col in colunas_visiveis if col in df_final.columns]
+
+# Aplica o filtro de colunas com segurança
 df_final = df_final[colunas_visiveis]
+
 # Formata valores
 colunas_percentuais = ["%LojaXGrupo", "%Grupo", "%Atingido"]
 def formatar(valor, col):
