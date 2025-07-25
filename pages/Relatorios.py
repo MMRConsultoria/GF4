@@ -367,7 +367,9 @@ with aba3:
     df_formatado = df_final.copy()
     for col in colunas_periodo:
         df_formatado[col] = df_formatado[col].apply(formatar)
-
+    # 🔧 Garante ordem correta das colunas
+    df_formatado = df_formatado[["Grupo", "Loja"] + colunas_periodo]
+    
     # Exibição final
     st.dataframe(
         df_formatado,
