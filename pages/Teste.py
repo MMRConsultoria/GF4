@@ -280,7 +280,11 @@ for col in colunas_visiveis:
     elif col not in ["Grupo", "Loja", "Tipo"]:
         df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
     else:
-        df_formatado[col] = df_formatado[col].fillna("")  # 👈 tipo e loja não numéricos
+        # Se for coluna do tipo Categorical, adiciona "" como categoria antes de preencher
+        if pd.api.types.is_categorical_dtype(df_formatado[col]):
+            if "" not in df_formatado[col].cat.categories:
+                df_formatado[col] = df_formatado[col].cat.add_categories([""])
+        df_formatado[col] = df_formatado[col].fillna("")
 
 # ================================
 # ➕ Linhas de resumo por Tipo
