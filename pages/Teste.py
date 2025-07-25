@@ -362,8 +362,7 @@ for col in colunas_visiveis:
     elif col == "%Atingido":
         linha_desejavel_dict[col] = formatar(perc_desejavel, "%Atingido")
     elif col == col_acumulado:
-        # 👇 Aqui insere o total das metas
-        linha_desejavel_dict[col] = formatar(df_final["Meta"].replace("", 0).astype(float).sum(), "Meta")
+        linha_desejavel_dict[col] = formatar(total_meta_mes, "Meta")  # 👈 valor correto da meta do mês
     else:
         linha_desejavel_dict[col] = ""
 
