@@ -158,6 +158,7 @@ for grupo, df_grp in df_base.groupby("Grupo"):
     grupos_info.append((grupo, total_grupo, df_grp))
 grupos_info.sort(key=lambda x: x[1], reverse=True)
 for grupo, _, df_grp in grupos_info:
+    df_grp = df_base[df_base["Grupo"] == grupo].copy()
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
