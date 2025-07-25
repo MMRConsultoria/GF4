@@ -160,15 +160,18 @@ linha_total = df_base.drop(columns=colunas_base).sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
 linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
 
-# Junta Tipo da loja
+# Garante que df_empresa tem Tipo associado às Lojas
 df_tipo_loja = df_empresa[["Loja", "Tipo"]].drop_duplicates()
 df_base = df_base.merge(df_tipo_loja, on="Loja", how="left")
 
-# Define prioridade dos tipos
+# Ordena df_base por prioridade de Tipo
 tipos_prioritarios = ["AIRPORTS", "Airports - Kopp"]
-df_base["PrioridadeTipo"] = df_base["Tipo"].apply(
-    lambda x: tipos_prioritarios.index(x) if x in tipos_prioritarios else 999
-)
+if "Tipo" not in df_base.columns:
+    st.error("❌ Coluna 'Tipo' não encontrada após o merge com df_empresa.")
+else:
+    df_base["PrioridadeTipo"] = df_base["Tipo"].apply(lambda x: tipos_prioritarios.index(x) if x in tipos_prioritarios else 999)
+    df_base = df_base.sort_values(by=["PrioridadeTipo", "Grupo", col_acumulado], ascending=[True, True, False])
+    df_base = df_base.drop(columns=["PrioridadeTipo", "Tipo"])
 
 # Calcula os blocos (lojas e subtotais por grupo) com ordenação correta
 blocos = []
