@@ -418,14 +418,7 @@ for _, row in df_linhas_visiveis.iterrows():
 estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_linhas_visiveis.columns)] + estilos_linha
 
 # Atualiza o dataframe com a linha no topo
-# Atualiza o dataframe com a linha no topo (sem coluna "Tipo" se não for visível)
-df_linhas_visiveis_sem_tipo = df_linhas_visiveis.drop(columns=["Tipo"]) if "Tipo" in df_linhas_visiveis.columns else df_linhas_visiveis
-linha_desejavel_sem_tipo = linha_desejavel.drop(columns=["Tipo"]) if "Tipo" in linha_desejavel.columns else linha_desejavel
-df_exibir = pd.concat([linha_desejavel_sem_tipo, df_linhas_visiveis_sem_tipo], ignore_index=True)
-# Remove coluna "Tipo" de todos os DataFrames usados na exibição
-for df_temp in [df_formatado, df_linhas_visiveis, df_exibir]:
-    if "Tipo" in df_temp.columns:
-        df_temp.drop(columns=["Tipo"], inplace=True)
+df_exibir = pd.concat([linha_desejavel, df_linhas_visiveis], ignore_index=True)
 
 # Aplica o estilo atualizado
 st.dataframe(
