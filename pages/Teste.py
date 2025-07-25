@@ -494,8 +494,11 @@ border_grossa = Border(left=thick, right=thick, top=thick, bottom=thick)
 for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
     estilo_linha = estilos_final[row_idx - 2]  # -2 porque o cabeçalho está na linha 1
 
-    # ✅ Detecta se a linha é subtotal
-    is_subtotal = isinstance(row["Grupo"], str) and row["Grupo"].startswith("SUBTOTAL")
+    # ✅ Detecta se a linha é SUBTOTAL ou TOTAL
+    grupo = row.get("Grupo", "")
+    is_subtotal = isinstance(grupo, str) and grupo.startswith("SUBTOTAL")
+    is_total = grupo == "TOTAL"
+    usar_borda_grossa = is_subtotal or is_total
 
     for col_idx, (col, valor) in enumerate(row.items(), start=1):
         # Aplica valor e formatação numérica
@@ -529,8 +532,8 @@ for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
         # Alinhamento
         cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
 
-        # ✅ Borda (mais grossa se subtotal)
-        cell.border = border_grossa if is_subtotal else border_padrao
+        # ✅ Borda (grossa se subtotal ou total)
+        cell.border = border_grossa if usar_borda_grossa else border_padrao
 
         # ✅ Cor verde/vermelha no %Atingido
         if col == "%Atingido":
@@ -546,7 +549,7 @@ for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
                     if valor_float >= perc_desejavel:
                         cell.font = Font(color="006400", bold=True)  # Verde escuro
                     else:
-                        cell.font = Font(color="B22222", bold=True)  # Vermelho
+                        cell.font = Font(color="B22222", bold=True)  # Vermelho escuro
             except:
                 pass
 
