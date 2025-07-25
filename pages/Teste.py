@@ -154,36 +154,42 @@ linha_total["Tipo"] = "TOTAL"
 blocos = []
 grupos_info = []
 
-# Agrupa a versão FINAL de df_base com Tipo já presente
-df_ordenado = df_base.sort_values(by=col_acumulado, ascending=False)
-
-for grupo, df_grp in df_ordenado.groupby("Grupo"):
+for grupo, df_grp in df_base.groupby("Grupo"):
     total_grupo = df_grp[col_acumulado].sum()
     grupos_info.append((grupo, total_grupo, df_grp))
 
-# Ordena os grupos
+# Ordena grupos
 grupos_info.sort(key=lambda x: x[1], reverse=True)
 
-for grupo, _, df_grp_ord in grupos_info:
-    subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
-    subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
-    subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
-    tipo_subtotal = df_grp_ord["Tipo"].dropna().unique()
-    if len(tipo_subtotal) == 1:
-        subtotal["Tipo"] = tipo_subtotal[0]
+for grupo, _, df_grp in grupos_info:
+    df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
+
+    # Subtotal
+    subtotal_values = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+    subtotal_df = pd.DataFrame([subtotal_values])
+    subtotal_df["Grupo"] = f"SUBTOTAL {grupo}"
+    subtotal_df["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
+    
+    tipo_unico = df_grp_ord["Tipo"].dropna().unique()
+    if len(tipo_unico) == 1:
+        subtotal_df["Tipo"] = tipo_unico[0]
     else:
-        subtotal["Tipo"] = ""
+        subtotal_df["Tipo"] = ""
+
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord)
-    blocos.append(pd.DataFrame([subtotal]))
 
-df_dados_lojas = pd.concat([df_grp_ord for _, _, df_grp_ord in grupos_info], ignore_index=True)
-df_final = pd.concat(
-    [pd.DataFrame([linha_total])] +
-    [pd.DataFrame([subtotal]) for _, _, df_grp_ord in grupos_info for subtotal in [df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True).assign(Grupo=f"SUBTOTAL {df_grp_ord['Grupo'].iloc[0]}", Loja=f"Lojas: {df_grp_ord['Loja'].nunique():02d}", Tipo=df_grp_ord['Tipo'].dropna().unique()[0] if df_grp_ord['Tipo'].nunique() == 1 else "")]] +
-    [df_dados_lojas],
-    ignore_index=True
-)
+    blocos.append(subtotal_df)
+
+# Total final
+linha_total = df_base.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+linha_total["Grupo"] = "TOTAL"
+linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
+linha_total["Tipo"] = "TOTAL"
+
+# Agora monta o df_final corretamente
+df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
+
 
 # Percentuais
 filtro_lojas = (
