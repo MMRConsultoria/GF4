@@ -155,33 +155,35 @@ for col in ["%LojaXGrupo", "%Grupo"]:
         df_base[col] = np.nan
 df_base = df_base[colunas_finais]
 
-# Subtotais e totais com ordenação por Tipo
+# Subtotais e totais com ordenação por Tipo → Grupo → Loja
 linha_total = df_base.drop(columns=colunas_base).sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
 linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
 
 # Junta Tipo da loja
 df_tipos = df_empresa[["Loja", "Tipo"]].drop_duplicates()
-df_base_tipos = df_base.merge(df_tipos, on="Loja", how="left")
+df_base_ordenada = df_base.merge(df_tipos, on="Loja", how="left")
 
 # Define prioridade dos tipos
 tipos_prioritarios = ["AIRPORTS", "Airports - Kopp"]
-df_base_tipos["PrioridadeTipo"] = df_base_tipos["Tipo"].apply(lambda x: tipos_prioritarios.index(x) if x in tipos_prioritarios else 999)
+df_base_ordenada["PrioridadeTipo"] = df_base_ordenada["Tipo"].apply(
+    lambda x: tipos_prioritarios.index(x) if x in tipos_prioritarios else 999
+)
 
-# Ordena primeiro por Tipo, depois pelo acumulado do grupo
-grupos_info = []
-for grupo, df_grp in df_base_tipos.groupby("Grupo"):
-    tipo_grupo = df_grp["Tipo"].iloc[0] if "Tipo" in df_grp.columns else None
-    prioridade = tipos_prioritarios.index(tipo_grupo) if tipo_grupo in tipos_prioritarios else 999
-    total_grupo = df_grp[col_acumulado].sum()
-    grupos_info.append((prioridade, total_grupo, grupo, df_grp))
-
-# Ordena pela prioridade do tipo e depois pelo valor acumulado (desc)
-grupos_info.sort(key=lambda x: (x[0], -x[1]))
-
-# Monta os blocos
+# Organiza as lojas dentro dos grupos
 blocos = []
-for _, _, grupo, df_grp in grupos_info:
+grupos_ordenados = []
+
+for tipo_idx in sorted(df_base_ordenada["PrioridadeTipo"].unique()):
+    df_tipo = df_base_ordenada[df_base_ordenada["PrioridadeTipo"] == tipo_idx]
+    for grupo, df_grp in df_tipo.groupby("Grupo"):
+        total_grupo = df_grp[col_acumulado].sum()
+        grupos_ordenados.append((tipo_idx, total_grupo, grupo, df_grp.copy()))
+
+# Ordena grupos por prioridadeTipo e depois acumulado
+grupos_ordenados.sort(key=lambda x: (x[0], -x[1]))
+
+for _, _, grupo, df_grp in grupos_ordenados:
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja", "Tipo", "PrioridadeTipo"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
@@ -191,6 +193,7 @@ for _, _, grupo, df_grp in grupos_info:
     blocos.append(pd.DataFrame([subtotal]))
 
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
+
 
 
 # Percentuais
