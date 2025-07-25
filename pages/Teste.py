@@ -225,21 +225,16 @@ for col in colunas_visiveis:  # ✅ CORRETO
 # ➕ Linhas de resumo por Tipo
 # ================================
 df_tipo = df_empresa[["Loja", "Tipo"]].drop_duplicates()
-df_merge_tipo = df_final.merge(df_tipo, on="Loja", how="left")
+df_base_tipo = df_base.merge(df_tipo, on="Loja", how="left")
 
-# Remove linhas TOTAL e SUBTOTAL
-df_merge_tipo = df_merge_tipo[
-    (~df_merge_tipo["Grupo"].astype(str).str.startswith("SUBTOTAL")) &
-    (df_merge_tipo["Grupo"] != "TOTAL") &
-    (~df_merge_tipo["Loja"].astype(str).str.startswith("Lojas:"))
-]
+# Ignora lojas sem tipo
+df_base_tipo = df_base_tipo[~df_base_tipo["Tipo"].isna()]
 
-# Agrupamento por Tipo
 linhas_resumo_tipo = []
-tipos_ordenados = df_merge_tipo.groupby("Tipo")[col_acumulado].sum().sort_values(ascending=False).index.tolist()
+tipos_ordenados = df_base_tipo.groupby("Tipo")[col_acumulado].sum().sort_values(ascending=False).index.tolist()
 
 for tipo in tipos_ordenados:
-    df_tipo_filtro = df_merge_tipo[df_merge_tipo["Tipo"] == tipo]
+    df_tipo_filtro = df_base_tipo[df_base_tipo["Tipo"] == tipo]
     if df_tipo_filtro.empty:
         continue
 
@@ -247,13 +242,13 @@ for tipo in tipos_ordenados:
     linha["Grupo"] = tipo
     linha["Loja"] = f"Lojas: {df_tipo_filtro['Loja'].nunique():02d}"
 
-    # Soma das diárias e acumulado
     for col in col_diarias:
-        linha[col] = df_tipo_filtro[col].apply(lambda x: x if isinstance(x, (int, float)) else 0).sum()
-    linha[col_acumulado] = df_tipo_filtro[col_acumulado].apply(lambda x: x if isinstance(x, (int, float)) else 0).sum()
+        linha[col] = df_tipo_filtro[col].sum()
+
+    linha[col_acumulado] = df_tipo_filtro[col_acumulado].sum()
 
     if filtro_meta == "Meta":
-        meta_total = df_tipo_filtro["Meta"].apply(lambda x: x if isinstance(x, (int, float)) else 0).sum()
+        meta_total = df_tipo_filtro["Meta"].sum()
         linha["Meta"] = meta_total
         linha["%Atingido"] = linha[col_acumulado] / meta_total if meta_total > 0 else 0
 
@@ -261,25 +256,21 @@ for tipo in tipos_ordenados:
         if modo_exibicao == "Loja":
             soma_grupo = df_lojas_reais[col_acumulado].sum()
             linha["%LojaXGrupo"] = linha[col_acumulado] / soma_grupo if soma_grupo > 0 else 0
-            linha["%Grupo"] = linha[col_acumulado] / soma_total_geral if soma_total_geral > 0 else 0
-        else:  # Grupo
-            linha["%Grupo"] = linha[col_acumulado] / soma_total_geral if soma_total_geral > 0 else 0
+        linha["%Grupo"] = linha[col_acumulado] / soma_total_geral if soma_total_geral > 0 else 0
 
     linhas_resumo_tipo.append(linha)
 
-# Converte e formata
 df_resumo_tipo = pd.DataFrame(linhas_resumo_tipo)
-if not df_resumo_tipo.empty and "Loja" in df_resumo_tipo.columns:
-    df_resumo_tipo = df_resumo_tipo[df_resumo_tipo["Loja"] != ""]
 
-# Formata os valores como no restante
+# Formata
 df_resumo_tipo_formatado = df_resumo_tipo.copy()
 for col in df_resumo_tipo.columns:
     if col not in ["Grupo", "Loja"]:
         df_resumo_tipo_formatado[col] = df_resumo_tipo[col].apply(lambda x: formatar(x, col))
 
-# Adiciona ao início
+# Junta com dados formatados
 df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
+
 
 
 
