@@ -89,6 +89,7 @@ col_acumulado = f"Acumulado Mês (01/{data_fim_dt.strftime('%m')} até {data_fim
 df_acumulado = df_acumulado.rename(columns={"Fat.Total": col_acumulado})
 df_base = df_pivot.merge(df_acumulado, on=["Grupo", "Loja"], how="left")
 df_base = df_base[df_base[col_acumulado] != 0]
+df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
 
 # Adiciona coluna de Meta
 df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
