@@ -353,6 +353,9 @@ dia_hoje = data_fim_dt.day
 dias_mes = monthrange(data_fim_dt.year, data_fim_dt.month)[1]
 perc_desejavel = dia_hoje / dias_mes
 
+# Cálculo proporcional da meta até o dia
+meta_total_mes = df_metas_filtrado["Meta"].sum()
+meta_desejada_ate_hoje = (meta_total_mes / dias_mes) * dia_hoje
 
 # Faturamento desejável (com ordem correta das colunas)
 # Faturamento desejável (com ordem correta das colunas)
@@ -365,7 +368,7 @@ for col in colunas_visiveis:
     elif col == "%Atingido":
         linha_desejavel_dict[col] = formatar(perc_desejavel, "%Atingido")
     elif col == col_acumulado:
-        linha_desejavel_dict[col] = formatar(total_meta_mes, "Meta")  # 👈 valor correto da meta do mês
+        linha_desejavel_dict[col] = formatar(meta_desejada_ate_hoje, "Meta")
     else:
         linha_desejavel_dict[col] = ""
 
