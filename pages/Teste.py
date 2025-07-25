@@ -174,9 +174,15 @@ for grupo, df_grp in df_base.groupby("Grupo"):
 grupos_info.sort(key=lambda x: x[1], reverse=True)
 
 # 🔁 Monta blocos
+# 🔁 Monta blocos
 blocos = []
+
+# Define ordem desejada
+ordem_tipos = ["Airports", "Airports - Kopp", "On-Premise"]
+
 for grupo, _, df_grp in grupos_info:
-    df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
+    df_grp["Tipo"] = pd.Categorical(df_grp["Tipo"], categories=ordem_tipos, ordered=True)
+    df_grp_ord = df_grp.sort_values(by=["Tipo", col_acumulado], ascending=[True, False])  # 👈 aqui aplica ordenação por Tipo + acumulado
 
     # Subtotal
     tipo_unico = df_grp_ord["Tipo"].dropna().unique()
@@ -187,18 +193,15 @@ for grupo, _, df_grp in grupos_info:
     subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
     subtotal["Tipo"] = tipo_valor
 
-    # ✅ Garante todas as colunas
     for col in colunas_visiveis:
         if col not in subtotal:
             subtotal[col] = np.nan
     subtotal = subtotal[colunas_visiveis]
 
-    # 🟦 Lojas
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord[colunas_visiveis])
-
-    # 🟨 Subtotal
     blocos.append(pd.DataFrame([subtotal], columns=colunas_visiveis))
+
 
 # 🔚 Junta tudo
 linha_total = pd.DataFrame([linha_total], columns=colunas_visiveis)
