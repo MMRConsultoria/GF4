@@ -207,7 +207,9 @@ elif filtro_meta == "Sem Meta":
         colunas_visiveis += ["%LojaXGrupo", "%Grupo"]
     else:  # Grupo
         colunas_visiveis += ["%Grupo"]
-
+# Garante que 'Tipo' esteja presente
+if "Tipo" not in df_final.columns:
+    df_final = df_final.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
 df_final = df_final[colunas_visiveis]
 
 # Formata valores
