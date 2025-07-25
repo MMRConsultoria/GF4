@@ -128,6 +128,9 @@ st.write("⚠️ Lojas sem tipo após o merge:", lojas_sem_tipo[["Loja"]].drop_d
 # Diagnóstico: lojas disponíveis na Tabela Empresa
 st.write("✅ Lojas disponíveis na Tabela Empresa:", df_empresa[["Loja", "Tipo"]].drop_duplicates())
 
+df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
+st.write("🔍 Verificação rápida após merge com Tipo:", df_base[["Loja", "Tipo"]].drop_duplicates().sort_values("Loja"))
+
 # %Atingido
 df_base["%Atingido"] = df_base[col_acumulado] / df_base["Meta"]
 df_base["%Atingido"] = df_base["%Atingido"].replace([np.inf, -np.inf], np.nan).fillna(0).round(4)
@@ -161,13 +164,20 @@ for grupo, df_grp in df_base.groupby("Grupo"):
 grupos_info.sort(key=lambda x: x[1], reverse=True)
 for grupo, _, df_grp in grupos_info:
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
-    subtotal = df_grp_ord.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
+    
+    # ✅ Usa df_grp_ord["Tipo"] se existir
+    tipo_unico = df_grp_ord["Tipo"].dropna().unique()
+    tipo_valor = tipo_unico[0] if len(tipo_unico) == 1 else ""
+    
+    subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
     subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
-    subtotal["Tipo"] = df_grp_ord["Tipo"].dropna().unique()[0] if df_grp_ord["Tipo"].nunique() == 1 else ""
+    subtotal["Tipo"] = tipo_valor
+
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord)
     blocos.append(pd.DataFrame([subtotal]))
+
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
 # Percentuais
