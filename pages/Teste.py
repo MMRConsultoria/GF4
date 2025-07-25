@@ -327,32 +327,38 @@ def aplicar_estilo_final(df, estilos_linha):
     return df.style.apply(apply_row_style, axis=1)
 
 
+# ⚠️ Calcula os estilos com base em df_linhas_visiveis (já inclui linhas de tipo + dados)
 cores_alternadas = ["#eef4fa", "#f5fbf3"]  # azul e verde bem suaves
-estilos = []
+estilos_linha = []
 cor_idx = -1
 grupo_atual = None
 
-for _, row in df_final.iterrows():
+for _, row in df_linhas_visiveis.iterrows():
     grupo = row["Grupo"]
     loja = row["Loja"]
 
-    if grupo == "TOTAL":
-        estilos.append(["background-color: #f2f2f2; font-weight: bold"] * len(row))  # cinza claro
+    if isinstance(grupo, str) and grupo in df_resumo_tipo["Grupo"].values:
+        estilos_linha.append(["background-color: #f0f8ff; font-weight: bold"] * len(row))  # azul claro (linhas de tipo)
+    elif grupo == "TOTAL":
+        estilos_linha.append(["background-color: #f2f2f2; font-weight: bold"] * len(row))
     elif isinstance(grupo, str) and grupo.startswith("SUBTOTAL"):
-        estilos.append(["background-color: #fff8dc; font-weight: bold"] * len(row))  # amarelo pastel
+        estilos_linha.append(["background-color: #fff8dc; font-weight: bold"] * len(row))
     elif loja == "":
-        estilos.append(["background-color: #fdfdfd"] * len(row))  # branco quase puro (ou #fefefe, #fcfcfc)
+        estilos_linha.append(["background-color: #fdfdfd"] * len(row))
     else:
         if grupo != grupo_atual:
             cor_idx = (cor_idx + 1) % len(cores_alternadas)
             grupo_atual = grupo
         cor = cores_alternadas[cor_idx]
-        estilos.append([f"background-color: {cor}"] * len(row))
+        estilos_linha.append([f"background-color: {cor}"] * len(row))
 
-estilos = [["background-color: #dddddd; font-weight: bold"] * len(df_formatado.columns)] + estilos  # adiciona linha desejável
+# Adiciona a linha FATURAMENTO DESEJÁVEL no topo
+estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_linhas_visiveis.columns)] + estilos_linha
+
+# Atualiza o dataframe com a linha no topo
 df_exibir = pd.concat([linha_desejavel, df_linhas_visiveis], ignore_index=True)
-estilos_final = estilos
-# Exibe na tela
+
+# Aplica o estilo atualizado
 st.dataframe(
     aplicar_estilo_final(df_exibir, estilos_final),
     use_container_width=True,
