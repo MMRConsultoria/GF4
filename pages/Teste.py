@@ -142,7 +142,7 @@ st.write("⚠️ Lojas sem tipo após o merge:", lojas_sem_tipo[["Loja"]].drop_d
 # Diagnóstico: lojas disponíveis na Tabela Empresa
 st.write("✅ Lojas disponíveis na Tabela Empresa:", df_empresa[["Loja", "Tipo"]].drop_duplicates())
 
-df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
+
 st.write("🔍 Verificação rápida após merge com Tipo:", df_base[["Loja", "Tipo"]].drop_duplicates().sort_values("Loja"))
 
 # %Atingido
