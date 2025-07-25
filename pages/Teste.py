@@ -279,6 +279,7 @@ for col in df_resumo_tipo.columns:
 
 # Adiciona ao início
 df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
+estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_linhas_visiveis.columns)] + estilos
 
 
 
@@ -350,7 +351,7 @@ for _, row in df_final.iterrows():
 
 estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_formatado.columns)] + estilos
 
-df_exibir = pd.concat([linha_desejavel, df_formatado], ignore_index=True)
+df_exibir = pd.concat([linha_desejavel, df_linhas_visiveis], ignore_index=True)
 
 # Exibe na tela
 st.dataframe(
