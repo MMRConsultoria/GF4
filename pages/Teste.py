@@ -335,14 +335,10 @@ for col in df_resumo_tipo.columns:
     if col not in ["Grupo", "Loja"]:
         df_resumo_tipo_formatado[col] = df_resumo_tipo[col].apply(lambda x: formatar(x, col))
 
-# 🔽 Remove "Tipo" apenas da visualização final
-for df_temp in [df_resumo_tipo_formatado, df_formatado, linha_desejavel]:
-    if "Tipo" in df_temp.columns:
-        df_temp.drop(columns=["Tipo"], inplace=True)
 
 
-# Junta com dados formatados
-df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
+
+
 
 
 
@@ -367,6 +363,11 @@ for col in colunas_visiveis:  # ✅ CORRETO
     else:
         linha_desejavel_dict[col] = ""
 linha_desejavel = pd.DataFrame([linha_desejavel_dict])
+
+# 🔽 Remove "Tipo" apenas da visualização final
+for df_temp in [df_resumo_tipo_formatado, df_formatado, linha_desejavel]:
+    if "Tipo" in df_temp.columns:
+        df_temp.drop(columns=["Tipo"], inplace=True)
 
 # Estilo visual
 def aplicar_estilo_final(df, estilos_linha):
@@ -424,6 +425,8 @@ for _, row in df_linhas_visiveis.iterrows():
 estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_linhas_visiveis.columns)] + estilos_linha
 
 # Atualiza o dataframe com a linha no topo
+# Junta com dados formatados
+df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
 df_exibir = pd.concat([linha_desejavel, df_linhas_visiveis], ignore_index=True)
 
 # Aplica o estilo atualizado
