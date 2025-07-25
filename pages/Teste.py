@@ -438,3 +438,60 @@ st.dataframe(
     use_container_width=True,
     height=750
 )
+import openpyxl
+from openpyxl.styles import PatternFill, Font, Alignment
+from io import BytesIO
+
+# Botão de download
+if st.button("📥 Baixar Excel idêntico à tela"):
+    # Cria workbook e planilha
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Vendas"
+
+    # Define largura padrão para cada coluna
+    for i, col in enumerate(df_exibir.columns, start=1):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = max(14, len(col) + 2)
+
+    # Cabeçalho
+    header_fill = PatternFill("solid", fgColor="DDDDDD")
+    header_font = Font(bold=True)
+    for col_idx, col in enumerate(df_exibir.columns, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=col)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    # Linhas formatadas com base nos estilos
+    for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
+        estilo_linha = estilos_final[row_idx - 1]  # ignora cabeçalho
+        for col_idx, (col, valor) in enumerate(row.items(), start=1):
+            cell = ws.cell(row=row_idx, column=col_idx, value=valor)
+
+            # Aplica estilo de fundo
+            estilo = estilo_linha[col_idx - 1]
+            if "background-color" in estilo:
+                cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
+                cell.fill = PatternFill("solid", fgColor=cor)
+
+            # Alinhamento e formatação de fonte
+            cell.alignment = Alignment(horizontal="right", vertical="center")
+            if "font-weight: bold" in estilo:
+                cell.font = Font(bold=True)
+
+            # Alinha texto à esquerda em Grupo/Loja
+            if col in ["Grupo", "Loja"]:
+                cell.alignment = Alignment(horizontal="left", vertical="center")
+
+    # Salva para BytesIO
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    # Download
+    st.download_button(
+        label="📤 Clique para baixar o Excel",
+        data=buffer,
+        file_name="vendas_formatado.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
