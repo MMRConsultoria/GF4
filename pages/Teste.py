@@ -492,12 +492,21 @@ for col_idx, column_cells in enumerate(ws.columns, start=1):
     max_length = 0
     for cell in column_cells:
         try:
-            cell_value = str(cell.value)
-            if cell_value:
-                max_length = max(max_length, len(cell_value))
+            if cell.number_format in ["0.00%", 'R$ #,##0.00']:
+                # Simula tamanho com máscara (mais largo)
+                cell_str = cell.number_format.replace("0", "0").replace("#", "0")
+                if "R$" in cell.number_format:
+                    cell_str = "R$ 00.000,00"
+                elif "%" in cell.number_format:
+                    cell_str = "100,00%"
+                length = len(cell_str)
+            else:
+                cell_value = str(cell.value)
+                length = len(cell_value) if cell_value else 0
+            max_length = max(max_length, length)
         except:
             pass
-    adjusted_width = max_length + 2
+    adjusted_width = max_length + 2  # margem extra
     col_letter = openpyxl.utils.get_column_letter(col_idx)
     ws.column_dimensions[col_letter].width = adjusted_width
 
