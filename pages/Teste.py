@@ -235,9 +235,6 @@ elif filtro_meta == "Sem Meta":
     else:  # Grupo
         colunas_visiveis += ["%Grupo"]
 # Garante que a coluna Tipo esteja presente no df_final antes de selecionar colunas
-# Garante que "Tipo" esteja presente, se necessário
-if "Tipo" not in df_final.columns and "Tipo" in df_empresa.columns:
-    df_final = df_final.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
 
 
 
