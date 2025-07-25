@@ -168,7 +168,7 @@ if "Tipo" not in df_base.columns:
     df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
 
 df_base = df_base[colunas_finais]
-
+colunas_visiveis = colunas_finais.copy()
 # Subtotais e totais
 linha_total = df_base.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
