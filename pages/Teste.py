@@ -164,7 +164,7 @@ for grupo, _, df_grp in grupos_info:
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
     subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
-    subtotal["Tipo"] = ""
+    subtotal["Tipo"] = df_grp_ord["Tipo"].dropna().unique()[0] if df_grp_ord["Tipo"].nunique() == 1 else ""
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord)
     blocos.append(pd.DataFrame([subtotal]))
