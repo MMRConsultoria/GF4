@@ -316,14 +316,15 @@ meta_total = df_final.loc[df_final["Grupo"] == "TOTAL", "Meta"].values[0]
 fat_desejavel = meta_total * percentual_desejavel
 texto_desejavel = f"FATURAMENTO DESEJÁVEL ATÉ {data_fim_dt.strftime('%d/%m')}"
 
-# Cria linha de destaque com o valor
-linha_desejavel = pd.DataFrame([{
-    "Grupo": "",
-    "Loja": texto_desejavel,
-    "Meta": meta_total,
-    col_acumulado: fat_desejavel,
-    "%Meta Atingida": percentual_desejavel
-}])
+# Garante que a linha tenha todas as colunas do df_formatado na ordem correta
+linha_desejavel_dict = {col: "" for col in df_formatado.columns}
+linha_desejavel_dict["Grupo"] = ""
+linha_desejavel_dict["Loja"] = texto_desejavel
+linha_desejavel_dict["Meta"] = meta_total
+linha_desejavel_dict[col_acumulado] = fat_desejavel
+linha_desejavel_dict["%Meta Atingida"] = percentual_desejavel
+
+linha_desejavel = pd.DataFrame([linha_desejavel_dict])
 
 
 
