@@ -300,9 +300,9 @@ for tipo in tipos_ordenados:
         continue
 
     linha = {}
-    linha["Grupo"] = tipo
+    linha["Tipo"] = tipo  # ✅ Aqui adicionamos o tipo real
+    linha["Grupo"] = tipo  # Continua usando o nome do tipo no Grupo para exibir acima
     linha["Loja"] = f"Lojas: {df_tipo_filtro['Loja'].nunique():02d}"
-
     for col in col_diarias:
         linha[col] = df_tipo_filtro[col].sum()
 
