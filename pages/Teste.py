@@ -204,7 +204,7 @@ for grupo, _, df_grp in grupos_info:
 linha_total = pd.DataFrame([linha_total], columns=colunas_visiveis)
 df_final = pd.concat([linha_total] + blocos, ignore_index=True)
 
-st.write("🔍 Diagnóstico: Linhas de loja sem Tipo", df_final[(df_final["Tipo"].isna()) & (~df_final["Loja"].str.startswith("Lojas:"))])
+#st.write("🔍 Diagnóstico: Linhas de loja sem Tipo", df_final[(df_final["Tipo"].isna()) & (~df_final["Loja"].str.startswith("Lojas:"))])
 # Percentuais
 filtro_lojas = (
     (df_final["Loja"] != "") &
