@@ -272,7 +272,7 @@ with aba3:
     df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
     df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
 
-    # Normalização
+    # Normaliza campos
     df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
     df_empresa["Grupo"] = df_empresa["Grupo"].str.strip()
     df_vendas.columns = df_vendas.columns.str.strip()
@@ -292,44 +292,49 @@ with aba3:
     )
     df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
 
-    # Filtros
-    data_min = df_vendas["Data"].min()
-    data_max = df_vendas["Data"].max()
-    col1, col2, col3 = st.columns([2, 2, 2])
+    # ================== FILTROS ===================
+    ultimo_dia_disponivel = df_vendas["Data"].max()
+    data_min_disponivel = df_vendas["Data"].min()
+
+    col1, col2 = st.columns([2, 2])
     with col1:
-        data_inicio, data_fim = st.date_input(
-            "📅 Intervalo de datas:",
-            (data_max, data_max),
-            data_min,
-            data_max,
-            key="data_vendas_relatorio"
-        )
+        modo_exibicao = st.selectbox("🔀 Ver por:", ["Loja", "Grupo"], index=0, key="modo_exibicao_relatorio")
     with col2:
-        modo_exibicao = st.selectbox("🔀 Ver por:", ["Loja", "Grupo"], key="modo_exibicao_relatorio")
-    with col3:
-        modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"], key="modo_periodo_relatorio")
+        modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"], index=0, key="modo_periodo_relatorio")
 
-    # Filtro de datas
-    data_inicio_dt = pd.to_datetime(data_inicio)
-    data_fim_dt = pd.to_datetime(data_fim)
-    df_filtrado = df_vendas[(df_vendas["Data"] >= data_inicio_dt) & (df_vendas["Data"] <= data_fim_dt)]
-
-    # Coluna de período
     if modo_periodo == "Diário":
+        data_inicio, data_fim = st.date_input(
+            "🗕️ Intervalo de datas:",
+            value=(ultimo_dia_disponivel, ultimo_dia_disponivel),
+            min_value=data_min_disponivel,
+            max_value=ultimo_dia_disponivel,
+            key="data_filtro_dia"
+        )
+        df_vendas["FiltroPeriodo"] = df_vendas["Data"].dt.strftime("%d/%m/%Y")
+        datas_filtradas = (df_vendas["Data"] >= pd.to_datetime(data_inicio)) & (df_vendas["Data"] <= pd.to_datetime(data_fim))
+        df_filtrado = df_vendas[datas_filtradas]
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
-    elif modo_periodo == "Mensal":
-        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
-    else:
-        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%Y")
 
-    # Agrupamento
+    elif modo_periodo == "Mensal":
+        df_vendas["MesAno"] = df_vendas["Data"].dt.strftime("%m/%Y")
+        meses_disponiveis = sorted(df_vendas["MesAno"].unique())
+        meses_selecionados = st.multiselect("🗓️ Selecione o(s) mês(es):", options=meses_disponiveis, default=[meses_disponiveis[-1]], key="data_filtro_mes")
+        df_filtrado = df_vendas[df_vendas["MesAno"].isin(meses_selecionados)].copy()
+        df_filtrado["Período"] = df_filtrado["MesAno"]
+
+    elif modo_periodo == "Anual":
+        df_vendas["Ano"] = df_vendas["Data"].dt.strftime("%Y")
+        anos_disponiveis = sorted(df_vendas["Ano"].unique())
+        anos_selecionados = st.multiselect("📆 Selecione o(s) ano(s):", options=anos_disponiveis, default=[anos_disponiveis[-1]], key="data_filtro_ano")
+        df_filtrado = df_vendas[df_vendas["Ano"].isin(anos_selecionados)].copy()
+        df_filtrado["Período"] = df_filtrado["Ano"]
+
+    # ================== AGRUPAMENTO ===================
     chaves = ["Loja", "Grupo"] if modo_exibicao == "Loja" else ["Grupo"]
     df_agrupado = df_filtrado.groupby(chaves + ["Período"], as_index=False)["Fat.Total"].sum()
 
-    # Pivot
     df_pivot = df_agrupado.pivot_table(index=chaves, columns="Período", values="Fat.Total", fill_value=0).reset_index()
 
-    # Ordenação das datas
     def ordenar_datas(col):
         try:
             return datetime.strptime(col, "%d/%m/%Y")
@@ -340,31 +345,21 @@ with aba3:
                 return datetime.strptime("01/01/" + col, "%d/%m/%Y")
 
     colunas_periodo = sorted([c for c in df_pivot.columns if c not in ["Loja", "Grupo"]], key=ordenar_datas)
+    if "Loja" not in df_pivot.columns: df_pivot["Loja"] = ""
+    if "Grupo" not in df_pivot.columns: df_pivot["Grupo"] = ""
 
-    # Garante que colunas existam
-    if "Loja" not in df_pivot.columns:
-        df_pivot["Loja"] = ""
-    if "Grupo" not in df_pivot.columns:
-        df_pivot["Grupo"] = ""
-
-    # Define ordem final: Grupo, Loja, depois períodos
     colunas_finais = ["Grupo", "Loja"] + colunas_periodo
     df_final = df_pivot[colunas_finais].copy()
 
-    # Total acumulado (última coluna)
     ultima_coluna_valor = colunas_periodo[-1]
     df_final["__ordem"] = df_final[ultima_coluna_valor]
-
-    # Ordena do maior para o menor
     df_final = df_final.sort_values(by="__ordem", ascending=False).drop(columns="__ordem").reset_index(drop=True)
 
-    # Linha TOTAL
     linha_total = df_final.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     linha_total["Grupo"] = "TOTAL"
     linha_total["Loja"] = ""
     df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
 
-    # Formatação
     def formatar(valor):
         try:
             return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -374,10 +369,8 @@ with aba3:
     df_formatado = df_final.copy()
     for col in colunas_periodo:
         df_formatado[col] = df_formatado[col].apply(formatar)
-
     df_formatado = df_formatado[["Grupo", "Loja"] + colunas_periodo]
 
-    # Estilo para destacar TOTAL
     def aplicar_estilo(df):
         def estilo_linha(row):
             if row["Grupo"] == "TOTAL":
@@ -386,12 +379,12 @@ with aba3:
                 return ["" for _ in row]
         return df.style.apply(estilo_linha, axis=1)
 
-    # Exibição
     st.dataframe(
         aplicar_estilo(df_formatado),
         use_container_width=True,
         height=750
     )
+
 
 # ================================
 # Aba 4: Analise Lojas
