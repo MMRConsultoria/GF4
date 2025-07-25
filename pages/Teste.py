@@ -464,7 +464,7 @@ if st.button("📥 Baixar Excel idêntico à tela"):
 
     # Linhas formatadas com base nos estilos
     for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
-        estilo_linha = estilos_final[row_idx - 1]  # ignora cabeçalho
+        estilo_linha = estilos_final[row_idx - 2]  # -2 porque header está na linha 1, e estilos_final começa na linha 0
         for col_idx, (col, valor) in enumerate(row.items(), start=1):
             cell = ws.cell(row=row_idx, column=col_idx, value=valor)
 
