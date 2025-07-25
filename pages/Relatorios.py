@@ -262,7 +262,7 @@ with aba2:
 # ================================
 # Aba 3: Relatorio Analitico
 # ================================
-with aba3:
+with aba4:
     import pandas as pd
     import numpy as np
     import streamlit as st
@@ -314,7 +314,7 @@ with aba3:
     data_fim_dt = pd.to_datetime(data_fim)
     df_filtrado = df_vendas[(df_vendas["Data"] >= data_inicio_dt) & (df_vendas["Data"] <= data_fim_dt)]
 
-    # Coluna período
+    # Coluna de período
     if modo_periodo == "Diário":
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
     elif modo_periodo == "Mensal":
@@ -329,7 +329,7 @@ with aba3:
     # Pivot
     df_pivot = df_agrupado.pivot_table(index=chaves, columns="Período", values="Fat.Total", fill_value=0).reset_index()
 
-    # Ordena datas corretamente
+    # Ordenação das datas
     def ordenar_datas(col):
         try:
             return datetime.strptime(col, "%d/%m/%Y")
@@ -339,23 +339,22 @@ with aba3:
             except:
                 return datetime.strptime("01/01/" + col, "%d/%m/%Y")
 
-    colunas_periodo = sorted([c for c in df_pivot.columns if c not in chaves], key=ordenar_datas)
+    colunas_periodo = sorted([c for c in df_pivot.columns if c not in ["Loja", "Grupo"]], key=ordenar_datas)
 
-    # Define colunas finais: Loja, Grupo, Períodos
-    if modo_exibicao == "Loja":
-        colunas_finais = ["Loja", "Grupo"] + colunas_periodo
-    else:
-        colunas_finais = ["Grupo"] + colunas_periodo
+    # Garante que ambas colunas existam (mesmo que estejam vazias)
+    if "Loja" not in df_pivot.columns:
+        df_pivot["Loja"] = ""
+    if "Grupo" not in df_pivot.columns:
+        df_pivot["Grupo"] = ""
 
+    # Define ordem final: Grupo, Loja, depois períodos
+    colunas_finais = ["Grupo", "Loja"] + colunas_periodo
     df_final = df_pivot[colunas_finais]
 
-    # Linha TOTAL no topo
-    linha_total = df_final.drop(columns=colunas_finais[:2 if modo_exibicao == "Loja" else 1]).sum(numeric_only=True)
-    if modo_exibicao == "Loja":
-        linha_total["Loja"] = "TOTAL"
-        linha_total["Grupo"] = ""
-    else:
-        linha_total["Grupo"] = "TOTAL"
+    # Linha TOTAL
+    linha_total = df_final.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+    linha_total["Grupo"] = "TOTAL"
+    linha_total["Loja"] = ""
     df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
 
     # Formatação monetária
@@ -375,7 +374,6 @@ with aba3:
         use_container_width=True,
         height=750
     )
-
 
 
 # ================================
