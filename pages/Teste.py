@@ -481,11 +481,11 @@ for col_idx, col in enumerate(df_exibir.columns, start=1):
 ws.row_dimensions[1].height = 30
 
 # Preenche os dados na planilha
+# Dentro do loop de preenchimento de dados
 for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
     estilo_linha = estilos_final[row_idx - 2]
-    is_subtotal = "SUBTOTAL" in str(row["Grupo"]).upper()
-
     for col_idx, (col, valor) in enumerate(row.items(), start=1):
+        # Processa valores numéricos com formatação
         if isinstance(valor, str) and "%" in valor:
             try:
                 valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
@@ -503,17 +503,23 @@ for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
         else:
             cell = ws.cell(row=row_idx, column=col_idx, value=valor)
 
-        # Estilo visual
+        # 🟩🟥 Cor em %Atingido
+        if col == "%Atingido" and isinstance(cell.value, (float, int)):
+            if cell.value >= perc_desejavel:
+                cell.font = Font(color="008000")  # verde
+            else:
+                cell.font = Font(color="FF0000")  # vermelho
+
+        # Aplica estilo visual (cor de fundo, bordas, alinhamento...)
         estilo = estilo_linha[col_idx - 1]
         if "background-color" in estilo:
             cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
             cell.fill = PatternFill("solid", fgColor=cor)
         if "font-weight: bold" in estilo:
-            cell.font = Font(bold=True)
+            cell.font = Font(bold=True, color=cell.font.color)
         cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
-
-        # ⬛️ Aplique borda aqui
         cell.border = border_grossa if is_subtotal else border_padrao
+
 
 
         # ✅ Aplica o estilo visual (cor, negrito, alinhamento)
