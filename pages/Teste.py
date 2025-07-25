@@ -246,11 +246,8 @@ for col in colunas_visiveis:  # ✅ CORRETO
 # ================================
 # ➕ Linhas de resumo por Tipo
 # ================================
-df_tipo = df_empresa[["Loja", "Tipo"]].drop_duplicates()
-df_base_tipo = df_base.merge(df_tipo, on="Loja", how="left")
-
-# Ignora lojas sem tipo
-df_base_tipo = df_base_tipo[~df_base_tipo["Tipo"].isna()]
+# A coluna "Tipo" já está em df_base, então não precisa fazer novo merge
+df_base_tipo = df_base[~df_base["Tipo"].isna()].copy()
 
 linhas_resumo_tipo = []
 tipos_ordenados = df_base_tipo.groupby("Tipo")[col_acumulado].sum().sort_values(ascending=False).index.tolist()
