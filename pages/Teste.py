@@ -314,15 +314,19 @@ percentual_desejavel = dia_hoje / dias_do_mes
 # Total da meta e cálculo do desejável
 meta_total = df_final.loc[df_final["Grupo"] == "TOTAL", "Meta"].values[0]
 fat_desejavel = meta_total * percentual_desejavel
+# Texto e valor desejável
 texto_desejavel = f"FATURAMENTO DESEJÁVEL ATÉ {data_fim_dt.strftime('%d/%m')}"
+percentual_desejavel = dia_hoje / dias_do_mes
 
-# Garante que a linha tenha todas as colunas do df_formatado na ordem correta
-# Garante que a linha tenha todas as colunas do df_formatado na ordem correta
+# Cria dicionário vazio com todas as colunas
 linha_desejavel_dict = {col: "" for col in df_formatado.columns}
 linha_desejavel_dict["Grupo"] = ""
 linha_desejavel_dict["Loja"] = texto_desejavel
-linha_desejavel_dict["%Meta Atingida"] = percentual_desejavel  # Mostra somente essa informação
 
+# Aplica formatação percentual à coluna correta
+linha_desejavel_dict["%Meta Atingida"] = formatar_brasileiro_com_coluna(percentual_desejavel, "%Meta Atingida")
+
+# Cria o DataFrame
 linha_desejavel = pd.DataFrame([linha_desejavel_dict])
 
 
