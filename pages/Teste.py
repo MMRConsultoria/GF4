@@ -103,7 +103,7 @@ df_base["PrioridadeTipo"] = df_base["Tipo"].apply(lambda x: tipos_prioritarios.i
 df_base = df_base.sort_values(by=["PrioridadeTipo", "Grupo", col_acumulado], ascending=[True, True, False])
 
 # Remove colunas auxiliares
-df_base = df_base.drop(columns=["PrioridadeTipo", "Tipo"])
+df_base = df_base.drop(columns=["PrioridadeTipo"])  # Mantém "Tipo" para usar na ordenação e subtotais
 
 
 
