@@ -267,6 +267,9 @@ with aba3:
     import numpy as np
     import streamlit as st
     from datetime import datetime
+    import locale
+
+    locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
 
     # Carrega dados
     df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
@@ -301,43 +304,34 @@ with aba3:
         modo_exibicao = st.selectbox("🔀 Ver por:", ["Loja", "Grupo"], index=0, key="modo_exibicao_relatorio")
     with col2:
         modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"], index=0, key="modo_periodo_relatorio")
-    import locale
-    locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')  # para formatar mês em português
-        
-        # === Filtro de período ===
-        if modo_periodo == "Diário":
-            data_inicio, data_fim = st.date_input(
-                "📅 Selecione o intervalo de datas:",
-                value=(ultimo_dia_disponivel, ultimo_dia_disponivel),
-                min_value=data_min_disponivel,
-                max_value=ultimo_dia_disponivel,
-                key="data_filtro_dia"
-            )
-            df_filtrado = df_vendas[
-                (df_vendas["Data"] >= pd.to_datetime(data_inicio)) &
-                (df_vendas["Data"] <= pd.to_datetime(data_fim))
-            ].copy()
-            df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
-        
-        elif modo_periodo == "Mensal":
-            df_vendas["AnoMes"] = df_vendas["Data"].dt.to_period("M")
-            meses_disponiveis = sorted(df_vendas["AnoMes"].unique())
-            opcoes_formatadas = [pd.to_datetime(str(m)).strftime("%B/%Y").capitalize() for m in meses_disponiveis]
-        
-            idx_ultimo = len(meses_disponiveis) - 1
-            mes_escolhido = st.selectbox("📅 Selecione o mês:", opcoes_formatadas, index=idx_ultimo, key="filtro_mes_pt")
-        
-            mes_dt = pd.to_datetime(meses_disponiveis[opcoes_formatadas.index(mes_escolhido)].to_timestamp())
-            df_filtrado = df_vendas[df_vendas["Data"].dt.to_period("M") == mes_dt.to_period("M")].copy()
-            df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
-        
-        elif modo_periodo == "Anual":
-            df_vendas["Ano"] = df_vendas["Data"].dt.year
-            anos_disponiveis = sorted(df_vendas["Ano"].unique())
-            ano_escolhido = st.selectbox("📅 Selecione o ano:", anos_disponiveis, index=len(anos_disponiveis)-1, key="filtro_ano_pt")
-        
-            df_filtrado = df_vendas[df_vendas["Ano"] == ano_escolhido].copy()
-            df_filtrado["Período"] = df_filtrado["Ano"].astype(str)
+
+    if modo_periodo == "Diário":
+        data_inicio, data_fim = st.date_input(
+            "🗕️ Selecione o intervalo de datas:",
+            value=(ultimo_dia_disponivel, ultimo_dia_disponivel),
+            min_value=data_min_disponivel,
+            max_value=ultimo_dia_disponivel,
+            key="data_filtro_dia"
+        )
+        df_filtrado = df_vendas[(df_vendas["Data"] >= pd.to_datetime(data_inicio)) & (df_vendas["Data"] <= pd.to_datetime(data_fim))].copy()
+        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
+
+    elif modo_periodo == "Mensal":
+        df_vendas["AnoMes"] = df_vendas["Data"].dt.to_period("M")
+        meses_disponiveis = sorted(df_vendas["AnoMes"].unique())
+        opcoes_formatadas = [pd.to_datetime(str(m)).strftime("%B/%Y").capitalize() for m in meses_disponiveis]
+        idx_ultimo = len(meses_disponiveis) - 1
+        mes_escolhido = st.selectbox("🗕️ Selecione o mês:", opcoes_formatadas, index=idx_ultimo, key="filtro_mes_pt")
+        mes_dt = pd.to_datetime(meses_disponiveis[opcoes_formatadas.index(mes_escolhido)].to_timestamp())
+        df_filtrado = df_vendas[df_vendas["Data"].dt.to_period("M") == mes_dt.to_period("M")].copy()
+        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
+
+    elif modo_periodo == "Anual":
+        df_vendas["Ano"] = df_vendas["Data"].dt.year
+        anos_disponiveis = sorted(df_vendas["Ano"].unique())
+        ano_escolhido = st.selectbox("🗕️ Selecione o ano:", anos_disponiveis, index=len(anos_disponiveis)-1, key="filtro_ano_pt")
+        df_filtrado = df_vendas[df_vendas["Ano"] == ano_escolhido].copy()
+        df_filtrado["Período"] = df_filtrado["Ano"].astype(str)
 
     # ================== AGRUPAMENTO ===================
     chaves = ["Loja", "Grupo"] if modo_exibicao == "Loja" else ["Grupo"]
@@ -394,6 +388,7 @@ with aba3:
         use_container_width=True,
         height=750
     )
+
 
 
 # ================================
