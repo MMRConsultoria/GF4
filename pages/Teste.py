@@ -90,24 +90,6 @@ df_acumulado = df_acumulado.rename(columns={"Fat.Total": col_acumulado})
 df_base = df_pivot.merge(df_acumulado, on=["Grupo", "Loja"], how="left")
 df_base = df_base[df_base[col_acumulado] != 0]
 
-# ================================
-# 📌 Ordena por Tipo: AIRPORTS > Airports - Kopp > outros
-# ================================
-df_tipo_ordem = df_empresa[["Loja", "Tipo"]].drop_duplicates()
-df_base = df_base.merge(df_tipo_ordem, on="Loja", how="left")
-
-tipos_prioritarios = ["AIRPORTS", "Airports - Kopp"]
-df_base["PrioridadeTipo"] = df_base["Tipo"].apply(lambda x: tipos_prioritarios.index(x) if x in tipos_prioritarios else 999)
-
-# Ordena: primeiro por tipo prioritário, depois por acumulado (desc)
-df_base = df_base.sort_values(by=["PrioridadeTipo", "Grupo", col_acumulado], ascending=[True, True, False])
-
-# Remove colunas auxiliares
-df_base = df_base.drop(columns=["PrioridadeTipo"])  # Mantém "Tipo" para usar na ordenação e subtotais
-
-
-
-
 # Adiciona coluna de Meta
 df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
 df_metas["Loja"] = df_metas["Loja Vendas"].astype(str).str.strip().str.upper()
@@ -155,60 +137,25 @@ for col in ["%LojaXGrupo", "%Grupo"]:
         df_base[col] = np.nan
 df_base = df_base[colunas_finais]
 
-# Subtotais e totais com ordenação por Tipo -> Grupo -> Loja
+# Subtotais e totais
 linha_total = df_base.drop(columns=colunas_base).sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
 linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
-
-# Garante que df_empresa tem Tipo associado às Lojas
-df_tipo_loja = df_empresa[["Loja", "Tipo"]].drop_duplicates()
-df_base = df_base.merge(df_tipo_loja, on="Loja", how="left")
-
-# Ordena df_base por prioridade de Tipo
-tipos_prioritarios = ["AIRPORTS", "Airports - Kopp"]
-if "Tipo" not in df_base.columns:
-    st.error("❌ Coluna 'Tipo' não encontrada após o merge com df_empresa.")
-else:
-    df_base["PrioridadeTipo"] = df_base["Tipo"].apply(lambda x: tipos_prioritarios.index(x) if x in tipos_prioritarios else 999)
-    df_base = df_base.sort_values(by=["PrioridadeTipo", "Grupo", col_acumulado], ascending=[True, True, False])
-    df_base = df_base.drop(columns=["PrioridadeTipo", "Tipo"])
-
-# Calcula os blocos (lojas e subtotais por grupo) com ordenação correta
 blocos = []
-grupos_ordenados = []
-
-# Agrupa por Grupo e inclui tipo prioritário
+grupos_info = []
 for grupo, df_grp in df_base.groupby("Grupo"):
-    tipo_ref = df_grp["Tipo"].dropna().iloc[0] if not df_grp["Tipo"].dropna().empty else ""
-    prioridade = tipos_prioritarios.index(tipo_ref) if tipo_ref in tipos_prioritarios else 999
     total_grupo = df_grp[col_acumulado].sum()
-    grupos_ordenados.append((prioridade, total_grupo, grupo, df_grp.copy()))
-
-# Ordena grupos primeiro por prioridade de tipo, depois por total acumulado (decrescente)
-grupos_ordenados.sort(key=lambda x: (x[0], -x[1]))
-
-# Monta os blocos
-for _, _, grupo, df_grp in grupos_ordenados:
+    grupos_info.append((grupo, total_grupo, df_grp))
+grupos_info.sort(key=lambda x: x[1], reverse=True)
+for grupo, _, df_grp in grupos_info:
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
-    subtotal = df_grp_ord.drop(columns=["Grupo", "Loja", "Tipo", "PrioridadeTipo"]).sum(numeric_only=True)
+    subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
     subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
     if modo_exibicao == "Loja":
-        blocos.append(df_grp_ord.drop(columns=["Tipo"]))  # ✅ Remove só "Tipo"
-    else:
-        blocos.append(pd.DataFrame([subtotal]))
-    # Agora sim pode remover a coluna 'Tipo' se ainda existir
-    if "Tipo" in df_base.columns:
-        df_base = df_base.drop(columns=["Tipo"])
-
-
-# Junta tudo com total
+        blocos.append(df_grp_ord)
+    blocos.append(pd.DataFrame([subtotal]))
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
-
-# Agora sim pode remover a coluna 'Tipo' se ainda existir
-if "Tipo" in df_base.columns:
-    df_base = df_base.drop(columns=["Tipo"])
-
 
 # Percentuais
 filtro_lojas = (
