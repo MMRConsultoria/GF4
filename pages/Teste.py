@@ -165,14 +165,23 @@ linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
 linha_total["Tipo"] = ""
 
 # 🧱 Agrupa por grupo
+# 🧱 Agrupa por grupo e considera Tipo para ordenar os blocos
+ordem_tipos = ["Airports", "Airports - Kopp", "On-Premise"]
 grupos_info = []
+
 for grupo, df_grp in df_base.groupby("Grupo"):
+    df_grp = df_grp.copy()
+    tipo_mais_frequente = (
+        df_grp["Tipo"].dropna().mode().iloc[0]
+        if not df_grp["Tipo"].dropna().empty else "—"
+    )
+    df_grp["Tipo"] = tipo_mais_frequente  # força o tipo do grupo inteiro
     total_grupo = df_grp[col_acumulado].sum()
-    grupos_info.append((grupo, total_grupo, df_grp))
+    grupos_info.append((grupo, tipo_mais_frequente, total_grupo, df_grp))
 
-# 📊 Ordena grupos
-grupos_info.sort(key=lambda x: x[1], reverse=True)
-
+# 📊 Ordena por Tipo (manual) e depois pelo valor total
+ordem_tipo_dict = {tipo: i for i, tipo in enumerate(ordem_tipos)}
+grupos_info.sort(key=lambda x: (ordem_tipo_dict.get(x[1], 999), -x[2]))
 # 🔁 Monta blocos
 # 🔁 Monta blocos
 blocos = []
@@ -180,7 +189,7 @@ blocos = []
 # Define ordem desejada
 ordem_tipos = ["Airports", "Airports - Kopp", "On-Premise"]
 
-for grupo, _, df_grp in grupos_info:
+for grupo, tipo, _, df_grp in grupos_info:
     df_grp["Tipo"] = pd.Categorical(df_grp["Tipo"], categories=ordem_tipos, ordered=True)
     df_grp_ord = df_grp.sort_values(by=["Tipo", col_acumulado], ascending=[True, False])  # 👈 aqui aplica ordenação por Tipo + acumulado
 
