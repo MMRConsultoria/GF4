@@ -121,6 +121,13 @@ df_base = df_base.merge(df_metas_filtrado[["Loja", "Meta"]], on="Loja", how="lef
 df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
 df_base["Meta"] = df_base["Meta"].fillna(0)
 
+# Diagnóstico: lojas que não receberam tipo
+lojas_sem_tipo = df_base[df_base["Tipo"].isna()]
+st.write("⚠️ Lojas sem tipo após o merge:", lojas_sem_tipo[["Loja"]].drop_duplicates())
+
+# Diagnóstico: lojas disponíveis na Tabela Empresa
+st.write("✅ Lojas disponíveis na Tabela Empresa:", df_empresa[["Loja", "Tipo"]].drop_duplicates())
+
 # %Atingido
 df_base["%Atingido"] = df_base[col_acumulado] / df_base["Meta"]
 df_base["%Atingido"] = df_base["%Atingido"].replace([np.inf, -np.inf], np.nan).fillna(0).round(4)
