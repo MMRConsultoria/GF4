@@ -482,10 +482,23 @@ ws.row_dimensions[1].height = 30
 
 # Preenche os dados na planilha
 # Dentro do loop de preenchimento de dados
+from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
+
+# Estilos de borda
+thin = Side(border_style="thin", color="000000")
+thick = Side(border_style="medium", color="000000")
+border_padrao = Border(left=thin, right=thin, top=thin, bottom=thin)
+border_grossa = Border(left=thick, right=thick, top=thick, bottom=thick)
+
+# Dados
 for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
-    estilo_linha = estilos_final[row_idx - 2]
+    estilo_linha = estilos_final[row_idx - 2]  # -2 porque o cabeçalho está na linha 1
+
+    # ✅ Detecta se a linha é subtotal
+    is_subtotal = isinstance(row["Grupo"], str) and row["Grupo"].startswith("SUBTOTAL")
+
     for col_idx, (col, valor) in enumerate(row.items(), start=1):
-        # Processa valores numéricos com formatação
+        # Aplica valor e formatação numérica
         if isinstance(valor, str) and "%" in valor:
             try:
                 valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
@@ -503,33 +516,40 @@ for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
         else:
             cell = ws.cell(row=row_idx, column=col_idx, value=valor)
 
-        # 🟩🟥 Cor em %Atingido
-        if col == "%Atingido" and isinstance(cell.value, (float, int)):
-            if cell.value >= perc_desejavel:
-                cell.font = Font(color="008000")  # verde
-            else:
-                cell.font = Font(color="FF0000")  # vermelho
-
-        # Aplica estilo visual (cor de fundo, bordas, alinhamento...)
+        # Estilo de fundo
         estilo = estilo_linha[col_idx - 1]
         if "background-color" in estilo:
             cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
             cell.fill = PatternFill("solid", fgColor=cor)
-        if "font-weight: bold" in estilo:
-            cell.font = Font(bold=True, color=cell.font.color)
-        cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
-        cell.border = border_grossa if is_subtotal else border_padrao
 
-
-
-        # ✅ Aplica o estilo visual (cor, negrito, alinhamento)
-        estilo = estilo_linha[col_idx - 1]
-        if "background-color" in estilo:
-            cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
-            cell.fill = PatternFill("solid", fgColor=cor)
+        # Estilo de negrito
         if "font-weight: bold" in estilo:
             cell.font = Font(bold=True)
+
+        # Alinhamento
         cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
+
+        # ✅ Borda (mais grossa se subtotal)
+        cell.border = border_grossa if is_subtotal else border_padrao
+
+        # ✅ Cor verde/vermelha no %Atingido
+        if col == "%Atingido":
+            try:
+                if isinstance(valor, str) and "%" in valor:
+                    valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
+                elif isinstance(valor, (int, float)):
+                    valor_float = float(valor)
+                else:
+                    valor_float = None
+
+                if valor_float is not None:
+                    if valor_float >= perc_desejavel:
+                        cell.font = Font(color="006400", bold=True)  # Verde escuro
+                    else:
+                        cell.font = Font(color="B22222", bold=True)  # Vermelho
+            except:
+                pass
+
 
 # ⬇️ Ajusta automaticamente a largura das colunas
 # Ajuste refinado de largura das colunas
