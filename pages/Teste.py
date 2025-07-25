@@ -173,7 +173,12 @@ df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 # Cria coluna Tipo para todas as linhas: lojas, subtotal e total
 
 # 1. Adiciona Tipo para lojas reais
-df_final = df_final.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
+df_final = df_final.merge(
+    df_empresa[["Loja", "Tipo"]].drop_duplicates(),
+    on="Loja",
+    how="left",
+    suffixes=("", "_empresa")
+)
 
 # 2. Preenche Tipo nas linhas de subtotal e total com base na maioria do grupo
 mascara_nulo = df_final["Tipo"].isna()
@@ -234,8 +239,13 @@ elif filtro_meta == "Sem Meta":
     else:  # Grupo
         colunas_visiveis += ["%Grupo"]
 # Garante que a coluna 'Tipo' existe
+# Garante que a coluna 'Tipo' esteja correta
 if "Tipo" not in df_final.columns:
-    df_final["Tipo"] = ""
+    if "Tipo_y" in df_final.columns:
+        df_final["Tipo"] = df_final["Tipo_y"]
+        df_final = df_final.drop(columns=["Tipo_y"])
+    else:
+        df_final["Tipo"] = ""
 
 # Preenche Tipo nas lojas reais
 df_final.loc[df_final["Tipo"] == "", "Tipo"] = df_final.loc[df_final["Tipo"] == "", "Loja"].map(
