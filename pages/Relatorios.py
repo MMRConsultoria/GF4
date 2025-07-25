@@ -350,6 +350,8 @@ with aba3:
         df_filtrado = df_vendas[df_vendas["Ano"].isin(anos_escolhidos)]
 
     # ================== AGRUPAMENTO ===================
+
+    modo_exibicao = st.selectbox("👥 Agrupar por:", ["Loja", "Grupo"], index=0)
     chaves = ["Loja", "Grupo"] if modo_exibicao == "Loja" else ["Grupo"]
     df_agrupado = df_filtrado.groupby(chaves + ["Período"], as_index=False)["Fat.Total"].sum()
 
