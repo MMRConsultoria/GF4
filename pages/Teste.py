@@ -195,11 +195,6 @@ elif filtro_meta == "Sem Meta":
 
 df_final = df_final[colunas_visiveis]
 
-
-
-df_final = df_final[colunas_exibir]
-
-
 # Formata valores
 colunas_percentuais = ["%LojaXGrupo", "%Grupo", "%Atingido"]
 def formatar(valor, col):
