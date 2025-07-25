@@ -40,6 +40,8 @@ df_vendas["Fat.Total"] = (
 )
 df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
 
+st.write("📌 Amostra da Tabela Empresa:", df_empresa[["Loja", "Tipo"]].drop_duplicates().sort_values("Loja"))
+
 # Filtros
 data_min = df_vendas["Data"].min()
 data_max = df_vendas["Data"].max()
@@ -118,7 +120,19 @@ df_base["Loja"] = df_base["Loja"].astype(str).str.strip().str.upper()
 df_base = df_base.merge(df_metas_filtrado[["Loja", "Meta"]], on="Loja", how="left")
 
 # Adiciona coluna Tipo (vindo de Tabela Empresa)
-df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
+# Merge da coluna Tipo
+df_base = df_base.merge(
+    df_empresa[["Loja", "Tipo"]].drop_duplicates(), 
+    on="Loja", 
+    how="left", 
+    validate="many_to_one"
+)
+
+# Checagem imediata
+if "Tipo" not in df_base.columns:
+    st.error("❌ Coluna 'Tipo' não foi adicionada ao df_base após o merge.")
+else:
+    st.success("✅ Coluna 'Tipo' adicionada com sucesso ao df_base.")
 df_base["Meta"] = df_base["Meta"].fillna(0)
 
 # Diagnóstico: lojas que não receberam tipo
