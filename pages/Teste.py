@@ -323,6 +323,8 @@ linha_desejavel = pd.DataFrame([{
     "Meta": meta_total,
     col_acumulado: fat_desejavel,
     "%Meta Atingida": percentual_desejavel
+}])
+
 
 
 # Estilo
