@@ -157,6 +157,27 @@ for grupo, _, df_grp in grupos_info:
     blocos.append(pd.DataFrame([subtotal]))
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
+# Cria coluna Tipo para todas as linhas: lojas, subtotal e total
+
+# 1. Adiciona Tipo para lojas reais
+df_final = df_final.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
+
+# 2. Preenche Tipo nas linhas de subtotal e total com base na maioria do grupo
+mascara_nulo = df_final["Tipo"].isna()
+mapa_tipo_grupo = (
+    df_final[~df_final["Tipo"].isna() & ~df_final["Grupo"].astype(str).str.startswith("SUBTOTAL")]
+    .groupby("Grupo")["Tipo"]
+    .agg(lambda x: x.mode().iloc[0] if not x.mode().empty else None)
+)
+df_final.loc[mascara_nulo, "Tipo"] = df_final.loc[mascara_nulo, "Grupo"].map(mapa_tipo_grupo)
+
+# 3. Ordenação opcional por Tipo, Grupo e Acumulado (se quiser)
+ordem_tipos = ["AIRPORTS", "Airports - Kopp", "On-Premise"]
+df_final["Tipo"] = pd.Categorical(df_final["Tipo"], categories=ordem_tipos, ordered=True)
+df_final = df_final.sort_values(by=["Tipo", "Grupo", col_acumulado], ascending=[True, True, False])
+
+
+
 # Percentuais
 filtro_lojas = (
     (df_final["Loja"] != "") &
@@ -197,7 +218,7 @@ else:
 
 # Oculta coluna %LojaXGrupo se for modo Grupo
 # Define colunas com base no filtro "Meta" ou "Sem Meta"
-colunas_visiveis = ["Grupo", "Loja"] + col_diarias + [col_acumulado]
+colunas_visiveis = ["Tipo", "Grupo", "Loja"] + col_diarias + [col_acumulado]
 
 if filtro_meta == "Meta":
     colunas_visiveis += ["Meta", "%Atingido"]
@@ -219,10 +240,9 @@ def formatar(valor, col):
     except:
         return ""
 df_formatado = df_final.copy()
-for col in colunas_visiveis:  # ✅ CORRETO
-    if col not in ["Grupo", "Loja"]:
+for col in colunas_visiveis:
+    if col not in ["Tipo", "Grupo", "Loja"]:
         df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
-
 
 # ================================
 # ➕ Linhas de resumo por Tipo
