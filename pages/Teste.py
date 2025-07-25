@@ -323,6 +323,9 @@ for tipo in tipos_ordenados:
 
 df_resumo_tipo = pd.DataFrame(linhas_resumo_tipo)
 
+# 🔧 Alinha colunas para garantir que concat funcione
+df_resumo_tipo = df_resumo_tipo[df_formatado.columns]  # 👈 ADICIONE ESSA LINHA
+
 # Formata
 df_resumo_tipo_formatado = df_resumo_tipo.copy()
 for col in df_resumo_tipo.columns:
