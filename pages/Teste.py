@@ -117,6 +117,14 @@ df_base["Loja"] = df_base["Loja"].astype(str).str.strip().str.upper()
 df_base = df_base.merge(df_metas_filtrado[["Loja", "Meta"]], on="Loja", how="left")
 df_base["Meta"] = df_base["Meta"].fillna(0)
 df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
+# Ordena os tipos manualmente
+ordem_tipos = ["AIRPORTS", "Airports - Kopp", "On-Premise"]
+df_base["Tipo"] = pd.Categorical(df_base["Tipo"], categories=ordem_tipos, ordered=True)
+
+# Ordena o dataframe
+df_base = df_base.sort_values(by=["Tipo", "Grupo", col_acumulado], ascending=[True, True, False])
+
+
 
 # %Atingido
 df_base["%Atingido"] = df_base[col_acumulado] / df_base["Meta"]
