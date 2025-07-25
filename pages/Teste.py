@@ -231,8 +231,26 @@ linha_desejavel = pd.DataFrame([linha_desejavel_dict])
 # Estilo visual
 def aplicar_estilo_final(df, estilos_linha):
     def apply_row_style(row):
-        return estilos_linha[row.name]
+        base_style = estilos_linha[row.name].copy()
+        if "%Atingido" in df.columns and row.name > 0:
+            try:
+                valor = row["%Atingido"]
+                if isinstance(valor, str) and "%" in valor:
+                    valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
+                else:
+                    valor_float = float(valor)
+                if not pd.isna(valor_float):
+                    if valor_float >= perc_desejavel:
+                        idx = df.columns.get_loc("%Atingido")
+                        base_style[idx] = base_style[idx] + "; color: green; font-weight: bold"
+                    else:
+                        idx = df.columns.get_loc("%Atingido")
+                        base_style[idx] = base_style[idx] + "; color: red; font-weight: bold"
+            except:
+                pass
+        return base_style
     return df.style.apply(apply_row_style, axis=1)
+
 
 cores_alternadas = ["#eef4fa", "#f5fbf3"]  # azul e verde bem suaves
 estilos = []
