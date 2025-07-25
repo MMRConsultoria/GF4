@@ -240,7 +240,7 @@ df_tipo = df_empresa[["Loja", "Tipo"]].drop_duplicates()
 df_base_tipo = df_base.merge(df_tipo, on="Loja", how="left")
 
 # Ignora lojas sem tipo
-df_base_tipo = df_base_tipo[~df_base_tipo["Tipo"].isna()]
+df_base_tipo = df_base_tipo[~df_base_tipo["Tipo"].isna()].copy()
 
 linhas_resumo_tipo = []
 tipos_ordenados = df_base_tipo.groupby("Tipo")[col_acumulado].sum().sort_values(ascending=False).index.tolist()
@@ -254,9 +254,11 @@ for tipo in tipos_ordenados:
     linha["Grupo"] = tipo
     linha["Loja"] = f"Lojas: {df_tipo_filtro['Loja'].nunique():02d}"
 
+    # Soma das diárias
     for col in col_diarias:
         linha[col] = df_tipo_filtro[col].sum()
 
+    # Acumulado
     linha[col_acumulado] = df_tipo_filtro[col_acumulado].sum()
 
     if filtro_meta == "Meta":
@@ -267,31 +269,30 @@ for tipo in tipos_ordenados:
     elif filtro_meta == "Sem Meta":
         if modo_exibicao == "Loja":
             soma_grupo = df_lojas_reais[col_acumulado].sum()
-            linha["%LojaXGrupo"] = linha[col_acumulado] / soma_grupo if soma_grupo > 0 else 0
-        linha["%Grupo"] = linha[col_acumulado] / soma_total_geral if soma_total_geral > 0 else 0
+            linha["%LojaXGrupo"] = linha[col_acumulado] / soma_grupo if soma_grupo > 0 else ""
+        linha["%Grupo"] = linha[col_acumulado] / soma_total_geral if soma_total_geral > 0 else ""
 
     linhas_resumo_tipo.append(linha)
 
+# Converte para DataFrame
 df_resumo_tipo = pd.DataFrame(linhas_resumo_tipo)
 
-# Formata
+# Formata os valores como no restante
 df_resumo_tipo_formatado = df_resumo_tipo.copy()
 for col in df_resumo_tipo.columns:
     if col not in ["Grupo", "Loja"]:
         df_resumo_tipo_formatado[col] = df_resumo_tipo[col].apply(lambda x: formatar(x, col))
 
-# Junta com dados formatados
+# Junta com o restante dos dados
 df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
 
-
-
-
-
-
-# Calcula o percentual desejável até o dia selecionado
+# ================================
+# 🎯 Calcula o percentual desejável até o dia selecionado
+# ================================
 dia_hoje = data_fim_dt.day
 dias_mes = monthrange(data_fim_dt.year, data_fim_dt.month)[1]
 perc_desejavel = dia_hoje / dias_mes
+
 
 
 # Faturamento desejável (com ordem correta das colunas)
