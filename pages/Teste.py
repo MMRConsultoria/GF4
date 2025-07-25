@@ -116,6 +116,7 @@ df_metas_filtrado = df_metas[(df_metas["Mês"] == mes_filtro) & (df_metas["Ano"]
 df_base["Loja"] = df_base["Loja"].astype(str).str.strip().str.upper()
 df_base = df_base.merge(df_metas_filtrado[["Loja", "Meta"]], on="Loja", how="left")
 df_base["Meta"] = df_base["Meta"].fillna(0)
+df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
 
 # %Atingido
 df_base["%Atingido"] = df_base[col_acumulado] / df_base["Meta"]
@@ -197,7 +198,7 @@ else:
 
 # Oculta coluna %LojaXGrupo se for modo Grupo
 # Define colunas com base no filtro "Meta" ou "Sem Meta"
-colunas_visiveis = ["Grupo", "Loja"] + col_diarias + [col_acumulado]
+colunas_visiveis = ["Grupo", "Loja", "Tipo"] + col_diarias + [col_acumulado]
 
 if filtro_meta == "Meta":
     colunas_visiveis += ["Meta", "%Atingido"]
