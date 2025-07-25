@@ -465,19 +465,20 @@ border_grossa = Border(
 )
 
 # Cabeçalho com azul escuro
+# Cabeçalho estilizado
 for col_idx, col in enumerate(df_exibir.columns, start=1):
     cell = ws.cell(row=1, column=col_idx, value=col)
     cell.fill = PatternFill("solid", fgColor="1F4E78")  # azul escuro
     cell.font = Font(bold=True, color="FFFFFF")         # texto branco
-    cell.alignment = Alignment(horizontal="center")
-    cell.border = Border(  # borda do cabeçalho
+    cell.alignment = Alignment(horizontal="center", vertical="center")
+    cell.border = Border(
         left=Side(style="medium"),
         right=Side(style="medium"),
         top=Side(style="medium"),
         bottom=Side(style="medium")
     )
 
-ws.row_dimensions[1].height = 24
+ws.row_dimensions[1].height = 30
 
 # Preenche os dados na planilha
 for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
