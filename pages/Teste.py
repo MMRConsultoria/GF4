@@ -118,6 +118,9 @@ df_base = df_base.merge(df_metas_filtrado[["Loja", "Meta"]], on="Loja", how="lef
 df_base["Meta"] = df_base["Meta"].fillna(0)
 df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
 
+st.write("🧪 Diagnóstico - Tabela Empresa")
+st.dataframe(df_empresa[["Loja", "Tipo"]].drop_duplicates())
+
 # %Atingido
 df_base["%Atingido"] = df_base[col_acumulado] / df_base["Meta"]
 df_base["%Atingido"] = df_base["%Atingido"].replace([np.inf, -np.inf], np.nan).fillna(0).round(4)
@@ -132,7 +135,7 @@ col_diarias = [
 
 # Extrai a data do nome da coluna e ordena corretamente
 col_diarias.sort(key=lambda x: datetime.strptime(x.replace("Fat Total ", ""), "%d/%m/%Y"))
-colunas_finais = colunas_base + col_diarias + [col_acumulado, "Meta", "%Atingido", "%LojaXGrupo", "%Grupo"]
+colunas_finais = colunas_base + ["Tipo"] + col_diarias + [col_acumulado, "Meta", "%Atingido", "%LojaXGrupo", "%Grupo"]
 for col in ["%LojaXGrupo", "%Grupo"]:
     if col not in df_base.columns:
         df_base[col] = np.nan
@@ -142,6 +145,7 @@ df_base = df_base[colunas_finais]
 linha_total = df_base.drop(columns=colunas_base).sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
 linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
+linha_total["Tipo"] = "TOTAL"
 blocos = []
 grupos_info = []
 for grupo, df_grp in df_base.groupby("Grupo"):
@@ -153,6 +157,11 @@ for grupo, _, df_grp in grupos_info:
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
     subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
+    tipo_subtotal = df_grp_ord["Tipo"].dropna().unique()
+    if len(tipo_subtotal) == 1:
+        subtotal["Tipo"] = tipo_subtotal[0]
+    else:
+        subtotal["Tipo"] = ""
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord)
     blocos.append(pd.DataFrame([subtotal]))
@@ -212,6 +221,10 @@ elif filtro_meta == "Sem Meta":
 if "Tipo" not in df_final.columns and "Tipo" in df_empresa.columns:
     df_final = df_final.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
 
+st.write("🧪 Diagnóstico - df_base com Tipo")
+st.dataframe(df_base[["Loja", "Tipo"]].drop_duplicates())
+
+
 # Remove colunas ausentes da lista antes de selecionar
 colunas_visiveis = [col for col in colunas_visiveis if col in df_final.columns]
 
@@ -236,8 +249,12 @@ for col in colunas_visiveis:  # ✅ CORRETO
 # ================================
 # ➕ Linhas de resumo por Tipo
 # ================================
-df_tipo = df_empresa[["Loja", "Tipo"]].drop_duplicates()
-df_base_tipo = df_base.merge(df_tipo, on="Loja", how="left")
+df_base_tipo = df_base.copy()
+
+# Garante que a coluna 'Tipo' existe (prevenção)
+if "Tipo" not in df_base_tipo.columns:
+    st.error("❌ A coluna 'Tipo' não foi encontrada no df_base.")
+    st.stop()
 
 # Ignora lojas sem tipo
 df_base_tipo = df_base_tipo[~df_base_tipo["Tipo"].isna()]
@@ -253,6 +270,7 @@ for tipo in tipos_ordenados:
     linha = {}
     linha["Grupo"] = tipo
     linha["Loja"] = f"Lojas: {df_tipo_filtro['Loja'].nunique():02d}"
+    linha["Tipo"] = tipo
 
     for col in col_diarias:
         linha[col] = df_tipo_filtro[col].sum()
@@ -301,10 +319,14 @@ for col in colunas_visiveis:  # ✅ CORRETO
         linha_desejavel_dict[col] = ""
     elif col == "Loja":
         linha_desejavel_dict[col] = f"FATURAMENTO DESEJÁVEL ATÉ {data_fim_dt.strftime('%d/%m')}"
+    elif col == "Tipo":
+        linha_desejavel_dict[col] = ""
     elif col == "%Atingido":
         linha_desejavel_dict[col] = formatar(perc_desejavel, "%Atingido")
+    
     else:
         linha_desejavel_dict[col] = ""
+        
 linha_desejavel = pd.DataFrame([linha_desejavel_dict])
 
 # Estilo visual
