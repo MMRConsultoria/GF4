@@ -138,22 +138,21 @@ for col in ["%LojaXGrupo", "%Grupo"]:
         df_base[col] = np.nan
 df_base = df_base[colunas_finais]
 
+# Adiciona coluna Tipo (uma única vez e no lugar certo)
+df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
+
 # Subtotais e totais com ordenação por Tipo > Grupo > Loja (todos por acumulado)
-linha_total = df_base.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+linha_total = df_base.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
 linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
 
-# Junta com Tipo
-df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
-
-# Ordena os tipos manualmente
+# Define a ordem dos Tipos
 ordem_tipos = ["AIRPORTS", "Airports - Kopp", "On-Premise"]
 df_base["Tipo"] = pd.Categorical(df_base["Tipo"], categories=ordem_tipos, ordered=True)
 
-# Soma por grupo
-coluna_acumulado = col_acumulado  # só para clareza
-soma_grupo = df_base.groupby(["Tipo", "Grupo"], as_index=False)[coluna_acumulado].sum()
-soma_grupo = soma_grupo.sort_values(by=["Tipo", coluna_acumulado], ascending=[True, False])
+# Calcula subtotal por Grupo
+soma_grupo = df_base.groupby(["Tipo", "Grupo"], as_index=False)[col_acumulado].sum()
+soma_grupo = soma_grupo.sort_values(by=["Tipo", col_acumulado], ascending=[True, False])
 
 # Constrói os blocos ordenados
 blocos = []
@@ -161,18 +160,17 @@ for _, linha in soma_grupo.iterrows():
     tipo = linha["Tipo"]
     grupo = linha["Grupo"]
     df_grp = df_base[df_base["Grupo"] == grupo].copy()
-    df_grp = df_grp.sort_values(by=coluna_acumulado, ascending=False)
+    df_grp = df_grp.sort_values(by=col_acumulado, ascending=False)
 
     subtotal = df_grp.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
     subtotal["Loja"] = f"Lojas: {df_grp['Loja'].nunique():02d}"
 
     if modo_exibicao == "Loja":
-        blocos.append(df_grp.drop(columns=["Tipo"]))
-
+        blocos.append(df_grp.drop(columns=["Tipo"]))  # remove Tipo da visualização
     blocos.append(pd.DataFrame([subtotal]))
 
-# Junta tudo
+# Junta tudo no final
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
 
