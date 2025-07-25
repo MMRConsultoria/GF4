@@ -280,7 +280,7 @@ for tipo in tipos_ordenados:
     linha = {}
     linha["Grupo"] = tipo
     linha["Loja"] = f"Lojas: {df_tipo_filtro['Loja'].nunique():02d}"
-    linha["Tipo"] = tipo
+    linha["Tipo"] = tipo if pd.notna(tipo) and tipo != "" else "Sem Tipo"
 
     for col in col_diarias:
         linha[col] = df_tipo_filtro[col].sum()
