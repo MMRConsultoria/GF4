@@ -165,22 +165,32 @@ linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
 linha_total["Tipo"] = ""
 
 # 🧱 Agrupa por grupo
+# 🧱 Agrupa por grupo e define o Tipo do grupo
+ordem_tipos = ["Airports", "Airports - Kopp", "On-Premise"]
+ordem_tipo_dict = {tipo: i for i, tipo in enumerate(ordem_tipos)}
+
 grupos_info = []
 for grupo, df_grp in df_base.groupby("Grupo"):
+    df_grp = df_grp.copy()
+    
+    # Detecta o tipo mais comum do grupo (ou NA se indefinido)
+    tipo_dominante = df_grp["Tipo"].dropna().mode().iloc[0] if not df_grp["Tipo"].dropna().empty else "—"
+    tipo_ordenado = ordem_tipo_dict.get(tipo_dominante, 999)
+    
     total_grupo = df_grp[col_acumulado].sum()
-    grupos_info.append((grupo, total_grupo, df_grp))
+    grupos_info.append((tipo_ordenado, grupo, total_grupo, df_grp, tipo_dominante))
 
-# 📊 Ordena grupos
-grupos_info.sort(key=lambda x: x[1], reverse=True)
+# 📊 Ordena primeiro por Tipo, depois por acumulado (decrescente)
+grupos_info.sort(key=lambda x: (x[0], -x[2]))
+
 
 # 🔁 Monta blocos
 blocos = []
-for grupo, _, df_grp in grupos_info:
+for _, grupo, _, df_grp, tipo_dominante in grupos_info:
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
 
     # Subtotal
-    tipo_unico = df_grp_ord["Tipo"].dropna().unique()
-    tipo_valor = tipo_unico[0] if len(tipo_unico) == 1 else "—"
+    tipo_valor = tipo_dominante
 
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
