@@ -268,6 +268,46 @@ estilos = []
 cor_idx = -1
 grupo_atual = None
 
+# RESUMO POR TIPO (antes de aplicar estilos)
+df_tipo = df_empresa[["Loja", "Tipo"]].drop_duplicates()
+df_tmp = df_final.copy()
+df_tmp = df_tmp.merge(df_tipo, on="Loja", how="left")
+df_tmp = df_tmp[df_tmp["Grupo"].astype(str).str.startswith("SUBTOTAL")].copy()
+
+# Agrupamento
+df_resumo_tipo = (
+    df_tmp.groupby("Tipo", as_index=False)
+    .agg({
+        col_acumulado: "sum",
+        "Meta": "sum" if "Meta" in df_tmp.columns else "first",
+    })
+)
+
+df_resumo_tipo["%Grupo"] = df_resumo_tipo[col_acumulado] / df_resumo_tipo[col_acumulado].sum()
+if "Meta" in df_resumo_tipo.columns:
+    df_resumo_tipo["%Atingido"] = df_resumo_tipo[col_acumulado] / df_resumo_tipo["Meta"]
+else:
+    df_resumo_tipo["%Atingido"] = ""
+
+# Colunas adicionais
+df_resumo_tipo["Grupo"] = df_resumo_tipo["Tipo"]
+df_resumo_tipo["Loja"] = df_tmp.groupby("Tipo")["Loja"].nunique().apply(lambda x: f"Lojas: {x:02d}").values
+
+# Preenche colunas faltantes com ""
+for col in df_formatado.columns:
+    if col not in df_resumo_tipo.columns:
+        df_resumo_tipo[col] = ""
+
+# Ordena colunas na mesma ordem do relatório
+df_resumo_tipo = df_resumo_tipo[df_formatado.columns]
+
+# Formata
+df_resumo_tipo_formatado = df_resumo_tipo.copy()
+for col in df_resumo_tipo.columns:
+    if col not in ["Grupo", "Loja"]:
+        df_resumo_tipo_formatado[col] = df_resumo_tipo_formatado[col].apply(lambda x: formatar(x, col))
+
+
 df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
 
 for _, row in df_linhas_visiveis.iterrows():
