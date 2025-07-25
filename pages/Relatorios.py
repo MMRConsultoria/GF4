@@ -262,7 +262,7 @@ with aba2:
 # ================================
 # Aba 3: Relatorio Analitico
 # ================================
-with aba4:
+with aba3:
     import pandas as pd
     import numpy as np
     import streamlit as st
