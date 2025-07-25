@@ -316,16 +316,31 @@ with aba3:
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
 
     elif modo_periodo == "Mensal":
-        df_vendas["MesAno"] = df_vendas["Data"].dt.strftime("%m/%Y")
-        meses_disponiveis = sorted(df_vendas["MesAno"].unique())
-        meses_selecionados = st.multiselect("🗓️ Selecione o(s) mês(es):", options=meses_disponiveis, default=[meses_disponiveis[-1]], key="data_filtro_mes")
-        df_filtrado = df_vendas[df_vendas["MesAno"].isin(meses_selecionados)].copy()
-        df_filtrado["Período"] = df_filtrado["MesAno"]
+        df_vendas["MesAno"] = df_vendas["Data"].dt.to_period("M").dt.to_timestamp()
+        meses_unicos = df_vendas["MesAno"].dt.strftime("%Y-%m").sort_values().unique()
+        label_map = {m: pd.to_datetime(m).strftime("%B/%Y").capitalize() for m in meses_unicos}
+    
+        meses_selecionados = st.multiselect(
+            "📅 Selecione o(s) mês(es):",
+            options=meses_unicos,
+            default=[meses_unicos[-1]],
+            format_func=lambda x: label_map[x],
+            key="data_filtro_mes"
+        )
+
+        df_vendas["MesAnoStr"] = df_vendas["MesAno"].dt.strftime("%Y-%m")
+        df_filtrado = df_vendas[df_vendas["MesAnoStr"].isin(meses_selecionados)].copy()
+        df_filtrado["Período"] = pd.to_datetime(df_filtrado["MesAnoStr"]).dt.strftime("%m/%Y")
 
     elif modo_periodo == "Anual":
-        df_vendas["Ano"] = df_vendas["Data"].dt.strftime("%Y")
+        df_vendas["Ano"] = df_vendas["Data"].dt.year.astype(str)
         anos_disponiveis = sorted(df_vendas["Ano"].unique())
-        anos_selecionados = st.multiselect("📆 Selecione o(s) ano(s):", options=anos_disponiveis, default=[anos_disponiveis[-1]], key="data_filtro_ano")
+        anos_selecionados = st.multiselect(
+            "📅 Selecione o(s) ano(s):",
+            options=anos_disponiveis,
+            default=[anos_disponiveis[-1]],
+            key="data_filtro_ano"
+        )
         df_filtrado = df_vendas[df_vendas["Ano"].isin(anos_selecionados)].copy()
         df_filtrado["Período"] = df_filtrado["Ano"]
 
