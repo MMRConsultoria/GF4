@@ -443,13 +443,22 @@ from openpyxl.styles import PatternFill, Font, Alignment
 from io import BytesIO
 
 # Botão de download
+# Gatilho de geração do Excel
 if st.button("📥 Baixar Excel idêntico à tela"):
+    st.session_state.gerar_excel_idêntico = True
+
+# Gera e exibe o botão de download somente se foi clicado
+if st.session_state.get("gerar_excel_idêntico"):
+    import openpyxl
+    from openpyxl.styles import PatternFill, Font, Alignment
+    from io import BytesIO
+
     # Cria workbook e planilha
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Vendas"
 
-    # Define largura padrão para cada coluna
+    # Largura das colunas
     for i, col in enumerate(df_exibir.columns, start=1):
         ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = max(14, len(col) + 2)
 
@@ -462,28 +471,23 @@ if st.button("📥 Baixar Excel idêntico à tela"):
         cell.font = header_font
         cell.alignment = Alignment(horizontal="center", vertical="center")
 
-    # Linhas formatadas com base nos estilos
+    # Conteúdo com estilos
     for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
-        estilo_linha = estilos_final[row_idx - 2]  # -2 porque header está na linha 1, e estilos_final começa na linha 0
+        estilo_linha = estilos_final[row_idx - 2]  # -2 pois header é linha 1
         for col_idx, (col, valor) in enumerate(row.items(), start=1):
             cell = ws.cell(row=row_idx, column=col_idx, value=valor)
-
-            # Aplica estilo de fundo
             estilo = estilo_linha[col_idx - 1]
             if "background-color" in estilo:
                 cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
                 cell.fill = PatternFill("solid", fgColor=cor)
-
-            # Alinhamento e formatação de fonte
-            cell.alignment = Alignment(horizontal="right", vertical="center")
             if "font-weight: bold" in estilo:
                 cell.font = Font(bold=True)
+            cell.alignment = Alignment(
+                horizontal="left" if col in ["Grupo", "Loja"] else "right",
+                vertical="center"
+            )
 
-            # Alinha texto à esquerda em Grupo/Loja
-            if col in ["Grupo", "Loja"]:
-                cell.alignment = Alignment(horizontal="left", vertical="center")
-
-    # Salva para BytesIO
+    # Exporta como arquivo
     buffer = BytesIO()
     wb.save(buffer)
     buffer.seek(0)
