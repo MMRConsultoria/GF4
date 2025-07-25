@@ -458,7 +458,25 @@ for col_idx, col in enumerate(df_exibir.columns, start=1):
 for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
     estilo_linha = estilos_final[row_idx - 2]  # -2 porque o header está na linha 1
     for col_idx, (col, valor) in enumerate(row.items(), start=1):
-        cell = ws.cell(row=row_idx, column=col_idx, value=valor)
+        # Aplica valor e formatação numérica
+        if isinstance(valor, str) and "%" in valor:
+            try:
+                valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
+                cell = ws.cell(row=row_idx, column=col_idx, value=valor_float)
+                cell.number_format = '0.00%'
+            except:
+                cell = ws.cell(row=row_idx, column=col_idx, value=valor)
+        elif isinstance(valor, str) and "R$" in valor:
+            try:
+                valor_float = float(
+                    valor.replace("R$", "").replace(".", "").replace(",", ".")
+                )
+                cell = ws.cell(row=row_idx, column=col_idx, value=valor_float)
+                cell.number_format = 'R$ #,##0.00'
+            except:
+                cell = ws.cell(row=row_idx, column=col_idx, value=valor)
+        else:
+            cell = ws.cell(row=row_idx, column=col_idx, value=valor)
 
         estilo = estilo_linha[col_idx - 1]
         if "background-color" in estilo:
