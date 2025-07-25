@@ -137,32 +137,38 @@ for col in ["%LojaXGrupo", "%Grupo"]:
         df_base[col] = np.nan
 df_base = df_base[colunas_finais]
 
-# Subtotais e totais
-linha_total = df_base.drop(columns=colunas_base).sum(numeric_only=True)
+# Adiciona Tipo às lojas antes do agrupamento
+df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
+
+linha_total = df_base.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
 linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
+linha_total["Tipo"] = ""
+
 blocos = []
 grupos_info = []
 for grupo, df_grp in df_base.groupby("Grupo"):
     total_grupo = df_grp[col_acumulado].sum()
     grupos_info.append((grupo, total_grupo, df_grp))
 grupos_info.sort(key=lambda x: x[1], reverse=True)
+
 for grupo, _, df_grp in grupos_info:
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
-    
-    # 🧠 Obtém o Tipo mais frequente (moda) entre as lojas do grupo
+
+    # ✅ Agora df_grp_ord tem a coluna "Tipo"
     tipo_predominante = df_grp_ord["Tipo"].mode().iloc[0] if not df_grp_ord["Tipo"].mode().empty else ""
 
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
     subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
-    subtotal["Tipo"] = tipo_predominante  # ✅ Aqui preenche o Tipo
+    subtotal["Tipo"] = tipo_predominante
 
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord)
-
     blocos.append(pd.DataFrame([subtotal]))
+
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
+
 
 # Cria coluna Tipo para todas as linhas: lojas, subtotal e total
 
