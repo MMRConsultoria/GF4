@@ -190,6 +190,7 @@ if modo_exibicao == "Grupo":
 else:
     colunas_exibir = colunas_finais
 df_final = df_final[colunas_exibir]
+df_formatado = df_formatado[colunas_exibir]
 
 # Formata valores
 colunas_percentuais = ["%LojaXGrupo", "%Grupo", "%Atingido"]
