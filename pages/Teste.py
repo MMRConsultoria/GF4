@@ -284,7 +284,7 @@ df_final = df_final[colunas_chave + colunas_valores]
 # Formatação correta para R$ e %
 # ================================
 
-colunas_percentuais = ["%LojaXGrupo", "%Grupo", "%Meta Atingida"]
+colunas_percentuais = ["%LojaXGrupo", "%Grupo", "%Atingido"]
 
 def formatar_brasileiro_com_coluna(valor, coluna):
     try:
@@ -296,7 +296,8 @@ def formatar_brasileiro_com_coluna(valor, coluna):
             return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     except:
         return ""
-
+        
+df_final = df_final.rename(columns={"%Meta Atingida": "%Atingido"})
 df_formatado = df_final.copy()
 for col in colunas_valores:
     df_formatado[col] = df_formatado[col].apply(lambda x: formatar_brasileiro_com_coluna(x, col))
@@ -324,8 +325,7 @@ linha_desejavel_dict["Grupo"] = ""
 linha_desejavel_dict["Loja"] = texto_desejavel
 
 # Aplica formatação percentual à coluna correta
-linha_desejavel_dict["%Meta Atingida"] = formatar_brasileiro_com_coluna(percentual_desejavel, "%Meta Atingida")
-
+linha_desejavel_dict["%Atingido"] = formatar_brasileiro_com_coluna(percentual_desejavel, "%Atingido")
 # Cria o DataFrame
 linha_desejavel = pd.DataFrame([linha_desejavel_dict])
 
