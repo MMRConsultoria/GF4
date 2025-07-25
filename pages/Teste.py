@@ -142,11 +142,20 @@ linha_total = df_base.drop(columns=colunas_base).sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
 linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
 blocos = []
+# Prioridade dos nomes dos grupos
+prioritarios = ["AIRPORTS", "Airports - Kopp"]
+
 grupos_info = []
 for grupo, df_grp in df_base.groupby("Grupo"):
     total_grupo = df_grp[col_acumulado].sum()
-    grupos_info.append((grupo, total_grupo, df_grp))
-grupos_info.sort(key=lambda x: x[1], reverse=True)
+    prioridade = prioritarios.index(grupo) if grupo in prioritarios else 999
+    grupos_info.append((grupo, total_grupo, prioridade, df_grp))
+
+# Ordena: primeiro pela prioridade, depois pelo acumulado (desc)
+grupos_info.sort(key=lambda x: (x[2], -x[1]))
+
+
+
 for grupo, _, df_grp in grupos_info:
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
