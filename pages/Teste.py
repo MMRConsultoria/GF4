@@ -160,33 +160,34 @@ df_base = df_base.sort_values(
 df_base = df_base.drop(columns=["PrioridadeTipo", "Tipo", "AcumuladoGrupo"], errors="ignore")
 
 # Calcula linha TOTAL
-linha_total = df_base.drop(columns=colunas_base).sum(numeric_only=True)
+# Já está ordenado por tipo prioritário e acumulado
+# Agora criamos os blocos respeitando essa ordem
+
+df_base["Grupo_Loja"] = df_base["Grupo"] + " | " + df_base["Loja"]
+
+blocos = []
+grupos_ordem = df_base["Grupo"].drop_duplicates().tolist()
+
+for grupo in grupos_ordem:
+    df_grp = df_base[df_base["Grupo"] == grupo].copy()
+    df_grp = df_grp.sort_values(by=col_acumulado, ascending=False)
+
+    subtotal = df_grp.drop(columns=["Grupo", "Loja", "Grupo_Loja"]).sum(numeric_only=True)
+    subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
+    subtotal["Loja"] = f"Lojas: {df_grp['Loja'].nunique():02d}"
+
+    if modo_exibicao == "Loja":
+        blocos.append(df_grp.drop(columns="Grupo_Loja"))
+    blocos.append(pd.DataFrame([subtotal]))
+
+# Linha total geral
+linha_total = df_base.drop(columns=["Grupo", "Loja", "Grupo_Loja"]).sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
 linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
 
-# Cria blocos por grupo com subtotais
-blocos = []
-grupos_info = []
-
-for grupo, df_grp in df_base.groupby("Grupo"):
-    total_grupo = df_grp[col_acumulado].sum()
-    grupos_info.append((grupo, total_grupo, df_grp))
-
-# Ordena grupos (por acumulado, a ordenação por Tipo já foi aplicada na ordenação anterior)
-grupos_info.sort(key=lambda x: -x[1])  # ordem decrescente pelo acumulado
-
-for grupo, _, df_grp in grupos_info:
-    df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
-    subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
-    subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
-    subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
-    
-    if modo_exibicao == "Loja":
-        blocos.append(df_grp_ord)
-    blocos.append(pd.DataFrame([subtotal]))
-
-# Junta tudo
+# Junta tudo com linha total primeiro
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
+
 
 
 # Percentuais
