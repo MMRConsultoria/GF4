@@ -167,9 +167,7 @@ for col in ["%LojaXGrupo", "%Grupo"]:
 if "Tipo" not in df_base.columns:
     df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
 
-df_base = df_base[colunas_finais]
-colunas_visiveis = colunas_finais.copy()
-# ✅ Garante colunas visíveis logo após selecionar colunas finais
+# 🔧 Define colunas visíveis antes de qualquer concatenação
 df_base = df_base[colunas_finais]
 colunas_visiveis = colunas_finais.copy()
 
@@ -179,43 +177,47 @@ linha_total["Grupo"] = "TOTAL"
 linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
 linha_total["Tipo"] = ""
 
-# 🧱 Agrupamento por Grupo
-blocos = []
+# 🧱 Agrupa por grupo
 grupos_info = []
-
 for grupo, df_grp in df_base.groupby("Grupo"):
     total_grupo = df_grp[col_acumulado].sum()
     grupos_info.append((grupo, total_grupo, df_grp))
 
-# 📊 Ordena grupos por maior total
+# 📊 Ordena grupos
 grupos_info.sort(key=lambda x: x[1], reverse=True)
 
-# 🔁 Geração dos blocos
+# 🔁 Monta blocos
+blocos = []
 for grupo, _, df_grp in grupos_info:
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
 
-    # 🟡 Subtotal
+    # Subtotal
     tipo_unico = df_grp_ord["Tipo"].dropna().unique()
-    tipo_valor = tipo_unico[0] if len(tipo_unico) == 1 else ""
+    tipo_valor = tipo_unico[0] if len(tipo_unico) == 1 else "—"
 
     subtotal = df_grp_ord.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
     subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
-    subtotal["Tipo"] = tipo_valor if tipo_valor else "—"  # 👈 força tipo
+    subtotal["Tipo"] = tipo_valor
 
-    # 🛡️ Garante todas as colunas visíveis
+    # ✅ Garante todas as colunas
     for col in colunas_visiveis:
         if col not in subtotal:
             subtotal[col] = np.nan
     subtotal = subtotal[colunas_visiveis]
 
+    # 🟦 Lojas
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord[colunas_visiveis])
-    blocos.append(pd.DataFrame([subtotal]))
 
-# ✅ Junta linha total e blocos
-df_final = pd.concat([pd.DataFrame([linha_total], columns=colunas_visiveis)] + blocos, ignore_index=True)
+    # 🟨 Subtotal
+    blocos.append(pd.DataFrame([subtotal], columns=colunas_visiveis))
 
+# 🔚 Junta tudo
+linha_total = pd.DataFrame([linha_total], columns=colunas_visiveis)
+df_final = pd.concat([linha_total] + blocos, ignore_index=True)
+
+st.write("🔍 Diagnóstico: Linhas de loja sem Tipo", df_final[(df_final["Tipo"].isna()) & (~df_final["Loja"].str.startswith("Lojas:"))])
 # Percentuais
 filtro_lojas = (
     (df_final["Loja"] != "") &
