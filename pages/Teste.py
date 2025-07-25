@@ -334,11 +334,13 @@ estilos_linha = []
 cor_idx = -1
 grupo_atual = None
 
+tem_grupo_resumo = not df_resumo_tipo.empty and "Grupo" in df_resumo_tipo.columns
+
 for _, row in df_linhas_visiveis.iterrows():
     grupo = row["Grupo"]
     loja = row["Loja"]
 
-    if isinstance(grupo, str) and grupo in df_resumo_tipo["Grupo"].values:
+    if isinstance(grupo, str) and tem_grupo_resumo and grupo in df_resumo_tipo["Grupo"].values:
         estilos_linha.append(["background-color: #f0f8ff; font-weight: bold"] * len(row))  # azul claro (linhas de tipo)
     elif grupo == "TOTAL":
         estilos_linha.append(["background-color: #f2f2f2; font-weight: bold"] * len(row))
