@@ -419,6 +419,10 @@ estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_linha
 
 # Atualiza o dataframe com a linha no topo
 df_exibir = pd.concat([linha_desejavel, df_linhas_visiveis], ignore_index=True)
+# Remove coluna "Tipo" de todos os DataFrames usados na exibição
+for df_temp in [df_formatado, df_linhas_visiveis, df_exibir]:
+    if "Tipo" in df_temp.columns:
+        df_temp.drop(columns=["Tipo"], inplace=True)
 
 # Aplica o estilo atualizado
 st.dataframe(
