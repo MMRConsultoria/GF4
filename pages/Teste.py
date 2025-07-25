@@ -361,6 +361,9 @@ for col in colunas_visiveis:
         linha_desejavel_dict[col] = f"FATURAMENTO DESEJÁVEL ATÉ {data_fim_dt.strftime('%d/%m')}"
     elif col == "%Atingido":
         linha_desejavel_dict[col] = formatar(perc_desejavel, "%Atingido")
+    elif col == col_acumulado:
+        # 👇 Aqui insere o total das metas
+        linha_desejavel_dict[col] = formatar(df_final["Meta"].replace("", 0).astype(float).sum(), "Meta")
     else:
         linha_desejavel_dict[col] = ""
 
