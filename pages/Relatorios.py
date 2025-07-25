@@ -279,6 +279,7 @@ with aba3:
     df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], dayfirst=True, errors="coerce")
     df_vendas["Loja"] = df_vendas["Loja"].astype(str).str.strip().str.upper()
     df_vendas["Grupo"] = df_vendas["Grupo"].astype(str).str.strip()
+
     df_vendas["Fat.Total"] = (
         df_vendas["Fat.Total"]
         .astype(str)
@@ -296,17 +297,24 @@ with aba3:
     data_max = df_vendas["Data"].max()
     col1, col2, col3 = st.columns([2, 2, 2])
     with col1:
-        data_inicio, data_fim = st.date_input("📅 Intervalo de datas:", (data_max, data_max), data_min, data_max)
+        data_inicio, data_fim = st.date_input(
+            "📅 Intervalo de datas:",
+            (data_max, data_max),
+            data_min,
+            data_max,
+            key="data_vendas_relatorio"
+        )
     with col2:
-        modo_exibicao = st.selectbox("🔀 Ver por:", ["Loja", "Grupo"])
+        modo_exibicao = st.selectbox("🔀 Ver por:", ["Loja", "Grupo"], key="modo_exibicao_relatorio")
     with col3:
-        modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"])
+        modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"], key="modo_periodo_relatorio")
 
+    # Filtro de datas
     data_inicio_dt = pd.to_datetime(data_inicio)
     data_fim_dt = pd.to_datetime(data_fim)
     df_filtrado = df_vendas[(df_vendas["Data"] >= data_inicio_dt) & (df_vendas["Data"] <= data_fim_dt)]
 
-    # Cria coluna de período
+    # Coluna período
     if modo_periodo == "Diário":
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
     elif modo_periodo == "Mensal":
@@ -321,7 +329,7 @@ with aba3:
     # Pivot
     df_pivot = df_agrupado.pivot_table(index=chaves, columns="Período", values="Fat.Total", fill_value=0).reset_index()
 
-    # Ordena colunas de período corretamente
+    # Ordena datas corretamente
     def ordenar_datas(col):
         try:
             return datetime.strptime(col, "%d/%m/%Y")
@@ -333,7 +341,7 @@ with aba3:
 
     colunas_periodo = sorted([c for c in df_pivot.columns if c not in chaves], key=ordenar_datas)
 
-    # Reordena: Loja, Grupo, depois as datas
+    # Define colunas finais: Loja, Grupo, Períodos
     if modo_exibicao == "Loja":
         colunas_finais = ["Loja", "Grupo"] + colunas_periodo
     else:
@@ -341,7 +349,7 @@ with aba3:
 
     df_final = df_pivot[colunas_finais]
 
-    # Adiciona linha TOTAL
+    # Linha TOTAL no topo
     linha_total = df_final.drop(columns=colunas_finais[:2 if modo_exibicao == "Loja" else 1]).sum(numeric_only=True)
     if modo_exibicao == "Loja":
         linha_total["Loja"] = "TOTAL"
@@ -350,7 +358,7 @@ with aba3:
         linha_total["Grupo"] = "TOTAL"
     df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
 
-    # Formata valores
+    # Formatação monetária
     def formatar(valor):
         try:
             return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -361,12 +369,13 @@ with aba3:
     for col in colunas_periodo:
         df_formatado[col] = df_formatado[col].apply(formatar)
 
-    # Exibe sem estilos
+    # Exibição final
     st.dataframe(
         df_formatado,
         use_container_width=True,
         height=750
     )
+
 
 
 # ================================
