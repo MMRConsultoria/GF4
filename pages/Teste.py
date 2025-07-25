@@ -280,10 +280,13 @@ def formatar(valor, col):
     except:
         return ""
 df_formatado = df_final.copy()
-for col in colunas_visiveis:  # ✅ CORRETO
-    if col not in ["Grupo", "Loja"]:
+for col in colunas_visiveis:
+    if col in colunas_percentuais:
         df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
-
+    elif col not in ["Grupo", "Loja", "Tipo"]:
+        df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
+    else:
+        df_formatado[col] = df_formatado[col].fillna("")  # 👈 tipo e loja não numéricos
 
 # ================================
 # ➕ Linhas de resumo por Tipo
