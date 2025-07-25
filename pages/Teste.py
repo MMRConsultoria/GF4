@@ -301,6 +301,29 @@ df_formatado = df_final.copy()
 for col in colunas_valores:
     df_formatado[col] = df_formatado[col].apply(lambda x: formatar_brasileiro_com_coluna(x, col))
 
+# ================================
+# Faturamento desejável até hoje
+# ================================
+from calendar import monthrange
+
+# Cálculo proporcional até o dia final do filtro
+dias_do_mes = monthrange(data_fim_dt.year, data_fim_dt.month)[1]
+dia_hoje = data_fim_dt.day
+percentual_desejavel = dia_hoje / dias_do_mes
+
+# Total da meta e cálculo do desejável
+meta_total = df_final.loc[df_final["Grupo"] == "TOTAL", "Meta"].values[0]
+fat_desejavel = meta_total * percentual_desejavel
+texto_desejavel = f"FATURAMENTO DESEJÁVEL ATÉ {data_fim_dt.strftime('%d/%m')}"
+
+# Cria linha de destaque com o valor
+linha_desejavel = pd.DataFrame([{
+    "Grupo": "",
+    "Loja": texto_desejavel,
+    "Meta": meta_total,
+    col_acumulado: fat_desejavel,
+    "%Meta Atingida": percentual_desejavel
+
 
 # Estilo
 cores_alternadas = ["#dce6f1", "#d9ead3"]
@@ -335,13 +358,23 @@ else:
 
 # Exibição
 
+# Exibição
+
 def aplicar_estilo_final(df, estilos_linha):
     def apply_row_style(row):
         return estilos_linha[row.name]
     return df.style.apply(apply_row_style, axis=1)
 
+# Insere a linha de faturamento desejável acima do cabeçalho
+df_exibir = pd.concat([linha_desejavel, df_formatado], ignore_index=True)
+
+# Estilo para a linha desejável
+estilo_desejavel = ["background-color: #dddddd; font-weight: bold"] * len(df_formatado.columns)
+estilos_final = [estilo_desejavel] + estilos
+
+# Mostra a tabela formatada
 st.dataframe(
-    aplicar_estilo_final(df_formatado, estilos),
+    aplicar_estilo_final(df_exibir, estilos_final),
     use_container_width=True,
     height=750
 )
