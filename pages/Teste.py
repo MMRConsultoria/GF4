@@ -373,72 +373,69 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
     workbook  = writer.book
     worksheet = writer.sheets["Relatório"]
 
-    # === Formatações ===
+    # === Formatos ===
     formato_valor = workbook.add_format({"num_format": "R$ #,##0.00", "align": "right"})
     formato_pct   = workbook.add_format({"num_format": "0.00%", "align": "right"})
     formato_cabecalho = workbook.add_format({"bold": True, "bg_color": "#d9d9d9", "border": 1, "align": "center"})
     formato_total = workbook.add_format({"bold": True, "bg_color": "#f2f2f2"})
     formato_subtotal = workbook.add_format({"bold": True, "bg_color": "#fff8dc"})
-    formato_desejavel = workbook.add_format({"bold": True, "bg_color": "#dddddd"})
     formato_resumo_tipo = workbook.add_format({"bold": True, "bg_color": "#fffbea"})
-
-    # Formatos condicional para %Atingido
-    formato_verde = workbook.add_format({"font_color": "green", "bold": True})
-    formato_vermelho = workbook.add_format({"font_color": "red", "bold": True})
+    formato_desejavel = workbook.add_format({"bold": True, "bg_color": "#dddddd"})
+    formato_verde = workbook.add_format({"font_color": "green", "num_format": "0.00%", "bold": True})
+    formato_vermelho = workbook.add_format({"font_color": "red", "num_format": "0.00%", "bold": True})
+    formato_padrao = workbook.add_format({"align": "left"})
 
     # === Cabeçalhos ===
-    for col_num, value in enumerate(df_exportar.columns.values):
+    for col_num, value in enumerate(df_exportar.columns):
         worksheet.write(0, col_num, value, formato_cabecalho)
 
-    # === Aplica estilos por linha ===
+    # === Estilo de linhas
     for row_num, row in df_exportar.iterrows():
         grupo = row["Grupo"]
         loja = row["Loja"]
 
+        # Detecta tipo de linha
         if isinstance(grupo, str) and grupo in df_resumo_tipo_formatado["Grupo"].values:
-            fmt = formato_resumo_tipo
-        elif grupo == "TOTAL":
-            fmt = formato_total
+            estilo = formato_resumo_tipo
+        elif isinstance(loja, str) and loja.startswith("FATURAMENTO"):
+            estilo = formato_desejavel
+        elif isinstance(grupo, str) and grupo == "TOTAL":
+            estilo = formato_total
         elif isinstance(grupo, str) and grupo.startswith("SUBTOTAL"):
-            fmt = formato_subtotal
-        elif isinstance(loja, str) and loja.startswith("FATURAMENTO DESEJÁVEL"):
-            fmt = formato_desejavel
+            estilo = formato_subtotal
         else:
             cor = cores_alternadas[row_num % 2]
-            fmt = workbook.add_format({"bg_color": cor})
+            estilo = workbook.add_format({"bg_color": cor})
 
         for col_num, col_name in enumerate(df_exportar.columns):
             valor = row[col_name]
-            if col_name in colunas_percentuais:
-                worksheet.write(row_num + 1, col_num, valor if valor != "" else None, formato_pct)
-            elif isinstance(valor, str) and valor.startswith("R$"):
+
+            # Coluna %Atingido com condicional
+            if col_name == "%Atingido":
                 try:
-                    num = float(valor.replace("R$", "").replace(".", "").replace(",", "."))
-                    worksheet.write(row_num + 1, col_num, num, formato_valor)
+                    val_pct = float(str(valor).replace("%", "").replace(",", ".")) / 100
+                    formato_pct_cor = formato_verde if val_pct >= perc_desejavel else formato_vermelho
+                    worksheet.write(row_num + 1, col_num, val_pct, formato_pct_cor)
                 except:
-                    worksheet.write(row_num + 1, col_num, valor, fmt)
+                    worksheet.write(row_num + 1, col_num, valor, estilo)
+            elif col_name.startswith("Fat") or col_name.startswith("Acumulado") or col_name == "Meta":
+                try:
+                    val = float(str(valor).replace("R$", "").replace(".", "").replace(",", "."))
+                    worksheet.write(row_num + 1, col_num, val, formato_valor)
+                except:
+                    worksheet.write(row_num + 1, col_num, valor, estilo)
+            elif col_name.startswith("%") and valor != "":
+                try:
+                    val = float(str(valor).replace("%", "").replace(",", ".")) / 100
+                    worksheet.write(row_num + 1, col_num, val, formato_pct)
+                except:
+                    worksheet.write(row_num + 1, col_num, valor, estilo)
             else:
-                worksheet.write(row_num + 1, col_num, valor, fmt)
+                worksheet.write(row_num + 1, col_num, valor, estilo)
 
-        # Condicional em %Atingido
-        if "%Atingido" in df_exportar.columns:
-            idx_col_pct = df_exportar.columns.get_loc("%Atingido")
-            try:
-                val_pct = row["%Atingido"]
-                if isinstance(val_pct, str) and "%" in val_pct:
-                    pct_float = float(val_pct.replace("%", "").replace(",", ".")) / 100
-                else:
-                    pct_float = float(val_pct)
-                if pct_float >= perc_desejavel:
-                    worksheet.write(row_num + 1, idx_col_pct, pct_float, formato_verde)
-                else:
-                    worksheet.write(row_num + 1, idx_col_pct, pct_float, formato_vermelho)
-            except:
-                pass
-
-# Download
+# Botão para download
 st.download_button(
-    label="📥 Baixar Excel Formatado",
+    label="📥 Baixar Excel Igual à Tela",
     data=buffer.getvalue(),
     file_name=f"Relatorio_Vendas_{data_fim_dt.strftime('%d%m%Y')}.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
