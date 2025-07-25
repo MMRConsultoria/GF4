@@ -205,7 +205,7 @@ def formatar(valor, col):
     except:
         return ""
 df_formatado = df_final.copy()
-for col in colunas_exibir:
+for col in colunas_visiveis:  # ✅ CORRETO
     if col not in ["Grupo", "Loja"]:
         df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
 
@@ -254,6 +254,7 @@ for _, row in df_final.iterrows():
         cor = cores_alternadas[cor_idx]
         estilos.append([f"background-color: {cor}"] * len(row))
 estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_formatado.columns)] + estilos
+
 df_exibir = pd.concat([linha_desejavel, df_formatado], ignore_index=True)
 
 # Exibe na tela
