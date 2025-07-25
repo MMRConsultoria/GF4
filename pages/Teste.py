@@ -185,10 +185,18 @@ else:
     df_final.loc[~(mascara_total | mascara_subtotal), "%Atingido"] = ""
 
 # Oculta coluna %LojaXGrupo se for modo Grupo
-if modo_exibicao == "Grupo":
-    colunas_exibir = [c for c in colunas_finais if c != "%LojaXGrupo"]
-else:
-    colunas_exibir = colunas_finais
+# Define colunas com base no filtro "Meta" ou "Sem Meta"
+colunas_visiveis = ["Grupo", "Loja"] + col_diarias + [col_acumulado]
+
+if filtro_meta == "Meta":
+    colunas_visiveis += ["Meta", "%Atingido"]
+elif filtro_meta == "Sem Meta":
+    colunas_visiveis += ["%LojaXGrupo", "%Grupo"]
+
+df_final = df_final[colunas_visiveis]
+
+
+
 df_final = df_final[colunas_exibir]
 
 
