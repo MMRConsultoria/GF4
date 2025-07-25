@@ -235,10 +235,9 @@ def formatar(valor, col):
     except:
         return ""
 df_formatado = df_final.copy()
-for col in colunas_visiveis:  # ✅ CORRETO
-    if col not in ["Grupo", "Loja"]:
+for col in colunas_visiveis:
+    if col not in ["Tipo", "Grupo", "Loja"]:
         df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
-
 
 # ================================
 # ➕ Linhas de resumo por Tipo
