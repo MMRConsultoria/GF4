@@ -342,7 +342,7 @@ for _, row in df_linhas_visiveis.iterrows():
             cor_idx = (cor_idx + 1) % len(cores_alternadas)
             grupo_atual = grupo
         cor = cores_alternadas[cor_idx]
-        estilos.append([f"background-color: {cor}"] * len(row))
+        estilos.append([f"background-color: {cor}; font-weight: normal" ] * len(row))
 
 
 
