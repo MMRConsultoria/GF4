@@ -202,7 +202,10 @@ colunas_visiveis = ["Grupo", "Loja"] + col_diarias + [col_acumulado]
 if filtro_meta == "Meta":
     colunas_visiveis += ["Meta", "%Atingido"]
 elif filtro_meta == "Sem Meta":
-    colunas_visiveis += ["%LojaXGrupo", "%Grupo"]
+    if modo_exibicao == "Loja":
+        colunas_visiveis += ["%LojaXGrupo", "%Grupo"]
+    else:  # Grupo
+        colunas_visiveis += ["%Grupo"]
 
 df_final = df_final[colunas_visiveis]
 
