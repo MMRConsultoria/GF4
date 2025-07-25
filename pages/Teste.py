@@ -114,7 +114,11 @@ mes_filtro = data_fim_dt.strftime("%m")
 ano_filtro = data_fim_dt.strftime("%Y")
 df_metas_filtrado = df_metas[(df_metas["Mês"] == mes_filtro) & (df_metas["Ano"] == ano_filtro)].copy()
 df_base["Loja"] = df_base["Loja"].astype(str).str.strip().str.upper()
+# Adiciona coluna Meta
 df_base = df_base.merge(df_metas_filtrado[["Loja", "Meta"]], on="Loja", how="left")
+
+# Adiciona coluna Tipo (vindo de Tabela Empresa)
+df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
 df_base["Meta"] = df_base["Meta"].fillna(0)
 
 # %Atingido
@@ -122,7 +126,7 @@ df_base["%Atingido"] = df_base[col_acumulado] / df_base["Meta"]
 df_base["%Atingido"] = df_base["%Atingido"].replace([np.inf, -np.inf], np.nan).fillna(0).round(4)
 
 # Reordena colunas
-colunas_base = ["Grupo", "Loja"]
+colunas_base = ["Grupo", "Loja", "Tipo"]
 from datetime import datetime
 
 col_diarias = [
@@ -138,9 +142,10 @@ for col in ["%LojaXGrupo", "%Grupo"]:
 df_base = df_base[colunas_finais]
 
 # Subtotais e totais
-linha_total = df_base.drop(columns=colunas_base).sum(numeric_only=True)
+linha_total = df_base.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
 linha_total["Grupo"] = "TOTAL"
 linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
+linha_total["Tipo"] = ""
 blocos = []
 grupos_info = []
 for grupo, df_grp in df_base.groupby("Grupo"):
@@ -149,9 +154,10 @@ for grupo, df_grp in df_base.groupby("Grupo"):
 grupos_info.sort(key=lambda x: x[1], reverse=True)
 for grupo, _, df_grp in grupos_info:
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
-    subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+    subtotal = df_grp_ord.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
     subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
+    subtotal["Tipo"] = ""
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord)
     blocos.append(pd.DataFrame([subtotal]))
@@ -197,7 +203,7 @@ else:
 
 # Oculta coluna %LojaXGrupo se for modo Grupo
 # Define colunas com base no filtro "Meta" ou "Sem Meta"
-colunas_visiveis = ["Grupo", "Loja"] + col_diarias + [col_acumulado]
+colunas_visiveis = ["Grupo", "Loja", "Tipo"] + col_diarias + [col_acumulado]
 
 if filtro_meta == "Meta":
     colunas_visiveis += ["Meta", "%Atingido"]
