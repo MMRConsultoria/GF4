@@ -166,8 +166,18 @@ df_base = df_base.drop(columns=["PrioridadeTipo", "Tipo", "AcumuladoGrupo"], err
 df_base["Grupo_Loja"] = df_base["Grupo"] + " | " + df_base["Loja"]
 
 blocos = []
-grupos_ordem = df_base["Grupo"].drop_duplicates().tolist()
+# Prioridade de tipo para definir ordem dos grupos
+tipos_prioritarios = ["AIRPORTS", "Airports - Kopp"]
 
+# Pega os tipos dos grupos pelas lojas
+df_grupo_tipo = df_base.groupby("Grupo")["Loja"].first().reset_index()
+df_grupo_tipo = df_grupo_tipo.merge(df_empresa[["Loja", "Tipo"]], on="Loja", how="left")
+df_grupo_tipo["PrioridadeTipo"] = df_grupo_tipo["Tipo"].apply(
+    lambda x: tipos_prioritarios.index(x) if x in tipos_prioritarios else 999
+)
+
+# Ordena os grupos por prioridade do tipo
+grupos_ordem = df_grupo_tipo.sort_values(by="PrioridadeTipo")["Grupo"].tolist()
 for grupo in grupos_ordem:
     df_grp = df_base[df_base["Grupo"] == grupo].copy()
     df_grp = df_grp.sort_values(by=col_acumulado, ascending=False)
