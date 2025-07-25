@@ -475,7 +475,7 @@ buffer.seek(0)
 
 # Botão direto de download
 st.download_button(
-    label="📥 Baixar Excel idêntico à tela",
+    label="📥 Baixar Excel",
     data=buffer,
     file_name="vendas_formatado.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
