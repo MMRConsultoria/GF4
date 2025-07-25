@@ -449,13 +449,6 @@ wb = openpyxl.Workbook()
 ws = wb.active
 ws.title = "Vendas"
 
-# Cabeçalho
-for col_idx, col in enumerate(df_exibir.columns, start=1):
-    cell = ws.cell(row=1, column=col_idx, value=col)
-    cell.fill = PatternFill("solid", fgColor="DDDDDD")
-    cell.font = Font(bold=True)
-    cell.alignment = Alignment(horizontal="center")
-
 # Define bordas
 border_padrao = Border(
     left=Side(style="thin"),
@@ -470,6 +463,15 @@ border_grossa = Border(
     top=Side(style="medium"),
     bottom=Side(style="medium"),
 )
+
+# Cabeçalho
+for col_idx, col in enumerate(df_exibir.columns, start=1):
+    cell = ws.cell(row=1, column=col_idx, value=col)
+    cell.fill = PatternFill("solid", fgColor="DDDDDD")
+    cell.font = Font(bold=True)
+    cell.alignment = Alignment(horizontal="center")
+
+
 
 # Preenche os dados na planilha
 for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
