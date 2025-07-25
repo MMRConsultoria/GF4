@@ -424,9 +424,9 @@ with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
             elif col_name.startswith("Fat") or col_name.startswith("Acumulado") or col_name == "Meta":
                 try:
                     val = float(str(valor).replace("R$", "").replace(".", "").replace(",", "."))
-                    worksheet.write(row_num + 1, col_num, val, formato_valor)
+                    worksheet.write_number(row_num + 1, col_num, val, formato_valor)
                 except:
-                    worksheet.write(row_num + 1, col_num, valor, estilo)
+                    worksheet.write_string(row_num + 1, col_num, str(valor), estilo)
             elif col_name.startswith("%") and valor != "":
                 try:
                     val = float(str(valor).replace("%", "").replace(",", ".")) / 100
