@@ -280,8 +280,9 @@ for tipo in tipos_ordenados:
     linha = {}
     linha["Grupo"] = tipo
     linha["Loja"] = f"Lojas: {df_tipo_filtro['Loja'].nunique():02d}"
-    linha["Tipo"] = tipo if pd.notna(tipo) and tipo != "" else "Sem Tipo"
+    linha["Tipo"] = tipo if pd.notna(tipo) and tipo != "" else "—"  # 👈 aqui
 
+    # Somatórios
     for col in col_diarias:
         linha[col] = df_tipo_filtro[col].sum()
 
@@ -299,6 +300,7 @@ for tipo in tipos_ordenados:
         linha["%Grupo"] = linha[col_acumulado] / soma_total_geral if soma_total_geral > 0 else 0
 
     linhas_resumo_tipo.append(linha)
+
 
 df_resumo_tipo = pd.DataFrame(linhas_resumo_tipo)
 
