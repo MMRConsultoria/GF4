@@ -312,7 +312,7 @@ with aba3:
 
     if modo_periodo == "Diário":
         data_inicio, data_fim = st.date_input(
-            "🗕️ Selecione o intervalo de datas:",
+            "Selecione o intervalo de datas:",
             value=(data_ultima_disponivel, data_ultima_disponivel),
             min_value=data_min_disponivel,
             max_value=data_ultima_disponivel,
