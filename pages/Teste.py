@@ -194,8 +194,13 @@ for _, _, grupo, df_grp in grupos_ordenados:
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
     subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
     if modo_exibicao == "Loja":
-        blocos.append(df_grp_ord.drop(columns=["Tipo", "PrioridadeTipo"]))
-    blocos.append(pd.DataFrame([subtotal]))
+        blocos.append(df_grp_ord.drop(columns=["Tipo"]))  # ✅ Remove só "Tipo"
+    else:
+        blocos.append(pd.DataFrame([subtotal]))
+    # Agora sim pode remover a coluna 'Tipo' se ainda existir
+    if "Tipo" in df_base.columns:
+        df_base = df_base.drop(columns=["Tipo"])
+
 
 # Junta tudo com total
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
