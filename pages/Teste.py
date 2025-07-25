@@ -217,7 +217,7 @@ perc_desejavel = dia_hoje / dias_mes
 
 # Faturamento desejável (com ordem correta das colunas)
 linha_desejavel_dict = {}
-for col in colunas_exibir:
+for col in colunas_visiveis:  # ✅ CORRETO
     if col == "Grupo":
         linha_desejavel_dict[col] = ""
     elif col == "Loja":
