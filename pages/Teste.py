@@ -234,25 +234,28 @@ def aplicar_estilo_final(df, estilos_linha):
         return estilos_linha[row.name]
     return df.style.apply(apply_row_style, axis=1)
 
-cores_alternadas = ["#dce6f1", "#d9ead3"]
+cores_alternadas = ["#eef4fa", "#f5fbf3"]  # azul e verde bem suaves
 estilos = []
 cor_idx = -1
 grupo_atual = None
+
 for _, row in df_final.iterrows():
     grupo = row["Grupo"]
     loja = row["Loja"]
+
     if grupo == "TOTAL":
-        estilos.append(["background-color: #eeeeee; font-weight: bold"] * len(row))
+        estilos.append(["background-color: #f2f2f2; font-weight: bold"] * len(row))  # cinza claro
     elif isinstance(grupo, str) and grupo.startswith("SUBTOTAL"):
-        estilos.append(["background-color: #ffe599; font-weight: bold"] * len(row))
+        estilos.append(["background-color: #fff8dc; font-weight: bold"] * len(row))  # amarelo pastel
     elif loja == "":
-        estilos.append(["background-color: #f9f9f9"] * len(row))
+        estilos.append(["background-color: #fdfdfd"] * len(row))  # branco quase puro (ou #fefefe, #fcfcfc)
     else:
         if grupo != grupo_atual:
             cor_idx = (cor_idx + 1) % len(cores_alternadas)
             grupo_atual = grupo
         cor = cores_alternadas[cor_idx]
         estilos.append([f"background-color: {cor}"] * len(row))
+
 estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_formatado.columns)] + estilos
 
 df_exibir = pd.concat([linha_desejavel, df_formatado], ignore_index=True)
