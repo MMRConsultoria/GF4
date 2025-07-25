@@ -374,9 +374,17 @@ for col in df_resumo_tipo.columns:
 
 
 
+# 🔸 Cria estilos adicionais para as linhas extras
+estilo_desejavel = [["background-color: #dddddd; font-weight: bold"] * len(df_formatado.columns)]
+estilo_resumo_tipo = [["background-color: #f0f8ff; font-weight: bold"] * len(df_formatado.columns)] * len(df_resumo_tipo_formatado)
+
+# 🔸 Recria df_exibir com as 3 partes
 df_exibir = pd.concat([linha_desejavel, df_resumo_tipo_formatado, df_formatado], ignore_index=True)
 
-# Exibe na tela
+# 🔸 Junta todos os estilos: desejável + resumo tipo + estilos das linhas finais
+estilos_final = estilo_desejavel + estilo_resumo_tipo + estilos
+
+# 🔸 Exibe com estilo correto
 st.dataframe(
     aplicar_estilo_final(df_exibir, estilos_final),
     use_container_width=True,
