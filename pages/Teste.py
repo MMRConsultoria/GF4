@@ -268,16 +268,20 @@ estilos = []
 cor_idx = -1
 grupo_atual = None
 
-for _, row in df_final.iterrows():
+df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
+
+for _, row in df_linhas_visiveis.iterrows():
     grupo = row["Grupo"]
     loja = row["Loja"]
 
-    if grupo == "TOTAL":
-        estilos.append(["background-color: #f2f2f2; font-weight: bold"] * len(row))  # cinza claro
+    if isinstance(grupo, str) and grupo.startswith("Tipo:"):
+        estilos.append(["background-color: #e6f2e6; font-weight: bold"] * len(row))  # verde pastel
+    elif grupo == "TOTAL":
+        estilos.append(["background-color: #f2f2f2; font-weight: bold"] * len(row))
     elif isinstance(grupo, str) and grupo.startswith("SUBTOTAL"):
-        estilos.append(["background-color: #fff8dc; font-weight: bold"] * len(row))  # amarelo pastel
+        estilos.append(["background-color: #fff8dc; font-weight: bold"] * len(row))
     elif loja == "":
-        estilos.append(["background-color: #fdfdfd"] * len(row))  # branco quase puro (ou #fefefe, #fcfcfc)
+        estilos.append(["background-color: #fdfdfd"] * len(row))
     else:
         if grupo != grupo_atual:
             cor_idx = (cor_idx + 1) % len(cores_alternadas)
@@ -285,9 +289,50 @@ for _, row in df_final.iterrows():
         cor = cores_alternadas[cor_idx]
         estilos.append([f"background-color: {cor}"] * len(row))
 
+
 estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_formatado.columns)] + estilos
 
-df_exibir = pd.concat([linha_desejavel, df_formatado], ignore_index=True)
+# ================================
+# ➕ Subtotais por Tipo (linha extra no topo)
+# ================================
+df_tipo = df_empresa[["Loja", "Tipo"]].drop_duplicates()
+df_merge_tipo = df_final.merge(df_tipo, on="Loja", how="left")
+df_merge_tipo = df_merge_tipo[df_merge_tipo["Loja"].astype(str).str.startswith("Lojas:") == False]
+df_merge_tipo = df_merge_tipo[df_merge_tipo["Grupo"] != "TOTAL"]
+df_merge_tipo = df_merge_tipo[df_merge_tipo["Grupo"].astype(str).str.startswith("SUBTOTAL") == False]
+
+# Acumula por tipo
+linhas_tipos = []
+tipos_ordenados = df_merge_tipo.groupby("Tipo")[col_acumulado].sum().sort_values(ascending=False).index.tolist()
+
+for tipo in tipos_ordenados:
+    df_tipo_filtro = df_merge_tipo[df_merge_tipo["Tipo"] == tipo]
+    if df_tipo_filtro.empty:
+        continue
+
+    linha = {}
+    linha["Grupo"] = tipo
+    linha["Loja"] = f"Lojas: {df_tipo_filtro['Loja'].nunique()}"
+    for col in df_tipo_filtro.columns:
+        if col in ["Grupo", "Loja", "Tipo"]:
+            continue
+        if pd.api.types.is_numeric_dtype(df_tipo_filtro[col]):
+            linha[col] = df_tipo_filtro[col].sum()
+        else:
+            linha[col] = ""
+
+    linhas_tipos.append(linha)
+
+df_resumo_tipo = pd.DataFrame(linhas_tipos)
+df_resumo_tipo_formatado = df_resumo_tipo.copy()
+for col in df_resumo_tipo.columns:
+    if col not in ["Grupo", "Loja"]:
+        df_resumo_tipo_formatado[col] = df_resumo_tipo_formatado[col].apply(lambda x: formatar(x, col))
+
+
+
+
+df_exibir = pd.concat([linha_desejavel, df_resumo_tipo_formatado, df_formatado], ignore_index=True)
 
 # Exibe na tela
 st.dataframe(
