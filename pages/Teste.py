@@ -317,15 +317,13 @@ fat_desejavel = meta_total * percentual_desejavel
 texto_desejavel = f"FATURAMENTO DESEJÁVEL ATÉ {data_fim_dt.strftime('%d/%m')}"
 
 # Garante que a linha tenha todas as colunas do df_formatado na ordem correta
+# Garante que a linha tenha todas as colunas do df_formatado na ordem correta
 linha_desejavel_dict = {col: "" for col in df_formatado.columns}
 linha_desejavel_dict["Grupo"] = ""
 linha_desejavel_dict["Loja"] = texto_desejavel
-linha_desejavel_dict["Meta"] = meta_total
-linha_desejavel_dict[col_acumulado] = fat_desejavel
-linha_desejavel_dict["%Meta Atingida"] = percentual_desejavel
+linha_desejavel_dict["%Meta Atingida"] = percentual_desejavel  # Mostra somente essa informação
 
 linha_desejavel = pd.DataFrame([linha_desejavel_dict])
-
 
 
 # Estilo
