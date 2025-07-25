@@ -46,6 +46,11 @@ data_max = df_vendas["Data"].max()
 col1, col2, col3 = st.columns([2, 2, 2])
 with col1:
     data_inicio, data_fim = st.date_input("📅 Intervalo de datas:", (data_max, data_max), data_min, data_max)
+
+# 🚫 Validação: intervalo deve estar no mesmo mês
+if data_inicio.month != data_fim.month or data_inicio.year != data_fim.year:
+    st.error("⚠️ O intervalo de datas deve estar dentro do **mesmo mês e ano**.")
+    st.stop()
 with col2:
     modo_exibicao = st.selectbox("🧭 Ver por:", ["Loja", "Grupo"])
 with col3:
