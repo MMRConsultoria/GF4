@@ -149,11 +149,18 @@ for grupo, df_grp in df_base.groupby("Grupo"):
 grupos_info.sort(key=lambda x: x[1], reverse=True)
 for grupo, _, df_grp in grupos_info:
     df_grp_ord = df_grp.sort_values(by=col_acumulado, ascending=False)
-    subtotal = df_grp_ord.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+    
+    # 🧠 Obtém o Tipo mais frequente (moda) entre as lojas do grupo
+    tipo_predominante = df_grp_ord["Tipo"].mode().iloc[0] if not df_grp_ord["Tipo"].mode().empty else ""
+
+    subtotal = df_grp_ord.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
     subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
     subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
+    subtotal["Tipo"] = tipo_predominante  # ✅ Aqui preenche o Tipo
+
     if modo_exibicao == "Loja":
         blocos.append(df_grp_ord)
+
     blocos.append(pd.DataFrame([subtotal]))
 df_final = pd.concat([pd.DataFrame([linha_total])] + blocos, ignore_index=True)
 
