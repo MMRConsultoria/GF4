@@ -330,6 +330,8 @@ for _, row in df_linhas_visiveis.iterrows():
         estilos.append([f"background-color: {cor}"] * len(row))
 
 
+
+
 estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_formatado.columns)] + estilos
 
 # ================================
