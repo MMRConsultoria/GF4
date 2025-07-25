@@ -118,8 +118,6 @@ df_base = df_base.merge(df_metas_filtrado[["Loja", "Meta"]], on="Loja", how="lef
 df_base["Meta"] = df_base["Meta"].fillna(0)
 df_base = df_base.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
 
-st.write("🧪 Diagnóstico - Tabela Empresa")
-st.dataframe(df_empresa[["Loja", "Tipo"]].drop_duplicates())
 
 # %Atingido
 df_base["%Atingido"] = df_base[col_acumulado] / df_base["Meta"]
@@ -221,8 +219,6 @@ elif filtro_meta == "Sem Meta":
 if "Tipo" not in df_final.columns and "Tipo" in df_empresa.columns:
     df_final = df_final.merge(df_empresa[["Loja", "Tipo"]].drop_duplicates(), on="Loja", how="left")
 
-st.write("🧪 Diagnóstico - df_base com Tipo")
-st.dataframe(df_base[["Loja", "Tipo"]].drop_duplicates())
 
 
 # Remove colunas ausentes da lista antes de selecionar
