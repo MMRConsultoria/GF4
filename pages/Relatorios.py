@@ -269,7 +269,7 @@ with aba3:
     from datetime import datetime
     import locale
 
-    locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
+
 
     # Carrega dados
     df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
@@ -305,6 +305,13 @@ with aba3:
     with col2:
         modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"], index=0, key="modo_periodo_relatorio")
 
+    nomes_meses = {
+        "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril",
+        "05": "Maio", "06": "Junho", "07": "Julho", "08": "Agosto",
+        "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
+    }    
+
+    
     if modo_periodo == "Diário":
         data_inicio, data_fim = st.date_input(
             "🗕️ Selecione o intervalo de datas:",
@@ -319,7 +326,12 @@ with aba3:
     elif modo_periodo == "Mensal":
         df_vendas["AnoMes"] = df_vendas["Data"].dt.to_period("M")
         meses_disponiveis = sorted(df_vendas["AnoMes"].unique())
-        opcoes_formatadas = [pd.to_datetime(str(m)).strftime("%B/%Y").capitalize() for m in meses_disponiveis]
+        opcoes_formatadas = []
+            for m in meses_disponiveis:
+                mes_ano_str = str(m)  # ex: '2025-07'
+                ano, mes = mes_ano_str.split("-")
+                label = f"{nomes_meses[mes]}/{ano}"
+    opcoes_formatadas.append(label)
         idx_ultimo = len(meses_disponiveis) - 1
         mes_escolhido = st.selectbox("🗕️ Selecione o mês:", opcoes_formatadas, index=idx_ultimo, key="filtro_mes_pt")
         mes_dt = pd.to_datetime(meses_disponiveis[opcoes_formatadas.index(mes_escolhido)].to_timestamp())
