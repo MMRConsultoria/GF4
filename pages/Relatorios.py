@@ -337,14 +337,15 @@ with aba3:
     elif modo_periodo == "Anual":
         df_vendas["Ano"] = df_vendas["Data"].dt.strftime("%Y")
         anos_disponiveis = sorted(df_vendas["Ano"].unique())
-        ano_selecionado = st.select_slider(
-            "📅 Selecione o ano:",
+    
+        anos_selecionados = st.multiselect(
+            "📅 Selecione os anos:",
             options=anos_disponiveis,
-            value=datetime.today().strftime("%Y")
+            default=[datetime.today().strftime("%Y")]
         )
-        df_filtrado = df_vendas[df_vendas["Ano"] == ano_selecionado]
+    
+        df_filtrado = df_vendas[df_vendas["Ano"].isin(anos_selecionados)]
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%Y")
-
 
     
 
