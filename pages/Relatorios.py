@@ -323,70 +323,58 @@ with aba3:
     )
     df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
 
-    # Filtros
-    data_min = df_vendas["Data"].min()
-    data_max = df_vendas["Data"].max()
+    # Filtros principais
     col1, col2, col3 = st.columns([2, 2, 2])
     with col1:
-        data_inicio, data_fim = st.date_input(
-            "📅 Intervalo de datas:",
-            (data_max, data_max),
-            data_min,
-            data_max,
-            key="data_vendas_relatorio"
-        )
-    with col2:
         modo_exibicao = st.selectbox("🔀 Ver por:", ["Loja", "Grupo"], key="modo_exibicao_relatorio")
-    with col3:
+    with col2:
         modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"], key="modo_periodo_relatorio")
-
-    # Filtro de datas
-    data_inicio_dt = pd.to_datetime(data_inicio)
-    data_fim_dt = pd.to_datetime(data_fim)
-    df_filtrado = df_vendas[(df_vendas["Data"] >= data_inicio_dt) & (df_vendas["Data"] <= data_fim_dt)]
-
-    # Coluna de período
-    # Filtro de datas e definição de "Período"
-    if modo_periodo == "Diário":
-        data_min = df_vendas["Data"].min()
-        data_max = df_vendas["Data"].max()
-        data_inicio, data_fim = st.date_input(
-            "📅 Intervalo de datas:",
-            (data_max, data_max),
-            data_min,
-            data_max,
-            key="data_vendas_relatorio"
-        )
-        df_filtrado = df_vendas[
-            (df_vendas["Data"] >= pd.to_datetime(data_inicio)) &
-            (df_vendas["Data"] <= pd.to_datetime(data_fim))
-        ]
-        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
     
-    elif modo_periodo == "Mensal":
-        df_vendas["Mes/Ano"] = df_vendas["Data"].dt.strftime("%m/%Y")
-        meses_disponiveis = sorted(
-            df_vendas["Mes/Ano"].unique(),
-            key=lambda x: datetime.strptime("01/" + x, "%d/%m/%Y")
-        )
-        meses_selecionados = st.multiselect(
-            "🗓️ Selecione os meses:",
-            options=meses_disponiveis,
-            default=[datetime.today().strftime("%m/%Y")]
-        )
-        df_filtrado = df_vendas[df_vendas["Mes/Ano"].isin(meses_selecionados)]
-        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
+    # Container para o filtro de datas ou períodos, sempre no mesmo lugar
+    with col3:
+        if modo_periodo == "Diário":
+            data_min = df_vendas["Data"].min()
+            data_max = df_vendas["Data"].max()
+            data_inicio, data_fim = st.date_input(
+                "📅 Intervalo de datas:",
+                (data_max, data_max),
+                data_min,
+                data_max,
+                key="data_vendas_relatorio"
+            )
+            df_filtrado = df_vendas[
+                (df_vendas["Data"] >= pd.to_datetime(data_inicio)) &
+                (df_vendas["Data"] <= pd.to_datetime(data_fim))
+            ]
+            df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
     
-    elif modo_periodo == "Anual":
-        df_vendas["Ano"] = df_vendas["Data"].dt.strftime("%Y")
-        anos_disponiveis = sorted(df_vendas["Ano"].unique())
-        anos_selecionados = st.multiselect(
-            "📅 Selecione os anos:",
-            options=anos_disponiveis,
-            default=[datetime.today().strftime("%Y")]
-        )
-        df_filtrado = df_vendas[df_vendas["Ano"].isin(anos_selecionados)]
-        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%Y")
+        elif modo_periodo == "Mensal":
+            df_vendas["Mes/Ano"] = df_vendas["Data"].dt.strftime("%m/%Y")
+            meses_disponiveis = sorted(
+                df_vendas["Mes/Ano"].unique(),
+                key=lambda x: datetime.strptime("01/" + x, "%d/%m/%Y")
+            )
+            meses_selecionados = st.multiselect(
+                "🗓️ Selecione os meses:",
+                options=meses_disponiveis,
+                default=[datetime.today().strftime("%m/%Y")],
+                key="meses_relatorio"
+            )
+            df_filtrado = df_vendas[df_vendas["Mes/Ano"].isin(meses_selecionados)]
+            df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
+    
+        elif modo_periodo == "Anual":
+            df_vendas["Ano"] = df_vendas["Data"].dt.strftime("%Y")
+            anos_disponiveis = sorted(df_vendas["Ano"].unique())
+            anos_selecionados = st.multiselect(
+                "📅 Selecione os anos:",
+                options=anos_disponiveis,
+                default=[datetime.today().strftime("%Y")],
+                key="anos_relatorio"
+            )
+            df_filtrado = df_vendas[df_vendas["Ano"].isin(anos_selecionados)]
+            df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%Y")
+    
 
 
     
