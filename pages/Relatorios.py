@@ -316,12 +316,37 @@ with aba3:
     df_filtrado = df_vendas[(df_vendas["Data"] >= data_inicio_dt) & (df_vendas["Data"] <= data_fim_dt)]
 
     # Coluna de período
+    # Filtro de datas e definição de "Período"
     if modo_periodo == "Diário":
+        data_inicio_dt = pd.to_datetime(data_inicio)
+        data_fim_dt = pd.to_datetime(data_fim)
+        df_filtrado = df_vendas[(df_vendas["Data"] >= data_inicio_dt) & (df_vendas["Data"] <= data_fim_dt)]
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
+    
     elif modo_periodo == "Mensal":
+        df_vendas["Mes/Ano"] = df_vendas["Data"].dt.strftime("%m/%Y")
+        meses_disponiveis = sorted(df_vendas["Mes/Ano"].unique(), key=lambda x: datetime.strptime("01/" + x, "%d/%m/%Y"))
+        meses_selecionados = st.multiselect(
+            "🗓️ Selecione os meses:",
+            meses_disponiveis,
+            default=[datetime.today().strftime("%m/%Y")]
+        )
+        df_filtrado = df_vendas[df_vendas["Mes/Ano"].isin(meses_selecionados)]
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
-    else:
+    
+    elif modo_periodo == "Anual":
+        df_vendas["Ano"] = df_vendas["Data"].dt.strftime("%Y")
+        anos_disponiveis = sorted(df_vendas["Ano"].unique())
+        ano_selecionado = st.select_slider(
+            "📅 Selecione o ano:",
+            options=anos_disponiveis,
+            value=datetime.today().strftime("%Y")
+        )
+        df_filtrado = df_vendas[df_vendas["Ano"] == ano_selecionado]
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%Y")
+
+
+    
 
     # Agrupamento
     chaves = ["Loja", "Grupo"] if modo_exibicao == "Loja" else ["Grupo"]
