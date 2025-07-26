@@ -386,7 +386,9 @@ with aba3:
             df_filtrado = df_vendas[df_vendas["Ano"].isin(anos_selecionados)]
             df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%Y")
     
-
+        # ==== Aplica filtro de loja ou grupo somente agora ====
+        if selecao != todos:
+            df_filtrado = df_filtrado[df_filtrado[modo_exibicao] == selecao]
 
     
 
