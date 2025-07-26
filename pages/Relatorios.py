@@ -269,6 +269,36 @@ with aba3:
     import streamlit as st
     from datetime import datetime
 
+    st.markdown("""
+        <style>
+        .stMultiSelect > div {
+            background-color: #f5f5f5 !important;
+            color: black !important;
+            border: 1px solid #ccc !important;
+            border-radius: 6px;
+        }
+    
+        .stMultiSelect [data-baseweb="tag"] {
+            background-color: #cccccc !important;
+            color: black !important;
+            font-weight: 600;
+            border-radius: 6px;
+            padding: 4px 10px;
+        }
+    
+        .stSelectbox > div > div {
+            background-color: #f5f5f5 !important;
+            color: black !important;
+            border: 1px solid #ccc !important;
+        }
+    
+        .stDateInput > div > div {
+            background-color: #f5f5f5 !important;
+            color: black !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     # Carrega dados
     df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
     df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
@@ -318,17 +348,30 @@ with aba3:
     # Coluna de período
     # Filtro de datas e definição de "Período"
     if modo_periodo == "Diário":
-        data_inicio_dt = pd.to_datetime(data_inicio)
-        data_fim_dt = pd.to_datetime(data_fim)
-        df_filtrado = df_vendas[(df_vendas["Data"] >= data_inicio_dt) & (df_vendas["Data"] <= data_fim_dt)]
+        data_min = df_vendas["Data"].min()
+        data_max = df_vendas["Data"].max()
+        data_inicio, data_fim = st.date_input(
+            "📅 Intervalo de datas:",
+            (data_max, data_max),
+            data_min,
+            data_max,
+            key="data_vendas_relatorio"
+        )
+        df_filtrado = df_vendas[
+            (df_vendas["Data"] >= pd.to_datetime(data_inicio)) &
+            (df_vendas["Data"] <= pd.to_datetime(data_fim))
+        ]
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
     
     elif modo_periodo == "Mensal":
         df_vendas["Mes/Ano"] = df_vendas["Data"].dt.strftime("%m/%Y")
-        meses_disponiveis = sorted(df_vendas["Mes/Ano"].unique(), key=lambda x: datetime.strptime("01/" + x, "%d/%m/%Y"))
+        meses_disponiveis = sorted(
+            df_vendas["Mes/Ano"].unique(),
+            key=lambda x: datetime.strptime("01/" + x, "%d/%m/%Y")
+        )
         meses_selecionados = st.multiselect(
             "🗓️ Selecione os meses:",
-            meses_disponiveis,
+            options=meses_disponiveis,
             default=[datetime.today().strftime("%m/%Y")]
         )
         df_filtrado = df_vendas[df_vendas["Mes/Ano"].isin(meses_selecionados)]
@@ -337,15 +380,14 @@ with aba3:
     elif modo_periodo == "Anual":
         df_vendas["Ano"] = df_vendas["Data"].dt.strftime("%Y")
         anos_disponiveis = sorted(df_vendas["Ano"].unique())
-    
         anos_selecionados = st.multiselect(
             "📅 Selecione os anos:",
             options=anos_disponiveis,
             default=[datetime.today().strftime("%Y")]
         )
-    
         df_filtrado = df_vendas[df_vendas["Ano"].isin(anos_selecionados)]
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%Y")
+
 
     
 
