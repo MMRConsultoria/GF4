@@ -424,7 +424,7 @@ with aba3:
     linha_lojas["Loja"] = ""
     for periodo in df_lojas_por_periodo.index:
         if periodo in linha_lojas:
-            linha_lojas[periodo] = df_lojas_por_periodo[periodo]
+            linha_lojas[periodo] = int(df_lojas_por_periodo[periodo])  # 👈 força inteiro
     
     # === Linha TOTAL ===
     linha_total = df_final.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
