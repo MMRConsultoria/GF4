@@ -478,24 +478,23 @@ with aba3:
     from io import BytesIO
     from openpyxl import load_workbook
     
-    # Cria uma cópia limpa da tabela com dados reais (sem aplicar o estilo de string formatada)
-    df_exportar = df_final.copy()
+    # ➤ Usa a mesma lógica da visualização: remove "Loja" se for modo Grupo
+    df_exportar = df_final.drop(columns=["Loja"]) if modo_exibicao == "Grupo" else df_final.copy()
     
-    # Exporta para Excel simples com BytesIO
+    # ➤ Exporta para Excel com BytesIO
     output = BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df_exportar.to_excel(writer, index=False, sheet_name="Relatório")
     output.seek(0)
     
-    # Reabre com openpyxl para formatar colunas numéricas como moeda
+    # ➤ Reabre com openpyxl para aplicar formatação
     wb = load_workbook(output)
     ws = wb["Relatório"]
     
-    # Detecta colunas de valor (aquelas com "R$" na versão formatada)
+    # ➤ Detecta colunas de valor (não são "Grupo" nem "Loja")
     colunas_valor = [col for col in df_exportar.columns if col not in ["Grupo", "Loja"]]
     
-    # Aplica formatação "R$ #.##0,00" nas células numéricas dessas colunas
-    from openpyxl.styles import numbers
+    # ➤ Aplica formatação "R$ #.##0,00" nas colunas numéricas
     for col in colunas_valor:
         col_idx = list(df_exportar.columns).index(col) + 1
         for cell in ws.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx):
@@ -503,12 +502,12 @@ with aba3:
                 if isinstance(c.value, (int, float)):
                     c.number_format = '"R$" #,##0.00'
     
-    # Salva novamente
+    # ➤ Salva para download
     output_final = BytesIO()
     wb.save(output_final)
     output_final.seek(0)
     
-    # Botão para download
+    # ➤ Botão de download
     st.download_button(
         label="📥 Baixar Excel",
         data=output_final,
