@@ -261,7 +261,7 @@ with aba2:
     st.info("em desenvolvimento.")
 
 # ================================
-# Aba 3: Relatorio Analitico
+# Aba 3: Relatórios Vendas
 # ================================
 with aba3:
     import pandas as pd
@@ -397,7 +397,7 @@ with aba3:
 
 
 # ================================
-# Aba 4: Analise Lojas
+# Aba 4: Relatório Vendas/Metas
 # ================================
 with aba4:
     # Carrega dados
@@ -979,7 +979,7 @@ with aba4:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 # ======================
-# 📝 Aba 4
+# 📝 Relatórios Financeiros
 # ======================
 
 with aba5:
