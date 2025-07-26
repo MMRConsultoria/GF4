@@ -270,34 +270,27 @@ with aba3:
     from datetime import datetime
 
     st.markdown("""
-        <style>
-        .stMultiSelect > div {
-            background-color: #f5f5f5 !important;
-            color: black !important;
-            border: 1px solid #ccc !important;
-            border-radius: 6px;
-        }
+    <style>
+    /* Fundo geral dos chips selecionados no multiselect */
+    .stMultiSelect [data-baseweb="tag"] {
+        background-color: #f5f5f5 !important;
+        color: black !important;
+        border: 1px solid #ccc !important;
+        font-weight: normal;
+        border-radius: 6px;
+        padding: 5px 10px;
+    }
     
-        .stMultiSelect [data-baseweb="tag"] {
-            background-color: #cccccc !important;
-            color: black !important;
-            font-weight: 600;
-            border-radius: 6px;
-            padding: 4px 10px;
-        }
-    
-        .stSelectbox > div > div {
-            background-color: #f5f5f5 !important;
-            color: black !important;
-            border: 1px solid #ccc !important;
-        }
-    
-        .stDateInput > div > div {
-            background-color: #f5f5f5 !important;
-            color: black !important;
-        }
-        </style>
+    /* Remove fundo branco da caixa de multiselect */
+    .stMultiSelect > div {
+        background-color: #f5f5f5 !important;
+        color: black !important;
+        border: 1px solid #ccc !important;
+        border-radius: 6px;
+    }
+    </style>
     """, unsafe_allow_html=True)
+
 
     # Carrega dados
     df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
