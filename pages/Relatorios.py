@@ -271,22 +271,21 @@ with aba3:
 
     st.markdown("""
     <style>
-    /* Fundo geral dos chips selecionados no multiselect */
+    /* Remove aparência de "caixa" do chip selecionado */
     .stMultiSelect [data-baseweb="tag"] {
-        background-color: #f5f5f5 !important;
+        background-color: transparent !important;
         color: black !important;
-        border: 1px solid #ccc !important;
-        font-weight: normal;
-        border-radius: 6px;
-        padding: 5px 10px;
+        font-weight: 500 !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 2px 6px !important;
+        margin: 2px 4px !important;
     }
     
-    /* Remove fundo branco da caixa de multiselect */
+    /* Remove o fundo da área de seleção */
     .stMultiSelect > div {
-        background-color: #f5f5f5 !important;
-        color: black !important;
-        border: 1px solid #ccc !important;
-        border-radius: 6px;
+        background-color: transparent !important;
+        border: none !important;
     }
     </style>
     """, unsafe_allow_html=True)
