@@ -462,7 +462,17 @@ with aba3:
             else:
                 return ["" for _ in row]
         return df.style.apply(estilo_linha, axis=1)
-            
+
+    # Aplica estilo
+    tabela_final = aplicar_estilo(df_formatado)
+    
+    # Remove visualmente a coluna Loja se o modo for Grupo
+    if modo_exibicao == "Grupo":
+        if "Loja" in tabela_final.data.columns:
+            tabela_final = tabela_final.hide(columns=["Loja"])      
+
+
+    
     # Exibição
     st.dataframe(
         aplicar_estilo(df_formatado),
