@@ -71,10 +71,10 @@ st.markdown("""
 # 3. Separação em ABAS
 # ================================
 aba1, aba2, aba3, aba4, aba5 = st.tabs([
-    "📈 Graficos Anuais",
-    "📊 Graficos Trimestrais",
+    "📈 Gráficos Anuais",
+    "📊 Gráficos Trimestrais",
     "📆 Relatórios Vendas",
-    "📋 Vendas diarias/Metas",
+    "📋 Vendas diárias/Metas",
     "📋 Relatórios Financeiros"
 ])
 # ================================
