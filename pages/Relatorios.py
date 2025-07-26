@@ -416,15 +416,17 @@ with aba3:
     df_final = df_final.sort_values(by="__ordem", ascending=False).drop(columns="__ordem").reset_index(drop=True)
 
     # === Linha de Lojas Ativas (quantas lojas venderam algo em cada período) ===
+    # === Linha de Lojas Ativas (quantas lojas venderam por período) ===
     df_lojas_por_periodo = df_filtrado.groupby("Período")["Loja"].nunique()
     
-    # Monta linha com mesma estrutura do df_final
+    # Monta linha com estrutura do df_final, já convertendo os valores para str (evita float!)
     linha_lojas = {col: "" for col in df_final.columns}
     linha_lojas["Grupo"] = "Lojas Ativas"
     linha_lojas["Loja"] = ""
+    
     for periodo in df_lojas_por_periodo.index:
         if periodo in linha_lojas:
-            linha_lojas[periodo] = int(df_lojas_por_periodo[periodo])  # 👈 força inteiro
+            linha_lojas[periodo] = str(int(df_lojas_por_periodo[periodo]))  # 👈 força int e depois str
     
     # === Linha TOTAL ===
     linha_total = df_final.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
