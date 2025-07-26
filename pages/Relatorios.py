@@ -1188,7 +1188,7 @@ with aba5:
                 tipo_relatorio = None
 
         # NOVO BLOCO: filtro de tipo de pagamento
-        tipos_disponiveis = df_relatorio["Tipo de Pagamento"].dropna().unique().tolist()
+        tipos_disponiveis = df_relatorio["Tabela Meio Pagamento"].dropna().unique().tolist()
         filtro_tipo_pagamento = st.multiselect(
             "💳 Tipo de Pagamento:",
             options=sorted(tipos_disponiveis),
