@@ -59,7 +59,7 @@ st.markdown("""
 # ========================
 # 🗂️ Abas
 # ========================
-tab1, tab2, tab3 = st.tabs([
+tab1, tab2 = st.tabs([
     "📥 Upload e Processamento",
     "🔄 Atualizar Google Sheets"
    
