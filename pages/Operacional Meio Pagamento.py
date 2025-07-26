@@ -506,9 +506,9 @@ with tab2:
 #                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 #                     )
 
-#     except Exception as e:
-#         st.error(f"❌ Erro ao acessar Google Sheets: {e}")
+ #    except Exception as e:
+ #        st.error(f"❌ Erro ao acessar Google Sheets: {e}")
 
 
-    except Exception as e:
-        st.error(f"❌ Erro ao acessar Google Sheets: {e}")
+ #   except Exception as e:
+ #       st.error(f"❌ Erro ao acessar Google Sheets: {e}")
