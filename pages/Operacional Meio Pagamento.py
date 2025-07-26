@@ -61,8 +61,8 @@ st.markdown("""
 # ========================
 tab1, tab2, tab3 = st.tabs([
     "📥 Upload e Processamento",
-    "🔄 Atualizar Google Sheets",
-    "📝 Relatório"
+    "🔄 Atualizar Google Sheets"
+   
 ])
 # ======================
 # 📥 Aba 1
