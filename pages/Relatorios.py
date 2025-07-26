@@ -315,7 +315,8 @@ with aba3:
     )
     df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
 
-   # ==== Filtros principais ====
+    # ==== Filtros principais ====
+    # ==== Filtros principais ====
     data_min = df_vendas["Data"].min()
     data_max = df_vendas["Data"].max()
     
@@ -324,21 +325,21 @@ with aba3:
     with col1:
         modo_exibicao = st.selectbox("🔀 Ver por:", ["Loja", "Grupo"], key="modo_exibicao_relatorio")
     
-    with col2:
-        modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"], key="modo_periodo_relatorio")
-    
-    # Guarda seleção de Loja ou Grupo (não aplica ainda)
+    # Filtro de Loja ou Grupo (apenas define, será aplicado depois)
     todos = "Todas"
     opcoes_filtro = sorted(df_vendas[modo_exibicao].dropna().unique())
     opcoes_filtro.insert(0, todos)
     
-    with col3:
+    with col2:
         selecao = st.selectbox(
             f"🎯 Selecione {modo_exibicao.lower()} (opcional):",
             options=opcoes_filtro,
             index=0,
             key="filtro_unico_loja_grupo"
         )
+    
+    with col3:
+        modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"], key="modo_periodo_relatorio")
     
     # ==== Filtro por período ====
     if modo_periodo == "Diário":
@@ -380,9 +381,10 @@ with aba3:
         df_filtrado = df_vendas[df_vendas["Ano"].isin(anos_selecionados)]
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%Y")
     
-    # ==== Filtro de Loja ou Grupo (aplicado após período) ====
+    # ==== Aplica filtro de Loja ou Grupo ====
     if selecao != todos:
         df_filtrado = df_filtrado[df_filtrado[modo_exibicao] == selecao]
+
     
         
 
