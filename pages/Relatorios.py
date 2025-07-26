@@ -463,23 +463,18 @@ with aba3:
                 return ["" for _ in row]
         return df.style.apply(estilo_linha, axis=1)
 
-    # Aplica estilo
-    tabela_final = aplicar_estilo(df_formatado)
+    # Se for exibição por Grupo, remove a coluna "Loja" antes de aplicar estilo
+    df_visivel = df_formatado.drop(columns=["Loja"]) if modo_exibicao == "Grupo" else df_formatado
     
-    # Remove visualmente a coluna Loja se o modo for Grupo
-    if modo_exibicao == "Grupo":
-        if "Loja" in tabela_final.data.columns:
-            tabela_final = tabela_final.hide(columns=["Loja"])      
-
-
+    # Aplica estilo na nova tabela visual
+    tabela_final = aplicar_estilo(df_visivel)
     
-    # Exibição
+    # Exibe
     st.dataframe(
-        aplicar_estilo(df_formatado),
+        tabela_final,
         use_container_width=True,
-        height=750
+        height=700
     )
-
 
 
 # ================================
