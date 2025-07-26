@@ -458,11 +458,12 @@ with aba3:
     
     df_formatado = df_formatado[["Grupo", "Loja"] + colunas_periodo]
 
-    # Estilo para destacar TOTAL
     def aplicar_estilo(df):
         def estilo_linha(row):
             if row["Grupo"] == "TOTAL":
                 return ["background-color: #f0f0f0; font-weight: bold"] * len(row)
+            elif row["Grupo"] == "Lojas Ativas":
+                return ["background-color: #eeeeee; font-style: italic"] * len(row)  # ⛔ aqui está o destaque
             else:
                 return ["" for _ in row]
         return df.style.apply(estilo_linha, axis=1)
