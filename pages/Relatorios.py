@@ -317,11 +317,30 @@ with aba3:
 
     # Filtros principais
     col1, col2, col3 = st.columns([2, 2, 2])
+
     with col1:
         modo_exibicao = st.selectbox("🔀 Ver por:", ["Loja", "Grupo"], key="modo_exibicao_relatorio")
+    
     with col2:
         modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"], key="modo_periodo_relatorio")
     
+    # ✅ NOVO BLOCO AQUI: Select único para Loja ou Grupo
+    todos = "Todas as opções"
+    opcoes_filtro = sorted(df_vendas[modo_exibicao].dropna().unique())
+    opcoes_filtro.insert(0, todos)
+    
+    selecao = st.selectbox(
+        f"🔎 Selecione {modo_exibicao.lower()} (opcional):",
+        opcoes_filtro,
+        index=0,
+        key="filtro_dinamico"
+    )
+    
+    # Aplica o filtro se algo for selecionado
+    if selecao != todos:
+        df_filtrado = df_filtrado[df_filtrado[modo_exibicao] == selecao]
+    
+    # Agora segue com o col3 normalmente
     # Container para o filtro de datas ou períodos, sempre no mesmo lugar
     with col3:
         if modo_periodo == "Diário":
