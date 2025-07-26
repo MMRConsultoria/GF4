@@ -445,10 +445,17 @@ with aba3:
         except:
             return valor
 
+    # === Formatação final ===
     df_formatado = df_final.copy()
+    
     for col in colunas_periodo:
-        df_formatado[col] = df_formatado[col].apply(formatar)
-
+        if col in df_formatado.columns:
+            # Só aplica formatação em valores monetários (não em 'Lojas Ativas')
+            df_formatado[col] = df_formatado.apply(
+                lambda row: formatar(row[col]) if row["Grupo"] not in ["Lojas Ativas"] else row[col],
+                axis=1
+            )
+    
     df_formatado = df_formatado[["Grupo", "Loja"] + colunas_periodo]
 
     # Estilo para destacar TOTAL
