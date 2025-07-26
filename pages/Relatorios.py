@@ -415,11 +415,28 @@ with aba3:
     # Ordena do maior para o menor
     df_final = df_final.sort_values(by="__ordem", ascending=False).drop(columns="__ordem").reset_index(drop=True)
 
-    # Linha TOTAL
+    # === Linha de Lojas Ativas (quantas lojas venderam algo em cada período) ===
+    df_lojas_por_periodo = df_filtrado.groupby("Período")["Loja"].nunique()
+    
+    # Monta linha com mesma estrutura do df_final
+    linha_lojas = {col: "" for col in df_final.columns}
+    linha_lojas["Grupo"] = "Lojas Ativas"
+    linha_lojas["Loja"] = ""
+    for periodo in df_lojas_por_periodo.index:
+        if periodo in linha_lojas:
+            linha_lojas[periodo] = df_lojas_por_periodo[periodo]
+    
+    # === Linha TOTAL ===
     linha_total = df_final.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
     linha_total["Grupo"] = "TOTAL"
     linha_total["Loja"] = ""
-    df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
+    
+    # Junta tudo: Lojas Ativas → TOTAL → Dados
+    df_final = pd.concat([
+        pd.DataFrame([linha_lojas]),
+        pd.DataFrame([linha_total]),
+        df_final
+    ], ignore_index=True)
 
     # Formatação
     def formatar(valor):
