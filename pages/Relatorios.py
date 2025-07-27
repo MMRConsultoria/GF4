@@ -1226,7 +1226,7 @@ with aba5:
             )
 
         # === Tabs ===
-        abas = st.tabs(["💰 Vendas", "📄 Financeiro", "🔗 Vendas + Prazo e Taxas"])
+        abas = st.tabs(["💰 Vendas Meio Pagamento", "📄 Financeiro", "🔗 Vendas + Prazo e Taxas"])
 
         # === VENDAS ===
         with abas[0]:
