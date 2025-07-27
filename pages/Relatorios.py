@@ -1201,19 +1201,12 @@ with aba5:
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            datas_selecionadas = st.date_input(
-                "📅 Intervalo de datas:",
-                value=(data_max, data_max),
-                min_value=data_min,
-                max_value=data_max
+            data_inicio, data_fim = st.date_input(
+                "Período:",
+                value=(max_data, max_data),
+                min_value=min_data,
+                max_value=max_data
             )
-            
-            # Validação para garantir que foram selecionadas 2 datas
-            if isinstance(datas_selecionadas, (tuple, list)) and len(datas_selecionadas) == 2:
-                data_inicio, data_fim = datas_selecionadas
-            else:
-                st.warning("⚠️ Por favor, selecione um intervalo com **duas datas** (início e fim).")
-                st.stop()
         with col2:
             modo_relatorio = st.selectbox(
                 "Tipo de análise:",
