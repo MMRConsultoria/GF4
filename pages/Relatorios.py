@@ -1127,9 +1127,11 @@ with aba5:
 
         # Abertura das duas planilhas
         # Conexão com a planilha principal "Vendas diarias"
+        # Conexão com a planilha "Vendas diarias"
+            # Conexão com a planilha "Vendas diarias"
         planilha = gc.open("Vendas diarias")
         
-        # Acesso às abas necessárias
+        # Acesso às abas
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
         df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
         df_relatorio.columns = df_relatorio.columns.str.strip()
@@ -1138,17 +1140,22 @@ with aba5:
         df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
         df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip()
         
-        # Normaliza os campos e faz o merge com Tipo de Pagamento
+        # Renomeia coluna se necessário
+        df_meio_pagamento.rename(columns={"tipo de pagamento": "Tipo de Pagamento"}, inplace=True)
+        
+        # Normaliza campos
         for col in ["Meio de Pagamento", "Tipo de Pagamento"]:
             df_relatorio[col] = df_relatorio[col].astype(str).str.strip().str.upper()
             if col in df_meio_pagamento.columns:
                 df_meio_pagamento[col] = df_meio_pagamento[col].astype(str).str.strip().str.upper()
         
+        # Merge com Tipo de Pagamento
         df_relatorio = df_relatorio.merge(
             df_meio_pagamento[["Meio de Pagamento", "Tipo de Pagamento"]],
             on="Meio de Pagamento",
             how="left"
         )
+
         
         # Converte coluna "Data" e "Valor (R$)"
         df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
