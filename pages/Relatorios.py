@@ -1405,12 +1405,12 @@ with aba5:
                 wb.save(output_final)
                 output_final.seek(0)
 
-                st.download_button(
-                    "📥 Baixar Excel",
-                    data=output_final,
-                    file_name=f"Vendas_Prazo_Taxas_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+            st.download_button(
+                "📥 Baixar Excel",
+                data=output_final,
+                file_name=f"Vendas_Prazo_Taxas_{data_inicio.strftime('%d-%m-%Y')}_a_{data_fim.strftime('%d-%m-%Y')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
     except Exception as e:
         st.error(f"❌ Erro ao acessar Google Sheets: {e}")
 
