@@ -574,6 +574,28 @@ with aba4:
         modo_exibicao = st.selectbox("🧭 Ver por:", ["Loja", "Grupo"])
     with col3:
         filtro_meta = st.selectbox("🎯 Mostrar:", ["Meta", "Sem Meta"])
+
+    # -----------------------------------
+    # 🎛️ Seletor dinâmico de colunas extras
+    # -----------------------------------
+    st.markdown("### 🎛️ Personalize sua visualização")
+    
+    colunas_opcionais = {
+        "🎯 Meta da Loja": "Meta",
+        "📊 % Atingido": "%Atingido",
+        "🏬 % Loja X Grupo": "%LojaXGrupo",
+        "🧮 % Grupo no Total": "%Grupo"
+    }
+    
+    opcoes_selecionadas = st.multiselect(
+        "➕ Escolha os indicadores que deseja **exibir**:",
+        options=list(colunas_opcionais.keys()),
+        default=["🎯 Meta da Loja", "📊 % Atingido"] if filtro_meta == "Meta" else []
+    )
+    
+    # Mapeia as escolhas visuais para os nomes reais das colunas
+    colunas_escolhidas = [colunas_opcionais[op] for op in opcoes_selecionadas]
+
     
     data_inicio_dt = pd.to_datetime(data_inicio)
     data_fim_dt = pd.to_datetime(data_fim)
@@ -773,15 +795,7 @@ with aba4:
     
     # Oculta coluna %LojaXGrupo se for modo Grupo
     # Define colunas com base no filtro "Meta" ou "Sem Meta"
-    colunas_visiveis = ["Grupo", "Loja", "Tipo"] + col_diarias + [col_acumulado]
-    
-    if filtro_meta == "Meta":
-        colunas_visiveis += ["Meta", "%Atingido"]
-    elif filtro_meta == "Sem Meta":
-        if modo_exibicao == "Loja":
-            colunas_visiveis += ["%LojaXGrupo", "%Grupo"]
-        else:  # Grupo
-            colunas_visiveis += ["%Grupo"]
+    colunas_visiveis = ["Grupo", "Loja", "Tipo"] + col_diarias + [col_acumulado] + colunas_escolhidas
     if "Tipo" in colunas_visiveis:
         colunas_visiveis.remove("Tipo")
     df_final = df_final[colunas_visiveis]
