@@ -342,42 +342,45 @@ with aba3:
         modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"], key="modo_periodo_relatorio")
     
     # ==== Filtro por período ====
+    # ==== Filtro por período ====
     if modo_periodo == "Diário":
-        # 📅 Força seleção de duas datas
-        datas_selecionadas = st.date_input(
-            "📅 Intervalo de datas:",
-            value=(data_max, data_max),
-            min_value=data_min,
-            max_value=data_max,
-            key="data_vendas_relatorio"
+        # 📅 Intervalo com validação
+            datas_selecionadas = st.date_input(
+                "📅 Intervalo de datas:",
+                value=(data_max, data_max),
+                min_value=data_min,
+                max_value=data_max,
+                key="data_vendas_relatorio"
+            )
+        
+            if isinstance(datas_selecionadas, (tuple, list)) and len(datas_selecionadas) == 2:
+                data_inicio, data_fim = datas_selecionadas
+            else:
+                st.warning("⚠️ Por favor, selecione um intervalo com **duas datas** (início e fim).")
+                st.stop()
+        
+            df_filtrado = df_vendas[
+                (df_vendas["Data"] >= pd.to_datetime(data_inicio)) &
+                (df_vendas["Data"] <= pd.to_datetime(data_fim))
+            ]
+            df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
+
+
+
+    
+    elif modo_periodo == "Mensal":
+        df_vendas["Mes/Ano"] = df_vendas["Data"].dt.strftime("%m/%Y")
+        meses_disponiveis = sorted(
+            df_vendas["Mes/Ano"].unique(),
+            key=lambda x: datetime.strptime("01/" + x, "%d/%m/%Y")
         )
-    
-        # ✅ Validação segura
-        if isinstance(datas_selecionadas, (tuple, list)) and len(datas_selecionadas) == 2:
-            data_inicio, data_fim = datas_selecionadas
-        else:
-            st.warning("⚠️ Por favor, selecione um intervalo com **duas datas** (início e fim).")
-            st.stop()
-    
-        # 🔍 Filtro no dataframe
-        df_filtrado = df_vendas[
-            (df_vendas["Data"] >= pd.to_datetime(data_inicio)) &
-            (df_vendas["Data"] <= pd.to_datetime(data_fim))
-        ]
-        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
-        elif modo_periodo == "Mensal":
-            df_vendas["Mes/Ano"] = df_vendas["Data"].dt.strftime("%m/%Y")
-            meses_disponiveis = sorted(
-                df_vendas["Mes/Ano"].unique(),
-                key=lambda x: datetime.strptime("01/" + x, "%d/%m/%Y")
-            )
-            meses_selecionados = st.multiselect(
-                "🗓️ Selecione os meses:",
-                options=meses_disponiveis,
-                default=[datetime.today().strftime("%m/%Y")]
-            )
-            df_filtrado = df_vendas[df_vendas["Mes/Ano"].isin(meses_selecionados)]
-            df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
+        meses_selecionados = st.multiselect(
+            "🗓️ Selecione os meses:",
+            options=meses_disponiveis,
+            default=[datetime.today().strftime("%m/%Y")]
+        )
+        df_filtrado = df_vendas[df_vendas["Mes/Ano"].isin(meses_selecionados)]
+        df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
     
     elif modo_periodo == "Anual":
         df_vendas["Ano"] = df_vendas["Data"].dt.strftime("%Y")
