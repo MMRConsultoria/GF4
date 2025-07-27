@@ -574,7 +574,7 @@ with aba4:
         if isinstance(data_inicio, datetime) or isinstance(data_inicio, date):
             st.error("⚠️ Por favor, selecione **duas datas**: início e fim.")
             st.stop()
-            with col2:
+    with col2:
         modo_exibicao = st.selectbox("🧭 Ver por:", ["Loja", "Grupo"])
     
     # -----------------------------------
