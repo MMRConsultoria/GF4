@@ -569,12 +569,19 @@ with aba4:
     data_max = df_vendas["Data"].max()
     
     with col1:
-        data_inicio, data_fim = st.date_input(
+        datas_selecionadas = st.date_input(
             "📅 Intervalo de datas:",
-            value=(data_max, data_max),  # <- esse formato exige dois cliques
+            value=(data_max, data_max),
             min_value=data_min,
             max_value=data_max
         )
+        
+        # Validação para garantir que foram selecionadas 2 datas
+        if isinstance(datas_selecionadas, (tuple, list)) and len(datas_selecionadas) == 2:
+            data_inicio, data_fim = datas_selecionadas
+        else:
+            st.warning("⚠️ Por favor, selecione um intervalo com **duas datas** (início e fim).")
+            st.stop()
        
     with col2:
         modo_exibicao = st.selectbox("🧭 Ver por:", ["Loja", "Grupo"])
