@@ -1212,8 +1212,8 @@ with aba5:
             (df_relatorio["Tipo de Pagamento"].isin(filtro_tipo_pagamento))
         ]
 
-            if df_filtrado.empty:
-                st.info("🔍 Não há dados para o período e filtro selecionado.")
+        if df_filtrado.empty:
+            st.info("🔍 Não há dados para o período e filtro selecionado.")
             
             else:
                 if modo_relatorio == "Vendas":
