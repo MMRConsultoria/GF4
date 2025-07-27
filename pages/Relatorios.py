@@ -569,21 +569,22 @@ with aba4:
     data_max = df_vendas["Data"].max()
     
     with col1:
-        datas_selecionadas = st.date_input(
-            "📅 Intervalo de datas:",
-            value=(data_max, data_max) if "datas_selecionadas" not in st.session_state else st.session_state["datas_selecionadas"],
-            min_value=data_min,
-            max_value=data_max
-        )
-        
-        # Corrige se for só uma data
-        if isinstance(datas_selecionadas, (datetime, date)):
-            data_inicio = data_fim = datas_selecionadas
-            # Atualiza o estado para manter as 2 datas visíveis
-            st.session_state["datas_selecionadas"] = (datas_selecionadas, datas_selecionadas)
-        else:
-            data_inicio, data_fim = datas_selecionadas
-            st.session_state["datas_selecionadas"] = datas_selecionadas
+        # 📅 Calendário com suporte a um ou dois cliques e atualização visual
+            datas_selecionadas_raw = st.date_input(
+                "📅 Intervalo de datas:",
+                value=(data_max, data_max),
+                min_value=data_min,
+                max_value=data_max,
+                key="intervalo_datas"
+            )
+            
+            # 🚫 Garante que não ocorra erro se clicar uma vez só
+            if isinstance(datas_selecionadas_raw, (datetime, date)):
+                data_inicio = data_fim = datas_selecionadas_raw
+                datas_selecionadas = (data_inicio, data_fim)
+            else:
+                data_inicio, data_fim = datas_selecionadas_raw
+                datas_selecionadas = datas_selecionadas_raw
 
        
     with col2:
