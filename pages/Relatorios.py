@@ -576,11 +576,12 @@ with aba4:
             max_value=data_max
         )
         
-        # 🔄 Ajusta automaticamente se for apenas uma data selecionada
-        if isinstance(datas_selecionadas, (datetime, date)):
-            data_inicio = data_fim = datas_selecionadas
-        else:
+        # Validação para garantir que foram selecionadas 2 datas
+        if isinstance(datas_selecionadas, (tuple, list)) and len(datas_selecionadas) == 2:
             data_inicio, data_fim = datas_selecionadas
+        else:
+            st.warning("⚠️ Por favor, selecione um intervalo com **duas datas** (início e fim).")
+            st.stop()
 
 
 
