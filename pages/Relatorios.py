@@ -1228,15 +1228,17 @@ with aba5:
             if df_filtrado.empty:
                 st.info("🔍 Não há dados para o período selecionado.")
             else:
-                if modo_relatorio == "Vendas":
-                    
+                if modo_relatorio == "Vendas" and tipo_relatorio:
+
                     if tipo_relatorio == "Meio de Pagamento":
                         index_cols = ["Meio de Pagamento"]
                     elif tipo_relatorio == "Loja":
                         index_cols = ["Loja", "Grupo", "Meio de Pagamento"]
                     elif tipo_relatorio == "Grupo":
                         index_cols = ["Grupo", "Meio de Pagamento"]
-
+                    elif tipo_relatorio == "Tipo de Pagamento":
+                        index_cols = ["Tipo de Pagamento", "Meio de Pagamento"]
+                
                     df_pivot = pd.pivot_table(
                         df_filtrado,
                         index=index_cols,
@@ -1245,11 +1247,19 @@ with aba5:
                         aggfunc="sum",
                         fill_value=0
                     ).reset_index()
-
+                
                     novo_nome_datas = {col: f"Vendas - {col}" for col in df_pivot.columns if "/" in str(col)}
                     df_pivot.rename(columns=novo_nome_datas, inplace=True)
-
+                
                     df_pivot["Total Vendas"] = df_pivot[[c for c in df_pivot.columns if "Vendas -" in str(c)]].sum(axis=1)
+                
+                    st.dataframe(df_pivot, use_container_width=True)
+                
+                else:
+                    st.info("🔍 Nenhuma tabela a exibir neste modo ou relatório não selecionado.")
+
+
+
 
                     linha_total_dict = {df_pivot.columns[0]: "TOTAL GERAL"}
                     for col in df_pivot.columns[1:]:
