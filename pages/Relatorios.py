@@ -1121,45 +1121,32 @@ with aba4:
 
 with aba5:
     try:
-        import pandas as pd
-        pd.set_option('display.max_colwidth', 20)
-        pd.set_option('display.width', 1000)
-
-        # Abertura das duas planilhas
-        # Conexão com a planilha principal "Vendas diarias"
-        # Conexão com a planilha "Vendas diarias"
-            # Conexão com a planilha "Vendas diarias"
+        # Carrega a planilha (caso ainda não tenha feito antes)
         planilha = gc.open("Vendas diarias")
-        
-        # Acesso às abas
+
+        # Aba com dados analíticos
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
         df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
         df_relatorio.columns = df_relatorio.columns.str.strip()
-        
+
+        # Aba com o tipo de pagamento
         aba_meio_pagamento = planilha.worksheet("Tabela Meio Pagamento")
         df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
         df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip()
-        
-        # Renomeia coluna se necessário
-        df_meio_pagamento.rename(columns={"tipo de pagamento": "Tipo de Pagamento"}, inplace=True)
-        
-        # Normaliza campos
-        for col in ["Meio de Pagamento", "Tipo de Pagamento"]:
-            df_relatorio[col] = df_relatorio[col].astype(str).str.strip().str.upper()
-            if col in df_meio_pagamento.columns:
-                df_meio_pagamento[col] = df_meio_pagamento[col].astype(str).str.strip().str.upper()
-        
-        # Merge com Tipo de Pagamento
+
+        # Normaliza colunas usadas no merge
+        df_relatorio["Meio de Pagamento"] = df_relatorio["Meio de Pagamento"].astype(str).str.strip().str.upper()
+        df_meio_pagamento["Meio de Pagamento"] = df_meio_pagamento["Meio de Pagamento"].astype(str).str.strip().str.upper()
+        df_meio_pagamento["Tipo de Pagamento"] = df_meio_pagamento["Tipo de Pagamento"].astype(str).str.strip().str.upper()
+
+        # Faz o merge para adicionar a coluna "Tipo de Pagamento"
         df_relatorio = df_relatorio.merge(
             df_meio_pagamento[["Meio de Pagamento", "Tipo de Pagamento"]],
             on="Meio de Pagamento",
             how="left"
         )
 
-        
-        # Converte coluna "Data" e "Valor (R$)"
-        df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
-        df_relatorio = df_relatorio[df_relatorio["Data"].notna()]
+        # Corrige coluna de valor para float
         df_relatorio["Valor (R$)"] = (
             df_relatorio["Valor (R$)"]
             .astype(str)
@@ -1172,16 +1159,16 @@ with aba5:
             .astype(float)
         )
 
+        # Converte coluna de data (se necessário)
         df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
-        df_relatorio = df_relatorio[df_relatorio["Data"].notna()]
-        
-        # Define intervalo de datas
+
+        # Define intervalo
         min_data = df_relatorio["Data"].min().date()
         max_data = df_relatorio["Data"].max().date()
-        
-        # Interface de filtros
+
+        # Filtros visuais
         col1, col2, col3 = st.columns(3)
-        
+
         with col1:
             data_inicio, data_fim = st.date_input(
                 "Período:",
@@ -1189,33 +1176,44 @@ with aba5:
                 min_value=min_data,
                 max_value=max_data
             )
-        
+
         with col2:
             modo_relatorio = st.selectbox(
                 "Tipo de análise:",
                 ["Vendas", "Financeiro", "Vendas + Prazo e Taxas"]
             )
-        
+
         with col3:
             if modo_relatorio == "Vendas":
                 tipo_relatorio = st.selectbox(
                     "Relatório:",
-                    ["Meio de Pagamento", "Loja", "Grupo"]
+                    ["Meio de Pagamento", "Loja", "Grupo", "Tipo de Pagamento"]
                 )
             else:
                 tipo_relatorio = None
-        
-        # Filtro de Tipo de Pagamento
+
+        # NOVO FILTRO - Tipo de Pagamento
         tipos_disponiveis = df_relatorio["Tipo de Pagamento"].dropna().unique().tolist()
+        tipos_disponiveis.sort()
         filtro_tipo_pagamento = st.multiselect(
             "💳 Tipo de Pagamento:",
-            options=sorted(tipos_disponiveis),
-            default=sorted(tipos_disponiveis)
+            options=tipos_disponiveis,
+            default=tipos_disponiveis
         )
-        
-        # Validação de datas
+
         if data_inicio > data_fim:
             st.warning("🚫 A data inicial não pode ser maior que a data final.")
+            st.stop()
+
+        # Aplica filtros
+        df_filtrado = df_relatorio[
+            (df_relatorio["Data"].dt.date >= data_inicio) &
+            (df_relatorio["Data"].dt.date <= data_fim) &
+            (df_relatorio["Tipo de Pagamento"].isin(filtro_tipo_pagamento))
+        ]
+
+        if df_filtrado.empty:
+            st.info("🔍 Não há dados para o período e filtro selecionado.")
         else:
             # Aplica filtro de tipo de pagamento
             df_relatorio = df_relatorio[df_relatorio["Tipo de Pagamento"].isin(filtro_tipo_pagamento)]
