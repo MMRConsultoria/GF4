@@ -1214,10 +1214,8 @@ with aba5:
 
         if df_filtrado.empty:
             st.info("🔍 Não há dados para o período e filtro selecionado.")
-            
         else:
             if modo_relatorio == "Vendas":
-                
                 if tipo_relatorio == "Meio de Pagamento":
                     index_cols = ["Meio de Pagamento"]
                 elif tipo_relatorio == "Loja":
