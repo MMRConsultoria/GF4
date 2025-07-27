@@ -1153,7 +1153,7 @@ with aba4:
 with aba5:
     st.markdown("""
     <div style="background-color:#fff3cd; border-left: 6px solid #ffecb5; padding: 1rem; border-radius: 6px; font-size: 16px;">
-    🚧 <strong>Este relatório ainda está em desenvolvimento.</strong> Resultados e funcionalidades podem mudar a qualquer momento.
+    🚧 <strong>Este relatório está em desenvolvimento.</strong> Resultados e funcionalidades podem mudar a qualquer momento.
     </div>
     """, unsafe_allow_html=True)
     try:
