@@ -576,11 +576,14 @@ with aba4:
             max_value=data_max
         )
         
-        # ✅ Se o usuário clicou apenas uma vez, assume que é a mesma data
+        # ✅ Garante que mesmo com 1 data selecionada, funcione como intervalo de 1 dia
         if isinstance(datas_selecionadas, (datetime, date)):
             data_inicio = data_fim = datas_selecionadas
-        else:
+        elif isinstance(datas_selecionadas, (tuple, list)) and len(datas_selecionadas) == 2:
             data_inicio, data_fim = datas_selecionadas
+        else:
+            # fallback de segurança
+            data_inicio = data_fim = data_max
        
     with col2:
         modo_exibicao = st.selectbox("🧭 Ver por:", ["Loja", "Grupo"])
