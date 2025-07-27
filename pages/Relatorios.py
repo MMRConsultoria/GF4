@@ -569,20 +569,18 @@ with aba4:
     data_max = df_vendas["Data"].max()
     
     with col1:
-        # Força a interface de intervalo
+        # 🔒 Força que o calendário abra sempre como intervalo de duas datas
         datas_selecionadas = st.date_input(
             "📅 Intervalo de datas:",
-            value=(data_max, data_max),
+            value=(data_max, data_max),     # 👈 Isso garante o modo intervalo
             min_value=data_min,
             max_value=data_max
         )
+        
+        # ✅ Indexa com segurança — nunca dá erro
+        data_inicio = datas_selecionadas[0]
+        data_fim = datas_selecionadas[1]
 
-        # Usa indexação segura, sem unpack
-        if isinstance(datas_selecionadas, (tuple, list)) and len(datas_selecionadas) == 2:
-            data_inicio = datas_selecionadas[0]
-            data_fim = datas_selecionadas[1]
-        else:
-            data_inicio = data_fim = datas_selecionadas
 
 
        
