@@ -75,7 +75,7 @@ aba1, aba2, aba3, aba4, aba5 = st.tabs([
     "📊 Gráficos Trimestrais",
     "📆 Relatórios Vendas",
     "📋 Relatório Diario Vendas/Metas",
-    "📋 Relatórios Financeiros"
+    "📋 Relatórios Financeiros - EM DESENVOLVIMENTO"
 ])
 # ================================
 # Aba 1: Graficos Anuais
