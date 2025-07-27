@@ -1125,15 +1125,34 @@ with aba5:
         pd.set_option('display.max_colwidth', 20)
         pd.set_option('display.width', 1000)
 
+        # Abertura das duas planilhas
+        planilha = gc.open("Faturamento Consolidado")  # Contém "Faturamento Meio Pagamento"
+        planilha_vendas = gc.open("Vendas diarias")    # Contém "Tabela Meio Pagamento"
+        
+        # Carrega os dados principais
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
         df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
         df_relatorio.columns = df_relatorio.columns.str.strip()
-
-        aba_meio_pagamento = planilha.worksheet("Tabela Meio Pagamento")
+        
+        # Carrega a Tabela Meio Pagamento da outra planilha
+        aba_meio_pagamento = planilha_vendas.worksheet("Tabela Meio Pagamento")
         df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
         df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip()
-
-        # Corrige valores
+        
+        # Normaliza os campos para merge
+        for col in ["Meio de Pagamento", "Tipo de Pagamento"]:
+            df_relatorio[col] = df_relatorio[col].astype(str).str.strip().str.upper()
+            if col in df_meio_pagamento.columns:
+                df_meio_pagamento[col] = df_meio_pagamento[col].astype(str).str.strip().str.upper()
+        
+        # Merge para trazer o Tipo de Pagamento
+        df_relatorio = df_relatorio.merge(
+            df_meio_pagamento[["Meio de Pagamento", "Tipo de Pagamento"]],
+            on="Meio de Pagamento",
+            how="left"
+        )
+        
+        # Conversão de data e valores
         df_relatorio["Valor (R$)"] = (
             df_relatorio["Valor (R$)"]
             .astype(str)
@@ -1145,25 +1164,16 @@ with aba5:
             .str.replace(",", ".")
             .astype(float)
         )
-
         df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
         df_relatorio = df_relatorio[df_relatorio["Data"].notna()]
-
-        from unidecode import unidecode
-        for col in ["Loja", "Grupo", "Meio de Pagamento"]:
-            df_relatorio[col] = df_relatorio[col].astype(str).str.strip().str.upper().map(unidecode)
-            if col in df_meio_pagamento.columns:
-                df_meio_pagamento[col] = df_meio_pagamento[col].astype(str).str.strip().str.upper().map(unidecode)
-
+        
+        # Define intervalo de datas
         min_data = df_relatorio["Data"].min().date()
         max_data = df_relatorio["Data"].max().date()
         
-        
-        
-        
-        
+        # Interface de filtros
         col1, col2, col3 = st.columns(3)
-
+        
         with col1:
             data_inicio, data_fim = st.date_input(
                 "Período:",
@@ -1186,13 +1196,28 @@ with aba5:
                 )
             else:
                 tipo_relatorio = None
+        
+        # Filtro de Tipo de Pagamento
+        tipos_disponiveis = df_relatorio["Tipo de Pagamento"].dropna().unique().tolist()
+        filtro_tipo_pagamento = st.multiselect(
+            "💳 Tipo de Pagamento:",
+            options=sorted(tipos_disponiveis),
+            default=sorted(tipos_disponiveis)
+        )
+        
+        # Validação de datas
         if data_inicio > data_fim:
             st.warning("🚫 A data inicial não pode ser maior que a data final.")
         else:
+            # Aplica filtro de tipo de pagamento
+            df_relatorio = df_relatorio[df_relatorio["Tipo de Pagamento"].isin(filtro_tipo_pagamento)]
+        
+            # Aplica filtro de período
             df_filtrado = df_relatorio[
                 (df_relatorio["Data"].dt.date >= data_inicio) &
                 (df_relatorio["Data"].dt.date <= data_fim)
             ]
+
 
             if df_filtrado.empty:
                 st.info("🔍 Não há dados para o período selecionado.")
