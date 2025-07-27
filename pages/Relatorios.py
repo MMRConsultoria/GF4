@@ -572,11 +572,9 @@ with aba4:
         data_inicio, data_fim = st.date_input("📅 Intervalo de datas:", (data_max, data_max), data_min, data_max)
     with col2:
         modo_exibicao = st.selectbox("🧭 Ver por:", ["Loja", "Grupo"])
-    with col3:
-        filtro_meta = st.selectbox("🎯 Mostrar:", ["Meta", "Sem Meta"])
-
+    
     # -----------------------------------
-    # 🎛️ Seletor dinâmico de colunas extras
+    # 🎛️ Seletor dinâmico de colunas extras (sem dependência de "Meta" ou "Sem Meta")
     # -----------------------------------
     st.markdown("### 🎛️ Personalize sua visualização")
     
@@ -590,7 +588,7 @@ with aba4:
     opcoes_selecionadas = st.multiselect(
         "➕ Escolha os indicadores que deseja **exibir**:",
         options=list(colunas_opcionais.keys()),
-        default=["🎯 Meta da Loja", "📊 % Atingido"] if filtro_meta == "Meta" else []
+        default=["🎯 Meta da Loja", "📊 % Atingido"]
     )
     
     # Mapeia as escolhas visuais para os nomes reais das colunas
@@ -848,16 +846,7 @@ with aba4:
     
         linha[col_acumulado] = df_tipo_filtro[col_acumulado].sum()
     
-        if filtro_meta == "Meta":
-            meta_total = df_tipo_filtro["Meta"].sum()
-            linha["Meta"] = meta_total
-            linha["%Atingido"] = linha[col_acumulado] / meta_total if meta_total > 0 else 0
-    
-        elif filtro_meta == "Sem Meta":
-            if modo_exibicao == "Loja":
-                soma_grupo = df_lojas_reais[col_acumulado].sum()
-                linha["%LojaXGrupo"] = linha[col_acumulado] / soma_grupo if soma_grupo > 0 else 0
-            linha["%Grupo"] = linha[col_acumulado] / soma_total_geral if soma_total_geral > 0 else 0
+        
     
         linhas_resumo_tipo.append(linha)
     
