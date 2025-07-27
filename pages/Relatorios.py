@@ -1122,9 +1122,13 @@ with aba4:
 with aba5:
     try:
         import pandas as pd
+        
         pd.set_option('display.max_colwidth', 20)
         pd.set_option('display.width', 1000)
 
+        planilha = gc.open("Faturamento Consolidado")  # contém "Faturamento Meio Pagamento"
+        planilha_vendas = gc.open("Vendas diarias")    # contém "Tabela Meio Pagamento"
+        
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
         df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
         df_relatorio.columns = df_relatorio.columns.str.strip()
@@ -1133,6 +1137,21 @@ with aba5:
         df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
         df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip()
 
+
+        # Normaliza os campos para merge
+        for col in ["Meio de Pagamento", "Tipo de Pagamento"]:
+            df_relatorio[col] = df_relatorio[col].astype(str).str.strip().str.upper()
+            if col in df_meio_pagamento.columns:
+                df_meio_pagamento[col] = df_meio_pagamento[col].astype(str).str.strip().str.upper()
+        
+        # Merge para trazer o Tipo de Pagamento
+        df_relatorio = df_relatorio.merge(
+            df_meio_pagamento[["Meio de Pagamento", "Tipo de Pagamento"]],
+            on="Meio de Pagamento",
+            how="left"
+        )
+
+        
         # Corrige valores
         df_relatorio["Valor (R$)"] = (
             df_relatorio["Valor (R$)"]
