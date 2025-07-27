@@ -1221,15 +1221,13 @@ with aba5:
         if data_inicio > data_fim:
             st.warning("🚫 A data inicial não pode ser maior que a data final.")
         else:
-            # APLICA O FILTRO DE TIPO DE PAGAMENTO
-            df_relatorio = df_relatorio[df_relatorio["Tipo de Pagamento"].isin(filtro_tipo_pagamento)]
-
+            
             # Depois aplica o filtro de data normalmente
             df_filtrado = df_relatorio[
                 (df_relatorio["Data"].dt.date >= data_inicio) &
                 (df_relatorio["Data"].dt.date <= data_fim)
-            ]
-
+                (df_relatorio["Tipo de Pagamento"].isin(filtro_tipo_pagamento))
+            ]    
 
             if df_filtrado.empty:
                 st.info("🔍 Não há dados para o período selecionado.")
