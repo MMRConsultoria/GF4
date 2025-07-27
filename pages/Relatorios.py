@@ -570,21 +570,23 @@ with aba4:
     
     with col1:
         # 📅 Calendário com suporte a um ou dois cliques e atualização visual
-            datas_selecionadas_raw = st.date_input(
+            # 📅 Intervalo de datas (aceita um clique ou dois)
+            datas_selecionadas = st.date_input(
                 "📅 Intervalo de datas:",
                 value=(data_max, data_max),
                 min_value=data_min,
-                max_value=data_max,
-                key="intervalo_datas"
+                max_value=data_max
             )
             
-            # 🚫 Garante que não ocorra erro se clicar uma vez só
-            if isinstance(datas_selecionadas_raw, (datetime, date)):
-                data_inicio = data_fim = datas_selecionadas_raw
-                datas_selecionadas = (data_inicio, data_fim)
+            # ✅ Garante funcionamento com 1 ou 2 datas
+            if isinstance(datas_selecionadas, (datetime, date)):
+                data_inicio = data_fim = datas_selecionadas
+            elif isinstance(datas_selecionadas, (list, tuple)) and len(datas_selecionadas) == 2:
+                data_inicio, data_fim = datas_selecionadas
             else:
-                data_inicio, data_fim = datas_selecionadas_raw
-                datas_selecionadas = datas_selecionadas_raw
+                # fallback de segurança
+                data_inicio = data_fim = data_max
+
 
        
     with col2:
