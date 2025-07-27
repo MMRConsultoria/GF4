@@ -571,19 +571,20 @@ with aba4:
     with col1:
         datas_selecionadas = st.date_input(
             "📅 Intervalo de datas:",
-            value=(data_max, data_max),
+            value=(data_max, data_max) if "datas_selecionadas" not in st.session_state else st.session_state["datas_selecionadas"],
             min_value=data_min,
             max_value=data_max
         )
         
-        # ✅ Garante que mesmo com 1 data selecionada, funcione como intervalo de 1 dia
+        # Corrige se for só uma data
         if isinstance(datas_selecionadas, (datetime, date)):
             data_inicio = data_fim = datas_selecionadas
-        elif isinstance(datas_selecionadas, (tuple, list)) and len(datas_selecionadas) == 2:
-            data_inicio, data_fim = datas_selecionadas
+            # Atualiza o estado para manter as 2 datas visíveis
+            st.session_state["datas_selecionadas"] = (datas_selecionadas, datas_selecionadas)
         else:
-            # fallback de segurança
-            data_inicio = data_fim = data_max
+            data_inicio, data_fim = datas_selecionadas
+            st.session_state["datas_selecionadas"] = datas_selecionadas
+
        
     with col2:
         modo_exibicao = st.selectbox("🧭 Ver por:", ["Loja", "Grupo"])
