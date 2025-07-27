@@ -71,8 +71,7 @@ st.markdown("""
 # 3. Separação em ABAS
 # ================================
 aba1, aba2, aba3, aba4, aba5 = st.tabs([
-    "📈 Gráficos Anuais",
-    "📊 Gráficos Trimestrais",
+    "📈 Gráficos",
     "📆 Relatórios Vendas",
     "📋 Relatório Diario Vendas/Metas",
     "📋 Relatórios Financeiros"
@@ -254,11 +253,6 @@ with aba1:
     st.subheader("Faturamento Mensal")
     st.plotly_chart(fig, use_container_width=True)
 
-# ================================
-# Aba 2: Graficos Trimestrais
-# ================================
-with aba2:
-    st.info("em desenvolvimento.")
 
 # ================================
 # Aba 3: Relatórios Vendas
