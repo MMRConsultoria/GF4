@@ -75,7 +75,7 @@ aba1, aba2, aba3, aba4, aba5 = st.tabs([
     "📊 Gráficos Trimestrais",
     "📆 Relatórios Vendas",
     "📋 Relatório Diario Vendas/Metas",
-    "📋 Relatórios Financeiros - EM DESENVOLVIMENTO"
+    "📋 Relatórios Financeiros"
 ])
 # ================================
 # Aba 1: Graficos Anuais
@@ -1151,6 +1151,11 @@ with aba4:
 # ======================
 
 with aba5:
+    st.markdown("""
+    <div style="background-color:#fff3cd; border-left: 6px solid #ffecb5; padding: 1rem; border-radius: 6px; font-size: 16px;">
+    🚧 <strong>Este relatório ainda está em desenvolvimento.</strong> Resultados e funcionalidades podem mudar a qualquer momento.
+    </div>
+    """, unsafe_allow_html=True)
     try:
         # Carrega a planilha (caso ainda não tenha feito antes)
         planilha = gc.open("Vendas diarias")
