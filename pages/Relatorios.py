@@ -1260,6 +1260,21 @@ with aba5:
                 st.dataframe(df_pivot_exibe, use_container_width=True)
 
             elif modo_relatorio == "Financeiro":
+                # Filtro adicional: Previsão FC
+                    opcoes_fc = df_filtrado["Previsão FC"].dropna().unique().tolist()
+                    opcoes_fc.sort()
+                    filtro_fc = st.multiselect(
+                        "🔮 Previsão FC:",
+                        options=opcoes_fc,
+                        default=opcoes_fc
+                    )
+    
+                    # Aplica o filtro de Previsão FC
+                    df_filtrado = df_filtrado[df_filtrado["Previsão FC"].isin(filtro_fc)]
+
+                
+
+                
                 df_completo = df_filtrado.merge(
                     df_meio_pagamento[["Meio de Pagamento", "Prazo", "Antecipa S/N"]],
                     on="Meio de Pagamento",
