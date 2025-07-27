@@ -570,7 +570,11 @@ with aba4:
     
     with col1:
         data_inicio, data_fim = st.date_input("📅 Intervalo de datas:", (data_max, data_max), data_min, data_max)
-    with col2:
+        # ✅ Validação: exige que o intervalo tenha duas datas
+        if isinstance(data_inicio, datetime) or isinstance(data_inicio, date):
+            st.error("⚠️ Por favor, selecione **duas datas**: início e fim.")
+            st.stop()
+            with col2:
         modo_exibicao = st.selectbox("🧭 Ver por:", ["Loja", "Grupo"])
     
     # -----------------------------------
