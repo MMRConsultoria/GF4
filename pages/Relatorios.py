@@ -1121,32 +1121,19 @@ with aba4:
 
 with aba5:
     try:
-        # Carrega a planilha
-        planilha = gc.open("Vendas diarias")
+        import pandas as pd
+        pd.set_option('display.max_colwidth', 20)
+        pd.set_option('display.width', 1000)
 
-        # Aba com dados analíticos
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
         df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
         df_relatorio.columns = df_relatorio.columns.str.strip()
 
-        # Aba com os tipos de pagamento
         aba_meio_pagamento = planilha.worksheet("Tabela Meio Pagamento")
         df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
         df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip()
 
-        # Prepara dados
-        df_relatorio["Meio de Pagamento"] = df_relatorio["Meio de Pagamento"].astype(str).str.strip().str.upper()
-        df_meio_pagamento["Meio de Pagamento"] = df_meio_pagamento["Meio de Pagamento"].astype(str).str.strip().str.upper()
-        df_meio_pagamento["Tipo de Pagamento"] = df_meio_pagamento["Tipo de Pagamento"].astype(str).str.strip().str.upper()
-
-        # Adiciona "Tipo de Pagamento"
-        df_relatorio = df_relatorio.merge(
-            df_meio_pagamento[["Meio de Pagamento", "Tipo de Pagamento"]],
-            on="Meio de Pagamento",
-            how="left"
-        )
-
-        # Converte valor
+        # Corrige valores
         df_relatorio["Valor (R$)"] = (
             df_relatorio["Valor (R$)"]
             .astype(str)
@@ -1159,14 +1146,22 @@ with aba5:
             .astype(float)
         )
 
-        # Converte data
         df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
+        df_relatorio = df_relatorio[df_relatorio["Data"].notna()]
 
-        # Define intervalo
+        from unidecode import unidecode
+        for col in ["Loja", "Grupo", "Meio de Pagamento"]:
+            df_relatorio[col] = df_relatorio[col].astype(str).str.strip().str.upper().map(unidecode)
+            if col in df_meio_pagamento.columns:
+                df_meio_pagamento[col] = df_meio_pagamento[col].astype(str).str.strip().str.upper().map(unidecode)
+
         min_data = df_relatorio["Data"].min().date()
         max_data = df_relatorio["Data"].max().date()
-
-        # Filtros visuais
+        
+        
+        
+        
+        
         col1, col2, col3 = st.columns(3)
 
         with col1:
@@ -1176,114 +1171,116 @@ with aba5:
                 min_value=min_data,
                 max_value=max_data
             )
-
+        
         with col2:
             modo_relatorio = st.selectbox(
                 "Tipo de análise:",
                 ["Vendas", "Financeiro", "Vendas + Prazo e Taxas"]
             )
-
+        
         with col3:
-            tipo_relatorio = None
             if modo_relatorio == "Vendas":
                 tipo_relatorio = st.selectbox(
                     "Relatório:",
-                    ["Meio de Pagamento", "Loja", "Grupo", "Tipo de Pagamento"]
+                    ["Meio de Pagamento", "Loja", "Grupo"]
                 )
+            else:
+                tipo_relatorio = None
 
-        # Filtro Tipo de Pagamento
-        tipos_disponiveis = df_relatorio["Tipo de Pagamento"].dropna().unique().tolist()
-        tipos_disponiveis.sort()
+        # NOVO BLOCO: filtro de tipo de pagamento
+        tipos_disponiveis = df_relatorio["Tabela Meio Pagamento"].dropna().unique().tolist()
         filtro_tipo_pagamento = st.multiselect(
             "💳 Tipo de Pagamento:",
-            options=tipos_disponiveis,
-            default=tipos_disponiveis
+            options=sorted(tipos_disponiveis),
+            default=sorted(tipos_disponiveis)
         )
 
         if data_inicio > data_fim:
             st.warning("🚫 A data inicial não pode ser maior que a data final.")
-            st.stop()
-
-        # Filtro principal
-        df_filtrado = df_relatorio[
-            (df_relatorio["Data"].dt.date >= data_inicio) &
-            (df_relatorio["Data"].dt.date <= data_fim) &
-            (df_relatorio["Tipo de Pagamento"].isin(filtro_tipo_pagamento))
-        ]
-
-        if df_filtrado.empty:
-            st.info("🔍 Não há dados para o período e filtro selecionado.")
         else:
-            if modo_relatorio == "Vendas" and tipo_relatorio:
-                if tipo_relatorio == "Meio de Pagamento":
-                    index_cols = ["Meio de Pagamento"]
-                elif tipo_relatorio == "Loja":
-                    index_cols = ["Loja", "Grupo", "Meio de Pagamento"]
-                elif tipo_relatorio == "Grupo":
-                    index_cols = ["Grupo", "Meio de Pagamento"]
-                elif tipo_relatorio == "Tipo de Pagamento":
-                    index_cols = ["Tipo de Pagamento", "Meio de Pagamento"]
+            # APLICA O FILTRO DE TIPO DE PAGAMENTO
+            df_relatorio = df_relatorio[df_relatorio["Tipo de Pagamento"].isin(filtro_tipo_pagamento)]
 
-                df_pivot = pd.pivot_table(
-                    df_filtrado,
-                    index=index_cols,
-                    columns=df_filtrado["Data"].dt.strftime("%d/%m/%Y"),
-                    values="Valor (R$)",
-                    aggfunc="sum",
-                    fill_value=0
-                ).reset_index()
+            # Depois aplica o filtro de data normalmente
+            df_filtrado = df_relatorio[
+                (df_relatorio["Data"].dt.date >= data_inicio) &
+                (df_relatorio["Data"].dt.date <= data_fim)
+            ]
 
-                novo_nome_datas = {col: f"Vendas - {col}" for col in df_pivot.columns if "/" in str(col)}
-                df_pivot.rename(columns=novo_nome_datas, inplace=True)
-                df_pivot["Total Vendas"] = df_pivot[[c for c in df_pivot.columns if "Vendas -" in str(c)]].sum(axis=1)
 
-                linha_total_dict = {df_pivot.columns[0]: "TOTAL GERAL"}
-                for col in df_pivot.columns[1:]:
-                    if "Vendas -" in str(col) or col == "Total Vendas":
-                        linha_total_dict[col] = df_pivot[col].sum()
-                    else:
-                        linha_total_dict[col] = np.nan
-                linha_total = pd.DataFrame([linha_total_dict])
-                df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
+            if df_filtrado.empty:
+                st.info("🔍 Não há dados para o período selecionado.")
+            else:
+                if modo_relatorio == "Vendas":
+                    
+                    if tipo_relatorio == "Meio de Pagamento":
+                        index_cols = ["Meio de Pagamento"]
+                    elif tipo_relatorio == "Loja":
+                        index_cols = ["Loja", "Grupo", "Meio de Pagamento"]
+                    elif tipo_relatorio == "Grupo":
+                        index_cols = ["Grupo", "Meio de Pagamento"]
 
-                df_pivot_exibe = df_pivot_total.copy()
-                for col in df_pivot_exibe.select_dtypes(include=[np.number]).columns:
-                    df_pivot_exibe[col] = df_pivot_exibe[col].map(
+                    df_pivot = pd.pivot_table(
+                        df_filtrado,
+                        index=index_cols,
+                        columns=df_filtrado["Data"].dt.strftime("%d/%m/%Y"),
+                        values="Valor (R$)",
+                        aggfunc="sum",
+                        fill_value=0
+                    ).reset_index()
+
+                    novo_nome_datas = {col: f"Vendas - {col}" for col in df_pivot.columns if "/" in str(col)}
+                    df_pivot.rename(columns=novo_nome_datas, inplace=True)
+
+                    df_pivot["Total Vendas"] = df_pivot[[c for c in df_pivot.columns if "Vendas -" in str(c)]].sum(axis=1)
+
+                    linha_total_dict = {df_pivot.columns[0]: "TOTAL GERAL"}
+                    for col in df_pivot.columns[1:]:
+                        if "Vendas -" in str(col) or col == "Total Vendas":
+                            linha_total_dict[col] = df_pivot[col].sum()
+                        else:
+                            linha_total_dict[col] = np.nan
+                    linha_total = pd.DataFrame([linha_total_dict])
+
+                    df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
+
+                    df_pivot_exibe = df_pivot_total.copy()
+                    for col in df_pivot_exibe.select_dtypes(include=[np.number]).columns:
+                        df_pivot_exibe[col] = df_pivot_exibe[col].map(
+                            lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                            if pd.notna(x) else ""
+                        )
+
+                    st.dataframe(df_pivot_exibe, use_container_width=True)
+
+                elif modo_relatorio == "Financeiro":
+                    df_completo = df_filtrado.merge(
+                        df_meio_pagamento[["Meio de Pagamento", "Prazo", "Antecipa S/N"]],
+                        on="Meio de Pagamento",
+                        how="left"
+                    )
+                    df_completo["Prazo"] = pd.to_numeric(df_completo["Prazo"], errors="coerce").fillna(0).astype(int)
+                    df_completo["Antecipa S/N"] = df_completo["Antecipa S/N"].astype(str).str.strip().str.upper()
+
+                    from pandas.tseries.offsets import BDay
+                    df_completo["Data Recebimento"] = df_completo.apply(
+                        lambda row: row["Data"] + BDay(1) if row["Antecipa S/N"] == "SIM" else row["Data"] + BDay(row["Prazo"]),
+                        axis=1
+                    )
+
+                    df_financeiro = df_completo.groupby(df_completo["Data Recebimento"].dt.date)["Valor (R$)"].sum().reset_index()
+                    df_financeiro = df_financeiro.rename(columns={"Data Recebimento": "Data"}).sort_values("Data")
+
+                    total_geral = df_financeiro["Valor (R$)"].sum()
+                    linha_total = pd.DataFrame([["TOTAL GERAL", total_geral]], columns=df_financeiro.columns)
+                    df_financeiro_total = pd.concat([linha_total, df_financeiro], ignore_index=True)
+
+                    df_financeiro_total["Valor (R$)"] = df_financeiro_total["Valor (R$)"].map(
                         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                         if pd.notna(x) else ""
                     )
 
-                st.dataframe(df_pivot_exibe, use_container_width=True)
-
-            elif modo_relatorio == "Financeiro":
-                df_completo = df_filtrado.merge(
-                    df_meio_pagamento[["Meio de Pagamento", "Prazo", "Antecipa S/N"]],
-                    on="Meio de Pagamento",
-                    how="left"
-                )
-                df_completo["Prazo"] = pd.to_numeric(df_completo["Prazo"], errors="coerce").fillna(0).astype(int)
-                df_completo["Antecipa S/N"] = df_completo["Antecipa S/N"].astype(str).str.strip().str.upper()
-
-                from pandas.tseries.offsets import BDay
-                df_completo["Data Recebimento"] = df_completo.apply(
-                    lambda row: row["Data"] + BDay(1) if row["Antecipa S/N"] == "SIM"
-                    else row["Data"] + BDay(row["Prazo"]),
-                    axis=1
-                )
-
-                df_financeiro = df_completo.groupby(df_completo["Data Recebimento"].dt.date)["Valor (R$)"].sum().reset_index()
-                df_financeiro = df_financeiro.rename(columns={"Data Recebimento": "Data"}).sort_values("Data")
-
-                total_geral = df_financeiro["Valor (R$)"].sum()
-                linha_total = pd.DataFrame([["TOTAL GERAL", total_geral]], columns=df_financeiro.columns)
-                df_financeiro_total = pd.concat([linha_total, df_financeiro], ignore_index=True)
-
-                df_financeiro_total["Valor (R$)"] = df_financeiro_total["Valor (R$)"].map(
-                    lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                    if pd.notna(x) else ""
-                )
-
-                st.dataframe(df_financeiro_total, use_container_width=True)
+                    st.dataframe(df_financeiro_total, use_container_width=True)
 
                 elif modo_relatorio == "Vendas + Prazo e Taxas":
                     df_completo = df_filtrado.merge(
