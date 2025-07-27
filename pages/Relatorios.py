@@ -1126,8 +1126,9 @@ with aba5:
         pd.set_option('display.max_colwidth', 20)
         pd.set_option('display.width', 1000)
 
-        planilha = gc.open("Faturamento Consolidado")  # contém "Faturamento Meio Pagamento"
-        planilha_vendas = gc.open("Vendas diarias")    # contém "Tabela Meio Pagamento"
+        # Carrega a planilha (caso ainda não tenha feito antes)
+        planilha = gc.open("Vendas diarias")
+        
         
         aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
         df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
@@ -1205,6 +1206,9 @@ with aba5:
                 )
             else:
                 tipo_relatorio = None
+
+
+        
 
         # NOVO BLOCO: filtro de tipo de pagamento
         tipos_disponiveis = df_relatorio["Tabela Meio Pagamento"].dropna().unique().tolist()
