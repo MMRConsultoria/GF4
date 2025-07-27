@@ -1401,9 +1401,9 @@ with aba5:
                             for cell in row:
                                 cell.number_format = '"R$" #,##0.00'
 
-                output_final = BytesIO()
-                wb.save(output_final)
-                output_final.seek(0)
+            output_final = BytesIO()
+            wb.save(output_final)
+            output_final.seek(0)
 
             st.download_button(
                 "📥 Baixar Excel",
