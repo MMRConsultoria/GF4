@@ -576,12 +576,11 @@ with aba4:
             max_value=data_max
         )
         
-        # Validação para garantir que foram selecionadas 2 datas
-        if isinstance(datas_selecionadas, (tuple, list)) and len(datas_selecionadas) == 2:
-            data_inicio, data_fim = datas_selecionadas
+        # ✅ Se o usuário clicou apenas uma vez, assume que é a mesma data
+        if isinstance(datas_selecionadas, (datetime, date)):
+            data_inicio = data_fim = datas_selecionadas
         else:
-            st.warning("⚠️ Por favor, selecione um intervalo com **duas datas** (início e fim).")
-            st.stop()
+            data_inicio, data_fim = datas_selecionadas
        
     with col2:
         modo_exibicao = st.selectbox("🧭 Ver por:", ["Loja", "Grupo"])
