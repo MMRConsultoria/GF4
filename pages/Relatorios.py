@@ -1194,8 +1194,8 @@ with aba5:
         df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
 
         # Define intervalo
-        min_data = df_relatorio["Data"].min().date()
-        max_data = df_relatorio["Data"].max().date()
+        data_min = df_relatorio["Data"].min().date()
+        data_max = df_relatorio["Data"].max().date()
 
         # Filtros visuais
         
