@@ -1344,25 +1344,44 @@ with aba5:
             colunas_datas = [col for col in df_pivot.columns if "/" in col]
             novo_nome_datas = {col: f"Vendas - {col}" for col in colunas_datas}
             df_pivot.rename(columns=novo_nome_datas, inplace=True)
-
+            
             colunas_vendas = [col for col in df_pivot.columns if "Vendas -" in col]
             cols_fixas = ["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"]
             novas_cols = []
-
+            
             for col_vendas in colunas_vendas:
+                # 🔒 Garante que os valores da coluna sejam numéricos
+                df_pivot[col_vendas] = pd.to_numeric(df_pivot[col_vendas], errors="coerce").fillna(0)
+            
                 data_col = col_vendas.split(" - ")[1]
-                taxa_bandeira = pd.to_numeric(df_pivot["Taxa Bandeira"].astype(str).str.replace("%", "").str.replace(",", "."), errors="coerce").fillna(0) / 100
-                taxa_antecipacao = pd.to_numeric(df_pivot["Taxa Antecipação"].astype(str).str.replace("%", "").str.replace(",", "."), errors="coerce").fillna(0) / 100
-
+            
+                taxa_bandeira = pd.to_numeric(
+                    df_pivot["Taxa Bandeira"].astype(str).str.replace("%", "").str.replace(",", "."),
+                    errors="coerce"
+                ).fillna(0) / 100
+            
+                taxa_antecipacao = pd.to_numeric(
+                    df_pivot["Taxa Antecipação"].astype(str).str.replace("%", "").str.replace(",", "."),
+                    errors="coerce"
+                ).fillna(0) / 100
+            
                 df_pivot[f"Vlr Taxa Bandeira - {data_col}"] = df_pivot[col_vendas] * taxa_bandeira
                 df_pivot[f"Vlr Taxa Antecipação - {data_col}"] = df_pivot[col_vendas] * taxa_antecipacao
-                novas_cols.extend([col_vendas, f"Vlr Taxa Bandeira - {data_col}", f"Vlr Taxa Antecipação - {data_col}"])
-
+            
+                novas_cols.extend([
+                    col_vendas,
+                    f"Vlr Taxa Bandeira - {data_col}",
+                    f"Vlr Taxa Antecipação - {data_col}"
+                ])
+            
             df_pivot = df_pivot[cols_fixas + novas_cols]
             df_pivot["Total Vendas"] = df_pivot[colunas_vendas].sum(axis=1)
             df_pivot["Total Tx Bandeira"] = df_pivot[[col for col in df_pivot.columns if "Vlr Taxa Bandeira" in col]].sum(axis=1)
             df_pivot["Total Tx Antecipação"] = df_pivot[[col for col in df_pivot.columns if "Vlr Taxa Antecipação" in col]].sum(axis=1)
-            df_pivot["Total a Receber"] = df_pivot["Total Vendas"] - df_pivot["Total Tx Bandeira"] - df_pivot["Total Tx Antecipação"]
+            df_pivot["Total a Receber"] = (
+                df_pivot["Total Vendas"] - df_pivot["Total Tx Bandeira"] - df_pivot["Total Tx Antecipação"]
+            )
+
 
             linha_total_dict = {col: "" for col in df_pivot.columns}
             linha_total_dict["Meio de Pagamento"] = "TOTAL GERAL"
