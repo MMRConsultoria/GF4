@@ -1308,7 +1308,7 @@ with aba5:
         with aba_taxas:
             # Posso copiar e adaptar com segurança a parte de exportação, formatação e totais.
             # Confirmar se deseja incluir também botão de download aqui.
-            
+            st.warning("📌 Em desenvolvimento")
             # 👉 Se quiser já posso completar esta parte também.
 
     except Exception as e:
