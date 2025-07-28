@@ -1230,7 +1230,7 @@ with aba5:
             st.stop()
 
         # ====== TABS ======
-        aba_vendas, aba_taxas, aba_financeiro, aba_Previsão_FC, aba_Conciliação_ Adquirente = st.tabs([
+        aba_vendas, aba_taxas, aba_financeiro, aba_Previsão_FC, aba_Conciliação_Adquirente = st.tabs([
             "💰 Vendas meio pagamento",
             "🔗 Vendas + Prazo e Taxas",
             "📄 Financeiro (Recebimentos)",
@@ -1392,7 +1392,7 @@ with aba5:
         with aba_Previsão_ FC:
             st.warning("📌 em desenvolvimento")
         # === Conciliação Adquirente ===
-        with aba_Conciliação_ Adquirente:    
+        with aba_Conciliação_Adquirente:    
             st.warning("📌 em desenvolvimento")
     except Exception as e:
         st.error(f"❌ Erro ao acessar dados: {e}")
