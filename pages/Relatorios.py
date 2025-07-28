@@ -1171,7 +1171,7 @@ with aba5:
             st.stop()
          df_meio_pagamento.rename(columns={
             "Antecipa S/N": "Antecipa S/N"
-        }, inplace=True)       
+         }, inplace=True)       
 
         # Normaliza colunas usadas no merge
         df_relatorio["Meio de Pagamento"] = df_relatorio["Meio de Pagamento"].astype(str).str.strip().str.upper()
