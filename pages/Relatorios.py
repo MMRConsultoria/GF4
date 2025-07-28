@@ -1163,10 +1163,7 @@ with aba5:
         aba_meio_pagamento = planilha.worksheet("Tabela Meio Pagamento")
         df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
 
-        # 🔍 Mostra colunas brutas como estão vindo da planilha
-        st.write("🧾 Colunas carregadas da Tabela Meio Pagamento:")
-        st.write(df_meio_pagamento.columns.tolist())
-        
+       
         # 🧹 Limpeza profunda dos nomes de coluna
         df_meio_pagamento.columns = (
             df_meio_pagamento.columns
@@ -1175,9 +1172,6 @@ with aba5:
             .str.replace("\u200b", "", regex=False)   # zero-width space
             .str.strip()
         )
-        
-        # 🧪 Verificação após limpeza
-        st.write("🧹 Colunas pós-limpeza:", df_meio_pagamento.columns.tolist())
         
         # 🔒 Verificação obrigatória
         if "Antecipa S/N" not in df_meio_pagamento.columns:
@@ -1204,7 +1198,15 @@ with aba5:
         df_meio_pagamento["Tipo de Pagamento"] = df_meio_pagamento["Tipo de Pagamento"].astype(str).str.strip().str.upper()
         df_meio_pagamento["Antecipa S/N"] = df_meio_pagamento["Antecipa S/N"].astype(str).str.strip().str.upper()
         df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip().str.replace(" ", " ")  # Substitui espaços invisíveis
+        
+        st.write("📋 Exemplo de df_meio_pagamento (primeiras linhas):")
+        st.write(df_meio_pagamento.head())
+        
+        st.write("📋 Colunas disponíveis no df_meio_pagamento:")
+        st.write(df_meio_pagamento.columns.tolist())
 
+
+            
         
         # Faz o merge para adicionar a coluna "Tipo de Pagamento"
         df_relatorio = df_relatorio.merge(
