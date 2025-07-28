@@ -1274,36 +1274,6 @@ with aba5:
                 )
 
             st.dataframe(df_pivot_total, use_container_width=True)
-
-        # === ABA FINANCEIRO ===
-        with aba_financeiro:
-            df_completo = df_filtrado.merge(
-                df_meio_pagamento[["Meio de Pagamento", "Prazo", "Antecipa S/N"]],
-                on="Meio de Pagamento",
-                how="left"
-            )
-            df_completo["Prazo"] = pd.to_numeric(df_completo["Prazo"], errors="coerce").fillna(0).astype(int)
-            df_completo["Antecipa S/N"] = df_completo["Antecipa S/N"].astype(str).str.upper().str.strip()
-
-            from pandas.tseries.offsets import BDay
-            df_completo["Data Recebimento"] = df_completo.apply(
-                lambda row: row["Data"] + BDay(1) if row["Antecipa S/N"] == "SIM" else row["Data"] + BDay(row["Prazo"]),
-                axis=1
-            )
-
-            df_financeiro = df_completo.groupby(df_completo["Data Recebimento"].dt.date)["Valor (R$)"].sum().reset_index()
-            df_financeiro = df_financeiro.rename(columns={"Data Recebimento": "Data"})
-
-            total_geral = df_financeiro["Valor (R$)"].sum()
-            linha_total = pd.DataFrame([["TOTAL GERAL", total_geral]], columns=df_financeiro.columns)
-            df_financeiro_total = pd.concat([linha_total, df_financeiro], ignore_index=True)
-
-            df_financeiro_total["Valor (R$)"] = df_financeiro_total["Valor (R$)"].map(
-                lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            )
-
-            st.dataframe(df_financeiro_total, use_container_width=True)
-
         # === ABA PRAZO E TAXAS ===
         with aba_taxas:
             df_completo = df_filtrado.merge(
@@ -1378,5 +1348,35 @@ with aba5:
 
             st.dataframe(df_pivot_exibe, use_container_width=True)
 
+        # === ABA FINANCEIRO ===
+        with aba_financeiro:
+            df_completo = df_filtrado.merge(
+                df_meio_pagamento[["Meio de Pagamento", "Prazo", "Antecipa S/N"]],
+                on="Meio de Pagamento",
+                how="left"
+            )
+            df_completo["Prazo"] = pd.to_numeric(df_completo["Prazo"], errors="coerce").fillna(0).astype(int)
+            df_completo["Antecipa S/N"] = df_completo["Antecipa S/N"].astype(str).str.upper().str.strip()
+
+            from pandas.tseries.offsets import BDay
+            df_completo["Data Recebimento"] = df_completo.apply(
+                lambda row: row["Data"] + BDay(1) if row["Antecipa S/N"] == "SIM" else row["Data"] + BDay(row["Prazo"]),
+                axis=1
+            )
+
+            df_financeiro = df_completo.groupby(df_completo["Data Recebimento"].dt.date)["Valor (R$)"].sum().reset_index()
+            df_financeiro = df_financeiro.rename(columns={"Data Recebimento": "Data"})
+
+            total_geral = df_financeiro["Valor (R$)"].sum()
+            linha_total = pd.DataFrame([["TOTAL GERAL", total_geral]], columns=df_financeiro.columns)
+            df_financeiro_total = pd.concat([linha_total, df_financeiro], ignore_index=True)
+
+            df_financeiro_total["Valor (R$)"] = df_financeiro_total["Valor (R$)"].map(
+                lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            )
+
+            st.dataframe(df_financeiro_total, use_container_width=True)
+
+        
     except Exception as e:
         st.error(f"❌ Erro ao acessar dados: {e}")
