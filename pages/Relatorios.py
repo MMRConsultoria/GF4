@@ -1182,7 +1182,7 @@ with aba5:
         df_meio_pagamento["Meio de Pagamento"] = df_meio_pagamento["Meio de Pagamento"].astype(str).str.strip().str.upper()
         df_meio_pagamento["Tipo de Pagamento"] = df_meio_pagamento["Tipo de Pagamento"].astype(str).str.strip().str.upper()
         df_meio_pagamento["Antecipa S/N"] = df_meio_pagamento["Antecipa S/N"].astype(str).str.strip().str.upper()
-
+        df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip().str.replace(" ", " ")  # Substitui espaços invisíveis
 
         
         # Faz o merge para adicionar a coluna "Tipo de Pagamento"
