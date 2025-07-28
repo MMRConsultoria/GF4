@@ -1163,23 +1163,28 @@ with aba5:
         aba_meio_pagamento = planilha.worksheet("Tabela Meio Pagamento")
         df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
         df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip()
-        colunas_necessarias = ["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação", "Tipo de Pagamento"]
-        faltando = [col for col in colunas_necessarias if col not in df_meio_pagamento.columns]
+        # Verifica colunas obrigatórias
+        colunas_necessarias = [
+            "Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação", "Tipo de Pagamento"
+        ]
+        colunas_atuais = df_meio_pagamento.columns.tolist()
+        faltando = [col for col in colunas_necessarias if col not in colunas_atuais]
         
         if faltando:
-            st.error(f"❌ As seguintes colunas estão faltando na Tabela Meio Pagamento: {faltando}")
+            st.error(f"❌ As seguintes colunas estão faltando na aba 'Tabela Meio Pagamento': {faltando}")
             st.stop()
         
         
-        df_meio_pagamento.rename(columns={
-            "Antecipa S/N": "Antecipa S/N"
-        }, inplace=True)       
+               
 
         # Normaliza colunas usadas no merge
         df_relatorio["Meio de Pagamento"] = df_relatorio["Meio de Pagamento"].astype(str).str.strip().str.upper()
         df_meio_pagamento["Meio de Pagamento"] = df_meio_pagamento["Meio de Pagamento"].astype(str).str.strip().str.upper()
         df_meio_pagamento["Tipo de Pagamento"] = df_meio_pagamento["Tipo de Pagamento"].astype(str).str.strip().str.upper()
+        df_meio_pagamento["Antecipa S/N"] = df_meio_pagamento["Antecipa S/N"].astype(str).str.strip().str.upper()
 
+
+        
         # Faz o merge para adicionar a coluna "Tipo de Pagamento"
         df_relatorio = df_relatorio.merge(
             df_meio_pagamento[["Meio de Pagamento", "Tipo de Pagamento"]],
