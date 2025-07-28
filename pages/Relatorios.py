@@ -1237,21 +1237,26 @@ with aba5:
         ])
 
         # === ABA VENDAS ===
+        # === ABA VENDAS ===
         with aba_vendas:
-            tipo_relatorio = st.selectbox(
-                "Agrupamento:",
-                ["Meio de Pagamento", "Loja", "Grupo", "Tipo de Pagamento"]
+            st.markdown("### 🔍 Personalize seu agrupamento")
+        
+            agrupamento = st.radio(
+                "Escolha como deseja agrupar os dados:",
+                options=["Grupo", "Loja", "Meio de Pagamento", "Tipo de Pagamento"],
+                horizontal=True
             )
-
-            if tipo_relatorio == "Meio de Pagamento":
-                index_cols = ["Meio de Pagamento"]
-            elif tipo_relatorio == "Loja":
-                index_cols = ["Loja", "Grupo", "Meio de Pagamento"]
-            elif tipo_relatorio == "Grupo":
+        
+            if agrupamento == "Grupo":
                 index_cols = ["Grupo", "Meio de Pagamento"]
-            elif tipo_relatorio == "Tipo de Pagamento":
-                index_cols = ["Tipo de Pagamento"]
-
+            elif agrupamento == "Loja":
+                index_cols = ["Grupo", "Loja", "Meio de Pagamento"]  # Grupo sempre antes de Loja
+            elif agrupamento == "Meio de Pagamento":
+                index_cols = ["Meio de Pagamento"]
+            elif agrupamento == "Tipo de Pagamento":
+                index_cols = ["Tipo de Pagamento", "Meio de Pagamento"]
+        
+            # Cria a tabela dinâmica
             df_pivot = pd.pivot_table(
                 df_filtrado,
                 index=index_cols,
@@ -1260,20 +1265,26 @@ with aba5:
                 aggfunc="sum",
                 fill_value=0
             ).reset_index()
-
+        
+            # Renomeia colunas de data
             novo_nome_datas = {col: f"Vendas - {col}" for col in df_pivot.columns if "/" in str(col)}
             df_pivot.rename(columns=novo_nome_datas, inplace=True)
+        
+            # Calcula total por linha
             df_pivot["Total Vendas"] = df_pivot[[c for c in df_pivot.columns if "Vendas -" in c]].sum(axis=1)
-
-            linha_total = {col: df_pivot[col].sum() if df_pivot[col].dtype in [np.float64, np.int64] else "TOTAL" for col in df_pivot.columns}
+        
+            # Adiciona linha de TOTAL GERAL
+            linha_total = {col: df_pivot[col].sum() if np.issubdtype(df_pivot[col].dtype, np.number) else "TOTAL GERAL" for col in df_pivot.columns}
             df_pivot_total = pd.concat([pd.DataFrame([linha_total]), df_pivot], ignore_index=True)
-
+        
+            # Formata números
             for col in df_pivot_total.select_dtypes(include=[np.number]).columns:
                 df_pivot_total[col] = df_pivot_total[col].map(
                     lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                 )
-
+        
             st.dataframe(df_pivot_total, use_container_width=True)
+
         # === ABA PRAZO E TAXAS ===
         with aba_taxas:
             df_completo = df_filtrado.merge(
