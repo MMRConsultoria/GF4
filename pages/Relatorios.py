@@ -1388,79 +1388,64 @@ with aba5:
             )
 
             st.dataframe(df_financeiro_total, use_container_width=True)
-        # === aba Previsão FC ===
-        # ==========================
-        # 📊 Aba Previsão FC
-        # ==========================
-        with aba_previsao_fc:
-            st.markdown("## Desenvolvimento)")
-        
+            # === aba Previsão FC ===
+            # ==========================
+            # 📊 Aba Previsão FC
+            # ==========================
+            with aba_previsao_fc:
             try:
-                # Acesso às planilhas
+                st.subheader("🔮 Previsão FC")
+        
+                # Carrega dados da planilha
                 planilha = gc.open("Vendas diarias")
-                df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
-                df_vendas = pd.DataFrame(planilha.worksheet("Fat Sistema Externo").get_all_records())
+                aba_fat = planilha.worksheet("Fat Sistema Externo")
+                df_fat = pd.DataFrame(aba_fat.get_all_records())
+                df_fat.columns = df_fat.columns.str.strip()
         
-                # Limpa colunas
-                df_empresa.columns = df_empresa.columns.str.strip()
-                df_vendas.columns = df_vendas.columns.str.strip()
-                df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
-                df_empresa["Grupo"] = df_empresa["Grupo"].str.strip().str.upper()
-                df_empresa["Tipo"] = df_empresa["Tipo"].str.strip()
+                # Converte data
+                df_fat["Data"] = pd.to_datetime(df_fat["Data"], dayfirst=True, errors="coerce")
+                df_fat = df_fat.dropna(subset=["Data"])
         
-                df_vendas["Loja"] = df_vendas["Loja"].str.strip().str.upper()
-                df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], dayfirst=True, errors="coerce")
-                df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
+                # Filtro últimos 30 dias
+                data_max = df_fat["Data"].max()
+                data_min = data_max - pd.Timedelta(days=30)
+                df_fat = df_fat[(df_fat["Data"] >= data_min) & (df_fat["Data"] <= data_max)]
         
-                # Junta com tipo e grupo
-                df = df_vendas.merge(
-                    df_empresa[["Loja", "Grupo", "Tipo", "Codigo Grupo Everest", "Codigo Everest"]],
-                    on="Loja", how="left"
-                )
+                # Normalização
+                df_fat["Loja"] = df_fat["Loja"].str.strip().str.upper()
+                df_fat["Grupo"] = df_fat["Grupo"].str.strip().str.upper()
+                df_fat["Tipo"] = df_fat["Tipo"].str.strip().str.title()  # ex: "On-Premise"
+                df_fat["Dia da Semana"] = df_fat["Data"].dt.day_name(locale='pt_BR')  # Exibe em português
+                df_fat["Dia da Semana"] = df_fat["Dia da Semana"].str.capitalize()
         
-                # Define ID FC
-                def definir_id_fc(row):
-                    if row["Tipo"] in ["Koop - Airports", "On-Premise"]:
-                        return row["Codigo Everest"]
-                    elif row["Tipo"] == "Airports":
-                        return row["Codigo Grupo Everest"]
-                    else:
-                        return ""
+                # Aplica regra para coluna ID FC
+                def obter_id_fc(linha):
+                    tipo = linha["Tipo"]
+                    if tipo == "Airports":
+                        return linha.get("Cod Grupo Empresas", "")
+                    elif tipo in ["Koop - Airports", "On-Premise"]:
+                        return linha.get("Codigo Everest", "")
+                    return ""
         
-                df["ID FC"] = df.apply(definir_id_fc, axis=1)
+                df_fat["ID FC"] = df_fat.apply(obter_id_fc, axis=1)
         
-                # Filtra os últimos 30 dias
-                data_max = df["Data"].max()
-                data_min = data_max - pd.Timedelta(days=29)
-                df_30 = df[(df["Data"] >= data_min) & (df["Data"] <= data_max)].copy()
-        
-                # Mapeia dia da semana
-                dias_pt = {
-                    "Monday": "segunda-feira",
-                    "Tuesday": "terça-feira",
-                    "Wednesday": "quarta-feira",
-                    "Thursday": "quinta-feira",
-                    "Friday": "sexta-feira",
-                    "Saturday": "sábado",
-                    "Sunday": "domingo"
-                }
-                df_30["Dia da semana"] = df_30["Data"].dt.day_name().map(dias_pt)
-        
-                # Calcula média
-                df_resumo = (
-                    df_30.groupby(["Grupo", "Loja", "ID FC", "Dia da semana"])["Fat.Total"]
-                    .mean()
-                    .reset_index()
+                # Agrupamento para média
+                df_resultado = (
+                    df_fat.groupby(["Grupo", "Loja", "ID FC", "Dia da Semana"], as_index=False)["Fat.Total"]
+                    .mean(numeric_only=True)
                     .rename(columns={"Fat.Total": "Faturamento"})
                 )
         
-                # Ordena dias
-                ordem_dias = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
-                df_resumo["Dia da semana"] = pd.Categorical(df_resumo["Dia da semana"], categories=ordem_dias, ordered=True)
-                df_resumo = df_resumo.sort_values(by=["Grupo", "Loja", "Dia da semana"])
+                # Ordenação personalizada (segunda até domingo)
+                ordem_dias = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
+                df_resultado["Dia da Semana"] = pd.Categorical(df_resultado["Dia da Semana"], categories=ordem_dias, ordered=True)
+                df_resultado = df_resultado.sort_values(["Grupo", "Loja", "Dia da Semana"])
         
-                # Mostra na tela
-                st.dataframe(df_resumo, use_container_width=True)
+                # Formatação
+                df_resultado["Faturamento"] = df_resultado["Faturamento"].round(2)
+        
+                # Exibe resultado
+                st.dataframe(df_resultado, use_container_width=True)
         
             except Exception as e:
                 st.error(f"❌ Erro ao acessar dados: {e}")
