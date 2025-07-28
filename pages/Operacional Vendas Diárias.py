@@ -449,15 +449,17 @@ with aba3:
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
 
+    
     from datetime import datetime
+    import pytz
     import requests
-
-    # 🔘 Botão que chama o Apps Script (após as 9h)
+    
+    # 🔘 Botão que chama o Apps Script (após as 12h)
     def pode_executar_agora():
-        agora = datetime.now()
+        fuso_brasilia = pytz.timezone("America/Sao_Paulo")
+        agora = datetime.now(fuso_brasilia)
         hora_local = agora.hour
         return hora_local >= 12
-
 
 
     #st.subheader("🚀 Atualização DRE")
