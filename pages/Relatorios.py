@@ -1163,12 +1163,14 @@ with aba5:
         aba_meio_pagamento = planilha.worksheet("Tabela Meio Pagamento")
         df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
         df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip()
-        colunas_necessarias = ["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"]
+        colunas_necessarias = ["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação", "Tipo de Pagamento"]
         faltando = [col for col in colunas_necessarias if col not in df_meio_pagamento.columns]
         
         if faltando:
             st.error(f"❌ As seguintes colunas estão faltando na Tabela Meio Pagamento: {faltando}")
             st.stop()
+        
+        
         df_meio_pagamento.rename(columns={
             "Antecipa S/N": "Antecipa S/N"
         }, inplace=True)       
