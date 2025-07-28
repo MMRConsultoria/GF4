@@ -1162,7 +1162,28 @@ with aba5:
         # Aba com o tipo de pagamento
         aba_meio_pagamento = planilha.worksheet("Tabela Meio Pagamento")
         df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
-        df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip()
+
+        # 🔍 Mostra colunas brutas como estão vindo da planilha
+        st.write("🧾 Colunas carregadas da Tabela Meio Pagamento:")
+        st.write(df_meio_pagamento.columns.tolist())
+        
+        # 🧹 Limpeza profunda dos nomes de coluna
+        df_meio_pagamento.columns = (
+            df_meio_pagamento.columns
+            .astype(str)
+            .str.replace("\u00A0", " ", regex=False)  # espaço não quebrável
+            .str.replace("\u200b", "", regex=False)   # zero-width space
+            .str.strip()
+        )
+        
+        # 🧪 Verificação após limpeza
+        st.write("🧹 Colunas pós-limpeza:", df_meio_pagamento.columns.tolist())
+        
+        # 🔒 Verificação obrigatória
+        if "Antecipa S/N" not in df_meio_pagamento.columns:
+            st.error("❌ A coluna 'Antecipa S/N' ainda não foi localizada mesmo após limpeza.")
+            st.stop()
+
         # Verifica colunas obrigatórias
         colunas_necessarias = [
             "Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação", "Tipo de Pagamento"
