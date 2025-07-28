@@ -1231,7 +1231,7 @@ with aba5:
 
         # ====== TABS ======
         aba_vendas, aba_financeiro, aba_taxas = st.tabs([
-            "💰 Vendas por agrupamento",
+            "💰 Vendas meio pagamento",
             "🔗 Vendas + Prazo e Taxas",
             "📄 Financeiro (Recebimentos)"
         ])
