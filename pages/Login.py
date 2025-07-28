@@ -1,6 +1,9 @@
 import streamlit as st
 import requests
-
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import json
+from datetime import datetime
 st.set_page_config(page_title="Login | MMR Consultoria")
 
 # ✅ Captura segura dos parâmetros da URL
@@ -69,6 +72,27 @@ USUARIOS = [
     {"codigo": "3377", "email": "maricelisrossi@gmail.com", "senha": "1825"}
 ]
 
+# ========================
+# 🔐 Autenticação Google Sheets
+# ========================
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT_ACESSOS"]
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+gc = gspread.authorize(credentials)
+
+def registrar_acesso(nome_usuario):
+    try:
+        planilha = gc.open_by_key("1SZ5R6hcBE6o_qWs0_wx6IGKfIGltxpb9RWiGyF4L5uE")
+        aba = planilha.sheet1
+        agora = datetime.now()
+        data = agora.strftime("%d/%m/%Y")
+        hora = agora.strftime("%H:%M:%S")
+        nova_linha = [nome_usuario, data, hora]
+        aba.append_row(nova_linha)
+    except Exception as e:
+        st.error(f"Erro ao registrar acesso: {e}")
+
+
 # ✅ Redireciona se já estiver logado
 if st.session_state.get("acesso_liberado"):
     st.switch_page("Home.py")
@@ -94,6 +118,10 @@ if st.button("Entrar"):
     if usuario_encontrado:
         st.session_state["acesso_liberado"] = True
         st.session_state["empresa"] = codigo
+        st.session_state["usuario"] = email  # opcional: guardar quem entrou
+
+        registrar_acesso(email)  # ✅ registra acesso na planilha
+        
         st.switch_page("Home.py")
     else:
         st.error("❌ Código, e-mail ou senha incorretos.")
