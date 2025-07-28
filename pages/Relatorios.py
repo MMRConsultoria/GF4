@@ -1391,6 +1391,58 @@ with aba5:
         # === aba Previsão FC ===
         with aba_previsao_fc:
             st.warning("📌 em desenvolvimento")
+        st.markdown("### 🔮 Previsão de FC (Fluxo de Caixa)")
+    
+        # --- Carrega dados ---
+        df_vendas = pd.DataFrame(planilha.worksheet("Fat Sistema Externo").get_all_records())
+        df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
+    
+        # --- Limpeza ---
+        df_vendas.columns = df_vendas.columns.str.strip()
+        df_empresa.columns = df_empresa.columns.str.strip()
+        df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
+        df_vendas["Loja"] = df_vendas["Loja"].str.strip().str.upper()
+    
+        # --- Trata datas ---
+        df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], errors="coerce")
+        df_vendas = df_vendas.dropna(subset=["Data"])
+    
+        # --- Últimos 30 dias ---
+        data_limite = df_vendas["Data"].max() - pd.Timedelta(days=30)
+        df_ultimos_30 = df_vendas[df_vendas["Data"] > data_limite].copy()
+    
+        # --- Dia da semana e Faturamento ---
+        df_ultimos_30["Dia da semana"] = df_ultimos_30["Data"].dt.day_name(locale="pt_BR").str.capitalize()
+    
+        df_media = (
+            df_ultimos_30
+            .groupby(["Loja", "Dia da semana"])["Faturamento"]
+            .mean()
+            .reset_index()
+            .rename(columns={"Faturamento": "Faturamento"})
+        )
+    
+        # --- Junta com empresa ---
+        df_base = df_media.merge(df_empresa, on="Loja", how="left")
+    
+        # --- Regras ID FC ---
+        def calcular_id_fc(row):
+            tipo = str(row["Tipo"]).strip().upper()
+            if tipo == "AIRPORTS":
+                return row.get("Código Grupo Everest")
+            elif tipo in ["KOOP - AIRPORTS", "ON-PREMISE"]:
+                return row.get("Código Everest")
+            return None
+    
+        df_base["ID FC - Codigo Everest"] = df_base.apply(calcular_id_fc, axis=1)
+    
+        # --- Colunas finais e ordenação ---
+        colunas_finais = ["Grupo", "Loja", "ID FC - Codigo Everest", "Dia da semana", "Faturamento"]
+        df_resultado = df_base[colunas_finais].sort_values(by=["Grupo", "Loja", "Dia da semana"])
+    
+        # --- Exibir na tela ---
+        st.dataframe(df_resultado, use_container_width=True)
+
         # === Conciliação Adquirente ===
         with aba_conciliacao:    
             st.warning("📌 em desenvolvimento")
