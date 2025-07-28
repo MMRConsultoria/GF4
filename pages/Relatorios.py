@@ -1411,8 +1411,17 @@ with aba5:
         data_limite = df_vendas["Data"].max() - pd.Timedelta(days=30)
         df_ultimos_30 = df_vendas[df_vendas["Data"] > data_limite].copy()
     
-        # --- Dia da semana e Faturamento ---
-        df_ultimos_30["Dia da semana"] = df_ultimos_30["Data"].dt.day_name(locale="pt_BR").str.capitalize()
+        # --- Dia da semana em português (sem locale) ---
+        dias_pt = {
+            "Monday": "Segunda-feira",
+            "Tuesday": "Terça-feira",
+            "Wednesday": "Quarta-feira",
+            "Thursday": "Quinta-feira",
+            "Friday": "Sexta-feira",
+            "Saturday": "Sábado",
+            "Sunday": "Domingo"
+        }
+        df_ultimos_30["Dia da semana"] = df_ultimos_30["Data"].dt.day_name().map(dias_pt)
     
         df_media = (
             df_ultimos_30
