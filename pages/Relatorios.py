@@ -1237,10 +1237,9 @@ with aba5:
         ])
 
         # === ABA VENDAS ===
-        # === ABA VENDAS ===
-        with aba_vendas:
-            st.markdown("### 🔍 Personalize seu agrupamento")
         
+        with aba_vendas:
+                    
             agrupamento = st.radio(
                 "Escolha como deseja agrupar os dados:",
                 options=["Grupo", "Loja", "Meio de Pagamento", "Tipo de Pagamento"],
