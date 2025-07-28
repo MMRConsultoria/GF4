@@ -1150,21 +1150,16 @@ with aba5:
     🚧 <strong>Este relatório está em desenvolvimento.</strong> Resultados e funcionalidades podem mudar a qualquer momento.
     </div>
     """, unsafe_allow_html=True)
+
     try:
-        # Carrega a planilha (caso ainda não tenha feito antes)
+        # 📥 Carrega planilha
         planilha = gc.open("Vendas diarias")
 
-        # Aba com dados analíticos
-        aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
-        df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
-        df_relatorio.columns = df_relatorio.columns.str.strip()
+        # 🧾 Dados principais
+        df_relatorio = pd.DataFrame(planilha.worksheet("Faturamento Meio Pagamento").get_all_records())
+        df_meio_pagamento = pd.DataFrame(planilha.worksheet("Tabela Meio Pagamento").get_all_records())
 
-        # Aba com o tipo de pagamento
-        aba_meio_pagamento = planilha.worksheet("Tabela Meio Pagamento")
-        df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
-
-       
-        # 🧹 Limpeza profunda dos nomes de coluna
+        # 🔍 Limpeza de colunas invisíveis
         df_meio_pagamento.columns = (
             df_meio_pagamento.columns
             .astype(str)
@@ -1172,73 +1167,46 @@ with aba5:
             .str.replace("\u200b", "", regex=False)   # zero-width space
             .str.strip()
         )
-        
-        # 🔒 Verificação obrigatória
-        if "Antecipa S/N" not in df_meio_pagamento.columns:
-            st.error("❌ A coluna 'Antecipa S/N' ainda não foi localizada mesmo após limpeza.")
-            st.stop()
 
-        # Verifica colunas obrigatórias
+        # ⚠️ Verifica colunas obrigatórias
         colunas_necessarias = [
-            "Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação", "Tipo de Pagamento"
+            "Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira",
+            "Taxa Antecipação", "Tipo de Pagamento"
         ]
         colunas_atuais = df_meio_pagamento.columns.tolist()
         faltando = [col for col in colunas_necessarias if col not in colunas_atuais]
-        
         if faltando:
             st.error(f"❌ As seguintes colunas estão faltando na aba 'Tabela Meio Pagamento': {faltando}")
             st.stop()
-        
-        
-               
 
-        # Normaliza colunas usadas no merge
+        # 🧼 Normalização
+        for col in colunas_necessarias:
+            df_meio_pagamento[col] = df_meio_pagamento[col].astype(str).str.strip().str.upper()
         df_relatorio["Meio de Pagamento"] = df_relatorio["Meio de Pagamento"].astype(str).str.strip().str.upper()
-        df_meio_pagamento["Meio de Pagamento"] = df_meio_pagamento["Meio de Pagamento"].astype(str).str.strip().str.upper()
-        df_meio_pagamento["Tipo de Pagamento"] = df_meio_pagamento["Tipo de Pagamento"].astype(str).str.strip().str.upper()
-        df_meio_pagamento["Antecipa S/N"] = df_meio_pagamento["Antecipa S/N"].astype(str).str.strip().str.upper()
-        df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip().str.replace(" ", " ")  # Substitui espaços invisíveis
-        
-        st.write("📋 Exemplo de df_meio_pagamento (primeiras linhas):")
-        st.write(df_meio_pagamento.head())
-        
-        st.write("📋 Colunas disponíveis no df_meio_pagamento:")
-        st.write(df_meio_pagamento.columns.tolist())
 
-
-            
-        
-        # Faz o merge para adicionar a coluna "Tipo de Pagamento"
+        # 🔁 Merge com tipo de pagamento
         df_relatorio = df_relatorio.merge(
             df_meio_pagamento[["Meio de Pagamento", "Tipo de Pagamento"]],
             on="Meio de Pagamento",
             how="left"
         )
 
-        # Corrige coluna de valor para float
+        # 💰 Conversão de valores
         df_relatorio["Valor (R$)"] = (
-            df_relatorio["Valor (R$)"]
-            .astype(str)
-            .str.replace("R$", "", regex=False)
-            .str.replace("(", "-")
-            .str.replace(")", "")
-            .str.replace(" ", "")
-            .str.replace(".", "")
-            .str.replace(",", ".")
+            df_relatorio["Valor (R$)"].astype(str)
+            .str.replace("R$", "", regex=False).str.replace("(", "-")
+            .str.replace(")", "").str.replace(" ", "")
+            .str.replace(".", "").str.replace(",", ".")
             .astype(float)
         )
 
-        # Converte coluna de data (se necessário)
+        # 📆 Datas
         df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
-
-        # Define intervalo
         data_min = df_relatorio["Data"].min().date()
         data_max = df_relatorio["Data"].max().date()
 
-        # Filtros visuais
-        
+        # 🎛️ Filtros
         col1, col2 = st.columns([2, 2])
-
         with col1:
             datas_selecionadas = st.date_input(
                 "📅 Intervalo de datas:",
@@ -1247,7 +1215,6 @@ with aba5:
                 max_value=data_max,
                 key="intervalo_datas_financeiro"
             )
-
             if isinstance(datas_selecionadas, (tuple, list)) and len(datas_selecionadas) == 2:
                 data_inicio, data_fim = datas_selecionadas
             else:
@@ -1263,23 +1230,18 @@ with aba5:
                 default=tipos_disponiveis
             )
 
-        # === Tabs ===
+        # 📑 Subabas
         abas = st.tabs(["💰 Vendas Meio Pagamento", "📄 Financeiro", "🔗 Vendas + Prazo e Taxas"])
 
-        # === VENDAS ===
+        # ABA 1: VENDAS
         with abas[0]:
-            tipo_relatorio = st.selectbox(
-                "Relatório:",
-                ["Meio de Pagamento", "Loja", "Grupo", "Tipo de Pagamento"]
-            )
-
-            df_filtrado = df_relatorio[
+            tipo_relatorio = st.selectbox("Relatório:", ["Meio de Pagamento", "Loja", "Grupo", "Tipo de Pagamento"])
+            df_filt = df_relatorio[
                 (df_relatorio["Data"].dt.date >= data_inicio) &
                 (df_relatorio["Data"].dt.date <= data_fim) &
                 (df_relatorio["Tipo de Pagamento"].isin(filtro_tipo_pagamento))
             ]
-
-            if df_filtrado.empty:
+            if df_filt.empty:
                 st.info("🔍 Não há dados para o período e filtro selecionado.")
             else:
                 if tipo_relatorio == "Meio de Pagamento":
@@ -1292,173 +1254,144 @@ with aba5:
                     index_cols = ["Tipo de Pagamento"]
 
                 df_pivot = pd.pivot_table(
-                    df_filtrado,
+                    df_filt,
                     index=index_cols,
-                    columns=df_filtrado["Data"].dt.strftime("%d/%m/%Y"),
+                    columns=df_filt["Data"].dt.strftime("%d/%m/%Y"),
                     values="Valor (R$)",
                     aggfunc="sum",
                     fill_value=0
                 ).reset_index()
 
-                novo_nome_datas = {col: f"Vendas - {col}" for col in df_pivot.columns if "/" in str(col)}
-                df_pivot.rename(columns=novo_nome_datas, inplace=True)
-                df_pivot["Total Vendas"] = df_pivot[[c for c in df_pivot.columns if "Vendas -" in str(c)]].sum(axis=1)
+                for col in df_pivot.columns:
+                    if "/" in str(col):
+                        df_pivot.rename(columns={col: f"Vendas - {col}"}, inplace=True)
 
-                linha_total_dict = {df_pivot.columns[0]: "TOTAL GERAL"}
-                for col in df_pivot.columns[1:]:
-                    linha_total_dict[col] = df_pivot[col].sum() if "Vendas -" in str(col) or col == "Total Vendas" else np.nan
-                linha_total = pd.DataFrame([linha_total_dict])
+                df_pivot["Total Vendas"] = df_pivot.filter(like="Vendas -").sum(axis=1)
 
-                df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
+                linha_total = pd.DataFrame([{col: df_pivot[col].sum() if "Vendas" in col else "TOTAL GERAL" for col in df_pivot.columns}])
+                df_exibe = pd.concat([linha_total, df_pivot], ignore_index=True)
 
-                df_pivot_exibe = df_pivot_total.copy()
-                for col in df_pivot_exibe.select_dtypes(include=[np.number]).columns:
-                    df_pivot_exibe[col] = df_pivot_exibe[col].map(
-                        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notna(x) else ""
-                    )
+                for col in df_exibe.select_dtypes(include=[float, int]).columns:
+                    df_exibe[col] = df_exibe[col].map(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notna(x) else "")
 
-                st.dataframe(df_pivot_exibe, use_container_width=True)
+                st.dataframe(df_exibe, use_container_width=True)
 
-        # === FINANCEIRO ===
+        # ABA 2: FINANCEIRO
         with abas[1]:
-            df_filtrado = df_relatorio[
+            df_filt = df_relatorio[
                 (df_relatorio["Data"].dt.date >= data_inicio) &
                 (df_relatorio["Data"].dt.date <= data_fim) &
                 (df_relatorio["Tipo de Pagamento"].isin(filtro_tipo_pagamento))
             ]
-
-            df_completo = df_filtrado.merge(
+            df_merged = df_filt.merge(
                 df_meio_pagamento[["Meio de Pagamento", "Prazo", "Antecipa S/N"]],
-                on="Meio de Pagamento",
-                how="left"
+                on="Meio de Pagamento", how="left"
             )
-            df_completo["Prazo"] = pd.to_numeric(df_completo["Prazo"], errors="coerce").fillna(0).astype(int)
-            df_completo["Antecipa S/N"] = df_completo["Antecipa S/N"].astype(str).str.strip().str.upper()
+            df_merged["Prazo"] = pd.to_numeric(df_merged["Prazo"], errors="coerce").fillna(0).astype(int)
+            df_merged["Antecipa S/N"] = df_merged["Antecipa S/N"].astype(str).str.strip().str.upper()
 
             from pandas.tseries.offsets import BDay
-            df_completo["Data Recebimento"] = df_completo.apply(
+            df_merged["Data Recebimento"] = df_merged.apply(
                 lambda row: row["Data"] + BDay(1) if row["Antecipa S/N"] == "SIM" else row["Data"] + BDay(row["Prazo"]),
                 axis=1
             )
 
-            df_financeiro = df_completo.groupby(df_completo["Data Recebimento"].dt.date)["Valor (R$)"].sum().reset_index()
-            df_financeiro = df_financeiro.rename(columns={"Data Recebimento": "Data"}).sort_values("Data")
+            df_fin = df_merged.groupby(df_merged["Data Recebimento"].dt.date)["Valor (R$)"].sum().reset_index()
+            df_fin = df_fin.rename(columns={"Data Recebimento": "Data"}).sort_values("Data")
 
-            total_geral = df_financeiro["Valor (R$)"].sum()
-            linha_total = pd.DataFrame([["TOTAL GERAL", total_geral]], columns=df_financeiro.columns)
-            df_financeiro_total = pd.concat([linha_total, df_financeiro], ignore_index=True)
+            linha_total = pd.DataFrame([["TOTAL GERAL", df_fin["Valor (R$)"].sum()]], columns=df_fin.columns)
+            df_fin = pd.concat([linha_total, df_fin], ignore_index=True)
 
-            df_financeiro_total["Valor (R$)"] = df_financeiro_total["Valor (R$)"].map(
-                lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notna(x) else ""
-            )
+            df_fin["Valor (R$)"] = df_fin["Valor (R$)"].map(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notna(x) else "")
+            st.dataframe(df_fin, use_container_width=True)
 
-            st.dataframe(df_financeiro_total, use_container_width=True)
-
+        
         # === PRAZO E TAXAS ===
         with abas[2]:
             from io import BytesIO
-            df_filtrado = df_relatorio[
+            df_filt = df_relatorio[
                 (df_relatorio["Data"].dt.date >= data_inicio) &
                 (df_relatorio["Data"].dt.date <= data_fim) &
                 (df_relatorio["Tipo de Pagamento"].isin(filtro_tipo_pagamento))
             ]
 
-            df_completo = df_filtrado.merge(
+            df_merged = df_filt.merge(
                 df_meio_pagamento[["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"]],
                 on="Meio de Pagamento",
                 how="left"
             )
 
-            df_completo["Prazo"] = pd.to_numeric(df_completo["Prazo"], errors="coerce").fillna(0).astype(int)
+            df_merged["Prazo"] = pd.to_numeric(df_merged["Prazo"], errors="coerce").fillna(0).astype(int)
 
             df_pivot = pd.pivot_table(
-                df_completo,
+                df_merged,
                 index=["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"],
-                columns=df_completo["Data"].dt.strftime("%d/%m/%Y"),
+                columns=df_merged["Data"].dt.strftime("%d/%m/%Y"),
                 values="Valor (R$)",
                 aggfunc="sum",
                 fill_value=0
             ).reset_index()
 
-            colunas_datas = [col for col in df_pivot.columns if "/" in col]
-            novo_nome_datas = {col: f"Vendas - {col}" for col in colunas_datas}
-            df_pivot.rename(columns=novo_nome_datas, inplace=True)
-            
+            col_datas = [col for col in df_pivot.columns if "/" in col]
+            df_pivot.rename(columns={col: f"Vendas - {col}" for col in col_datas}, inplace=True)
+
             colunas_vendas = [col for col in df_pivot.columns if "Vendas -" in col]
             cols_fixas = ["Meio de Pagamento", "Prazo", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"]
             novas_cols = []
-            
-            for col_vendas in colunas_vendas:
-                # 🔒 Garante que os valores da coluna sejam numéricos
-                df_pivot[col_vendas] = pd.to_numeric(df_pivot[col_vendas], errors="coerce").fillna(0)
-            
-                data_col = col_vendas.split(" - ")[1]
-            
-                taxa_bandeira = pd.to_numeric(
-                    df_pivot["Taxa Bandeira"].astype(str).str.replace("%", "").str.replace(",", "."),
-                    errors="coerce"
-                ).fillna(0) / 100
-            
-                taxa_antecipacao = pd.to_numeric(
-                    df_pivot["Taxa Antecipação"].astype(str).str.replace("%", "").str.replace(",", "."),
-                    errors="coerce"
-                ).fillna(0) / 100
-            
-                df_pivot[f"Vlr Taxa Bandeira - {data_col}"] = df_pivot[col_vendas] * taxa_bandeira
-                df_pivot[f"Vlr Taxa Antecipação - {data_col}"] = df_pivot[col_vendas] * taxa_antecipacao
-            
-                novas_cols.extend([
-                    col_vendas,
-                    f"Vlr Taxa Bandeira - {data_col}",
-                    f"Vlr Taxa Antecipação - {data_col}"
-                ])
-            
+
+            for col in colunas_vendas:
+                df_pivot[col] = pd.to_numeric(df_pivot[col], errors="coerce").fillna(0)
+                data_col = col.split(" - ")[1]
+
+                taxa_bandeira = pd.to_numeric(df_pivot["Taxa Bandeira"].astype(str).str.replace("%", "").str.replace(",", "."), errors="coerce").fillna(0) / 100
+                taxa_antecip = pd.to_numeric(df_pivot["Taxa Antecipação"].astype(str).str.replace("%", "").str.replace(",", "."), errors="coerce").fillna(0) / 100
+
+                df_pivot[f"Vlr Taxa Bandeira - {data_col}"] = df_pivot[col] * taxa_bandeira
+                df_pivot[f"Vlr Taxa Antecipação - {data_col}"] = df_pivot[col] * taxa_antecip
+
+                novas_cols.extend([col, f"Vlr Taxa Bandeira - {data_col}", f"Vlr Taxa Antecipação - {data_col}"])
+
             df_pivot = df_pivot[cols_fixas + novas_cols]
             df_pivot["Total Vendas"] = df_pivot[colunas_vendas].sum(axis=1)
-            df_pivot["Total Tx Bandeira"] = df_pivot[[col for col in df_pivot.columns if "Vlr Taxa Bandeira" in col]].sum(axis=1)
-            df_pivot["Total Tx Antecipação"] = df_pivot[[col for col in df_pivot.columns if "Vlr Taxa Antecipação" in col]].sum(axis=1)
-            df_pivot["Total a Receber"] = (
-                df_pivot["Total Vendas"] - df_pivot["Total Tx Bandeira"] - df_pivot["Total Tx Antecipação"]
-            )
-
+            df_pivot["Total Tx Bandeira"] = df_pivot[[c for c in df_pivot.columns if "Vlr Taxa Bandeira" in c]].sum(axis=1)
+            df_pivot["Total Tx Antecipação"] = df_pivot[[c for c in df_pivot.columns if "Vlr Taxa Antecipação" in c]].sum(axis=1)
+            df_pivot["Total a Receber"] = df_pivot["Total Vendas"] - df_pivot["Total Tx Bandeira"] - df_pivot["Total Tx Antecipação"]
 
             linha_total_dict = {col: "" for col in df_pivot.columns}
             linha_total_dict["Meio de Pagamento"] = "TOTAL GERAL"
             for col in df_pivot.columns:
-                if any(keyword in col for keyword in ["Vendas", "Vlr Taxa", "Total"]):
+                if any(p in col for p in ["Vendas", "Vlr Taxa", "Total"]):
                     linha_total_dict[col] = df_pivot[col].sum()
 
-            linha_total = pd.DataFrame([linha_total_dict])
-            df_pivot_total = pd.concat([linha_total, df_pivot], ignore_index=True)
+            df_pivot_total = pd.concat([pd.DataFrame([linha_total_dict]), df_pivot], ignore_index=True)
 
-            df_pivot_exibe = df_pivot_total.copy()
-            for col in df_pivot_exibe.columns:
+            df_exibe = df_pivot_total.copy()
+            for col in df_exibe.columns:
                 if any(p in col for p in ["Vendas", "Vlr Taxa", "Total"]):
-                    df_pivot_exibe[col] = df_pivot_exibe[col].map(
+                    df_exibe[col] = df_exibe[col].map(
                         lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notna(x) else ""
                     )
 
-            st.dataframe(df_pivot_exibe, use_container_width=True)
+            st.dataframe(df_exibe, use_container_width=True)
 
+            # EXPORTAÇÃO PARA EXCEL
+            from io import BytesIO
             from openpyxl import load_workbook
 
             output = BytesIO()
-            df_exportar = df_pivot_total.copy()
-            df_exportar["Taxa Bandeira"] = (
-                pd.to_numeric(df_exportar["Taxa Bandeira"].astype(str)
-                              .str.replace("%", "")
-                              .str.replace(",", "."),
-                              errors="coerce") / 100
-            )
-            df_exportar["Taxa Antecipação"] = (
-                pd.to_numeric(df_exportar["Taxa Antecipação"].astype(str)
-                              .str.replace("%", "")
-                              .str.replace(",", "."),
-                              errors="coerce") / 100
-            )
+            df_export = df_pivot_total.copy()
 
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df_exportar.to_excel(writer, index=False, sheet_name="PrazoTaxas")
+            df_export["Taxa Bandeira"] = pd.to_numeric(
+                df_export["Taxa Bandeira"].astype(str).str.replace("%", "").str.replace(",", "."),
+                errors="coerce"
+            ) / 100
+            df_export["Taxa Antecipação"] = pd.to_numeric(
+                df_export["Taxa Antecipação"].astype(str).str.replace("%", "").str.replace(",", "."),
+                errors="coerce"
+            ) / 100
+
+            with pd.ExcelWriter(output, engine="openpyxl") as writer:
+                df_export.to_excel(writer, index=False, sheet_name="PrazoTaxas")
             output.seek(0)
 
             wb = load_workbook(output)
@@ -1473,9 +1406,7 @@ with aba5:
                             cell.number_format = "0.00%"
 
             for col_name in header:
-                if ("Vendas" in col_name or "Vlr Taxa Bandeira" in col_name 
-                    or "Vlr Taxa Antecipação" in col_name or "Total Tx" in col_name 
-                    or col_name in ["Total Vendas", "Total a Receber"]):
+                if any(p in col_name for p in ["Vendas", "Vlr Taxa Bandeira", "Vlr Taxa Antecipação", "Total Tx", "Total Vendas", "Total a Receber"]):
                     col_idx = header.index(col_name) + 1
                     for row in ws.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx):
                         for cell in row:
