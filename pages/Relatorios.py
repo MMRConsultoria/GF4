@@ -1383,9 +1383,9 @@ with aba5:
             
             # Colunas de valores reais
             # Colunas que devem receber formato de reais
-                colunas_valores = [col for col in df_export.columns if any(p in col for p in [
-                    "Vendas", "Vlr Taxa Bandeira", "Vlr Taxa Antecipação", "Total"
-                ])]
+            colunas_valores = [col for col in df_export.columns if any(p in col for p in [
+                "Vendas", "Vlr Taxa Bandeira", "Vlr Taxa Antecipação", "Total"
+            ])]
             
             # Geração do Excel
             output = BytesIO()
