@@ -1483,6 +1483,68 @@ with aba5:
         
             # Exibe
             st.dataframe(df_resultado, use_container_width=True)
+            import io
+            import xlsxwriter
+            from datetime import datetime
+            
+            # Copia o DataFrame original (sem formatação de texto em reais)
+            df_export = df_resultado.copy()
+            
+            # Cria planilha em memória
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+                df_export.to_excel(writer, sheet_name="Previsão FC", index=False)
+                workbook = writer.book
+                worksheet = writer.sheets["Previsão FC"]
+            
+                # Estilos
+                header_fmt = workbook.add_format({
+                    "bold": True,
+                    "bg_color": "#F2F2F2",
+                    "border": 1,
+                    "align": "center"
+                })
+                moeda_fmt = workbook.add_format({
+                    "num_format": 'R$ #.##0,00',
+                    "border": 1,
+                    "align": "right"
+                })
+                text_fmt = workbook.add_format({
+                    "border": 1,
+                    "align": "left"
+                })
+                center_fmt = workbook.add_format({
+                    "border": 1,
+                    "align": "center"
+                })
+            
+                # Aplica formatação nas células
+                for row_num, row_data in enumerate(df_export.values, start=1):
+                    for col_num, value in enumerate(row_data):
+                        col_name = df_export.columns[col_num]
+                        if col_name == "Faturamento Médio":
+                            worksheet.write_number(row_num, col_num, value, moeda_fmt)
+                        elif col_name in ["Grupo", "Loja", "ID FC"]:
+                            worksheet.write(row_num, col_num, value, text_fmt)
+                        else:
+                            worksheet.write(row_num, col_num, value, center_fmt)
+            
+                # Cabeçalhos
+                for col_num, col_name in enumerate(df_export.columns):
+                    worksheet.write(0, col_num, col_name, header_fmt)
+            
+                    # Ajusta largura baseada no maior conteúdo da coluna
+                    col_width = max(df_export[col_name].astype(str).map(len).max(), len(col_name)) + 2
+                    worksheet.set_column(col_num, col_num, col_width)
+            
+            # Botão de download
+            st.markdown("### 📥 Exportar para Excel")
+            st.download_button(
+                label="📤 Baixar Excel formatado",
+                data=buffer.getvalue(),
+                file_name=f"Previsao_FC_{datetime.now().strftime('%Y-%m-%d')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
                 
 
