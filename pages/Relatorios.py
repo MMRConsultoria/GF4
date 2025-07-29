@@ -1389,59 +1389,100 @@ with aba5:
 
             st.dataframe(df_financeiro_total, use_container_width=True)
         # === aba Previsão FC ===
+        # ========================
+        # 📊 Aba Previsão FC
+        # ========================
         with aba_previsao_fc:
-            st.warning("📌 em desenvolvimento")
-        st.markdown("### 🔮 Previsão de FC (Fluxo de Caixa)")
-    
-        # --- Carrega dados ---
-        df_vendas = pd.DataFrame(planilha.worksheet("Fat Sistema Externo").get_all_records())
-        df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
-    
-        # --- Limpeza ---
-        df_vendas.columns = df_vendas.columns.str.strip()
-        df_empresa.columns = df_empresa.columns.str.strip()
-        df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
-        df_vendas["Loja"] = df_vendas["Loja"].str.strip().str.upper()
-    
-        # --- Trata datas ---
-        df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], errors="coerce")
-        df_vendas = df_vendas.dropna(subset=["Data"])
-    
-        # --- Últimos 30 dias ---
-        data_limite = df_vendas["Data"].max() - pd.Timedelta(days=30)
-        df_ultimos_30 = df_vendas[df_vendas["Data"] > data_limite].copy()
-    
-        # --- Dia da semana e Faturamento ---
-        df_ultimos_30["Dia da semana"] = df_ultimos_30["Data"].dt.day_name(locale="pt_BR").str.capitalize()
-    
-        df_media = (
-            df_ultimos_30
-            .groupby(["Loja", "Dia da semana"])["Faturamento"]
-            .mean()
-            .reset_index()
-            .rename(columns={"Faturamento": "Faturamento"})
-        )
-    
-        # --- Junta com empresa ---
-        df_base = df_media.merge(df_empresa, on="Loja", how="left")
-    
-        # --- Regras ID FC ---
-        def calcular_id_fc(row):
-            tipo = str(row["Tipo"]).strip().upper()
-            if tipo == "AIRPORTS":
-                return row.get("Código Grupo Everest")
-            elif tipo in ["KOOP - AIRPORTS", "ON-PREMISE"]:
-                return row.get("Código Everest")
-            return None
-    
-        df_base["ID FC - Codigo Everest"] = df_base.apply(calcular_id_fc, axis=1)
-    
-        # --- Colunas finais e ordenação ---
-        colunas_finais = ["Grupo", "Loja", "ID FC - Codigo Everest", "Dia da semana", "Faturamento"]
-        df_resultado = df_base[colunas_finais].sort_values(by=["Grupo", "Loja", "Dia da semana"])
-    
-        # --- Exibir na tela ---
-        st.dataframe(df_resultado, use_container_width=True)
+            
+            # Carrega planilha e abas
+            planilha = gc.open("Vendas diarias")
+            aba_fat = planilha.worksheet("Fat Sistema Externo")
+            aba_empresa = planilha.worksheet("Tabela Empresa")
+
+            # --- Dados principais ---
+            df_fat = pd.DataFrame(aba_fat.get_all_records())
+            df_empresa = pd.DataFrame(aba_empresa.get_all_records())
+
+            # --- Normalizações ---
+            df_fat.columns = df_fat.columns.str.strip()
+            df_empresa.columns = df_empresa.columns.str.strip()
+
+            df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.upper()
+            df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.upper()
+            df_empresa["Grupo"] = df_empresa["Grupo"].astype(str).str.strip().str.upper()
+
+            # Converte data
+            df_fat["Data"] = pd.to_datetime(df_fat["Data"], dayfirst=True, errors="coerce")
+            df_fat = df_fat.dropna(subset=["Data"])
+
+            # Últimos 30 dias
+            data_final = df_fat["Data"].max()
+            data_inicial = data_final - pd.Timedelta(days=30)
+            df_30dias = df_fat[(df_fat["Data"] >= data_inicial) & (df_fat["Data"] <= data_final)].copy()
+
+            # Dia da semana traduzido
+            dias_semana = {
+                "Monday": "Segunda-feira",
+                "Tuesday": "Terça-feira",
+                "Wednesday": "Quarta-feira",
+                "Thursday": "Quinta-feira",
+                "Friday": "Sexta-feira",
+                "Saturday": "Sábado",
+                "Sunday": "Domingo"
+            }
+            df_30dias["Dia da Semana"] = df_30dias["Data"].dt.day_name().map(dias_semana)
+
+            # 🧹 Converte Fat.Total para número
+            df_30dias["Fat.Total"] = (
+                df_30dias["Fat.Total"]
+                .astype(str)
+                .str.replace("R$", "", regex=False)
+                .str.replace(" ", "", regex=False)
+                .str.replace(".", "", regex=False)
+                .str.replace(",", ".", regex=False)
+                .astype(float)
+            )
+
+            # Seleciona colunas necessárias
+            df_fc = df_30dias[["Loja", "Data", "Dia da Semana", "Fat.Total"]].copy()
+
+            # Junta com dados de empresa (para Tipo e Grupo)
+            df_fc = df_fc.merge(df_empresa[["Loja", "Grupo", "Tipo"]], on="Loja", how="left")
+
+            # Junta com os códigos FC
+            df_fc = df_fc.merge(
+                df_fat[["Loja", "Codigo Everest", "Cod Grupo Empresas"]].drop_duplicates("Loja"),
+                on="Loja",
+                how="left"
+            )
+
+            # Define o ID FC conforme o Tipo
+            def definir_id_fc(row):
+                if row["Tipo"] == "Airports":
+                    return row["Cod Grupo Empresas"]
+                elif row["Tipo"] in ["Koop - Airports", "On-Premise"]:
+                    return row["Codigo Everest"]
+                else:
+                    return None
+
+            df_fc["ID FC"] = df_fc.apply(definir_id_fc, axis=1)
+
+            # Agrupa por Grupo, Loja, ID FC e Dia da Semana e calcula a média
+            df_resultado = (
+                df_fc.groupby(["Grupo", "Loja", "ID FC", "Dia da Semana"])["Fat.Total"]
+                .mean()
+                .reset_index()
+                .rename(columns={"Fat.Total": "Faturamento Médio"})
+            )
+
+            # Formata
+            df_resultado["Faturamento Médio"] = df_resultado["Faturamento Médio"].round(2)
+            ordem_dias = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
+            df_resultado["Dia da Semana"] = pd.Categorical(df_resultado["Dia da Semana"], categories=ordem_dias, ordered=True)
+            df_resultado = df_resultado.sort_values(["Grupo", "Loja", "Dia da Semana"])
+
+                
+
 
         # === Conciliação Adquirente ===
         with aba_conciliacao:    
