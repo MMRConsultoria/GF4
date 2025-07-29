@@ -1595,7 +1595,9 @@ with aba5:
             planilha = gc.open("Vendas diarias")
             aba_fat = planilha.worksheet("Faturamento Meio Pagamento")
             aba_empresa = planilha.worksheet("Tabela Empresa")
-        
+
+            st.markdown(f"**ℹ️ A previsão é calculada com base nos últimos 30 dias até {data_final.strftime('%d/%m/%Y')}**")
+            
             # --- Dados principais ---
             df_fat = pd.DataFrame(aba_fat.get_all_records())
             df_empresa = pd.DataFrame(aba_empresa.get_all_records())
