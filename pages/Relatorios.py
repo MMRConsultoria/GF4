@@ -1388,6 +1388,62 @@ with aba5:
             )
 
             st.dataframe(df_financeiro_total, use_container_width=True)
+
+
+    
+            import xlsxwriter
+            from io import BytesIO
+            
+            # === Corrige valores para float antes de exportar
+            df_export = df_financeiro_total.copy()
+            
+            # Remove "R$" e formata corretamente os valores
+            df_export["Valor (R$)"] = (
+                df_export["Valor (R$)"]
+                .astype(str)
+                .str.replace("R$", "", regex=False)
+                .str.replace(" ", "", regex=False)
+                .str.replace(".", "", regex=False)
+                .str.replace(",", ".", regex=False)
+            )
+            df_export["Valor (R$)"] = pd.to_numeric(df_export["Valor (R$)"], errors="coerce").fillna(0.0)
+            
+            # Gera arquivo Excel com formatação
+            output = BytesIO()
+            workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+            worksheet = workbook.add_worksheet("Financeiro")
+            
+            # Formatos
+            formato_header = workbook.add_format({'bold': True, 'bg_color': '#CCCCCC'})
+            formato_reais = workbook.add_format({'num_format': 'R$ #,##0.00'})
+            
+            # Escreve cabeçalhos
+            for col_idx, col_name in enumerate(df_export.columns):
+                worksheet.write(0, col_idx, col_name, formato_header)
+            
+            # Escreve dados com formatação
+            for row_idx, row in enumerate(df_export.itertuples(index=False), start=1):
+                for col_idx, value in enumerate(row):
+                    if df_export.columns[col_idx] == "Valor (R$)":
+                        worksheet.write_number(row_idx, col_idx, value, formato_reais)
+                    else:
+                        worksheet.write(row_idx, col_idx, value)
+            
+            # Ajusta largura das colunas
+            for i, col in enumerate(df_export.columns):
+                max_width = max(df_export[col].astype(str).map(len).max(), len(col)) + 2
+                worksheet.set_column(i, i, max_width)
+            
+            workbook.close()
+            output.seek(0)
+            
+            # Botão de download
+            st.download_button(
+                label="⬇️ Baixar Excel (Financeiro)",
+                data=output,
+                file_name="Financeiro.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
         # ========================
         # ========================
         # 📊 Aba Previsão FC
