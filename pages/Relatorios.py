@@ -1360,6 +1360,63 @@ with aba5:
 
             st.dataframe(df_pivot_exibe, use_container_width=True)
 
+
+            import xlsxwriter
+            from io import BytesIO
+            
+            # Prepara para exportação
+            df_export = df_pivot_total.copy()
+            
+            # Identifica colunas numéricas
+            colunas_numericas = [
+                col for col in df_export.columns 
+                if col not in ["Meio de Pagamento", "Antecipa S/N", "Taxa Bandeira", "Taxa Antecipação"]
+            ]
+            
+            # Converte e trata valores
+            for col in colunas_numericas:
+                df_export[col] = pd.to_numeric(df_export[col], errors="coerce").fillna(0.0)
+            
+            # Gera Excel com formatação
+            output = BytesIO()
+            workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+            worksheet = workbook.add_worksheet("Prazo e Taxas")
+            
+            # Formatos
+            formato_header = workbook.add_format({'bold': True, 'bg_color': '#CCCCCC'})
+            formato_reais = workbook.add_format({'num_format': 'R$ #,##0.00'})
+            formato_texto = workbook.add_format()
+            
+            # Cabeçalhos
+            for col_idx, col_name in enumerate(df_export.columns):
+                worksheet.write(0, col_idx, col_name, formato_header)
+            
+            # Dados
+            for row_idx, row in enumerate(df_export.itertuples(index=False), start=1):
+                for col_idx, value in enumerate(row):
+                    col_name = df_export.columns[col_idx]
+                    if col_name in colunas_numericas:
+                        worksheet.write_number(row_idx, col_idx, value, formato_reais)
+                    else:
+                        worksheet.write(row_idx, col_idx, str(value), formato_texto)
+            
+            # Ajuste de largura
+            for i, col in enumerate(df_export.columns):
+                largura = max(df_export[col].astype(str).map(len).max(), len(col)) + 2
+                worksheet.set_column(i, i, largura)
+            
+            workbook.close()
+            output.seek(0)
+            
+            # Botão de download
+            st.download_button(
+                label="⬇️ Baixar Excel (Prazo e Taxas)",
+                data=output,
+                file_name="Prazo_Taxas.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+
+
         # === ABA FINANCEIRO ===
         with aba_financeiro:
             df_completo = df_filtrado.merge(
@@ -1449,9 +1506,9 @@ with aba5:
             
             # Botão de download
             st.download_button(
-                label="⬇️ Baixar Excel (Financeiro)",
+                label="⬇️ Baixar Excel",
                 data=output,
-                file_name="Financeiro.xlsx",
+                file_name="Financeiro Recebimento.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
