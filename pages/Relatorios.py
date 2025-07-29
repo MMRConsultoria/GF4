@@ -1391,7 +1391,7 @@ with aba5:
         # ========================
         # 📊 Aba Previsão FC
         # ========================
-        with st.expander("📊 Previsão FC", expanded=True):
+        with aba_previsao_fc:
             try:
                 # Carrega planilha e abas
                 planilha = gc.open("Vendas diarias")
