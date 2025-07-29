@@ -1389,143 +1389,132 @@ with aba5:
 
             st.dataframe(df_financeiro_total, use_container_width=True)
         # ========================
-        # ========================
         # 📊 Aba Previsão FC
         # ========================
         with aba_previsao_fc:
-            
-            # Carrega planilha e abas
-            planilha = gc.open("Vendas diarias")
-            aba_fat = planilha.worksheet("Faturamento Meio Pagamento")
-            aba_empresa = planilha.worksheet("Tabela Empresa")
+            try:
+                # Carrega dados
+                planilha = gc.open("Vendas diarias")
+                df_fat = pd.DataFrame(planilha.worksheet("Faturamento Meio Pagamento").get_all_records())
+                df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
         
-            # --- Dados principais ---
-            df_fat = pd.DataFrame(aba_fat.get_all_records())
-            df_empresa = pd.DataFrame(aba_empresa.get_all_records())
+                # Limpa colunas
+                df_fat.columns = df_fat.columns.str.strip()
+                df_empresa.columns = df_empresa.columns.str.strip()
         
-            # --- Normalizações ---
-            df_fat.columns = df_fat.columns.str.strip()
-            df_empresa.columns = df_empresa.columns.str.strip()
+                # Trata nomes
+                df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.upper()
+                df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.upper()
+                df_empresa["Grupo"] = df_empresa["Grupo"].astype(str).str.strip().str.upper()
         
-            df_fat["Loja"] = df_fat["Loja"].astype(str).str.strip().str.upper()
-            df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.upper()
-            df_empresa["Grupo"] = df_empresa["Grupo"].astype(str).str.strip().str.upper()
+                # Datas
+                df_fat["Data"] = pd.to_datetime(df_fat["Data"], dayfirst=True, errors="coerce")
+                df_fat = df_fat.dropna(subset=["Data"])
         
-            # Converte data
-            df_fat["Data"] = pd.to_datetime(df_fat["Data"], dayfirst=True, errors="coerce")
-            df_fat = df_fat.dropna(subset=["Data"])
+                # Últimos 30 dias da aba correta
+                data_final = df_fat["Data"].max()
+                data_inicial = data_final - pd.Timedelta(days=30)
+                df_30dias = df_fat[(df_fat["Data"] >= data_inicial) & (df_fat["Data"] <= data_final)].copy()
         
-            # Últimos 30 dias com base na aba correta
-            data_final = df_fat["Data"].max()
-            data_inicial = data_final - pd.Timedelta(days=30)
-            df_30dias = df_fat[(df_fat["Data"] >= data_inicial) & (df_fat["Data"] <= data_final)].copy()
+                # Converte valores
+                df_30dias["Valor (R$)"] = (
+                    df_30dias["Valor (R$)"].astype(str)
+                    .str.replace("R$", "", regex=False)
+                    .str.replace(" ", "", regex=False)
+                    .str.replace(".", "", regex=False)
+                    .str.replace(",", ".", regex=False)
+                )
+                df_30dias = df_30dias[df_30dias["Valor (R$)"].str.strip() != ""]
+                df_30dias["Valor (R$)"] = pd.to_numeric(df_30dias["Valor (R$)"], errors="coerce")
+                df_30dias = df_30dias.dropna(subset=["Valor (R$)"])
         
-            # Traduz dia da semana
-            dias_semana = {
-                "Monday": "Segunda-feira",
-                "Tuesday": "Terça-feira",
-                "Wednesday": "Quarta-feira",
-                "Thursday": "Quinta-feira",
-                "Friday": "Sexta-feira",
-                "Saturday": "Sábado",
-                "Sunday": "Domingo"
-            }
-            df_30dias["Dia da Semana"] = df_30dias["Data"].dt.day_name().map(dias_semana)
+                # Dia da semana traduzido
+                dias_semana = {
+                    "Monday": "Segunda-feira",
+                    "Tuesday": "Terça-feira",
+                    "Wednesday": "Quarta-feira",
+                    "Thursday": "Quinta-feira",
+                    "Friday": "Sexta-feira",
+                    "Saturday": "Sábado",
+                    "Sunday": "Domingo"
+                }
+                df_30dias["Dia da Semana"] = df_30dias["Data"].dt.day_name().map(dias_semana)
         
-            # Limpa e converte valores
-            df_30dias["Valor (R$)"] = (
-                df_30dias["Valor (R$)"]
-                .astype(str)
-                .str.replace("R$", "", regex=False)
-                .str.replace(" ", "", regex=False)
-                .str.replace(".", "", regex=False)
-                .str.replace(",", ".", regex=False)
-            )
-            df_30dias = df_30dias[df_30dias["Valor (R$)"].str.strip() != ""]
-            df_30dias["Valor (R$)"] = pd.to_numeric(df_30dias["Valor (R$)"], errors="coerce")
-            df_30dias = df_30dias.dropna(subset=["Valor (R$)"])
+                # Junta com empresa
+                df_fc = df_30dias.merge(df_empresa[["Loja", "Grupo", "Tipo", "Código Everest", "Código Grupo Everest"]], on="Loja", how="left")
         
-            # Seleciona colunas
-            df_fc = df_30dias[[
-                "Loja", "Data", "Dia da Semana", "Valor (R$)", 
-                "Código Everest", "Código Grupo Everest"
-            ]].copy()
-        
-            # Junta com Tipo e Grupo
-            df_fc = df_fc.merge(df_empresa[["Loja", "Grupo", "Tipo"]], on="Loja", how="left")
-        
-            # Define ID FC
-            def definir_id_fc(row):
-                if row["Tipo"] == "Airports":
-                    return row["Código Grupo Everest"]
-                elif row["Tipo"] in ["Koop - Airports", "On-Premise"]:
-                    return row["Código Everest"]
-                else:
-                    return None
-        
-            df_fc["ID FC"] = df_fc.apply(definir_id_fc, axis=1)
-        
-            # Agrupa e calcula média
-            df_resultado = (
-                df_fc.groupby(["Grupo", "Loja", "ID FC", "Dia da Semana"])["Valor (R$)"]
-                .mean()
-                .reset_index()
-                .rename(columns={"Valor (R$)": "Faturamento Médio"})
-            )
-        
-            # Formata visual
-            df_resultado["Faturamento Médio"] = df_resultado["Faturamento Médio"].apply(
-                lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            )    
-            ordem_dias = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
-            df_resultado["Dia da Semana"] = pd.Categorical(df_resultado["Dia da Semana"], categories=ordem_dias, ordered=True)
-            df_resultado = df_resultado.sort_values(["Grupo", "Loja", "Dia da Semana"])
-        
-            # Exibe
-            st.dataframe(df_resultado, use_container_width=True)
-            import xlsxwriter
-            from io import BytesIO
-            
-            # === Corrige valores para float antes de exportar
-            df_export = df_resultado.copy()
-            df_export["Faturamento Médio"] = pd.to_numeric(df_export["Faturamento Médio"], errors="coerce").fillna(0.0)
-            
-            # Gera arquivo Excel com formatação
-            output = BytesIO()
-            workbook = xlsxwriter.Workbook(output, {'in_memory': True})
-            worksheet = workbook.add_worksheet("Previsão FC")
-            
-            # Formatos
-            formato_header = workbook.add_format({'bold': True, 'bg_color': '#CCCCCC'})
-            formato_reais = workbook.add_format({'num_format': 'R$ #,##0.00'})
-            
-            # Escreve cabeçalhos
-            for col_idx, col_name in enumerate(df_export.columns):
-                worksheet.write(0, col_idx, col_name, formato_header)
-            
-            # Escreve dados com formatação de reais
-            for row_idx, row in enumerate(df_export.itertuples(index=False), start=1):
-                for col_idx, value in enumerate(row):
-                    if df_export.columns[col_idx] == "Faturamento Médio":
-                        worksheet.write_number(row_idx, col_idx, value, formato_reais)
+                # ID FC conforme Tipo
+                def definir_id_fc(row):
+                    if row["Tipo"] == "Airports":
+                        return row["Código Grupo Everest"]
+                    elif row["Tipo"] in ["Koop - Airports", "On-Premise"]:
+                        return row["Código Everest"]
                     else:
-                        worksheet.write(row_idx, col_idx, value)
-            
-            # Ajusta largura
-            for i, col in enumerate(df_export.columns):
-                max_width = max(df_export[col].astype(str).map(len).max(), len(col)) + 2
-                worksheet.set_column(i, i, max_width)
-            
-            workbook.close()
-            output.seek(0)
-            
-            # Botão de download
-            st.download_button(
-                label="⬇️ Baixar Excel",
-                data=output,
-                file_name="Previsao_FC.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+                        return None
+        
+                df_fc["ID FC"] = df_fc.apply(definir_id_fc, axis=1)
+        
+                # Agrupa e calcula média
+                df_resultado = (
+                    df_fc.groupby(["Grupo", "Loja", "ID FC", "Dia da Semana"])["Valor (R$)"]
+                    .mean()
+                    .reset_index()
+                    .rename(columns={"Valor (R$)": "Faturamento Médio"})
+                )
+        
+                # Formata
+                df_resultado["Faturamento Médio"] = df_resultado["Faturamento Médio"].round(2)
+                ordem_dias = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
+                df_resultado["Dia da Semana"] = pd.Categorical(df_resultado["Dia da Semana"], categories=ordem_dias, ordered=True)
+                df_resultado = df_resultado.sort_values(["Grupo", "Loja", "Dia da Semana"])
+        
+                # Exibe
+                st.dataframe(df_resultado, use_container_width=True)
+        
+                # === Exporta Excel com formatação
+                import xlsxwriter
+                from io import BytesIO
+        
+                df_export = df_resultado.copy()
+                df_export["Faturamento Médio"] = pd.to_numeric(df_export["Faturamento Médio"], errors="coerce").fillna(0.0)
+        
+                output = BytesIO()
+                workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+                worksheet = workbook.add_worksheet("Previsão FC")
+        
+                formato_header = workbook.add_format({'bold': True, 'bg_color': '#DDDDDD'})
+                formato_reais = workbook.add_format({'num_format': 'R$ #,##0.00'})
+        
+                # Cabeçalho
+                for col_idx, col in enumerate(df_export.columns):
+                    worksheet.write(0, col_idx, col, formato_header)
+        
+                # Linhas
+                for row_idx, row in enumerate(df_export.itertuples(index=False), start=1):
+                    for col_idx, value in enumerate(row):
+                        if df_export.columns[col_idx] == "Faturamento Médio":
+                            worksheet.write_number(row_idx, col_idx, value, formato_reais)
+                        else:
+                            worksheet.write(row_idx, col_idx, value)
+        
+                # Larguras
+                for i, col in enumerate(df_export.columns):
+                    max_width = max(df_export[col].astype(str).map(len).max(), len(col)) + 2
+                    worksheet.set_column(i, i, max_width)
+        
+                workbook.close()
+                output.seek(0)
+        
+                st.download_button(
+                    "⬇️ Baixar Excel com formatação",
+                    data=output,
+                    file_name="Previsao_FC.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+        
+            except Exception as e:
+                st.error(f"❌ Erro ao acessar dados: {e}")
+
 
 
 
