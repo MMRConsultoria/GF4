@@ -1635,9 +1635,12 @@ with aba5:
                 "Saturday": "Sábado",
                 "Sunday": "Domingo"
             }
-            df_30dias["Dia da Semana"] = df_30dias["Data"].dt.day_name().map(dias_semana)
-
-
+            # Define ordem dos dias da semana
+            ordem_dias = [
+                "Segunda-feira", "Terça-feira", "Quarta-feira", 
+                "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"
+            ]
+            
             # Resumo simples por dia da semana (total R$ nos últimos 30 dias)
             df_resumo_dia = (
                 df_30dias.groupby("Dia da Semana")["Valor (R$)"]
@@ -1656,8 +1659,6 @@ with aba5:
             st.markdown("#### 📆 Resumo dos últimos 30 dias por Dia da Semana")
             st.dataframe(df_resumo_dia, use_container_width=True)
 
-            
-        
             # Limpa e converte valores
             df_30dias["Valor (R$)"] = (
                 df_30dias["Valor (R$)"]
