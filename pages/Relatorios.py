@@ -1591,8 +1591,8 @@ with aba5:
         # ========================
         with aba_previsao_fc:
             # 📢 Mensagem explicativa
-            st.markdown("### 📢 Este relatório apresenta a média dos ultimos 30 dias")
-            #"st.markdown(f"""
+            #st.markdown("### 📢 Este relatório apresenta a média dos ultimos 30 dias")
+            "st.markdown(f"""
             #"Este relatório apresenta a **média de faturamento dos últimos 30 dias** por loja e dia da semana, com base nos dados da aba _Faturamento Meio Pagamento_ até **{datetime.now().strftime('%d/%m/%Y')}**.
         
             #"Utilize essas informações para estimar o comportamento esperado dos recebimentos ao longo da semana, separando por **Grupo, Loja e ID FC**.
@@ -1635,9 +1635,12 @@ with aba5:
                 "Saturday": "Sábado",
                 "Sunday": "Domingo"
             }
-            # Define ordem dos dias da semana
+            
+            df_30dias["Dia da Semana"] = df_30dias["Data"].dt.day_name().map(dias_semana)
+            
+            # Define ordem correta ANTES de usar
             ordem_dias = [
-                "Segunda-feira", "Terça-feira", "Quarta-feira", 
+                "Segunda-feira", "Terça-feira", "Quarta-feira",
                 "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"
             ]
             
@@ -1673,14 +1676,20 @@ with aba5:
             df_30dias = df_30dias.dropna(subset=["Valor (R$)"])
         
             # Seleciona colunas
+            # Certifique-se de incluir "Dia da Semana" no df_fc
             df_fc = df_30dias[[
                 "Loja", "Data", "Dia da Semana", "Valor (R$)", 
                 "Código Everest", "Código Grupo Everest"
             ]].copy()
-        
+
+            
+
             # Junta com Tipo e Grupo
             df_fc = df_fc.merge(df_empresa[["Loja", "Grupo", "Tipo"]], on="Loja", how="left")
-        
+            st.write("🔍 Verificando amostra de df_fc antes do agrupamento")
+            st.dataframe(df_fc.head())
+
+
             # Define ID FC
             def definir_id_fc(row):
                 if row["Tipo"] == "Airports":
