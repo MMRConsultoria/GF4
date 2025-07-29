@@ -1441,7 +1441,7 @@ with aba5:
                 df_30dias["Dia da Semana"] = df_30dias["Data"].dt.day_name().map(dias_semana)
         
                 # Junta com empresa
-                df_fc = df_30dias.merge(df_empresa[["Loja", "Grupo", "Tipo", "Código Everest", "Código Grupo Everest"]], on="Loja", how="left")
+                df_fc = df_30dias.merge(df_empresa[["Loja", "Grupo", "Tipo","Código Everest","Código Grupo Everest"]], on="Loja", how="left")
         
                 # ID FC conforme Tipo
                 def definir_id_fc(row):
