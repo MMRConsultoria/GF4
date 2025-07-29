@@ -1456,7 +1456,7 @@ with aba5:
 
             # Junta com os códigos FC
             df_fc = df_fc.merge(
-                df_fat[["Loja", "Código Everest", "Código Grupo Everest"]].drop_duplicates("Loja"),
+                df_fat[["Loja","Código Everest","Código Grupo Everest"]].drop_duplicates("Loja"),
                 on="Loja",
                 how="left"
             )
