@@ -1456,7 +1456,7 @@ with aba5:
 
             # Junta com os códigos FC
             df_fc = df_fc.merge(
-                df_fat[["Loja", "Codigo Everest", "Cod Grupo Empresas"]].drop_duplicates("Loja"),
+                df_fat[["Loja", "Código Everest", "Código Grupo Everest"]].drop_duplicates("Loja"),
                 on="Loja",
                 how="left"
             )
@@ -1464,9 +1464,9 @@ with aba5:
             # Define o ID FC conforme o Tipo
             def definir_id_fc(row):
                 if row["Tipo"] == "Airports":
-                    return row["Cod Grupo Empresas"]
+                    return row["Código Grupo Everest"]
                 elif row["Tipo"] in ["Koop - Airports", "On-Premise"]:
-                    return row["Codigo Everest"]
+                    return row["Código Everest"]
                 else:
                     return None
 
