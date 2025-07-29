@@ -1388,7 +1388,6 @@ with aba5:
             )
 
             st.dataframe(df_financeiro_total, use_container_width=True)
-        # === aba Previsão FC ===
         # ========================
         # 📊 Aba Previsão FC
         # ========================
@@ -1432,7 +1431,7 @@ with aba5:
             }
             df_30dias["Dia da Semana"] = df_30dias["Data"].dt.day_name().map(dias_semana)
 
-            # 🧹 Converte Fat.Total para número
+            # Limpa strings e trata valores faltantes ou não numéricos
             df_30dias["Fat.Total"] = (
                 df_30dias["Fat.Total"]
                 .astype(str)
@@ -1440,8 +1439,14 @@ with aba5:
                 .str.replace(" ", "", regex=False)
                 .str.replace(".", "", regex=False)
                 .str.replace(",", ".", regex=False)
-                .astype(float)
             )
+            
+            # Remove linhas com valores vazios ou não numéricos
+            df_30dias = df_30dias[df_30dias["Fat.Total"].str.strip() != ""]
+            
+            # Agora converte com segurança
+            df_30dias["Fat.Total"] = pd.to_numeric(df_30dias["Fat.Total"], errors="coerce")
+            df_30dias = df_30dias.dropna(subset=["Fat.Total"])
 
             # Seleciona colunas necessárias
             df_fc = df_30dias[["Loja", "Data", "Dia da Semana", "Fat.Total"]].copy()
