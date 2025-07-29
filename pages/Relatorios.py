@@ -1391,7 +1391,6 @@ with aba5:
         # ========================
         # 📊 Aba Previsão FC
         # ========================
-        
         with st.expander("📊 Previsão FC", expanded=True):
             try:
                 # Carrega planilha e abas
@@ -1420,6 +1419,7 @@ with aba5:
                 data_inicial = data_final - pd.Timedelta(days=30)
                 df_30dias = df_fat[(df_fat["Data"] >= data_inicial) & (df_fat["Data"] <= data_final)].copy()
         
+                # Dia da semana traduzido
                 dias_semana = {
                     "Monday": "Segunda-feira",
                     "Tuesday": "Terça-feira",
@@ -1430,17 +1430,8 @@ with aba5:
                     "Sunday": "Domingo"
                 }
                 df_30dias["Dia da Semana"] = df_30dias["Data"].dt.day_name().map(dias_semana)
-
-                # 🧹 Converte Fat.Total para número (corrige ponto e vírgula)
-                df_30dias["Fat.Total"] = (
-                    df_30dias["Fat.Total"]
-                    .astype(str)
-                    .str.replace(".", "", regex=False)
-                    .str.replace(",", ".", regex=False)
-                    .astype(float)
-                )
-
-                # 🧼 Converte Fat.Total para número (remove R$, espaços, pontos e vírgulas)
+        
+                # 🧹 Converte Fat.Total para número
                 df_30dias["Fat.Total"] = (
                     df_30dias["Fat.Total"]
                     .astype(str)
@@ -1450,7 +1441,7 @@ with aba5:
                     .str.replace(",", ".", regex=False)
                     .astype(float)
                 )
-                
+        
                 # Seleciona colunas necessárias
                 df_fc = df_30dias[["Loja", "Data", "Dia da Semana", "Fat.Total"]].copy()
         
@@ -1494,10 +1485,3 @@ with aba5:
         
             except Exception as e:
                 st.error(f"❌ Erro ao acessar dados: {e}")
-
-
-        # === Conciliação Adquirente ===
-        with aba_conciliacao:    
-            st.warning("📌 em desenvolvimento")
-    except Exception as e:
-        st.error(f"❌ Erro ao acessar dados: {e}")
