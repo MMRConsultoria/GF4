@@ -1483,71 +1483,50 @@ with aba5:
         
             # Exibe
             st.dataframe(df_resultado, use_container_width=True)
-            import io
             import xlsxwriter
-            from datetime import datetime
+            from io import BytesIO
             
-            # Copia o DataFrame original (sem formatação de texto em reais)
+            # === Corrige valores para float antes de exportar
             df_export = df_resultado.copy()
             df_export["Faturamento Médio"] = pd.to_numeric(df_export["Faturamento Médio"], errors="coerce").fillna(0.0)
             
-            # Cria planilha em memória
-            buffer = io.BytesIO()
-            with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-                df_export.to_excel(writer, sheet_name="Previsão FC", index=False)
-                workbook = writer.book
-                worksheet = writer.sheets["Previsão FC"]
+            # Gera arquivo Excel com formatação
+            output = BytesIO()
+            workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+            worksheet = workbook.add_worksheet("Previsão FC")
             
-                # Estilos
-                header_fmt = workbook.add_format({
-                    "bold": True,
-                    "bg_color": "#F2F2F2",
-                    "border": 1,
-                    "align": "center"
-                })
-                moeda_fmt = workbook.add_format({
-                    "num_format": 'R$ #.##0,00',
-                    "border": 1,
-                    "align": "right"
-                })
-                text_fmt = workbook.add_format({
-                    "border": 1,
-                    "align": "left"
-                })
-                center_fmt = workbook.add_format({
-                    "border": 1,
-                    "align": "center"
-                })
+            # Formatos
+            formato_header = workbook.add_format({'bold': True, 'bg_color': '#CCCCCC'})
+            formato_reais = workbook.add_format({'num_format': 'R$ #,##0.00'})
             
-                # Aplica formatação nas células
-                for row_num, row_data in enumerate(df_export.values, start=1):
-                    for col_num, value in enumerate(row_data):
-                        col_name = df_export.columns[col_num]
-                        if col_name == "Faturamento Médio":
-                            worksheet.write_number(row_num, col_num, value, moeda_fmt)
-                        elif col_name in ["Grupo", "Loja", "ID FC"]:
-                            worksheet.write(row_num, col_num, value, text_fmt)
-                        else:
-                            worksheet.write(row_num, col_num, value, center_fmt)
+            # Escreve cabeçalhos
+            for col_idx, col_name in enumerate(df_export.columns):
+                worksheet.write(0, col_idx, col_name, formato_header)
             
-                # Cabeçalhos
-                for col_num, col_name in enumerate(df_export.columns):
-                    worksheet.write(0, col_num, col_name, header_fmt)
+            # Escreve dados com formatação de reais
+            for row_idx, row in enumerate(df_export.itertuples(index=False), start=1):
+                for col_idx, value in enumerate(row):
+                    if df_export.columns[col_idx] == "Faturamento Médio":
+                        worksheet.write_number(row_idx, col_idx, value, formato_reais)
+                    else:
+                        worksheet.write(row_idx, col_idx, value)
             
-                    # Ajusta largura baseada no maior conteúdo da coluna
-                    col_width = max(df_export[col_name].astype(str).map(len).max(), len(col_name)) + 2
-                    worksheet.set_column(col_num, col_num, col_width)
+            # Ajusta largura
+            for i, col in enumerate(df_export.columns):
+                max_width = max(df_export[col].astype(str).map(len).max(), len(col)) + 2
+                worksheet.set_column(i, i, max_width)
+            
+            workbook.close()
+            output.seek(0)
             
             # Botão de download
-            st.markdown("### 📥 Exportar para Excel")
             st.download_button(
-                label="📤 Baixar Excel formatado",
-                data=buffer.getvalue(),
-                file_name=f"Previsao_FC_{datetime.now().strftime('%Y-%m-%d')}.xlsx",
+                label="⬇️ Baixar Excel",
+                data=output,
+                file_name="Previsao_FC.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
-                
 
 
         # === Conciliação Adquirente ===
