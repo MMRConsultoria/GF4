@@ -1430,6 +1430,15 @@ with aba5:
                     "Sunday": "Domingo"
                 }
                 df_30dias["Dia da Semana"] = df_30dias["Data"].dt.day_name().map(dias_semana)
+
+                # 🧹 Converte Fat.Total para número (corrige ponto e vírgula)
+                df_30dias["Fat.Total"] = (
+                    df_30dias["Fat.Total"]
+                    .astype(str)
+                    .str.replace(".", "", regex=False)
+                    .str.replace(",", ".", regex=False)
+                    .astype(float)
+                )
         
                 # Seleciona colunas necessárias
                 df_fc = df_30dias[["Loja", "Data", "Dia da Semana", "Fat.Total"]].copy()
