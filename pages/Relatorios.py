@@ -1382,9 +1382,10 @@ with aba5:
             df_export["Taxa Antecipação"] = pd.to_numeric(df_export["Taxa Antecipação"], errors="coerce").fillna(0.0) / 100
             
             # Colunas de valores reais
-            colunas_valores = [col for col in df_export.columns if any(palavra in col for palavra in [
-                "Vendas", "Taxa Bandeira", "Taxa Antecipação", "Total"
-            ]) and "Taxa" not in col]
+            # Colunas que devem receber formato de reais
+                colunas_valores = [col for col in df_export.columns if any(p in col for p in [
+                    "Vendas", "Vlr Taxa Bandeira", "Vlr Taxa Antecipação", "Total"
+                ])]
             
             # Geração do Excel
             output = BytesIO()
