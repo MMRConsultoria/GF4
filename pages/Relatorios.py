@@ -1590,13 +1590,19 @@ with aba5:
         # 📊 Aba Previsão FC
         # ========================
         with aba_previsao_fc:
-            
+            # 📢 Mensagem explicativa
+            st.markdown("### 🔮 Previsão de Fluxo de Caixa (FC)")
+            st.markdown(f"""
+            Este relatório apresenta a **média de faturamento dos últimos 30 dias** por loja e dia da semana, com base nos dados da aba _Faturamento Meio Pagamento_ até **{datetime.now().strftime('%d/%m/%Y')}**.
+        
+            Utilize essas informações para estimar o comportamento esperado dos recebimentos ao longo da semana, separando por **Grupo, Loja e ID FC**.
+            """)
             # Carrega planilha e abas
             planilha = gc.open("Vendas diarias")
             aba_fat = planilha.worksheet("Faturamento Meio Pagamento")
             aba_empresa = planilha.worksheet("Tabela Empresa")
 
-            #st.markdown(f"**ℹ️ A previsão é calculada com base nos últimos 30 dias até {data_final.strftime('%d/%m/%Y')}**")
+           
             
             # --- Dados principais ---
             df_fat = pd.DataFrame(aba_fat.get_all_records())
