@@ -1420,8 +1420,16 @@ with aba5:
                 data_inicial = data_final - pd.Timedelta(days=30)
                 df_30dias = df_fat[(df_fat["Data"] >= data_inicial) & (df_fat["Data"] <= data_final)].copy()
         
-                # Dia da semana
-                df_30dias["Dia da Semana"] = df_30dias["Data"].dt.day_name(locale="pt_BR").str.capitalize()
+                dias_semana = {
+                    "Monday": "Segunda-feira",
+                    "Tuesday": "Terça-feira",
+                    "Wednesday": "Quarta-feira",
+                    "Thursday": "Quinta-feira",
+                    "Friday": "Sexta-feira",
+                    "Saturday": "Sábado",
+                    "Sunday": "Domingo"
+                }
+                df_30dias["Dia da Semana"] = df_30dias["Data"].dt.day_name().map(dias_semana)
         
                 # Seleciona colunas necessárias
                 df_fc = df_30dias[["Loja", "Data", "Dia da Semana", "Fat.Total"]].copy()
