@@ -1474,7 +1474,9 @@ with aba5:
             )
         
             # Formata visual
-            df_resultado["Faturamento Médio"] = df_resultado["Faturamento Médio"].round(2)
+            df_resultado["Faturamento Médio"] = df_resultado["Faturamento Médio"].apply(
+                lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            )    
             ordem_dias = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
             df_resultado["Dia da Semana"] = pd.Categorical(df_resultado["Dia da Semana"], categories=ordem_dias, ordered=True)
             df_resultado = df_resultado.sort_values(["Grupo", "Loja", "Dia da Semana"])
