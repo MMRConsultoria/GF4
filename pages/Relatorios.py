@@ -1286,6 +1286,62 @@ with aba5:
         
             st.dataframe(df_pivot_total, use_container_width=True)
 
+        import xlsxwriter
+        from io import BytesIO
+        
+        # === Prepara dados para exportar
+        df_export = df_pivot_total.copy()
+        
+        # === Remove o símbolo R$ e converte para número para aplicar formato corretamente no Excel
+        colunas_valores = [col for col in df_export.columns if "Vendas" in col or "Total Vendas" in col]
+        for col in colunas_valores:
+            df_export[col] = (
+                df_export[col].astype(str)
+                .str.replace("R$", "", regex=False)
+                .str.replace(" ", "", regex=False)
+                .str.replace(".", "", regex=False)
+                .str.replace(",", ".", regex=False)
+            )
+            df_export[col] = pd.to_numeric(df_export[col], errors="coerce").fillna(0.0)
+        
+        # === Gera arquivo Excel com formatação
+        output = BytesIO()
+        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+        worksheet = workbook.add_worksheet("Vendas")
+        
+        # === Formatos
+        formato_header = workbook.add_format({'bold': True, 'bg_color': '#CCCCCC'})
+        formato_reais = workbook.add_format({'num_format': 'R$ #,##0.00'})
+        
+        # === Escreve cabeçalhos
+        for col_idx, col_name in enumerate(df_export.columns):
+            worksheet.write(0, col_idx, col_name, formato_header)
+        
+        # === Escreve dados com formatação de reais
+        for row_idx, row in enumerate(df_export.itertuples(index=False), start=1):
+            for col_idx, value in enumerate(row):
+                col_name = df_export.columns[col_idx]
+                if col_name in colunas_valores:
+                    worksheet.write_number(row_idx, col_idx, value, formato_reais)
+                else:
+                    worksheet.write(row_idx, col_idx, value)
+        
+        # === Ajusta larguras das colunas
+        for i, col in enumerate(df_export.columns):
+            max_width = max(df_export[col].astype(str).map(len).max(), len(col)) + 2
+            worksheet.set_column(i, i, max_width)
+        
+        workbook.close()
+        output.seek(0)
+        
+        # === Botão de download
+        st.download_button(
+            label="⬇️ Baixar Excel",
+            data=output,
+            file_name="Vendas_Meio_Pagamento.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
         # === ABA PRAZO E TAXAS ===
         with aba_taxas:
             df_completo = df_filtrado.merge(
