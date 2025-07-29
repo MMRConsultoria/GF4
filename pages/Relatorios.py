@@ -1590,20 +1590,12 @@ with aba5:
         # 📊 Aba Previsão FC
         # ========================
         with aba_previsao_fc:
-            # 📢 Mensagem explicativa
-            #st.markdown("### 📢 Este relatório apresenta a média dos ultimos 30 dias")
-            "st.markdown(f"""
-            #"Este relatório apresenta a **média de faturamento dos últimos 30 dias** por loja e dia da semana, com base nos dados da aba _Faturamento Meio Pagamento_ até **{datetime.now().strftime('%d/%m/%Y')}**.
-        
-            #"Utilize essas informações para estimar o comportamento esperado dos recebimentos ao longo da semana, separando por **Grupo, Loja e ID FC**.
-            #"""")
+            
             # Carrega planilha e abas
             planilha = gc.open("Vendas diarias")
             aba_fat = planilha.worksheet("Faturamento Meio Pagamento")
             aba_empresa = planilha.worksheet("Tabela Empresa")
-
-           
-            
+        
             # --- Dados principais ---
             df_fat = pd.DataFrame(aba_fat.get_all_records())
             df_empresa = pd.DataFrame(aba_empresa.get_all_records())
@@ -1635,33 +1627,8 @@ with aba5:
                 "Saturday": "Sábado",
                 "Sunday": "Domingo"
             }
-            
             df_30dias["Dia da Semana"] = df_30dias["Data"].dt.day_name().map(dias_semana)
-            
-            # Define ordem correta ANTES de usar
-            ordem_dias = [
-                "Segunda-feira", "Terça-feira", "Quarta-feira",
-                "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"
-            ]
-            
-            # Resumo simples por dia da semana (total R$ nos últimos 30 dias)
-            df_resumo_dia = (
-                df_30dias.groupby("Dia da Semana")["Valor (R$)"]
-                .sum()
-                .reindex(ordem_dias)  # garante a ordem correta dos dias
-                .reset_index()
-            )
-            
-            # Formata visualmente
-            df_resumo_dia["Valor Total"] = df_resumo_dia["Valor (R$)"].apply(
-                lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            )
-            df_resumo_dia = df_resumo_dia[["Dia da Semana", "Valor Total"]]
-            
-            # Exibe no topo
-            st.markdown("#### 📆 Resumo dos últimos 30 dias por Dia da Semana")
-            st.dataframe(df_resumo_dia, use_container_width=True)
-
+        
             # Limpa e converte valores
             df_30dias["Valor (R$)"] = (
                 df_30dias["Valor (R$)"]
@@ -1676,20 +1643,14 @@ with aba5:
             df_30dias = df_30dias.dropna(subset=["Valor (R$)"])
         
             # Seleciona colunas
-            # Certifique-se de incluir "Dia da Semana" no df_fc
             df_fc = df_30dias[[
                 "Loja", "Data", "Dia da Semana", "Valor (R$)", 
                 "Código Everest", "Código Grupo Everest"
             ]].copy()
-
-            
-
+        
             # Junta com Tipo e Grupo
             df_fc = df_fc.merge(df_empresa[["Loja", "Grupo", "Tipo"]], on="Loja", how="left")
-            st.write("🔍 Verificando amostra de df_fc antes do agrupamento")
-            st.dataframe(df_fc.head())
-
-
+        
             # Define ID FC
             def definir_id_fc(row):
                 if row["Tipo"] == "Airports":
@@ -1771,6 +1732,7 @@ with aba5:
                 file_name="Previsao_FC.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
+
 
 
 
