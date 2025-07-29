@@ -1591,12 +1591,12 @@ with aba5:
         # ========================
         with aba_previsao_fc:
             # 📢 Mensagem explicativa
-            st.markdown("### 🔮 Previsão de Fluxo de Caixa (FC)")
-            st.markdown(f"""
-            Este relatório apresenta a **média de faturamento dos últimos 30 dias** por loja e dia da semana, com base nos dados da aba _Faturamento Meio Pagamento_ até **{datetime.now().strftime('%d/%m/%Y')}**.
+            st.markdown("### 📢 Este relatório apresenta a média dos ultimos 30 dias")
+            #"st.markdown(f"""
+            #"Este relatório apresenta a **média de faturamento dos últimos 30 dias** por loja e dia da semana, com base nos dados da aba _Faturamento Meio Pagamento_ até **{datetime.now().strftime('%d/%m/%Y')}**.
         
-            Utilize essas informações para estimar o comportamento esperado dos recebimentos ao longo da semana, separando por **Grupo, Loja e ID FC**.
-            """)
+            #"Utilize essas informações para estimar o comportamento esperado dos recebimentos ao longo da semana, separando por **Grupo, Loja e ID FC**.
+            #"""")
             # Carrega planilha e abas
             planilha = gc.open("Vendas diarias")
             aba_fat = planilha.worksheet("Faturamento Meio Pagamento")
