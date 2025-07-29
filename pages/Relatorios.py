@@ -1208,26 +1208,37 @@ with aba5:
             else:
                 st.warning("⚠️ Selecione um intervalo com DUAS datas.")
                 st.stop()
-
-        with col2:
-            tipos_disponiveis = df_relatorio["Tipo de Pagamento"].dropna().unique().tolist()
+        
+            # 🔽 Filtro de Tipo abaixo da data
+            tipos_disponiveis = df_relatorio["Tipo"].dropna().unique().tolist()
             tipos_disponiveis.sort()
-            filtro_tipo_pagamento = st.multiselect(
-                "💳 Tipo de Pagamento:",
+            filtro_tipo = st.multiselect(
+                "🏷️ Tipo:",
                 options=tipos_disponiveis,
                 default=tipos_disponiveis
             )
-
-        # Aplica filtro global
+        
+        with col2:
+            tipos_pagamento_disponiveis = df_relatorio["Tipo de Pagamento"].dropna().unique().tolist()
+            tipos_pagamento_disponiveis.sort()
+            filtro_tipo_pagamento = st.multiselect(
+                "💳 Tipo de Pagamento:",
+                options=tipos_pagamento_disponiveis,
+                default=tipos_pagamento_disponiveis
+            )
+        
+        # ✅ Aplica filtro global com novo filtro de Tipo
         df_filtrado = df_relatorio[
             (df_relatorio["Data"].dt.date >= data_inicio) &
             (df_relatorio["Data"].dt.date <= data_fim) &
-            (df_relatorio["Tipo de Pagamento"].isin(filtro_tipo_pagamento))
+            (df_relatorio["Tipo de Pagamento"].isin(filtro_tipo_pagamento)) &
+            (df_relatorio["Tipo"].isin(filtro_tipo))
         ]
-
+        
         if df_filtrado.empty:
             st.info("🔍 Não há dados para o período e filtros selecionados.")
             st.stop()
+
 
         # ====== TABS ======
         aba_vendas, aba_taxas, aba_financeiro, aba_previsao_fc, aba_conciliacao = st.tabs([
