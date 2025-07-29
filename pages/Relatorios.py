@@ -1439,7 +1439,18 @@ with aba5:
                     .str.replace(",", ".", regex=False)
                     .astype(float)
                 )
-        
+
+                # 🧼 Converte Fat.Total para número (remove R$, espaços, pontos e vírgulas)
+                df_30dias["Fat.Total"] = (
+                    df_30dias["Fat.Total"]
+                    .astype(str)
+                    .str.replace("R$", "", regex=False)
+                    .str.replace(" ", "", regex=False)
+                    .str.replace(".", "", regex=False)
+                    .str.replace(",", ".", regex=False)
+                    .astype(float)
+                )
+                
                 # Seleciona colunas necessárias
                 df_fc = df_30dias[["Loja", "Data", "Dia da Semana", "Fat.Total"]].copy()
         
