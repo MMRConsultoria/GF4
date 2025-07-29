@@ -1488,8 +1488,17 @@ with aba5:
             
             # === Corrige valores para float antes de exportar
             df_export = df_resultado.copy()
-            df_export["Faturamento Médio"] = pd.to_numeric(df_export["Faturamento Médio"], errors="coerce").fillna(0.0)
+            df_export["Faturamento Médio"] = (
+                df_export["Faturamento Médio"]
+                .astype(str)
+                .str.replace("R$", "", regex=False)
+                .str.replace(" ", "", regex=False)
+                .str.replace(".", "", regex=False)
+                .str.replace(",", ".", regex=False)
+            )
             
+            df_export["Faturamento Médio"] = pd.to_numeric(df_export["Faturamento Médio"], errors="coerce").fillna(0.0)
+                        
             # Gera arquivo Excel com formatação
             output = BytesIO()
             workbook = xlsxwriter.Workbook(output, {'in_memory': True})
