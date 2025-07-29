@@ -1489,6 +1489,7 @@ with aba5:
             
             # Copia o DataFrame original (sem formatação de texto em reais)
             df_export = df_resultado.copy()
+            df_export["Faturamento Médio"] = pd.to_numeric(df_export["Faturamento Médio"], errors="coerce").fillna(0.0)
             
             # Cria planilha em memória
             buffer = io.BytesIO()
