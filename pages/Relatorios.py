@@ -1195,50 +1195,35 @@ with aba5:
         data_max = df_relatorio["Data"].max().date()
 
         # ===== FILTROS GERAIS =====
-        col1, col2 = st.columns([2, 2])
+        # 📅 Seleção de data
+        datas_selecionadas = st.date_input(
+            "📅 Intervalo de datas:",
+            value=(data_max, data_max),
+            min_value=data_min,
+            max_value=data_max
+        )
+        if isinstance(datas_selecionadas, (tuple, list)) and len(datas_selecionadas) == 2:
+            data_inicio, data_fim = datas_selecionadas
+        else:
+            st.warning("⚠️ Selecione um intervalo com DUAS datas.")
+            st.stop()
         
-        # Coluna da esquerda: Data e Tipo (um embaixo do outro)
-        with col1:
-            datas_selecionadas = st.date_input(
-                "📅 Intervalo de datas:",
-                value=(data_max, data_max),
-                min_value=data_min,
-                max_value=data_max
-            )
-            if isinstance(datas_selecionadas, (tuple, list)) and len(datas_selecionadas) == 2:
-                data_inicio, data_fim = datas_selecionadas
-            else:
-                st.warning("⚠️ Selecione um intervalo com DUAS datas.")
-                st.stop()
+        # 💳 Filtro abaixo da data (não mais ao lado)
+        tipos_disponiveis = df_relatorio["Tipo de Pagamento"].dropna().unique().tolist()
+        tipos_disponiveis.sort()
+        filtro_tipo_pagamento = st.multiselect(
+            "💳 Tipo de Pagamento:",
+            options=tipos_disponiveis,
+            default=tipos_disponiveis
+        )
         
-            # Filtro Tipo (embaixo da data)
-            tipos_disponiveis_tipo = df_relatorio["Tipo"].dropna().unique().tolist()
-            tipos_disponiveis_tipo.sort()
-            filtro_tipo = st.multiselect(
-                "🏬 Tipo de Loja:",
-                options=tipos_disponiveis_tipo,
-                default=tipos_disponiveis_tipo
-            )
-        
-        # Coluna da direita: Tipo de Pagamento
-        with col2:
-            tipos_disponiveis = df_relatorio["Tipo de Pagamento"].dropna().unique().tolist()
-            tipos_disponiveis.sort()
-            filtro_tipo_pagamento = st.multiselect(
-                "💳 Tipo de Pagamento:",
-                options=tipos_disponiveis,
-                default=tipos_disponiveis
-            )
-        
-        # Aplica filtros
+        # 🔎 Aplica filtro global
         df_filtrado = df_relatorio[
             (df_relatorio["Data"].dt.date >= data_inicio) &
             (df_relatorio["Data"].dt.date <= data_fim) &
-            (df_relatorio["Tipo de Pagamento"].isin(filtro_tipo_pagamento)) &
-            (df_relatorio["Tipo"].isin(filtro_tipo))
+            (df_relatorio["Tipo de Pagamento"].isin(filtro_tipo_pagamento))
         ]
         
-        # Caso vazio
         if df_filtrado.empty:
             st.info("🔍 Não há dados para o período e filtros selecionados.")
             st.stop()
