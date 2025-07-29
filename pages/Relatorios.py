@@ -1394,10 +1394,10 @@ with aba5:
             import xlsxwriter
             from io import BytesIO
             
-            # === Corrige valores para float antes de exportar
+            # === Corrige valores para float e converte a coluna Data para datetime
             df_export = df_financeiro_total.copy()
             
-            # Remove "R$" e formata corretamente os valores
+            # Trata "Valor (R$)"
             df_export["Valor (R$)"] = (
                 df_export["Valor (R$)"]
                 .astype(str)
@@ -1408,6 +1408,9 @@ with aba5:
             )
             df_export["Valor (R$)"] = pd.to_numeric(df_export["Valor (R$)"], errors="coerce").fillna(0.0)
             
+            # Converte coluna "Data" para datetime (exceto TOTAL GERAL)
+            df_export["Data"] = pd.to_datetime(df_export["Data"], errors="coerce")
+            
             # Gera arquivo Excel com formatação
             output = BytesIO()
             workbook = xlsxwriter.Workbook(output, {'in_memory': True})
@@ -1416,16 +1419,23 @@ with aba5:
             # Formatos
             formato_header = workbook.add_format({'bold': True, 'bg_color': '#CCCCCC'})
             formato_reais = workbook.add_format({'num_format': 'R$ #,##0.00'})
+            formato_data = workbook.add_format({'num_format': 'dd/mm/yyyy'})
             
             # Escreve cabeçalhos
             for col_idx, col_name in enumerate(df_export.columns):
                 worksheet.write(0, col_idx, col_name, formato_header)
             
-            # Escreve dados com formatação
+            # Escreve dados
             for row_idx, row in enumerate(df_export.itertuples(index=False), start=1):
                 for col_idx, value in enumerate(row):
-                    if df_export.columns[col_idx] == "Valor (R$)":
+                    col_name = df_export.columns[col_idx]
+                    if col_name == "Valor (R$)":
                         worksheet.write_number(row_idx, col_idx, value, formato_reais)
+                    elif col_name == "Data":
+                        if pd.notnull(value):
+                            worksheet.write_datetime(row_idx, col_idx, value, formato_data)
+                        else:
+                            worksheet.write(row_idx, col_idx, "TOTAL GERAL")
                     else:
                         worksheet.write(row_idx, col_idx, value)
             
@@ -1444,6 +1454,7 @@ with aba5:
                 file_name="Financeiro.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
+
         # ========================
         # ========================
         # 📊 Aba Previsão FC
