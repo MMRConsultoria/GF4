@@ -1432,8 +1432,8 @@ with aba5:
             df_30dias["Dia da Semana"] = df_30dias["Data"].dt.day_name().map(dias_semana)
 
             # Limpa strings e trata valores faltantes ou não numéricos
-            df_30dias[" Valor (R$)"] = (
-                df_30dias[" Valor (R$)"]
+            df_30dias["Valor (R$)"] = (
+                df_30dias["Valor (R$)"]
                 .astype(str)
                 .str.replace("R$", "", regex=False)
                 .str.replace(" ", "", regex=False)
@@ -1442,14 +1442,14 @@ with aba5:
             )
             
             # Remove linhas com valores vazios ou não numéricos
-            df_30dias = df_30dias[df_30dias[" Valor (R$)"].str.strip() != ""]
+            df_30dias = df_30dias[df_30dias["Valor (R$)"].str.strip() != ""]
             
             # Agora converte com segurança
-            df_30dias[" Valor (R$)"] = pd.to_numeric(df_30dias[" Valor (R$)"], errors="coerce")
-            df_30dias = df_30dias.dropna(subset=[" Valor (R$)"])
+            df_30dias["Valor (R$)"] = pd.to_numeric(df_30dias["Valor (R$)"], errors="coerce")
+            df_30dias = df_30dias.dropna(subset=["Valor (R$)"])
 
             # Seleciona colunas necessárias
-            df_fc = df_30dias[["Loja", "Data", "Dia da Semana", " Valor (R$)"]].copy()
+            df_fc = df_30dias[["Loja", "Data", "Dia da Semana", "Valor (R$)"]].copy()
 
             # Junta com dados de empresa (para Tipo e Grupo)
             df_fc = df_fc.merge(df_empresa[["Loja", "Grupo", "Tipo"]], on="Loja", how="left")
@@ -1474,10 +1474,10 @@ with aba5:
 
             # Agrupa por Grupo, Loja, ID FC e Dia da Semana e calcula a média
             df_resultado = (
-                df_fc.groupby(["Grupo", "Loja", "ID FC", "Dia da Semana"])[" Valor (R$)"]
+                df_fc.groupby(["Grupo", "Loja", "ID FC", "Dia da Semana"])["Valor (R$)"]
                 .mean()
                 .reset_index()
-                .rename(columns={" Valor (R$)": "Faturamento Médio"})
+                .rename(columns={"Valor (R$)": "Faturamento Médio"})
             )
 
             # Formata
