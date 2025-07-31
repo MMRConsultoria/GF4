@@ -877,7 +877,12 @@ with aba4:
             if linha["Meta"] != 0 else 0
         )
 
-        
+        # %Grupo no total
+        soma_total_geral = df_base_tipo[col_acumulado].sum()
+        linha["%Grupo"] = (
+            linha[col_acumulado] / soma_total_geral
+            if soma_total_geral != 0 else 0
+        )
         
         
     
