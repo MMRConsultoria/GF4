@@ -1103,7 +1103,11 @@ with aba4:
                 is_subtotal = isinstance(grupo, str) and grupo.startswith("SUBTOTAL")
                 is_total = grupo == "TOTAL"
                 usar_borda_grossa = is_subtotal or is_total
-                cell.border = border_grossa if usar_borda_grossa else border_padrao
+                if row_idx == 3:
+                # Linha de Faturamento Desejável: sem borda
+                    cell.border = Border(left=None, right=None, top=None, bottom=None)
+                else:
+                    cell.border = border_grossa if usar_borda_grossa else border_padrao
     
             # Cor verde/vermelha no %Atingido
             if col == "%Atingido":
