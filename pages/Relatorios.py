@@ -1100,10 +1100,17 @@ with aba4:
                 cell = ws.cell(row=row_idx, column=col_idx, value=valor)
     
             # Estilo de fundo
-            estilo = estilo_linha[col_idx - 1]
-            if "background-color" in estilo:
+            # Detecta linha de resumo por Tipo
+            grupo = row.get("Grupo", "").strip().upper()
+            is_resumo_tipo = grupo in df_resumo_tipo["Grupo"].str.upper().str.strip().values
+            
+            # Estilo de fundo
+            if is_resumo_tipo:
+                cell.fill = PatternFill("solid", fgColor="FFF2CC")  # bege claro
+            elif "background-color" in estilo:
                 cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
                 cell.fill = PatternFill("solid", fgColor=cor)
+
     
             # Negrito
             if "font-weight: bold" in estilo:
