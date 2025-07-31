@@ -17,7 +17,7 @@ from st_aggrid import AgGrid, GridOptionsBuilder
 from datetime import datetime, date
 from datetime import datetime, date, timedelta
 from calendar import monthrange
-from st_aggrid import AgGrid, GridOptionsBuilder
+
 
 #st.set_page_config(page_title="Painel Agrupado", layout="wide")
 #st.set_page_config(page_title="Vendas Diarias", layout="wide")
@@ -941,40 +941,11 @@ with aba4:
     # 🔁 Junta tudo para exibir
     df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
     df_exibir = pd.concat([linha_desejavel, df_linhas_visiveis], ignore_index=True)
-
-    # 📊 Exibe com AgGrid com alinhamentos personalizados
-    def exibir_com_aggrid(df):
-        gb = GridOptionsBuilder.from_dataframe(df)
     
-        for col in df.columns:
-            if col in ["Grupo", "Loja"]:
-                gb.configure_column(col, header_name=col, cellStyle={"textAlign": "left"})
-            else:
-                gb.configure_column(col, header_name=col, cellStyle={"textAlign": "center"})
-    
-        grid_options = gb.build()
-    
-        AgGrid(
-            df,
-            gridOptions=grid_options,
-            fit_columns_on_grid_load=True,
-            height=750,
-            allow_unsafe_jscode=True
-        )
-    
-    
-        
-    # 🎨 Define função de estilo com alinhamento
+    # 🎨 Define função de estilo
     def aplicar_estilo_final(df, estilos_linha):
         def apply_row_style(row):
             base_style = estilos_linha[row.name].copy()
-    
-            for idx, col in enumerate(df.columns):
-                if col in ["Grupo", "Loja"]:
-                    base_style[idx] += "; text-align: left"
-                else:
-                    base_style[idx] += "; text-align: center"
-    
             if "%Atingido" in df.columns and row.name > 0:
                 try:
                     valor = row["%Atingido"]
@@ -990,11 +961,9 @@ with aba4:
                             base_style[idx] += "; color: red; font-weight: bold"
                 except:
                     pass
-    
             return base_style
-    
         return df.style.apply(apply_row_style, axis=1)
-
+    
     # 🎨 Estilo visual por linha
     cores_alternadas = ["#eef4fa", "#f5fbf3"]
     estilos_linha = []
@@ -1033,10 +1002,11 @@ with aba4:
     df_exibir.columns = [col.replace("Grupo", "Operação") for col in df_exibir.columns]
     
     # 📊 Exibe resultado final
-    exibir_com_aggrid(df_exibir)
-
-
-
+    st.dataframe(
+        aplicar_estilo_final(df_exibir, estilos_final),
+        use_container_width=True,
+        height=750
+    )
     import openpyxl
     from openpyxl.styles import PatternFill, Font, Alignment
     from io import BytesIO
@@ -1139,13 +1109,8 @@ with aba4:
                 cell.font = Font(bold=True)
     
             # Alinhamento
-            #cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
-            # Alinhamento formatado
-            if col in ["Grupo", "Loja"]:
-                cell.alignment = Alignment(horizontal="left", vertical="center")
-            else:
-                cell.alignment = Alignment(horizontal="center", vertical="center")
-                
+            cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
+    
             # 📌 Bordas especiais:
             if is_desejavel:
                 # Apenas bordas esquerda e direita
