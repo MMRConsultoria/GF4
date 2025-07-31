@@ -1000,7 +1000,6 @@ with aba4:
     estilos_final += estilos_linha
     # 🔁 Renomeia coluna 'Grupo' apenas visualmente para 'Operação'
     df_exibir.columns = [col.replace("Grupo", "Operação") for col in df_exibir.columns]
-    
     # 📊 Exibe resultado final
     st.dataframe(
         aplicar_estilo_final(df_exibir, estilos_final),
