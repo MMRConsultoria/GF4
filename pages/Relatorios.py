@@ -1050,8 +1050,8 @@ with aba4:
     border_grossa = Border(left=thick, right=thick, top=thick, bottom=thick)
     
     # Dados
-    for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=2):
-        estilo_linha = estilos_final[row_idx - 2]  # -2 porque o cabeçalho está na linha 1
+    for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=3):
+        estilo_linha = estilos_final[row_idx - 3]  # -3 porque agora cabeçalho está na linha 2
     
         # ✅ Detecta se a linha é SUBTOTAL ou TOTAL
         grupo = row.get("Grupo", "")
