@@ -907,7 +907,7 @@ with aba4:
         if col == "Grupo":
             linha_desejavel_dict[col] = ""
         elif col == "Loja":
-            linha_desejavel_dict[col] = f"FATURAMENTO DESEJÁVEL ATÉ {data_fim_dt.strftime('%d/%m')}"
+            linha_desejavel_dict[col] = f"FATURAMENTO IDEAL ATÉ {data_fim_dt.strftime('%d/%m')}"
         elif col == "%Atingido":
             linha_desejavel_dict[col] = formatar(perc_desejavel, "%Atingido")
         elif col == col_acumulado:
