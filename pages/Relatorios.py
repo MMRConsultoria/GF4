@@ -1019,12 +1019,20 @@ with aba4:
     
     # Cabeçalho com azul escuro
     # === Linha "Faturamento Desejável" na LINHA 1 ===
+    # --- Linha FATURAMENTO DESEJÁVEL na linha 1 ---
     for col_idx, valor in enumerate(linha_desejavel.iloc[0], start=1):
         cell = ws.cell(row=1, column=col_idx, value=valor)
         cell.fill = PatternFill("solid", fgColor="DDDDDD")  # cinza claro
         cell.font = Font(bold=True)
         cell.alignment = Alignment(horizontal="left" if col_idx == 2 else "right")
-        cell.border = border_grossa
+    
+        # 🔁 Aplica borda apenas nas laterais (remove linhas internas)
+        if col_idx == 1:
+            cell.border = Border(left=Side(style="thin"))
+        elif col_idx == len(linha_desejavel.columns):
+            cell.border = Border(right=Side(style="thin"))
+        else:
+            cell.border = Border()  # sem borda
     
     # === Cabeçalho na LINHA 2 ===
     for col_idx, col in enumerate(df_exibir.columns, start=1):
