@@ -1018,20 +1018,26 @@ with aba4:
     )
     
     # Cabeçalho com azul escuro
-    # Cabeçalho estilizado
+    # === Linha "Faturamento Desejável" na LINHA 1 ===
+    for col_idx, valor in enumerate(linha_desejavel.iloc[0], start=1):
+        cell = ws.cell(row=1, column=col_idx, value=valor)
+        cell.fill = PatternFill("solid", fgColor="DDDDDD")  # cinza claro
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal="left" if col_idx == 2 else "right")
+        cell.border = border_grossa
+    
+    # === Cabeçalho na LINHA 2 ===
     for col_idx, col in enumerate(df_exibir.columns, start=1):
-        cell = ws.cell(row=1, column=col_idx, value=col)
+        cell = ws.cell(row=2, column=col_idx, value=col)
         cell.fill = PatternFill("solid", fgColor="1F4E78")  # azul escuro
         cell.font = Font(bold=True, color="FFFFFF")         # texto branco
         cell.alignment = Alignment(horizontal="center", vertical="center")
-        cell.border = Border(
-            left=Side(style="medium"),
-            right=Side(style="medium"),
-            top=Side(style="medium"),
-            bottom=Side(style="medium")
-        )
+        cell.border = border_grossa
     
-    ws.row_dimensions[1].height = 30
+    # Ajuste de altura das linhas
+    ws.row_dimensions[1].height = 25
+    ws.row_dimensions[2].height = 30
+
     
     # Preenche os dados na planilha
     # Dentro do loop de preenchimento de dados
