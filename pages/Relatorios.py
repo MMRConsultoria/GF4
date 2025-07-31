@@ -942,10 +942,17 @@ with aba4:
     df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
     df_exibir = pd.concat([linha_desejavel, df_linhas_visiveis], ignore_index=True)
     
-    # 🎨 Define função de estilo
+    # 🎨 Define função de estilo com alinhamento
     def aplicar_estilo_final(df, estilos_linha):
         def apply_row_style(row):
             base_style = estilos_linha[row.name].copy()
+    
+            for idx, col in enumerate(df.columns):
+                if col in ["Grupo", "Loja"]:
+                    base_style[idx] += "; text-align: left"
+                else:
+                    base_style[idx] += "; text-align: center"
+    
             if "%Atingido" in df.columns and row.name > 0:
                 try:
                     valor = row["%Atingido"]
@@ -961,9 +968,11 @@ with aba4:
                             base_style[idx] += "; color: red; font-weight: bold"
                 except:
                     pass
-            return base_style
-        return df.style.apply(apply_row_style, axis=1)
     
+            return base_style
+    
+        return df.style.apply(apply_row_style, axis=1)
+
     # 🎨 Estilo visual por linha
     cores_alternadas = ["#eef4fa", "#f5fbf3"]
     estilos_linha = []
