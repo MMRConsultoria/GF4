@@ -603,8 +603,8 @@ with aba4:
     colunas_opcionais = {
         "🎯 Meta da Loja": "Meta",
         "📊 % Atingido": "%Atingido",
-        "🏬 % Loja X Grupo": "%LojaXGrupo",
-        "🧮 % Grupo no Total": "%Grupo"
+        "🏬 % Loja X Operação": "%LojaXGrupo",
+        "🧮 % Operação no Total": "%Grupo"
     }
     
     opcoes_selecionadas = st.multiselect(
@@ -982,6 +982,8 @@ with aba4:
     # ➕ Linha desejável no topo
     estilos_final = [["background-color: #dddddd; font-weight: bold"] * len(df_linhas_visiveis.columns)]
     estilos_final += estilos_linha
+    # 🔁 Renomeia coluna 'Grupo' apenas visualmente para 'Operação'
+    df_exibir.columns = [col.replace("Grupo", "Operação") for col in df_exibir.columns]
     
     # 📊 Exibe resultado final
     st.dataframe(
