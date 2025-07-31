@@ -1109,8 +1109,13 @@ with aba4:
                 cell.font = Font(bold=True)
     
             # Alinhamento
-            cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
-    
+            #cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
+            # Alinhamento formatado
+            if col in ["Grupo", "Loja"]:
+                cell.alignment = Alignment(horizontal="left", vertical="center")
+            else:
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+                
             # 📌 Bordas especiais:
             if is_desejavel:
                 # Apenas bordas esquerda e direita
