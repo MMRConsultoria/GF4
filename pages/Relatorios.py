@@ -1083,7 +1083,7 @@ with aba4:
     for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=3):
         estilo_linha = estilos_final[row_idx - 3]
         is_desejavel = (row_idx == 3)
-    
+
         grupo = row.get("Grupo", "")
         grupo_str = str(grupo).strip().upper()
         is_resumo_tipo = grupo_str in grupos_resumo_tipo
@@ -1161,11 +1161,11 @@ with aba4:
 
     
         # ✅ Detecta se a linha é SUBTOTAL ou TOTAL
-        grupo = row.get("Grupo", "")
-        is_subtotal = isinstance(grupo, str) and grupo.startswith("SUBTOTAL")
-        is_total = grupo == "TOTAL"
-        is_resumo_tipo = grupo in df_resumo_tipo["Grupo"].values
-        usar_borda_grossa = is_subtotal or is_total
+        #grupo = row.get("Grupo", "")
+        #is_subtotal = isinstance(grupo, str) and grupo.startswith("SUBTOTAL")
+        #is_total = grupo == "TOTAL"
+        #is_resumo_tipo = grupo in df_resumo_tipo["Grupo"].values
+        #usar_borda_grossa = is_subtotal or is_total
 
 
 
