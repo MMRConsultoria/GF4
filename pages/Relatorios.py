@@ -1161,11 +1161,11 @@ with aba4:
 
     
         # ✅ Detecta se a linha é SUBTOTAL ou TOTAL
-        #grupo = row.get("Grupo", "")
-        #is_subtotal = isinstance(grupo, str) and grupo.startswith("SUBTOTAL")
-        #is_total = grupo == "TOTAL"
-        #is_resumo_tipo = grupo in df_resumo_tipo["Grupo"].values
-        #usar_borda_grossa = is_subtotal or is_total
+        grupo = row.get("Grupo", "")
+        is_subtotal = isinstance(grupo, str) and grupo.startswith("SUBTOTAL")
+        is_total = grupo == "TOTAL"
+        is_resumo_tipo = grupo in df_resumo_tipo["Grupo"].values
+        usar_borda_grossa = is_subtotal or is_total
 
 
 
