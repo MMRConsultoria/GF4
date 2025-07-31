@@ -1157,8 +1157,12 @@ with aba4:
         grupo = row.get("Grupo", "")
         is_subtotal = isinstance(grupo, str) and grupo.startswith("SUBTOTAL")
         is_total = grupo == "TOTAL"
+        is_resumo_tipo = grupo in df_resumo_tipo["Grupo"].values
         usar_borda_grossa = is_subtotal or is_total
-    
+
+
+
+        
         for col_idx, (col, valor) in enumerate(row.items(), start=1):
             # Aplica valor e formatação numérica
             if isinstance(valor, str) and "%" in valor:
@@ -1179,8 +1183,10 @@ with aba4:
                 cell = ws.cell(row=row_idx, column=col_idx, value=valor)
     
             # Estilo de fundo
-            estilo = estilo_linha[col_idx - 1]
-            if "background-color" in estilo:
+            # Estilo de fundo
+            if is_resumo_tipo:
+                cell.fill = PatternFill("solid", fgColor="FFF2CC")  # bege claro uniforme
+            elif "background-color" in estilo:
                 cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
                 cell.fill = PatternFill("solid", fgColor=cor)
     
