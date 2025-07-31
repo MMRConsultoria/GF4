@@ -1104,13 +1104,20 @@ with aba4:
             grupo = row.get("Grupo", "").strip().upper()
             is_resumo_tipo = grupo in df_resumo_tipo["Grupo"].str.upper().str.strip().values
             
-            # Estilo de fundo
+            # Estilo individual da célula
+            estilo = estilo_linha[col_idx - 1]
+            
+            # Detecta linha de resumo por Tipo
+            grupo = row.get("Grupo", "")
+            grupo_str = str(grupo).strip().upper()
+            is_resumo_tipo = grupo_str in df_resumo_tipo["Grupo"].astype(str).str.strip().str.upper().values
+            
+            # Aplica cor de fundo
             if is_resumo_tipo:
                 cell.fill = PatternFill("solid", fgColor="FFF2CC")  # bege claro
             elif "background-color" in estilo:
                 cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
                 cell.fill = PatternFill("solid", fgColor=cor)
-
     
             # Negrito
             if "font-weight: bold" in estilo:
