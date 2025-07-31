@@ -1074,14 +1074,22 @@ with aba4:
     border_padrao = Border(left=thin, right=thin, top=thin, bottom=thin)
     border_grossa = Border(left=thick, right=thick, top=thick, bottom=thick)
     
-    # Dados
+    # ===================
+    # Dados no Excel
+    # ===================
+    # Lista de grupos de resumo por tipo (padronizados)
+    grupos_resumo_tipo = df_resumo_tipo["Grupo"].astype(str).str.strip().str.upper().tolist()
+    
     for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=3):
         estilo_linha = estilos_final[row_idx - 3]
+        is_desejavel = (row_idx == 3)
     
-        is_desejavel = (row_idx == 3)  # linha 1 do df_exibir, que será linha 3 do Excel
+        grupo = row.get("Grupo", "")
+        grupo_str = str(grupo).strip().upper()
+        is_resumo_tipo = grupo_str in grupos_resumo_tipo
     
         for col_idx, (col, valor) in enumerate(row.items(), start=1):
-            # Aplica valor e formatação numérica (igual ao seu código atual)
+            # Define valor e formato
             if isinstance(valor, str) and "%" in valor:
                 try:
                     valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
@@ -1099,20 +1107,10 @@ with aba4:
             else:
                 cell = ws.cell(row=row_idx, column=col_idx, value=valor)
     
-            # Estilo de fundo
-            # Detecta linha de resumo por Tipo
-            grupo = row.get("Grupo", "").strip().upper()
-            is_resumo_tipo = grupo in df_resumo_tipo["Grupo"].str.upper().str.strip().values
-            
             # Estilo individual da célula
             estilo = estilo_linha[col_idx - 1]
-            
-            # Detecta linha de resumo por Tipo
-            grupo = row.get("Grupo", "")
-            grupo_str = str(grupo).strip().upper()
-            is_resumo_tipo = grupo_str in df_resumo_tipo["Grupo"].astype(str).str.strip().str.upper().values
-            
-            # Aplica cor de fundo
+    
+            # Cor de fundo
             if is_resumo_tipo:
                 cell.fill = PatternFill("solid", fgColor="FFF2CC")  # bege claro
             elif "background-color" in estilo:
@@ -1126,29 +1124,24 @@ with aba4:
             # Alinhamento
             cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
     
-            # 📌 Bordas especiais:
+            # Bordas
             if is_desejavel:
-                # Apenas bordas esquerda e direita
-                borda_lateral = Border(
+                cell.border = Border(
                     left=Side(style="thin"),
                     right=Side(style="thin"),
                     top=Side(style=None),
                     bottom=Side(style=None)
                 )
-                cell.border = borda_lateral
             else:
-                # Lógica padrão (subtotal, total, ou linha comum)
-                grupo = row.get("Grupo", "")
                 is_subtotal = isinstance(grupo, str) and grupo.startswith("SUBTOTAL")
                 is_total = grupo == "TOTAL"
                 usar_borda_grossa = is_subtotal or is_total
                 if row_idx == 3:
-                # Linha de Faturamento Desejável: sem borda
                     cell.border = Border(left=None, right=None, top=None, bottom=None)
                 else:
                     cell.border = border_grossa if usar_borda_grossa else border_padrao
     
-            # Cor verde/vermelha no %Atingido
+            # Cor condicional para %Atingido
             if col == "%Atingido":
                 try:
                     if isinstance(valor, str) and "%" in valor:
@@ -1177,60 +1170,7 @@ with aba4:
 
 
         
-        for col_idx, (col, valor) in enumerate(row.items(), start=1):
-            # Aplica valor e formatação numérica
-            if isinstance(valor, str) and "%" in valor:
-                try:
-                    valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
-                    cell = ws.cell(row=row_idx, column=col_idx, value=valor_float)
-                    cell.number_format = '0.00%'
-                except:
-                    cell = ws.cell(row=row_idx, column=col_idx, value=valor)
-            elif isinstance(valor, str) and "R$" in valor:
-                try:
-                    valor_float = float(valor.replace("R$", "").replace(".", "").replace(",", "."))
-                    cell = ws.cell(row=row_idx, column=col_idx, value=valor_float)
-                    cell.number_format = 'R$ #,##0.00'
-                except:
-                    cell = ws.cell(row=row_idx, column=col_idx, value=valor)
-            else:
-                cell = ws.cell(row=row_idx, column=col_idx, value=valor)
-    
-            # Estilo de fundo
-            # Estilo de fundo
-            if is_resumo_tipo:
-                cell.fill = PatternFill("solid", fgColor="FFF2CC")  # bege claro uniforme
-            elif "background-color" in estilo:
-                cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
-                cell.fill = PatternFill("solid", fgColor=cor)
-    
-            # Estilo de negrito
-            if "font-weight: bold" in estilo:
-                cell.font = Font(bold=True)
-    
-            # Alinhamento
-            cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
-    
-            # ✅ Borda (grossa se subtotal ou total)
-            cell.border = border_grossa if usar_borda_grossa else border_padrao
-    
-            # ✅ Cor verde/vermelha no %Atingido
-            if col == "%Atingido":
-                try:
-                    if isinstance(valor, str) and "%" in valor:
-                        valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
-                    elif isinstance(valor, (int, float)):
-                        valor_float = float(valor)
-                    else:
-                        valor_float = None
-    
-                    if valor_float is not None:
-                        if valor_float >= perc_desejavel:
-                            cell.font = Font(color="006400", bold=True)  # Verde escuro
-                        else:
-                            cell.font = Font(color="B22222", bold=True)  # Vermelho escuro
-                except:
-                    pass
+        
     
     
     # ⬇️ Ajusta automaticamente a largura das colunas
