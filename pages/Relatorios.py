@@ -940,7 +940,8 @@ with aba4:
     
     # 🔁 Junta tudo para exibir
     df_linhas_visiveis = pd.concat([df_resumo_tipo_formatado, df_formatado], ignore_index=True)
-    df_exibir = pd.concat([linha_desejavel, df_linhas_visiveis], ignore_index=True)
+    #df_exibir = pd.concat([linha_desejavel, df_linhas_visiveis], ignore_index=True)
+    df_exibir = df_linhas_visiveis.copy()
     
     # 🎨 Define função de estilo
     def aplicar_estilo_final(df, estilos_linha):
