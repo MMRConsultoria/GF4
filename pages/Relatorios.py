@@ -1002,11 +1002,44 @@ with aba4:
     df_exibir.columns = [col.replace("Grupo", "Operação") for col in df_exibir.columns]
     
     # 📊 Exibe resultado final
-    st.dataframe(
-        aplicar_estilo_final(df_exibir, estilos_final),
-        use_container_width=True,
-        height=750
+    # Aplica estilo final
+    df_styled = aplicar_estilo_final(df_exibir, estilos_final)
+    
+    # Converte o DataFrame estilizado em HTML com bordas
+    html_styled = df_styled.to_html(escape=False)
+    
+    # Exibe com st.markdown garantindo centralização dos números
+    st.markdown(
+        f"""
+        <div style="overflow-x: auto; max-height: 750px;">
+            <style>
+                table {{
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-family: Arial, sans-serif;
+                }}
+                th, td {{
+                    border: 1px solid #ccc;
+                    padding: 8px;
+                }}
+                th {{
+                    background-color: #1F4E78;
+                    color: white;
+                    text-align: center;
+                }}
+                td {{
+                    text-align: center;
+                }}
+                td:nth-child(1), td:nth-child(2) {{
+                    text-align: left !important;
+                }}
+            </style>
+            {html_styled}
+        </div>
+        """,
+        unsafe_allow_html=True
     )
+
     import openpyxl
     from openpyxl.styles import PatternFill, Font, Alignment
     from io import BytesIO
