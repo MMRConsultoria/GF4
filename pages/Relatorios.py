@@ -832,14 +832,26 @@ with aba4:
     # Soma total da meta do mês filtrado
     total_meta_mes = df_metas_filtrado["Meta"].sum()
     
+    # Renomeia colunas para exibição final
+    df_final = df_final.rename(columns={
+        "Grupo": "Operação",
+        "%LojaXGrupo": "%LojaXOperação",
+        "%Grupo": "%Operação"
+    })
+    
+    # Atualiza lista de percentuais para refletir os novos nomes
+    colunas_percentuais = ["%LojaXOperação", "%Operação", "%Atingido"]
+    
+    # Formata visualmente
     df_formatado = df_final.copy()
     for col in colunas_visiveis:
         if col in colunas_percentuais:
             df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
-        elif col not in ["Grupo", "Loja", "Tipo"]:
+        elif col not in ["Operação", "Loja", "Tipo"]:
             df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
         else:
             df_formatado[col] = df_formatado[col].fillna("")  # 👈 tipo e loja não numéricos
+
     
     # ================================
     # ➕ Linhas de resumo por Tipo
@@ -881,8 +893,10 @@ with aba4:
         if col not in ["Grupo", "Loja"]:
             df_resumo_tipo_formatado[col] = df_resumo_tipo[col].apply(lambda x: formatar(x, col))
     
-    
-    
+    # Renomeia coluna "Grupo" para "Operação" nas linhas de resumo e desejável
+    df_resumo_tipo_formatado = df_resumo_tipo_formatado.rename(columns={"Grupo": "Operação"})
+    linha_desejavel = linha_desejavel.rename(columns={"Grupo": "Operação"})
+        
     
     
     
