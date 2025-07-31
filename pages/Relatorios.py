@@ -603,8 +603,8 @@ with aba4:
     colunas_opcionais = {
         "🎯 Meta da Loja": "Meta",
         "📊 % Atingido": "%Atingido",
-        "🏬 % Loja X Grupo": "%LojaXGrupo",
-        "🧮 % Grupo no Total": "%Grupo"
+        "🏬 % Loja X Grupo": "%LojaXOperação",
+        "🧮 % Grupo no Total": "%Operação"
     }
     
     opcoes_selecionadas = st.multiselect(
