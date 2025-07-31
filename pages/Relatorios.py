@@ -603,8 +603,8 @@ with aba4:
     colunas_opcionais = {
         "🎯 Meta da Loja": "Meta",
         "📊 % Atingido": "%Atingido",
-        "🏬 % Loja X Operação": "%LojaXGrupo",
-        "🧮 % Operação no Total": "%Grupo"
+        "🏬 % Loja X Grupo": "%LojaXGrupo",
+        "🧮 % Grupo no Total": "%Grupo"
     }
     
     opcoes_selecionadas = st.multiselect(
@@ -816,7 +816,6 @@ with aba4:
     # Oculta coluna %LojaXGrupo se for modo Grupo
     # Define colunas com base no filtro "Meta" ou "Sem Meta"
     colunas_visiveis = ["Grupo", "Loja", "Tipo"] + col_diarias + [col_acumulado] + colunas_escolhidas
-    colunas_visiveis = [col.replace("Grupo", "Operação") for col in colunas_visiveis]
     if "Tipo" in colunas_visiveis:
         colunas_visiveis.remove("Tipo")
     df_final = df_final[colunas_visiveis]
@@ -833,26 +832,14 @@ with aba4:
     # Soma total da meta do mês filtrado
     total_meta_mes = df_metas_filtrado["Meta"].sum()
     
-    # Renomeia colunas para exibição final
-    df_final = df_final.rename(columns={
-        "Grupo": "Operação",
-        "%LojaXGrupo": "%LojaXOperação",
-        "%Grupo": "%Operação"
-    })
-    
-    # Atualiza lista de percentuais para refletir os novos nomes
-    colunas_percentuais = ["%LojaXOperação", "%Operação", "%Atingido"]
-    
-    # Formata visualmente
     df_formatado = df_final.copy()
     for col in colunas_visiveis:
         if col in colunas_percentuais:
             df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
-        elif col not in ["Operação", "Loja", "Tipo"]:
+        elif col not in ["Grupo", "Loja", "Tipo"]:
             df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
         else:
             df_formatado[col] = df_formatado[col].fillna("")  # 👈 tipo e loja não numéricos
-
     
     # ================================
     # ➕ Linhas de resumo por Tipo
@@ -894,10 +881,8 @@ with aba4:
         if col not in ["Grupo", "Loja"]:
             df_resumo_tipo_formatado[col] = df_resumo_tipo[col].apply(lambda x: formatar(x, col))
     
-    # Renomeia coluna "Grupo" para "Operação" nas linhas de resumo e desejável
-    df_resumo_tipo_formatado = df_resumo_tipo_formatado.rename(columns={"Grupo": "Operação"})
-    linha_desejavel = linha_desejavel.rename(columns={"Grupo": "Operação"})
-        
+    
+    
     
     
     
@@ -922,7 +907,7 @@ with aba4:
         if col == "Grupo":
             linha_desejavel_dict[col] = ""
         elif col == "Loja":
-            linha_desejavel_dict[col] = f"FATURAMENTO IDEAL ATÉ {data_fim_dt.strftime('%d/%m')}"
+            linha_desejavel_dict[col] = f"FATURAMENTO DESEJÁVEL ATÉ {data_fim_dt.strftime('%d/%m')}"
         elif col == "%Atingido":
             linha_desejavel_dict[col] = formatar(perc_desejavel, "%Atingido")
         elif col == col_acumulado:
