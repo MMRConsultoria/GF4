@@ -1051,7 +1051,78 @@ with aba4:
     
     # Dados
     for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=3):
-        estilo_linha = estilos_final[row_idx - 3]  # -3 porque agora cabeçalho está na linha 2
+        estilo_linha = estilos_final[row_idx - 3]
+    
+        is_desejavel = (row_idx == 3)  # linha 1 do df_exibir, que será linha 3 do Excel
+    
+        for col_idx, (col, valor) in enumerate(row.items(), start=1):
+            # Aplica valor e formatação numérica (igual ao seu código atual)
+            if isinstance(valor, str) and "%" in valor:
+                try:
+                    valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
+                    cell = ws.cell(row=row_idx, column=col_idx, value=valor_float)
+                    cell.number_format = '0.00%'
+                except:
+                    cell = ws.cell(row=row_idx, column=col_idx, value=valor)
+            elif isinstance(valor, str) and "R$" in valor:
+                try:
+                    valor_float = float(valor.replace("R$", "").replace(".", "").replace(",", "."))
+                    cell = ws.cell(row=row_idx, column=col_idx, value=valor_float)
+                    cell.number_format = 'R$ #,##0.00'
+                except:
+                    cell = ws.cell(row=row_idx, column=col_idx, value=valor)
+            else:
+                cell = ws.cell(row=row_idx, column=col_idx, value=valor)
+    
+            # Estilo de fundo
+            estilo = estilo_linha[col_idx - 1]
+            if "background-color" in estilo:
+                cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
+                cell.fill = PatternFill("solid", fgColor=cor)
+    
+            # Negrito
+            if "font-weight: bold" in estilo:
+                cell.font = Font(bold=True)
+    
+            # Alinhamento
+            cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
+    
+            # 📌 Bordas especiais:
+            if is_desejavel:
+                # Apenas bordas esquerda e direita
+                borda_lateral = Border(
+                    left=Side(style="thin"),
+                    right=Side(style="thin"),
+                    top=Side(style=None),
+                    bottom=Side(style=None)
+                )
+                cell.border = borda_lateral
+            else:
+                # Lógica padrão (subtotal, total, ou linha comum)
+                grupo = row.get("Grupo", "")
+                is_subtotal = isinstance(grupo, str) and grupo.startswith("SUBTOTAL")
+                is_total = grupo == "TOTAL"
+                usar_borda_grossa = is_subtotal or is_total
+                cell.border = border_grossa if usar_borda_grossa else border_padrao
+    
+            # Cor verde/vermelha no %Atingido
+            if col == "%Atingido":
+                try:
+                    if isinstance(valor, str) and "%" in valor:
+                        valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
+                    elif isinstance(valor, (int, float)):
+                        valor_float = float(valor)
+                    else:
+                        valor_float = None
+    
+                    if valor_float is not None:
+                        if valor_float >= perc_desejavel:
+                            cell.font = Font(color="006400", bold=True)  # Verde escuro
+                        else:
+                            cell.font = Font(color="B22222", bold=True)  # Vermelho escuro
+                except:
+                    pass
+
     
         # ✅ Detecta se a linha é SUBTOTAL ou TOTAL
         grupo = row.get("Grupo", "")
