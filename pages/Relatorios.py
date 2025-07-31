@@ -816,6 +816,7 @@ with aba4:
     # Oculta coluna %LojaXGrupo se for modo Grupo
     # Define colunas com base no filtro "Meta" ou "Sem Meta"
     colunas_visiveis = ["Grupo", "Loja", "Tipo"] + col_diarias + [col_acumulado] + colunas_escolhidas
+    colunas_visiveis = [col.replace("Grupo", "Operação") for col in colunas_visiveis]
     if "Tipo" in colunas_visiveis:
         colunas_visiveis.remove("Tipo")
     df_final = df_final[colunas_visiveis]
