@@ -867,7 +867,27 @@ with aba4:
             linha[col] = df_tipo_filtro[col].sum()
     
         linha[col_acumulado] = df_tipo_filtro[col_acumulado].sum()
-    
+
+                # Meta total por tipo
+        linha["Meta"] = df_tipo_filtro["Meta"].sum()
+
+        # % Atingido
+        linha["%Atingido"] = (
+            linha[col_acumulado] / linha["Meta"]
+            if linha["Meta"] != 0 else 0
+        )
+
+        # %LojaXGrupo → dentro do tipo, participação de cada loja será a própria soma (100%)
+        linha["%LojaXGrupo"] = 1.0  # 100%
+
+        # %Grupo no total
+        soma_total_geral = df_base_tipo[col_acumulado].sum()
+        linha["%Grupo"] = (
+            linha[col_acumulado] / soma_total_geral
+            if soma_total_geral != 0 else 0
+        )
+
+        
         
     
         linhas_resumo_tipo.append(linha)
