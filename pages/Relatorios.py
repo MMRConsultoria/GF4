@@ -726,7 +726,7 @@ with aba4:
     
     # 🧱 Agrupa por grupo
     # 🧱 Agrupa por grupo e define o Tipo do grupo
-    ordem_tipos = ["Airports", "Airports - Kopp", "On-Premise"]
+    ordem_tipos = ["Airports", "Kopp", "On-Premise"]
     ordem_tipo_dict = {tipo: i for i, tipo in enumerate(ordem_tipos)}
     
     grupos_info = []
