@@ -775,7 +775,10 @@ with aba4:
     
     # 🔚 Junta tudo
     # 🔚 Junta tudo: TOTAL + Subtotais por Tipo + Blocos detalhados
-   
+    linha_total_df = pd.DataFrame([linha_total], columns=colunas_visiveis)
+    subtotais_tipo_df = pd.DataFrame(subtotais_tipo, columns=colunas_visiveis)
+
+    df_final = pd.concat([linha_total_df, subtotais_tipo_df] + blocos, ignore_index=True)
     # ➕ Subtotais por Tipo
     subtotais_tipo = []
     tipos_unicos = df_base["Tipo"].dropna().unique()
@@ -816,10 +819,7 @@ with aba4:
 
 
 
-    linha_total_df = pd.DataFrame([linha_total], columns=colunas_visiveis)
-    subtotais_tipo_df = pd.DataFrame(subtotais_tipo, columns=colunas_visiveis)
-
-    df_final = pd.concat([linha_total_df, subtotais_tipo_df] + blocos, ignore_index=True)
+    
 
     # Junta os subtotais de Tipo ao final
     if subtotais_tipo:
