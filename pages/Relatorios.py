@@ -1031,7 +1031,7 @@ with aba4:
         top=Side(style="medium"),
         bottom=Side(style="medium"),
     )
-    print(f"{row_idx=} | {grupo=}") 
+    
     # Cabeçalho com azul escuro
     # === Linha "Faturamento Desejável" na LINHA 1 ===
     # --- Linha FATURAMENTO DESEJÁVEL na linha 1 ---
@@ -1081,6 +1081,7 @@ with aba4:
         estilo_linha = estilos_final[row_idx - 3]
     
         grupo = row.get("Grupo", "")
+        print(f"{row_idx=} | {grupo=}") 
         grupo_str = str(grupo).strip().upper()  # garante consistência
         is_subtotal = grupo_str.startswith("SUBTOTAL")
         is_total = grupo_str == "TOTAL"
