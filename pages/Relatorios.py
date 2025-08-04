@@ -1126,7 +1126,14 @@ with aba4:
                 cell.font = Font(bold=True)
     
             # 📏 Alinhamento
-            cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
+            # Detecta a posição da coluna 'Loja'
+            pos_coluna_loja = list(df_exibir.columns).index("Loja")
+            
+            # Define alinhamento: esquerda até 'Loja', centralizado depois
+            if col_idx - 1 <= pos_coluna_loja:
+                cell.alignment = Alignment(horizontal="left")
+            else:
+                cell.alignment = Alignment(horizontal="center")
     
             # 🧱 Bordas
             if row_idx == 3:  # Linha Faturamento Ideal Desejável
