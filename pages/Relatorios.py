@@ -548,7 +548,6 @@ with aba4:
     df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
     df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
     df_empresa["Grupo"] = df_empresa["Grupo"].str.strip()
-    df_empresa["PDV"] = pd.to_numeric(df_empresa["PDV"], errors="coerce").fillna(0).astype(int)
     df_vendas.columns = df_vendas.columns.str.strip()
     df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], dayfirst=True, errors="coerce")
     df_vendas["Loja"] = df_vendas["Loja"].astype(str).str.strip().str.upper()
@@ -1009,6 +1008,7 @@ with aba4:
         use_container_width=True,
         height=750
     )
+    st.write("📌 Colunas do df_exibir:", df_exibir.columns.tolist())
     import openpyxl
     from openpyxl.styles import PatternFill, Font, Alignment
     from io import BytesIO
