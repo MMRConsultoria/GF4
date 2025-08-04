@@ -776,6 +776,35 @@ with aba4:
     # 🔚 Junta tudo
     linha_total = pd.DataFrame([linha_total], columns=colunas_visiveis)
     df_final = pd.concat([linha_total] + blocos, ignore_index=True)
+
+
+    # ➕ Subtotais por Tipo
+    subtotais_tipo = []
+    tipos_unicos = df_base["Tipo"].dropna().unique()
+    
+    for tipo in tipos_unicos:
+        df_tipo = df_base[df_base["Tipo"] == tipo]
+        if df_tipo.empty:
+            continue
+    
+        linha_subtipo = df_tipo.drop(columns=["Grupo", "Loja", "Tipo"], errors="ignore").sum(numeric_only=True)
+        linha_subtipo["Grupo"] = f"SUBTOTAL {tipo}"
+        linha_subtipo["PDV"] = int(df_tipo["PDV"].fillna(0).sum())
+        linha_subtipo["Loja"] = f"Lojas: {df_tipo['Loja'].nunique():02d}"
+        linha_subtipo["Tipo"] = tipo
+    
+        # Garante todas as colunas
+        for col in colunas_visiveis:
+            if col not in linha_subtipo:
+                linha_subtipo[col] = np.nan
+        linha_subtipo = linha_subtipo[colunas_visiveis]
+    
+        subtotais_tipo.append(linha_subtipo)
+    
+    # Junta os subtotais de Tipo ao final
+    if subtotais_tipo:
+        df_final = pd.concat([df_final] + [pd.DataFrame(subtotais_tipo)], ignore_index=True)
+
     
     #st.write("🔍 Diagnóstico: Linhas de loja sem Tipo", df_final[(df_final["Tipo"].isna()) & (~df_final["Loja"].str.startswith("Lojas:"))])
     # Percentuais
