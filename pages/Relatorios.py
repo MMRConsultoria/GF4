@@ -1008,7 +1008,7 @@ with aba4:
         use_container_width=True,
         height=750
     )
-    st.write("📌 Colunas do df_exibir:", df_exibir.columns.tolist())
+    
     import openpyxl
     from openpyxl.styles import PatternFill, Font, Alignment
     from io import BytesIO
@@ -1075,7 +1075,9 @@ with aba4:
     border_padrao = Border(left=thin, right=thin, top=thin, bottom=thin)
     border_grossa = Border(left=thick, right=thick, top=thick, bottom=thick)
 
-    
+    if "PDV" in df_exibir.columns:
+        df_exibir["PDV"] = pd.to_numeric(df_exibir["PDV"], errors="coerce").fillna(0).astype(int)
+
     
     # Dados
     # Detecta total de linhas que serão preenchidas
