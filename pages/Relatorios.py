@@ -1150,6 +1150,9 @@ with aba4:
                 except:
                     pass
 
+
+        df_exibir = df_exibir[df_exibir["Loja"] != "FATURAMENTO IDEAL"].copy()
+        
     
         # ✅ Detecta se a linha é SUBTOTAL ou TOTAL
         grupo = row.get("Grupo", "")
