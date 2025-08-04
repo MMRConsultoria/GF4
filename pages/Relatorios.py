@@ -1081,7 +1081,7 @@ with aba4:
         estilo_linha = estilos_final[row_idx - 3]
     
         grupo = row.get("Grupo", "")
-        print(f"{row_idx=} | {grupo=}") 
+        st.write(f"🔎 Linha {row_idx}: Grupo = {grupo!r}")
         grupo_str = str(grupo).strip().upper()  # garante consistência
         is_subtotal = grupo_str.startswith("SUBTOTAL")
         is_total = grupo_str == "TOTAL"
