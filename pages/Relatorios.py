@@ -1238,8 +1238,12 @@ with aba4:
         adjusted_width = max_length + 2  # margem extra
         col_letter = get_column_letter(col_idx)
         ws.column_dimensions[col_letter].width = adjusted_width
-    # Remove linha duplicada "FATURAMENTO IDEAL ATÉ XX/XX" (dentro de df_exibir, não cabeçalho)
-    df_exibir = df_exibir[~df_exibir["Loja"].str.startswith("FATURAMENTO IDEAL ATÉ", na=False)].copy()
+    # 🔥 Exclui a linha duplicada "FATURAMENTO IDEAL ATÉ..." da planilha final
+    for row in ws.iter_rows(min_row=3, max_row=ws.max_row):  # pula cabeçalhos
+        cell_val = row[1].value  # coluna B → índice 1
+        if isinstance(cell_val, str) and cell_val.startswith("FATURAMENTO IDEAL ATÉ"):
+            ws.delete_rows(row[0].row, 1)
+            break  # remove apenas a primeira ocorrência
 
     
     # Salva em memória
