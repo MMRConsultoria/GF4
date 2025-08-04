@@ -1098,7 +1098,12 @@ with aba4:
                     cell = ws.cell(row=row_idx, column=col_idx, value=valor)
             else:
                 cell = ws.cell(row=row_idx, column=col_idx, value=valor)
-    
+
+
+            # Detecta se é subtotal ou total
+            grupo = row.get("Grupo", "")
+            is_subtotal = isinstance(grupo, str) and grupo.startswith("SUBTOTAL")
+            is_total = grupo == "TOTAL"
             # Estilo de fundo
             estilo = estilo_linha[col_idx - 1]
             if is_total:
