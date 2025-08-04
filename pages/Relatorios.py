@@ -720,8 +720,8 @@ with aba4:
     
     # 🔢 Linha total
     linha_total = df_base.drop(columns=["Grupo", "PDV", "Loja", "Tipo"], errors="ignore").sum(numeric_only=True)
+    linha_total["PDV"] = int(df_base["PDV"].fillna(0).sum())
     linha_total["Grupo"] = "TOTAL"
-    linha_total["PDV"] = int(df_base["PDV"].sum())# não faz sentido somar PDV
     linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
     linha_total["Tipo"] = ""
     
