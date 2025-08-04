@@ -1112,9 +1112,9 @@ with aba4:
                 cor_personalizada = "F4B183"  # Laranja escuro p/ TOTAL
             elif is_subtotal:
                 cor_personalizada = "FCE4D6"  # Laranja claro p/ SUBTOTAL
-            elif "background-color" in estilo:
+            elif "background-color" in estilo and not (is_total or is_subtotal):
                 cor_personalizada = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
-            
+
             if cor_personalizada:
                 cell.fill = PatternFill("solid", fgColor=cor_personalizada)
                 
