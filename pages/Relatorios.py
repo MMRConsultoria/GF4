@@ -719,9 +719,9 @@ with aba4:
     colunas_visiveis = colunas_finais.copy()
     
     # 🔢 Linha total
-    linha_total = df_base.drop(columns=["Grupo", "PDV", "Loja", "Tipo"], errors="ignore").sum(numeric_only=True)
-    linha_total["PDV"] = int(df_base["PDV"].fillna(0).sum())
+    linha_total = df_base.drop(columns=["Grupo", "PDV", "Loja", "Tipo"]).sum(numeric_only=True)
     linha_total["Grupo"] = "TOTAL"
+    linha_total["PDV"] = ""  # não faz sentido somar PDV
     linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
     linha_total["Tipo"] = ""
     
@@ -753,78 +753,28 @@ with aba4:
         # Subtotal
         tipo_valor = tipo_dominante
     
-        linha_subtotal = df_grp.drop(columns=["Grupo", "PDV", "Loja"], errors="ignore").sum(numeric_only=True)
-        linha_subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
-        linha_subtotal["PDV"] = int(df_grp["PDV"].sum())
-        linha_subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
-        linha_subtotal["Tipo"] = tipo_dominante
-        
+        subtotal = df_grp_ord.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
+        subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
+        subtotal["PDV"] = ""  # não faz sentido somar PDV
+        subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
+        subtotal["Tipo"] = tipo_valor
+    
         # ✅ Garante todas as colunas
         for col in colunas_visiveis:
-            if col not in linha_subtotal:
-                linha_subtotal[col] = np.nan
-        linha_subtotal = linha_subtotal[colunas_visiveis]
-        
+            if col not in subtotal:
+                subtotal[col] = np.nan
+        subtotal = subtotal[colunas_visiveis]
+    
         # 🟦 Lojas
         if modo_exibicao == "Loja":
             blocos.append(df_grp_ord[colunas_visiveis])
-        
+    
         # 🟨 Subtotal
-        blocos.append(pd.DataFrame([linha_subtotal], columns=colunas_visiveis))
-
+        blocos.append(pd.DataFrame([subtotal], columns=colunas_visiveis))
     
     # 🔚 Junta tudo
-    # 🔚 Junta tudo: TOTAL + Subtotais por Tipo + Blocos detalhados
-    linha_total_df = pd.DataFrame([linha_total], columns=colunas_visiveis)
-    subtotais_tipo_df = pd.DataFrame(subtotais_tipo, columns=colunas_visiveis)
-
-    df_final = pd.concat([linha_total_df, subtotais_tipo_df] + blocos, ignore_index=True)
-    # ➕ Subtotais por Tipo
-    subtotais_tipo = []
-    tipos_unicos = df_base["Tipo"].dropna().unique()
-    
-    for tipo in tipos_unicos:
-        df_tipo = df_base[df_base["Tipo"] == tipo]
-        if df_tipo.empty:
-            continue
-    
-        linha_subtipo = df_tipo.drop(columns=["Grupo", "Loja", "Tipo"], errors="ignore").sum(numeric_only=True)
-        linha_subtipo["Grupo"] = f"SUBTOTAL {tipo.upper()}"
-        linha_subtipo["Tipo"] = tipo
-        
-        # Soma PDV apenas se a coluna existir
-        if "PDV" in df_tipo.columns:
-            linha_subtipo["PDV"] = int(df_tipo["PDV"].fillna(0).sum())
-        else:
-            linha_subtipo["PDV"] = ""
-        
-        # Loja (resumo)
-        linha_subtipo["Loja"] = f"Lojas: {df_tipo['Loja'].nunique():02d}"
-        
-        # Percentuais calculados manualmente se quiser preencher também:
-        if col_acumulado in df_tipo.columns and "Meta" in df_tipo.columns:
-            meta = df_tipo["Meta"].sum()
-            realizado = df_tipo[col_acumulado].sum()
-            atingido = realizado / meta if meta else 0
-            linha_subtipo["%Atingido"] = round(atingido, 4)
-
-    
-        # Garante todas as colunas
-        for col in colunas_visiveis:
-            if col not in linha_subtipo:
-                linha_subtipo[col] = np.nan
-        linha_subtipo = linha_subtipo[colunas_visiveis]
-    
-        subtotais_tipo.append(linha_subtipo)
-
-
-
-    
-
-    # Junta os subtotais de Tipo ao final
-    if subtotais_tipo:
-        df_final = pd.concat([df_final] + [pd.DataFrame(subtotais_tipo)], ignore_index=True)
-
+    linha_total = pd.DataFrame([linha_total], columns=colunas_visiveis)
+    df_final = pd.concat([linha_total] + blocos, ignore_index=True)
     
     #st.write("🔍 Diagnóstico: Linhas de loja sem Tipo", df_final[(df_final["Tipo"].isna()) & (~df_final["Loja"].str.startswith("Lojas:"))])
     # Percentuais
@@ -888,13 +838,11 @@ with aba4:
     for col in colunas_visiveis:
         if col in colunas_percentuais:
             df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
-        elif col == "PDV":
-            df_formatado[col] = df_formatado[col].apply(lambda x: str(int(x)) if pd.notna(x) and x != "" else "")
-        elif col not in ["Grupo", "Loja", "Tipo"]:
+        elif col not in ["Grupo", "Loja", "Tipo", "PDV"]:
             df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
         else:
-            df_formatado[col] = df_formatado[col].fillna("")
-           
+            df_formatado[col] = df_formatado[col].fillna("")  # 👈 tipo e loja não numéricos
+    
     # ================================
     # ➕ Linhas de resumo por Tipo
     # ================================
@@ -1880,3 +1828,4 @@ with aba5:
             st.warning("📌 em desenvolvimento")
     except Exception as e:
         st.error(f"❌ Erro ao acessar dados: {e}")
+
