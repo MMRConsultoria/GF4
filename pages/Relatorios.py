@@ -1077,10 +1077,7 @@ with aba4:
 
     if "PDV" in df_exibir.columns:
         df_exibir["PDV"] = pd.to_numeric(df_exibir["PDV"], errors="coerce").fillna(0).astype(int)
-    st.dataframe(df_exibir.style.format({
-        "PDV": "{:,.0f}".format  # inteiro sem casas decimais nem símbolo
-    }))
-
+    
     
     # Dados
     # Detecta total de linhas que serão preenchidas
