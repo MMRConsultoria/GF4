@@ -682,7 +682,7 @@ with aba4:
     # Adiciona coluna Tipo (vindo de Tabela Empresa)
     # Merge da coluna Tipo
     df_base = df_base.merge(
-        df_empresa[["Loja", "Tipo"]].drop_duplicates(), 
+        df_empresa[["Loja", "Tipo","PDV"]].drop_duplicates(), 
         on="Loja", 
         how="left", 
         validate="many_to_one"
@@ -697,7 +697,7 @@ with aba4:
     df_base["%Atingido"] = df_base["%Atingido"].replace([np.inf, -np.inf], np.nan).fillna(0).round(4)
     
     # Reordena colunas
-    colunas_base = ["Grupo", "Loja", "Tipo"]
+    colunas_base = ["Grupo", "PDV", "Loja", "Tipo"]
     from datetime import datetime
     
     col_diarias = [
@@ -719,8 +719,9 @@ with aba4:
     colunas_visiveis = colunas_finais.copy()
     
     # 🔢 Linha total
-    linha_total = df_base.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
+    linha_total = df_base.drop(columns=["Grupo", "PDV", "Loja", "Tipo"]).sum(numeric_only=True)
     linha_total["Grupo"] = "TOTAL"
+    linha_total["PDV"] = ""  # não faz sentido somar PDV
     linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
     linha_total["Tipo"] = ""
     
@@ -754,6 +755,7 @@ with aba4:
     
         subtotal = df_grp_ord.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
         subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
+        subtotal["PDV"] = ""  # não faz sentido somar PDV
         subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
         subtotal["Tipo"] = tipo_valor
     
@@ -815,7 +817,7 @@ with aba4:
     
     # Oculta coluna %LojaXGrupo se for modo Grupo
     # Define colunas com base no filtro "Meta" ou "Sem Meta"
-    colunas_visiveis = ["Grupo", "Loja", "Tipo"] + col_diarias + [col_acumulado] + colunas_escolhidas
+    colunas_visiveis = ["Grupo", "PDV", "Loja", "Tipo"] + col_diarias + [col_acumulado] + colunas_escolhidas
     if "Tipo" in colunas_visiveis:
         colunas_visiveis.remove("Tipo")
     df_final = df_final[colunas_visiveis]
