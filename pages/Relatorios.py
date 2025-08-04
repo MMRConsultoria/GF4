@@ -1072,7 +1072,8 @@ with aba4:
     border_padrao = Border(left=thin, right=thin, top=thin, bottom=thin)
     border_grossa = Border(left=thick, right=thick, top=thick, bottom=thick)
 
-    df_exibir = df_exibir[df_exibir["Loja"] != "FATURAMENTO IDEAL"].copy()
+    # Remove linha duplicada "FATURAMENTO IDEAL ATÉ XX/XX" (dentro de df_exibir, não cabeçalho)
+    df_exibir = df_exibir[~df_exibir["Loja"].str.startswith("FATURAMENTO IDEAL ATÉ", na=False)].copy()
     
     # Dados
     for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=3):
