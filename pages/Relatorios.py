@@ -1080,7 +1080,7 @@ with aba4:
     for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=3):
         estilo_linha = estilos_final[row_idx - 3]
     
-        grupo = row.get("Grupo", "")
+        grupo = row.get("Operação", "")
         st.write(f"Linha {row_idx}", row.to_dict())
         grupo_str = str(grupo).strip().upper()  # garante consistência
         is_subtotal = grupo_str.startswith("SUBTOTAL")
