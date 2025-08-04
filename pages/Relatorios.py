@@ -817,8 +817,8 @@ with aba4:
         subtotais_tipo.append(linha_subtipo)
     
     # Junta os subtotais de Tipo ao final
-    if subtotais_tipo:
-        df_final = pd.concat([df_final] + [pd.DataFrame(subtotais_tipo)], ignore_index=True)
+    # 🔚 Junta tudo corretamente (TOTAL + Subtipo + blocos de loja)
+    df_final = pd.concat([linha_total] + subtotais_tipo + blocos, ignore_index=True)
 
     
     #st.write("🔍 Diagnóstico: Linhas de loja sem Tipo", df_final[(df_final["Tipo"].isna()) & (~df_final["Loja"].str.startswith("Lojas:"))])
