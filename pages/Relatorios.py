@@ -1081,7 +1081,6 @@ with aba4:
         estilo_linha = estilos_final[row_idx - 3]
     
         grupo = row.get("Operação", "")
-        st.write(f"Linha {row_idx}", row.to_dict())
         grupo_str = str(grupo).strip().upper()  # garante consistência
         is_subtotal = grupo_str.startswith("SUBTOTAL")
         is_total = grupo_str == "TOTAL"
