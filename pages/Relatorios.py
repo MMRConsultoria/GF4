@@ -1072,8 +1072,7 @@ with aba4:
     border_padrao = Border(left=thin, right=thin, top=thin, bottom=thin)
     border_grossa = Border(left=thick, right=thick, top=thick, bottom=thick)
 
-    # Remove linha duplicada "FATURAMENTO IDEAL ATÉ XX/XX" (dentro de df_exibir, não cabeçalho)
-    df_exibir = df_exibir[~df_exibir["Loja"].str.startswith("FATURAMENTO IDEAL ATÉ", na=False)].copy()
+    
     
     # Dados
     for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=3):
@@ -1154,7 +1153,7 @@ with aba4:
                     pass
 
 
-        df_exibir = df_exibir[df_exibir["Loja"] != "FATURAMENTO IDEAL"].copy()
+    
         
     
         # ✅ Detecta se a linha é SUBTOTAL ou TOTAL
@@ -1239,6 +1238,9 @@ with aba4:
         adjusted_width = max_length + 2  # margem extra
         col_letter = get_column_letter(col_idx)
         ws.column_dimensions[col_letter].width = adjusted_width
+    # Remove linha duplicada "FATURAMENTO IDEAL ATÉ XX/XX" (dentro de df_exibir, não cabeçalho)
+    df_exibir = df_exibir[~df_exibir["Loja"].str.startswith("FATURAMENTO IDEAL ATÉ", na=False)].copy()
+
     
     # Salva em memória
     buffer = BytesIO()
