@@ -788,7 +788,7 @@ with aba4:
             continue
     
         linha_subtipo = df_tipo.drop(columns=["Grupo", "Loja", "Tipo"], errors="ignore").sum(numeric_only=True)
-        linha_subtipo["Grupo"] = f"SUBTOTAL {tipo}"
+        linha_subtipo["Grupo"] = f"SUBTOTAL {tipo.upper()}"  # usado no estilo do Excel
         linha_subtipo["PDV"] = int(df_tipo["PDV"].fillna(0).sum())
         linha_subtipo["Loja"] = f"Lojas: {df_tipo['Loja'].nunique():02d}"
         linha_subtipo["Tipo"] = tipo
