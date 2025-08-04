@@ -1081,8 +1081,9 @@ with aba4:
         estilo_linha = estilos_final[row_idx - 3]
     
         grupo = row.get("Grupo", "")
-        is_subtotal = isinstance(grupo, str) and grupo.startswith("SUBTOTAL")
-        is_total = grupo == "TOTAL"
+        grupo_str = str(grupo).strip().upper()  # garante consistência
+        is_subtotal = grupo_str.startswith("SUBTOTAL")
+        is_total = grupo_str == "TOTAL"
         usar_borda_grossa = is_subtotal or is_total
     
         for col_idx, (col, valor) in enumerate(row.items(), start=1):
@@ -1105,6 +1106,7 @@ with aba4:
                 cell = ws.cell(row=row_idx, column=col_idx, value=valor)
     
            # 🎨 Estilo de fundo com prioridade ao TOTAL e SUBTOTAL
+           # 🎨 Estilo de fundo com prioridade ao TOTAL e SUBTOTAL
             estilo = estilo_linha[col_idx - 1]
             cor_personalizada = None
             
@@ -1112,11 +1114,12 @@ with aba4:
                 cor_personalizada = "F4B183"  # Laranja escuro p/ TOTAL
             elif is_subtotal:
                 cor_personalizada = "FCE4D6"  # Laranja claro p/ SUBTOTAL
-            elif "background-color" in estilo and not (is_total or is_subtotal):
+            elif "background-color" in estilo:
                 cor_personalizada = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
-
+            
             if cor_personalizada:
                 cell.fill = PatternFill("solid", fgColor=cor_personalizada)
+
                 
             # 🅱️ Negrito
             if "font-weight: bold" in estilo:
