@@ -1104,16 +1104,20 @@ with aba4:
             else:
                 cell = ws.cell(row=row_idx, column=col_idx, value=valor)
     
-            # 🎨 Estilo de fundo
+           # 🎨 Estilo de fundo com prioridade ao TOTAL e SUBTOTAL
             estilo = estilo_linha[col_idx - 1]
+            cor_personalizada = None
+            
             if is_total:
-                cell.fill = PatternFill("solid", fgColor="F4B183")  # Laranja escuro p/ TOTAL
+                cor_personalizada = "F4B183"  # Laranja escuro p/ TOTAL
             elif is_subtotal:
-                cell.fill = PatternFill("solid", fgColor="FCE4D6")  # Laranja claro p/ SUBTOTAL
+                cor_personalizada = "FCE4D6"  # Laranja claro p/ SUBTOTAL
             elif "background-color" in estilo:
-                cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
-                cell.fill = PatternFill("solid", fgColor=cor)
-    
+                cor_personalizada = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
+            
+            if cor_personalizada:
+                cell.fill = PatternFill("solid", fgColor=cor_personalizada)
+                
             # 🅱️ Negrito
             if "font-weight: bold" in estilo:
                 cell.font = Font(bold=True)
