@@ -788,10 +788,25 @@ with aba4:
             continue
     
         linha_subtipo = df_tipo.drop(columns=["Grupo", "Loja", "Tipo"], errors="ignore").sum(numeric_only=True)
-        linha_subtipo["Grupo"] = f"SUBTOTAL {tipo.upper()}"  # usado no estilo do Excel
-        linha_subtipo["PDV"] = int(df_tipo["PDV"].fillna(0).sum())
-        linha_subtipo["Loja"] = f"Lojas: {df_tipo['Loja'].nunique():02d}"
+        linha_subtipo["Grupo"] = f"SUBTOTAL {tipo.upper()}"
         linha_subtipo["Tipo"] = tipo
+        
+        # Soma PDV apenas se a coluna existir
+        if "PDV" in df_tipo.columns:
+            linha_subtipo["PDV"] = int(df_tipo["PDV"].fillna(0).sum())
+        else:
+            linha_subtipo["PDV"] = ""
+        
+        # Loja (resumo)
+        linha_subtipo["Loja"] = f"Lojas: {df_tipo['Loja'].nunique():02d}"
+        
+        # Percentuais calculados manualmente se quiser preencher também:
+        if col_acumulado in df_tipo.columns and "Meta" in df_tipo.columns:
+            meta = df_tipo["Meta"].sum()
+            realizado = df_tipo[col_acumulado].sum()
+            atingido = realizado / meta if meta else 0
+            linha_subtipo["%Atingido"] = round(atingido, 4)
+
     
         # Garante todas as colunas
         for col in colunas_visiveis:
