@@ -758,19 +758,20 @@ with aba4:
         linha_subtotal["PDV"] = df_grp["PDV"].sum()
         linha_subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
         linha_subtotal["Tipo"] = tipo_dominante
-            
+        
         # ✅ Garante todas as colunas
         for col in colunas_visiveis:
-            if col not in subtotal:
-                subtotal[col] = np.nan
-        subtotal = subtotal[colunas_visiveis]
-    
+            if col not in linha_subtotal:
+                linha_subtotal[col] = np.nan
+        linha_subtotal = linha_subtotal[colunas_visiveis]
+        
         # 🟦 Lojas
         if modo_exibicao == "Loja":
             blocos.append(df_grp_ord[colunas_visiveis])
-    
+        
         # 🟨 Subtotal
-        blocos.append(pd.DataFrame([subtotal], columns=colunas_visiveis))
+        blocos.append(pd.DataFrame([linha_subtotal], columns=colunas_visiveis))
+
     
     # 🔚 Junta tudo
     linha_total = pd.DataFrame([linha_total], columns=colunas_visiveis)
