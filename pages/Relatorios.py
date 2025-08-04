@@ -1089,16 +1089,16 @@ with aba4:
         usar_borda_grossa = is_subtotal or is_total
     
         for col_idx, (col, valor) in enumerate(row.items(), start=1):
-            # 🛠️ Primeiro: trata a coluna "PDV" como inteiro, mesmo que venha como string
-            if col == "PDV":
+
+            # 🎯 Trate "PDV" como número inteiro SEMPRE, com prioridade total
+            if col.strip().upper() == "PDV":
                 try:
-                    valor_int = int(valor)
+                    valor_int = int(str(valor).strip().replace(".0", ""))
                     cell = ws.cell(row=row_idx, column=col_idx, value=valor_int)
-                    cell.number_format = '#,##0'
+                    cell.number_format = '0'  # inteiro puro
                 except:
                     cell = ws.cell(row=row_idx, column=col_idx, value=valor)
         
-            # 🎯 Depois: verifica se é valor percentual
             elif isinstance(valor, str) and "%" in valor:
                 try:
                     valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
@@ -1107,7 +1107,6 @@ with aba4:
                 except:
                     cell = ws.cell(row=row_idx, column=col_idx, value=valor)
         
-            # 💰 Depois: verifica se é valor em reais
             elif isinstance(valor, str) and "R$" in valor:
                 try:
                     valor_float = float(valor.replace("R$", "").replace(".", "").replace(",", "."))
@@ -1116,9 +1115,9 @@ with aba4:
                 except:
                     cell = ws.cell(row=row_idx, column=col_idx, value=valor)
         
-            # 🔚 Por fim: qualquer outro tipo de valor
             else:
                 cell = ws.cell(row=row_idx, column=col_idx, value=valor)
+
 
     
            # 🎨 Estilo de fundo com prioridade ao TOTAL e SUBTOTAL
