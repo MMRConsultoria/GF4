@@ -721,7 +721,7 @@ with aba4:
     # 🔢 Linha total
     linha_total = df_base.drop(columns=["Grupo", "Loja", "Tipo"], errors="ignore").sum(numeric_only=True)
     linha_total["Grupo"] = "TOTAL"
-    linha_total["PDV"] = df_base["PDV"].sum()# não faz sentido somar PDV
+    linha_total["PDV"] = int(df_base["PDV"].sum())# não faz sentido somar PDV
     linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
     linha_total["Tipo"] = ""
     
@@ -755,7 +755,7 @@ with aba4:
     
         linha_subtotal = df_grp.drop(columns=["Grupo", "Loja"], errors="ignore").sum(numeric_only=True)
         linha_subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
-        linha_subtotal["PDV"] = df_grp["PDV"].sum()
+        linha_subtotal["PDV"] = int(df_grp["PDV"].sum())
         linha_subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
         linha_subtotal["Tipo"] = tipo_dominante
         
