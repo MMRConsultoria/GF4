@@ -721,7 +721,7 @@ with aba4:
     # 🔢 Linha total
     linha_total = df_base.drop(columns=["Grupo", "PDV", "Loja", "Tipo"]).sum(numeric_only=True)
     linha_total["Grupo"] = "TOTAL"
-    linha_total["PDV"] = df_base["PDV"].sum()  # não faz sentido somar PDV
+    linha_total["PDV"] = ""  # não faz sentido somar PDV
     linha_total["Loja"] = f"Lojas: {df_base['Loja'].nunique():02d}"
     linha_total["Tipo"] = ""
     
@@ -755,7 +755,7 @@ with aba4:
     
         subtotal = df_grp_ord.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
         subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
-        linha_subtotal["PDV"] = df_grupo["PDV"].sum()  # não faz sentido somar PDV
+        subtotal["PDV"] = ""  # não faz sentido somar PDV
         subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
         subtotal["Tipo"] = tipo_valor
     
@@ -1828,4 +1828,5 @@ with aba5:
             st.warning("📌 em desenvolvimento")
     except Exception as e:
         st.error(f"❌ Erro ao acessar dados: {e}")
+
 
