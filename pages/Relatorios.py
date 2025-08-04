@@ -1101,7 +1101,11 @@ with aba4:
     
             # Estilo de fundo
             estilo = estilo_linha[col_idx - 1]
-            if "background-color" in estilo:
+            if is_total:
+                cell.fill = PatternFill("solid", fgColor="F4B183")  # Laranja escuro para TOTAL
+            elif is_subtotal:
+                cell.fill = PatternFill("solid", fgColor="FCE4D6")  # (mantém como está)
+            elif "background-color" in estilo:
                 cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
                 cell.fill = PatternFill("solid", fgColor=cor)
     
