@@ -1071,6 +1071,8 @@ with aba4:
     thick = Side(border_style="medium", color="000000")
     border_padrao = Border(left=thin, right=thin, top=thin, bottom=thin)
     border_grossa = Border(left=thick, right=thick, top=thick, bottom=thick)
+
+    df_exibir = df_exibir[df_exibir["Loja"] != "FATURAMENTO IDEAL"].copy()
     
     # Dados
     for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=3):
