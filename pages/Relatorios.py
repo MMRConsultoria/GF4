@@ -839,11 +839,13 @@ with aba4:
     for col in colunas_visiveis:
         if col in colunas_percentuais:
             df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
-        elif col not in ["Grupo", "Loja", "Tipo", "PDV"]:
+        elif col == "PDV":
+            df_formatado[col] = df_formatado[col].apply(lambda x: str(int(x)) if pd.notna(x) and x != "" else "")
+        elif col not in ["Grupo", "Loja", "Tipo"]:
             df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x, col))
         else:
-            df_formatado[col] = df_formatado[col].fillna("")  # 👈 tipo e loja não numéricos
-    
+            df_formatado[col] = df_formatado[col].fillna("")
+           
     # ================================
     # ➕ Linhas de resumo por Tipo
     # ================================
