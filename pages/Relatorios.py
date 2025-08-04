@@ -753,12 +753,12 @@ with aba4:
         # Subtotal
         tipo_valor = tipo_dominante
     
-        linha_subtotal = df_grupo.drop(columns=["Grupo", "Loja"], errors="ignore").sum(numeric_only=True)
-        subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
-        linha_subtotal["PDV"] = df_grupo["PDV"].sum()  # não faz sentido somar PDV
-        subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
-        subtotal["Tipo"] = tipo_valor
-    
+        linha_subtotal = df_grp.drop(columns=["Grupo", "Loja"], errors="ignore").sum(numeric_only=True)
+        linha_subtotal["Grupo"] = f"{'SUBTOTAL ' if modo_exibicao == 'Loja' else ''}{grupo}"
+        linha_subtotal["PDV"] = df_grp["PDV"].sum()
+        linha_subtotal["Loja"] = f"Lojas: {df_grp_ord['Loja'].nunique():02d}"
+        linha_subtotal["Tipo"] = tipo_dominante
+            
         # ✅ Garante todas as colunas
         for col in colunas_visiveis:
             if col not in subtotal:
