@@ -1075,13 +1075,18 @@ with aba4:
     
     
     # Dados
+    # Detecta total de linhas que serão preenchidas
     for row_idx, (i, row) in enumerate(df_exibir.iterrows(), start=3):
         estilo_linha = estilos_final[row_idx - 3]
     
-        is_desejavel = (row_idx == 3)  # linha 1 do df_exibir, que será linha 3 do Excel
+        # Identifica tipo de linha
+        grupo = row.get("Grupo", "")
+        is_subtotal = isinstance(grupo, str) and grupo.startswith("SUBTOTAL")
+        is_total = grupo == "TOTAL"
+        usar_borda_grossa = is_subtotal or is_total
     
         for col_idx, (col, valor) in enumerate(row.items(), start=1):
-            # Aplica valor e formatação numérica (igual ao seu código atual)
+            # Aplica valor e formatação numérica
             if isinstance(valor, str) and "%" in valor:
                 try:
                     valor_float = float(valor.replace("%", "").replace(",", ".")) / 100
@@ -1098,50 +1103,29 @@ with aba4:
                     cell = ws.cell(row=row_idx, column=col_idx, value=valor)
             else:
                 cell = ws.cell(row=row_idx, column=col_idx, value=valor)
-
-
-            # Detecta se é subtotal ou total
-            grupo = row.get("Grupo", "")
-            is_subtotal = isinstance(grupo, str) and grupo.startswith("SUBTOTAL")
-            is_total = grupo == "TOTAL"
+    
             # Estilo de fundo
             estilo = estilo_linha[col_idx - 1]
             if is_total:
-                cell.fill = PatternFill("solid", fgColor="F4B183")  # Laranja escuro para TOTAL
+                cell.fill = PatternFill("solid", fgColor="F4B183")  # Laranja escuro p/ TOTAL
             elif is_subtotal:
-                cell.fill = PatternFill("solid", fgColor="FCE4D6")  # (mantém como está)
+                cell.fill = PatternFill("solid", fgColor="FCE4D6")  # Laranja claro p/ SUBTOTAL
             elif "background-color" in estilo:
                 cor = estilo.split("background-color: ")[1].split(";")[0].replace("#", "")
                 cell.fill = PatternFill("solid", fgColor=cor)
     
-            # Negrito
+            # Estilo de negrito
             if "font-weight: bold" in estilo:
                 cell.font = Font(bold=True)
     
             # Alinhamento
             cell.alignment = Alignment(horizontal="left" if col in ["Grupo", "Loja"] else "right")
     
-            # 📌 Bordas especiais:
-            if is_desejavel:
-                # Apenas bordas esquerda e direita
-                borda_lateral = Border(
-                    left=Side(style="thin"),
-                    right=Side(style="thin"),
-                    top=Side(style=None),
-                    bottom=Side(style=None)
-                )
-                cell.border = borda_lateral
+            # Bordas
+            if row_idx == 3:  # Primeira linha de dados (Faturamento Ideal Desejável)
+                cell.border = Border(left=Side(style="thin"), right=Side(style="thin"))
             else:
-                # Lógica padrão (subtotal, total, ou linha comum)
-                grupo = row.get("Grupo", "")
-                is_subtotal = isinstance(grupo, str) and grupo.startswith("SUBTOTAL")
-                is_total = grupo == "TOTAL"
-                usar_borda_grossa = is_subtotal or is_total
-                if row_idx == 3:
-                # Linha de Faturamento Desejável: sem borda
-                    cell.border = Border(left=None, right=None, top=None, bottom=None)
-                else:
-                    cell.border = border_grossa if usar_borda_grossa else border_padrao
+                cell.border = border_grossa if usar_borda_grossa else border_padrao
     
             # Cor verde/vermelha no %Atingido
             if col == "%Atingido":
