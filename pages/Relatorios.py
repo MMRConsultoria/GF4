@@ -1031,7 +1031,7 @@ with aba4:
         top=Side(style="medium"),
         bottom=Side(style="medium"),
     )
-    
+    print(f"{row_idx=} | {grupo=}") 
     # Cabeçalho com azul escuro
     # === Linha "Faturamento Desejável" na LINHA 1 ===
     # --- Linha FATURAMENTO DESEJÁVEL na linha 1 ---
