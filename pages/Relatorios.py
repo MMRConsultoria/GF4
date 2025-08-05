@@ -901,13 +901,13 @@ with aba4:
     #        df_resumo_tipo_formatado[col] = df_resumo_tipo[col].apply(lambda x: formatar(x, col))
 
     for col in df_resumo_tipo.columns:
-    if col not in ["Grupo", "Loja"]:
-        if col == "PDV":
-            # Mantém como inteiro (sem R$)
-            df_resumo_tipo_formatado[col] = df_resumo_tipo[col].astype(int).astype(str)
-        else:
-            df_resumo_tipo_formatado[col] = df_resumo_tipo[col].apply(lambda x: formatar(x, col))
-    
+        if col not in ["Grupo", "Loja"]:
+            if col == "PDV":
+                # Mantém como inteiro (sem R$)
+                df_resumo_tipo_formatado[col] = df_resumo_tipo[col].astype(int).astype(str)
+            else:
+                df_resumo_tipo_formatado[col] = df_resumo_tipo[col].apply(lambda x: formatar(x, col))
+        
     
     
     
