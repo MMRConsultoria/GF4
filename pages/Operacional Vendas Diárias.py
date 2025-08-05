@@ -304,25 +304,7 @@ with aba3:
     #st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
 
     if 'df_final' in st.session_state:
-        df_final = st.session_state.df_final.copy()
-    
-        # 🚨 Verifica duplicidade por Data + Loja (independente da coluna M)
-        df_duplicados_data_loja = df_final[df_final.duplicated(subset=["Data", "Loja"], keep=False)]
-    
-        if not df_duplicados_data_loja.empty:
-            st.error("⚠️ Atenção! Foram encontrados lançamentos duplicados por **Data + Loja**.")
-            st.dataframe(df_duplicados_data_loja)
-    
-            # Botão para o usuário confirmar que quer continuar
-            if 'confirmar_duplicados_data_loja' not in st.session_state:
-                st.session_state.confirmar_duplicados_data_loja = False
-    
-            if not st.session_state.confirmar_duplicados_data_loja:
-                if st.button("✅ Confirmar e continuar mesmo assim"):
-                    st.session_state.confirmar_duplicados_data_loja = True
-                else:
-                    st.stop()  # Interrompe o processo até o usuário confirmar
-
+    df_final = st.session_state.df_final.copy()
 
         
 
