@@ -1221,7 +1221,7 @@ with aba4:
         ws.column_dimensions[col_letter].width = adjusted_width
     # 🔥 Exclui a linha duplicada "FATURAMENTO IDEAL ATÉ..." da planilha final
     for row in ws.iter_rows(min_row=3, max_row=ws.max_row):  # pula cabeçalhos
-        cell_val = row[1].value  # coluna B → índice 1
+        cell_val = row[2].value  # coluna B → índice 1
         if isinstance(cell_val, str) and cell_val.startswith("FATURAMENTO IDEAL ATÉ"):
             ws.delete_rows(row[0].row, 1)
             break  # remove apenas a primeira ocorrência
