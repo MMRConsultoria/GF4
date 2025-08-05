@@ -328,10 +328,12 @@ with aba3:
         # Não converter para string, apenas utilizar "M" para verificação de duplicação
         df_final['M'] = df_final['M'].apply(str)
 
+
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
         df_final = df_final.applymap(str)
         
-
+        # 🔁 Cria a coluna N com Data + Código Everest
+        df_final["N"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y").dt.strftime("%Y-%m-%d") + df_final["Código Everest"].astype(str)        
       
 
         #TIRAR ASPAS DOS VALORES, DATA E NUMEROS
@@ -392,12 +394,25 @@ with aba3:
         
         # Verificar duplicação somente na coluna "M"
         for linha in rows:
-            chave_m = linha[-1]  # A chave da coluna M (última coluna)
+            chave_m = linha[-2]  # A chave da coluna M (penultima coluna)
             if chave_m not in dados_existentes:
                 novos_dados.append(linha)
                 dados_existentes.add(chave_m)  # Adiciona a chave da linha para não enviar novamente
             else:
                 duplicados.append(linha)  # Adiciona a linha duplicada à lista
+        # 🔍 Validação da coluna N (Data + Código Everest)
+        valores_existentes_n = [linha[13] for linha in valores_existentes[1:] if len(linha) > 13]  # Coluna N = índice 13
+        conjunto_n_existente = set(valores_existentes_n)
+        novas_chaves_n = df_final["N"].tolist()
+        chaves_duplicadas_n = [n for n in novas_chaves_n if n in conjunto_n_existente]
+        
+        # Se encontrar duplicatas na N, pede confirmação do usuário
+        if chaves_duplicadas_n:
+            st.warning(f"⚠️ Encontramos {len(chaves_duplicadas_n)} possível(eis) duplicidade(s) na coluna N (Data + Código Everest).")
+            prosseguir = st.checkbox("✅ Deseja continuar mesmo assim?", value=False)
+            if not prosseguir:
+                st.stop()
+
 
         # Adicionar o botão de atualização do Google Sheets
         if todas_lojas_ok and st.button("📥 Enviar dados para o Google Sheets"):
