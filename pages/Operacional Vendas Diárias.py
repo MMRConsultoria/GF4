@@ -386,8 +386,18 @@ with aba3:
             else:
                 duplicados.append(linha)
 
+        # ⚠️ Alerta de duplicidade na coluna M
+        if duplicados:
+            qtd_descartados = len(duplicados)
+            st.warning(f"🚫 {qtd_descartados} registro(s) foram **descartados** por já existirem na base (duplicidade pela coluna **M**: Data + Fat.Total + Loja).")
+
+            df_duplicados_m = pd.DataFrame(duplicados, columns=df_final.columns)
+            df_duplicados_m['Data_Formatada'] = pd.to_datetime(df_duplicados_m['Data'], origin='1899-12-30', unit='D')
+
+            st.dataframe(df_duplicados_m[["Data_Formatada", "Loja", "Fat.Total", "M"]])
+
         # ========================
-        # ⚠️ Verificação pela coluna N (apenas nos novos dados)
+        # ⚠️ Verificação pela coluna N (somente entre os válidos da M)
         # ========================
         if novos_dados:
             df_envio = pd.DataFrame(novos_dados, columns=df_final.columns)
@@ -427,13 +437,11 @@ with aba3:
                         format_cell_range(aba_destino, f"F2:F{primeira_linha_vazia + len(novos_dados)}", numero_format)
 
                         st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
-
-                    if duplicados:
-                        st.warning(f"⚠️ {len(duplicados)} registro(s) foram duplicados pela **coluna M** e não foram enviados.")
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
 
 
 
