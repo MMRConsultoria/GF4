@@ -418,7 +418,7 @@ with aba3:
                     dados_existentes_n.add(chave_n)
             except:
                 continue
-        
+        df_final["Data"] = pd.to_datetime(df_final["Data"], errors="coerce", dayfirst=True)
         # ✅ Certifica que df_final["N"] existe corretamente
         df_final["N"] = df_final["Data"].dt.strftime("%Y-%m-%d") + df_final["Código Everest"].astype(str).str.strip().replace("'", "").replace(" ", "")
         
