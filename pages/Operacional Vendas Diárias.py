@@ -406,10 +406,11 @@ with aba3:
         
         # 🔍 Verifica duplicidade na coluna N (Data + Código Everest)
         # 🔍 Verifica duplicidade na coluna N (Data + Código Everest)
+        # ✅ Verifica duplicidade na coluna N (Data + Código Everest)
         dados_existentes_n = set()
         for linha in valores_existentes[1:]:  # Ignora cabeçalho
             try:
-                if linha[0] and linha[3]:  # Coluna A (Data serial) e D (Código Everest)
+                if linha[0] and linha[3]:  # A: Data serial, D: Código Everest
                     data_excel = int(linha[0])
                     data_formatada = pd.to_datetime(data_excel, origin='1899-12-30', unit='D').strftime('%Y-%m-%d')
                     cod_everest = str(linha[3]).strip().replace("'", "").replace(" ", "")
@@ -418,32 +419,32 @@ with aba3:
             except:
                 continue
         
-        # Compara com o df_final["N"]
-        df_duplicados_n = df_final[df_final["N"].isin(dados_existentes_n)]
-        # Se houver duplicados na coluna N e o usuário ainda não confirmou, filtra os registros duplicados da lista de envio
-        if not df_duplicados_n.empty and not st.session_state.get("confirmar_envio_n", False):
-            # Constrói o conjunto de chaves N duplicadas
-            chaves_n_duplicadas = set(df_duplicados_n["N"].tolist())
+        # ✅ Certifica que df_final["N"] existe corretamente
+        df_final["N"] = df_final["Data"].dt.strftime("%Y-%m-%d") + df_final["Código Everest"].astype(str).str.strip().replace("'", "").replace(" ", "")
         
-            # Remove de 'novos_dados' as linhas que contêm chaves duplicadas da coluna N
-            # Remove de 'novos_dados' as linhas que contêm chaves duplicadas da coluna N
+        # ✅ Verifica duplicados da coluna N
+        df_duplicados_n = df_final[df_final["N"].isin(dados_existentes_n)]
+        
+        # Se houver duplicados e usuário ainda não confirmou, remove da lista de envio
+        if not df_duplicados_n.empty and not st.session_state.get("confirmar_envio_n", False):
+            chaves_n_duplicadas = set(df_duplicados_n["N"])
+        
+            # Filtra 'novos_dados' para excluir os duplicados N
             novos_dados_filtrados = []
             for linha in novos_dados:
-                data_excel = linha[0]
-                cod_everest = str(linha[3]).strip().replace("'", "").replace(" ", "")
                 try:
-                    data_formatada = pd.to_datetime(int(data_excel), origin='1899-12-30', unit='D').strftime('%Y-%m-%d')
+                    data_excel = int(linha[0])
+                    data_formatada = pd.to_datetime(data_excel, origin='1899-12-30', unit='D').strftime('%Y-%m-%d')
+                    cod_everest = str(linha[3]).strip().replace("'", "").replace(" ", "")
                     chave_n = data_formatada + cod_everest
+                    if chave_n not in chaves_n_duplicadas:
+                        novos_dados_filtrados.append(linha)
                 except:
-                    chave_n = ""
-                if chave_n not in chaves_n_duplicadas:
-                    novos_dados_filtrados.append(linha)
-    
-            # ✅ Atualiza a lista de envio
+                    novos_dados_filtrados.append(linha)  # Se der erro, mantém
+        
             novos_dados = novos_dados_filtrados
-
-        # 🛑 Se houver duplicidade na coluna N, exige confirmação
-        if not df_duplicados_n.empty and not st.session_state.get("confirmar_envio_n", False):
+        
+            # Alerta visual
             with st.expander("⚠️ Aviso: registros com a mesma Data + Código Everest (coluna N):"):
                 st.dataframe(df_duplicados_n)
         
@@ -451,6 +452,7 @@ with aba3:
                 st.session_state["confirmar_envio_n"] = True
             else:
                 st.stop()
+
         
         # Envio só acontece após confirmação (ou se não houver duplicados N)
         if todas_lojas_ok and (df_duplicados_n.empty or st.session_state.get("confirmar_envio_n", False)):
