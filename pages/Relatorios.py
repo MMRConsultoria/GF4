@@ -1047,7 +1047,7 @@ with aba4:
     # Cabeçalho com azul escuro
     # === Linha "Faturamento Desejável" na LINHA 1 ===
     # --- Linha FATURAMENTO DESEJÁVEL na linha 1 ---
-    for col_idx, valor in enumerate(linha_desejavel.iloc[0], start=1):
+    for col_idx, (col_nome, valor) in enumerate(linha_desejavel.iloc[0].items(), start=1):
         if col_nome.strip().upper() == "PDV":
             valor = ""  # ⛔ não exibe valor na linha Faturamento Ideal
         cell = ws.cell(row=1, column=col_idx, value=valor)
@@ -1062,6 +1062,7 @@ with aba4:
             cell.border = Border(right=Side(style="thin"))
         else:
             cell.border = Border()  # sem borda
+
     
     # === Cabeçalho na LINHA 2 ===
     for col_idx, col in enumerate(df_exibir.columns, start=1):
