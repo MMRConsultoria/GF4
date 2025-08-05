@@ -404,10 +404,11 @@ with aba3:
                 duplicados.append(linha)  # Adiciona a linha duplicada à lista
         
         # 🔍 Verifica duplicidade na coluna N (Data + Código Everest)
+        # 🔍 Verifica duplicidade na coluna N (Data + Código Everest)
         dados_existentes_n = set()
         for linha in valores_existentes[1:]:  # Ignora cabeçalho
             try:
-                if linha[0] and linha[3]:  # Coluna A (data serial) e D (Código Everest)
+                if linha[0] and linha[3]:  # Coluna A (Data serial) e D (Código Everest)
                     data_excel = int(linha[0])
                     data_formatada = pd.to_datetime(data_excel, origin='1899-12-30', unit='D').strftime('%Y-%m-%d')
                     cod_everest = str(linha[3]).strip().replace("'", "").replace(" ", "")
@@ -416,71 +417,48 @@ with aba3:
             except:
                 continue
         
-        # Compara com o df_final["N"] que já está criado
+        # Compara com o df_final["N"]
         df_duplicados_n = df_final[df_final["N"].isin(dados_existentes_n)]
         
-        # Se houver duplicidade na N, exibe o alerta e exige confirmação
-        if not df_duplicados_n.empty:
+        # 🛑 Se houver duplicidade na coluna N, exige confirmação
+        if not df_duplicados_n.empty and not st.session_state.get("confirmar_envio_n", False):
             with st.expander("⚠️ Aviso: registros com a mesma Data + Código Everest (coluna N):"):
                 st.dataframe(df_duplicados_n)
         
-            if not st.session_state.get("confirmar_envio_n", False):
-                if st.button("✅ Deseja continuar mesmo com duplicidade na coluna N?"):
-                    st.session_state["confirmar_envio_n"] = True
-                else:
-                    st.stop()
+            if st.button("✅ Deseja continuar mesmo com duplicidade na coluna N?"):
+                st.session_state["confirmar_envio_n"] = True
+            else:
+                st.stop()
         
-                    
-        # Adicionar o botão de atualização do Google Sheets
+        # ✅ Agora, com ou sem confirmação de N, faz o envio
         if todas_lojas_ok and (df_duplicados_n.empty or st.session_state.get("confirmar_envio_n", False)):
             if st.button("📥 Enviar dados para o Google Sheets"):
                 with st.spinner("🔄 Atualizando o Google Sheets..."):
                     try:
                         if novos_dados:
-                            # Manter a primeira linha vazia para começar a inserção
                             primeira_linha_vazia = len(valores_existentes) + 1
-                            
-                            # Enviar os novos dados para o Google Sheets
                             aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
-
-# ASPAS RESOLVIDO
-                        
-                            # 🔧 Aplicar formatação de data na coluna A (Data) - prbblema de aspas resolvido
+        
+                            # 🔧 Formatação pós-envio
                             from gspread_formatting import CellFormat, NumberFormat, format_cell_range
-    
-                            data_format = CellFormat(
-                                numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy')
-                            )
-    
-                            # 🔢 Formato para coluna Ano como número sem aspas
-                            numero_format = CellFormat(
-                            numberFormat=NumberFormat(type='NUMBER', pattern='0')
-                            )
-                          
-                            
-                            # Considerando que a coluna A é onde está a data
+        
+                            data_format = CellFormat(numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy'))
+                            numero_format = CellFormat(numberFormat=NumberFormat(type='NUMBER', pattern='0'))
+        
                             format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(novos_dados)}", data_format)
-                            format_cell_range(aba_destino, f"L2:L{primeira_linha_vazia + len(novos_dados)}", numero_format)  
+                            format_cell_range(aba_destino, f"L2:L{primeira_linha_vazia + len(novos_dados)}", numero_format)
                             format_cell_range(aba_destino, f"D2:D{primeira_linha_vazia + len(novos_dados)}", numero_format)
                             format_cell_range(aba_destino, f"F2:F{primeira_linha_vazia + len(novos_dados)}", numero_format)
-    
-    
-    
-    
-                            
+        
                             st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
-    
+        
                         if duplicados:
-                            st.warning(f"⚠️ {len(duplicados)} registro(s) foram duplicados e não foram enviados para o Google Sheets.")
-                            # Exibir as linhas duplicadas para o usuário
-                       #     st.write("Registros Duplicados:", duplicados)
-    
-                       # else:
-                        #    st.info("✅ Dados atualizados google sheets.")
+                            st.warning(f"⚠️ {len(duplicados)} registro(s) foram duplicados (coluna M) e não foram enviados.")
                     except Exception as e:
                         st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
         else:
             st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
 
             
 
