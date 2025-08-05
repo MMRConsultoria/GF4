@@ -134,12 +134,27 @@ with aba1:
     df_anos["Mês"] = df_anos["Data"].dt.month.map(meses_map)
     df_anos["Ano"] = df_anos["Data"].dt.year
     df_anos["Fat.Total"] = df_anos["Fat.Total"].apply(parse_valor)
-
+    
     df_anos = df_anos.merge(df_empresa[["Loja", "Grupo", "Tipo"]], on=["Loja", "Grupo"], how="left")
-
-    mes_atual = datetime.now().strftime("%b")
     ano_atual = datetime.now().year
-    ordem_meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+    from datetime import datetime
+
+    # Mapeamento de meses (sistema → abreviações)
+    mapa_meses = {
+        "janeiro": "Jan", "fevereiro": "Fev", "março": "Mar", "abril": "Abr",
+        "maio": "Mai", "junho": "Jun", "julho": "Jul", "agosto": "Ago",
+        "setembro": "Set", "outubro": "Out", "novembro": "Nov", "dezembro": "Dez"
+    }
+    
+    # Lista de meses abreviados para o filtro
+    ordem_meses = list(mapa_meses.values())
+    
+    # Mês atual do sistema (em português) e mapeado
+    mes_extenso = datetime.now().strftime("%B").lower()  # ex: 'agosto'
+    mes_atual = mapa_meses.get(mes_extenso, "Jan")
+    
+    # Evita erro caso algo dê errado
+    index_mes = ordem_meses.index(mes_atual) if mes_atual in ordem_meses else 0
 
     anos_disponiveis = sorted(df_anos["Ano"].unique())
 
@@ -148,14 +163,13 @@ with aba1:
     with col1:
         ano_selecionado = st.selectbox("Ano:", anos_disponiveis, index=anos_disponiveis.index(ano_atual))
     with col2:
-        mes_selecionado = st.selectbox("Mês:", ordem_meses, index=ordem_meses.index(mes_atual))
+        mes_selecionado = st.selectbox("Mês:", ordem_meses, index=index_mes)
     with col3:
         modo_visao = st.selectbox("Visão:", ["Por Loja", "Por Grupo"])
     with col4:
         tipos_disponiveis = sorted(df_anos["Tipo"].dropna().unique())
         tipo_selecionado = st.selectbox("Tipo:", ["TODOS"] + tipos_disponiveis)
-    
-    df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)].copy()
+        df_anos_filtrado = df_anos[(df_anos["Ano"] == ano_selecionado) & (df_anos["Mês"] == mes_selecionado)].copy()
 
     if tipo_selecionado != "TODOS":
         df_anos_filtrado = df_anos_filtrado[df_anos_filtrado["Tipo"] == tipo_selecionado]
