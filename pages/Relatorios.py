@@ -706,7 +706,8 @@ with aba4:
     
     # Extrai a data do nome da coluna e ordena corretamente
     col_diarias.sort(key=lambda x: datetime.strptime(x.replace("Fat Total ", ""), "%d/%m/%Y"))
-    colunas_finais = colunas_base + col_diarias + [col_acumulado, "Meta", "%Atingido", "%LojaXGrupo", "%Grupo"]
+    #colunas_finais = colunas_base + col_diarias + [col_acumulado, "Meta", "%Atingido", "%LojaXGrupo", "%Grupo"]
+    colunas_finais = colunas_base + col_diarias + [col_acumulado] + colunas_escolhidas
     for col in ["%LojaXGrupo", "%Grupo"]:
         if col not in df_base.columns:
             df_base[col] = np.nan
