@@ -310,18 +310,19 @@ with aba3:
         df_final["Data"] = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce')
     
         # Verifica duplicidades por Data + Loja
-        df_duplicados_data_loja = df_final[df_final.duplicated(subset=["Data", "Loja"], keep=False)]
-    
-        if not df_duplicados_data_loja.empty:
-            st.error("⚠️ Foram encontrados registros duplicados por **Data + Loja** (independente de valor).")
-            st.dataframe(df_duplicados_data_loja)
-    
-            if 'confirmar_data_loja' not in st.session_state:
-                st.session_state.confirmar_data_loja = False
-    
-            if not st.session_state.confirmar_data_loja:
-                if st.button("✅ Confirmar envio mesmo com duplicidades"):
-                    st.session_state.confirmar_data_loja = True
+        # Verifica duplicidade por Data + Código Everest usando a nova coluna "N"
+        df_duplicados_data_codigo = df_final[df_final.duplicated(subset=["N"], keep=False)]
+        
+        if not df_duplicados_data_codigo.empty:
+            st.error("⚠️ Foram encontrados registros duplicados por **Data + Código Everest**.")
+            st.dataframe(df_duplicados_data_codigo)
+        
+            if 'confirmar_data_codigo' not in st.session_state:
+                st.session_state.confirmar_data_codigo = False
+        
+            if not st.session_state.confirmar_data_codigo:
+                if st.button("✅ Confirmar envio mesmo com duplicidades (Data + Código)"):
+                    st.session_state.confirmar_data_codigo = True
                 else:
                     st.stop()
 
@@ -352,7 +353,14 @@ with aba3:
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
         df_final = df_final.applymap(str)
         
-
+        # Garantir datetime sem aspas
+        df_final['Data'] = pd.to_datetime(df_final['Data'].astype(str).str.replace("'", "").str.strip(), dayfirst=True)
+        
+        # ✅ Criar a nova coluna "N" com base em Data + Código Everest
+        df_final["N"] = df_final["Data"].dt.strftime("%Y-%m-%d") + df_final["Código Everest"].astype(str)
+        
+        # Agora sim, converter a Data para formato serial Excel
+        df_final['Data'] = (df_final['Data'] - pd.Timestamp("1899-12-30")).dt.days
       
 
         #TIRAR ASPAS DOS VALORES, DATA E NUMEROS
