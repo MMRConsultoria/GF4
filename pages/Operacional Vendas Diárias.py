@@ -376,8 +376,24 @@ with aba3:
             except:
                 continue
 
-        df_final['Duplicado_N'] = df_final['N'].isin(dados_existentes_n)
-        duplicados_n_df = df_final[df_final['Duplicado_N'] == True]
+        # Converter novos_dados (linhas que passaram pela M) para DataFrame temporário
+        df_envio = pd.DataFrame(novos_dados, columns=df_final.columns)
+        
+        # Verifica duplicidade na coluna N apenas nos dados que passaram pela M
+        df_envio['Data_Formatada'] = pd.to_datetime(df_envio['Data'], origin='1899-12-30', unit='D')
+        df_envio['N'] = df_envio['Data_Formatada'].dt.strftime('%Y-%m-%d') + "_" + df_envio['Código Everest'].astype(str)
+        df_envio['Duplicado_N'] = df_envio['N'].isin(dados_existentes_n)
+        
+        # Se houver duplicados em N, mesmo após passar pela M, alerta o usuário
+        duplicados_n_df = df_envio[df_envio['Duplicado_N'] == True]
+        
+        if not duplicados_n_df.empty:
+            st.warning("⚠️ Atenção! Foram encontrados registros com possível duplicidade por **Data + Código Everest (coluna N)**:")
+            st.dataframe(duplicados_n_df[["Data_Formatada", "Loja", "Código Everest", "N"]])
+            continuar_envio = st.checkbox("✅ Desejo continuar mesmo assim (envio não será bloqueado)")
+        else:
+            continuar_envio = True
+
 
         if not duplicados_n_df.empty:
             st.warning("⚠️ Atenção! Foram encontrados registros com possível duplicidade por **Data + Código Everest (coluna N)**:")
