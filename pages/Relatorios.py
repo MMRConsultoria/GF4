@@ -896,8 +896,16 @@ with aba4:
     
     # Formata
     df_resumo_tipo_formatado = df_resumo_tipo.copy()
+    #for col in df_resumo_tipo.columns:
+    #    if col not in ["Grupo", "Loja"]:
+    #        df_resumo_tipo_formatado[col] = df_resumo_tipo[col].apply(lambda x: formatar(x, col))
+
     for col in df_resumo_tipo.columns:
-        if col not in ["Grupo", "Loja"]:
+    if col not in ["Grupo", "Loja"]:
+        if col == "PDV":
+            # Mantém como inteiro (sem R$)
+            df_resumo_tipo_formatado[col] = df_resumo_tipo[col].astype(int).astype(str)
+        else:
             df_resumo_tipo_formatado[col] = df_resumo_tipo[col].apply(lambda x: formatar(x, col))
     
     
