@@ -414,28 +414,18 @@ with aba3:
             except:
                 continue
         
-                # Verifica duplicidade na coluna N
-            dados_existentes_n = set()
-            for linha in valores_existentes[1:]:  # Ignora cabeçalho
-                try:
-                    data_excel = int(linha[0])  # Coluna A (Data serial Excel)
-                    data_formatada = pd.to_datetime(data_excel, origin='1899-12-30', unit='D').strftime('%Y-%m-%d')
-                    cod_everest = str(linha[3])  # Coluna D = Código Everest
-                    chave_n = data_formatada + cod_everest
-                    dados_existentes_n.add(chave_n)
-                except:
-                    continue
+                
     
-            df_duplicados_n = df_final[df_final["N"].isin(dados_existentes_n)]
-    
-            if not df_duplicados_n.empty:
-                with st.expander("⚠️ Aviso: registros com a mesma Data + Código Everest (coluna N):"):
-                    st.dataframe(df_duplicados_n)
-                if not st.session_state.get("confirmar_envio_n", False):
-                    if st.button("✅ Deseja continuar mesmo com duplicidade na coluna N?"):
-                        st.session_state["confirmar_envio_n"] = True
-                    else:
-                        st.stop()
+        df_duplicados_n = df_final[df_final["N"].isin(dados_existentes_n)]
+
+        if not df_duplicados_n.empty:
+            with st.expander("⚠️ Aviso: registros com a mesma Data + Código Everest (coluna N):"):
+                st.dataframe(df_duplicados_n)
+            if not st.session_state.get("confirmar_envio_n", False):
+                if st.button("✅ Deseja continuar mesmo com duplicidade na coluna N?"):
+                    st.session_state["confirmar_envio_n"] = True
+                else:
+                    st.stop()
 
             
         # Adicionar o botão de atualização do Google Sheets
