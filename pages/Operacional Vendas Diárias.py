@@ -305,28 +305,6 @@ with aba3:
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
-    
-        # Garante que a coluna Data está em formato datetime
-        df_final["Data"] = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce')
-    
-        # Verifica duplicidades por Data + Loja
-        # Verifica duplicidade por Data + Código Everest usando a nova coluna "N"
-        df_duplicados_data_codigo = df_final[df_final.duplicated(subset=["N"], keep=False)]
-        
-        if not df_duplicados_data_codigo.empty:
-            st.error("⚠️ Foram encontrados registros duplicados por **Data + Código Everest**.")
-            st.dataframe(df_duplicados_data_codigo)
-        
-            if 'confirmar_data_codigo' not in st.session_state:
-                st.session_state.confirmar_data_codigo = False
-        
-            if not st.session_state.confirmar_data_codigo:
-                if st.button("✅ Confirmar envio mesmo com duplicidades (Data + Código)"):
-                    st.session_state.confirmar_data_codigo = True
-                else:
-                    st.stop()
-
-        
 
        # Verifica se há lojas sem código Everest
         lojas_nao_cadastradas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
@@ -353,14 +331,7 @@ with aba3:
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
         df_final = df_final.applymap(str)
         
-        # Garantir datetime sem aspas
-        df_final['Data'] = pd.to_datetime(df_final['Data'].astype(str).str.replace("'", "").str.strip(), dayfirst=True)
-        
-        # ✅ Criar a nova coluna "N" com base em Data + Código Everest
-        df_final["N"] = df_final["Data"].dt.strftime("%Y-%m-%d") + df_final["Código Everest"].astype(str)
-        
-        # Agora sim, converter a Data para formato serial Excel
-        df_final['Data'] = (df_final['Data'] - pd.Timestamp("1899-12-30")).dt.days
+
       
 
         #TIRAR ASPAS DOS VALORES, DATA E NUMEROS
