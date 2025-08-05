@@ -305,16 +305,17 @@ with aba3:
 
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
-        # 🚨 Verifica duplicidade por Data + Loja (independente da coluna M)
-        df_verifica_data_loja = df_final.copy()
-        df_verifica_data_loja['Data'] = pd.to_datetime(df_verifica_data_loja['Data'], errors='coerce')
-        df_duplicados_data_loja = df_verifica_data_loja[df_verifica_data_loja.duplicated(subset=["Data", "Loja"], keep=False)]
+    
+        # Garante que a coluna Data está em formato datetime
+        df_final["Data"] = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce')
+    
+        # Verifica duplicidades por Data + Loja
+        df_duplicados_data_loja = df_final[df_final.duplicated(subset=["Data", "Loja"], keep=False)]
     
         if not df_duplicados_data_loja.empty:
             st.error("⚠️ Foram encontrados registros duplicados por **Data + Loja** (independente de valor).")
             st.dataframe(df_duplicados_data_loja)
     
-            # Confirmar com o usuário se deseja continuar mesmo assim
             if 'confirmar_data_loja' not in st.session_state:
                 st.session_state.confirmar_data_loja = False
     
@@ -322,7 +323,8 @@ with aba3:
                 if st.button("✅ Confirmar envio mesmo com duplicidades"):
                     st.session_state.confirmar_data_loja = True
                 else:
-                    st.stop()  # Interrompe até o usuário confirmar
+                    st.stop()
+
         
 
        # Verifica se há lojas sem código Everest
