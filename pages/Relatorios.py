@@ -886,10 +886,11 @@ with aba4:
 
         # %Grupo no total
         soma_total_geral = df_base_tipo[col_acumulado].sum()
-        linha["%Grupo"] = ( 
-            linha[col_acumulado] / soma_total_geral
-            if soma_total_geral != 0 else 0
-        )
+        if "%Grupo" in colunas_escolhidas:
+            linha["%Grupo"] = ( 
+                linha[col_acumulado] / soma_total_geral
+                if soma_total_geral != 0 else 0
+            )
     
         linhas_resumo_tipo.append(linha)
     
