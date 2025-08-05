@@ -739,11 +739,11 @@ def to_excel_com_estilo(df):
     output.seek(0)
     return output
 
-# botão de download
-excel_bytes = to_excel_com_estilo(df_resultado_final)
-st.download_button(
-    label="📥 Baixar Excel Estilizado",
-    data=excel_bytes,
-    file_name="comparativo_everest_externo.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
+    # botão de download
+    excel_bytes = to_excel_com_estilo(df_resultado_final)
+    st.download_button(
+        label="📥 Baixar Excel Estilizado",
+        data=excel_bytes,
+        file_name="comparativo_everest_externo.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
