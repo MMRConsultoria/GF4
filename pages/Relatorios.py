@@ -1048,6 +1048,8 @@ with aba4:
     # === Linha "Faturamento Desejável" na LINHA 1 ===
     # --- Linha FATURAMENTO DESEJÁVEL na linha 1 ---
     for col_idx, valor in enumerate(linha_desejavel.iloc[0], start=1):
+        if col_nome.strip().upper() == "PDV":
+            valor = ""  # ⛔ não exibe valor na linha Faturamento Ideal
         cell = ws.cell(row=1, column=col_idx, value=valor)
         cell.fill = PatternFill("solid", fgColor="DDDDDD")  # cinza claro
         cell.font = Font(bold=True)
