@@ -610,7 +610,7 @@ with aba4:
     opcoes_selecionadas = st.multiselect(
         "➕ Escolha os indicadores que deseja **exibir**:",
         options=list(colunas_opcionais.keys()),
-        default=["🎯 Meta da Loja", "📊 % Atingido"]
+        default=["🎯 Meta da Loja", "📊 % Atingido", "%Grupo","]
     )
     
     # Mapeia as escolhas visuais para os nomes reais das colunas
