@@ -304,7 +304,7 @@ with aba3:
     #st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
 
     if 'df_final' in st.session_state:
-    df_final = st.session_state.df_final.copy()
+        df_final = st.session_state.df_final.copy()
 
         
 
