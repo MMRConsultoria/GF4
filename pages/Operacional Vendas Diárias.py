@@ -330,7 +330,8 @@ with aba3:
 
         # 🔁 Cria a coluna N com Data + Código Everest
         df_final["N"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y").dt.strftime("%Y-%m-%d") + df_final["Código Everest"].astype(str)
-            
+        # 🧽 Normaliza a coluna N para garantir comparação correta
+        df_final["N"] = df_final["N"].astype(str).str.strip().str.replace("'", "").str.replace(" ", "")   
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
         df_final = df_final.applymap(str)
         
@@ -430,7 +431,7 @@ with aba3:
             else:
                 st.stop()
         
-        # ✅ Agora, com ou sem confirmação de N, faz o envio
+        # Envio só acontece após confirmação (ou se não houver duplicados N)
         if todas_lojas_ok and (df_duplicados_n.empty or st.session_state.get("confirmar_envio_n", False)):
             if st.button("📥 Enviar dados para o Google Sheets"):
                 with st.spinner("🔄 Atualizando o Google Sheets..."):
@@ -439,12 +440,10 @@ with aba3:
                             primeira_linha_vazia = len(valores_existentes) + 1
                             aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
         
-                            # 🔧 Formatação pós-envio
+                            # formatação
                             from gspread_formatting import CellFormat, NumberFormat, format_cell_range
-        
                             data_format = CellFormat(numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy'))
                             numero_format = CellFormat(numberFormat=NumberFormat(type='NUMBER', pattern='0'))
-        
                             format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(novos_dados)}", data_format)
                             format_cell_range(aba_destino, f"L2:L{primeira_linha_vazia + len(novos_dados)}", numero_format)
                             format_cell_range(aba_destino, f"D2:D{primeira_linha_vazia + len(novos_dados)}", numero_format)
@@ -456,8 +455,7 @@ with aba3:
                             st.warning(f"⚠️ {len(duplicados)} registro(s) foram duplicados (coluna M) e não foram enviados.")
                     except Exception as e:
                         st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
-        else:
-            st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
 
 
             
