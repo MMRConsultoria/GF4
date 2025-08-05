@@ -292,9 +292,7 @@ with aba1:
 # =======================================
 # Atualizar Google Sheets (Evitar duplicação)
 # =======================================
-# =======================================
-# Atualizar Google Sheets (Evitar duplicação)
-# =======================================
+
 with aba3:
 
     # 🔗 Link visível
@@ -386,18 +384,13 @@ with aba3:
             else:
                 duplicados.append(linha)
 
-        # ⚠️ Alerta de duplicidade na coluna M
+        # ⚠️ Alerta de duplicidade na coluna M (apenas informa, sem detalhar)
         if duplicados:
             qtd_descartados = len(duplicados)
-            st.warning(f"🚫 {qtd_descartados} registro(s) foram **descartados** por já existirem na base (duplicidade pela coluna **M**: Data + Fat.Total + Loja).")
-
-            df_duplicados_m = pd.DataFrame(duplicados, columns=df_final.columns)
-            df_duplicados_m['Data_Formatada'] = pd.to_datetime(df_duplicados_m['Data'], origin='1899-12-30', unit='D')
-
-            st.dataframe(df_duplicados_m[["Data_Formatada", "Loja", "Fat.Total", "M"]])
+            st.warning(f"🚫 {qtd_descartados} registro(s) foram descartados por já existirem na base (duplicidade pela coluna **M**).")
 
         # ========================
-        # ⚠️ Verificação pela coluna N (somente entre os válidos da M)
+        # ⚠️ Verificação pela coluna N (com detalhamento)
         # ========================
         if novos_dados:
             df_envio = pd.DataFrame(novos_dados, columns=df_final.columns)
@@ -408,7 +401,8 @@ with aba3:
             duplicados_n_df = df_envio[df_envio['Duplicado_N'] == True]
 
             if not duplicados_n_df.empty:
-                st.warning("⚠️ Foram encontrados registros com possível duplicidade por **Data + Código Everest (coluna N)**:")
+                qtd_n = len(duplicados_n_df)
+                st.warning(f"⚠️ {qtd_n} registro(s) possuem duplicidade na coluna **N** (Data + Código Everest). Confira abaixo:")
                 st.dataframe(duplicados_n_df[["Data_Formatada", "Loja", "Código Everest", "N"]])
                 continuar_envio = st.checkbox("✅ Desejo continuar mesmo assim (envio não será bloqueado)")
             else:
@@ -441,6 +435,7 @@ with aba3:
                     st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
     else:
         st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
 
 
 
