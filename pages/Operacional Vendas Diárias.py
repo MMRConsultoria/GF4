@@ -420,7 +420,28 @@ with aba3:
         
         # Compara com o df_final["N"]
         df_duplicados_n = df_final[df_final["N"].isin(dados_existentes_n)]
+        # Se houver duplicados na coluna N e o usuário ainda não confirmou, filtra os registros duplicados da lista de envio
+        if not df_duplicados_n.empty and not st.session_state.get("confirmar_envio_n", False):
+            # Constrói o conjunto de chaves N duplicadas
+            chaves_n_duplicadas = set(df_duplicados_n["N"].tolist())
         
+            # Remove de 'novos_dados' as linhas que contêm chaves duplicadas da coluna N
+            # Remove de 'novos_dados' as linhas que contêm chaves duplicadas da coluna N
+            novos_dados_filtrados = []
+            for linha in novos_dados:
+                data_excel = linha[0]
+                cod_everest = str(linha[3]).strip().replace("'", "").replace(" ", "")
+                try:
+                    data_formatada = pd.to_datetime(int(data_excel), origin='1899-12-30', unit='D').strftime('%Y-%m-%d')
+                    chave_n = data_formatada + cod_everest
+                except:
+                    chave_n = ""
+                if chave_n not in chaves_n_duplicadas:
+                    novos_dados_filtrados.append(linha)
+    
+            # ✅ Atualiza a lista de envio
+            novos_dados = novos_dados_filtrados
+
         # 🛑 Se houver duplicidade na coluna N, exige confirmação
         if not df_duplicados_n.empty and not st.session_state.get("confirmar_envio_n", False):
             with st.expander("⚠️ Aviso: registros com a mesma Data + Código Everest (coluna N):"):
