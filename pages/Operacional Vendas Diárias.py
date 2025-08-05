@@ -441,14 +441,14 @@ with aba3:
         # Adicionar o botão de atualização do Google Sheets
         if todas_lojas_ok and (df_duplicados_n.empty or st.session_state.get("confirmar_envio_n", False)):
             if st.button("📥 Enviar dados para o Google Sheets"):
-            with st.spinner("🔄 Atualizando o Google Sheets..."):
-                try:
-                    if novos_dados:
-                        # Manter a primeira linha vazia para começar a inserção
-                        primeira_linha_vazia = len(valores_existentes) + 1
-                        
-                        # Enviar os novos dados para o Google Sheets
-                        aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
+                with st.spinner("🔄 Atualizando o Google Sheets..."):
+                    try:
+                        if novos_dados:
+                            # Manter a primeira linha vazia para começar a inserção
+                            primeira_linha_vazia = len(valores_existentes) + 1
+                            
+                            # Enviar os novos dados para o Google Sheets
+                            aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
 
 # ASPAS RESOLVIDO
                         
