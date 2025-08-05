@@ -795,9 +795,10 @@ with aba4:
         filtro_grupos = df_final["Loja"].astype(str).str.startswith("Lojas:")
     else:
         filtro_grupos = df_final["Grupo"].astype(str).str.startswith("SUBTOTAL")
-    df_final.loc[filtro_grupos, "%Grupo"] = (
-        df_final.loc[filtro_grupos, col_acumulado] / soma_total_geral
-    ).round(4)
+    if "%Grupo" in colunas_escolhidas:
+        df_final.loc[filtro_grupos, "%Grupo"] = (
+            df_final.loc[filtro_grupos, col_acumulado] / soma_total_geral
+        ).round(4)
     
     # %Atingido final
     if modo_exibicao == "Loja":
