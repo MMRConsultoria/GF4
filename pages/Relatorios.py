@@ -320,7 +320,7 @@ with aba3:
     data_min = df_vendas["Data"].min()
     data_max = df_vendas["Data"].max()
     
-    col1, col2, col3 = st.columns([2, 2, 2])
+    col1, col2, col3, col4 = st.columns([2, 2, 2, 2])
     
     with col1:
         modo_exibicao = st.selectbox("🔀 Ver por:", ["Loja", "Grupo"], key="modo_exibicao_relatorio")
@@ -340,6 +340,13 @@ with aba3:
     
     with col3:
         modo_periodo = st.selectbox("🕒 Período:", ["Diário", "Mensal", "Anual"], key="modo_periodo_relatorio")
+
+    with col4:
+        tipos_disponiveis = sorted(df_vendas["Tipo"].dropna().unique())
+        tipos_disponiveis.insert(0, "Todos")
+        tipo_selecionado = st.selectbox("🏪 Tipo:", options=tipos_disponiveis, index=0)
+
+
     
     # ==== Filtro por período ====
     # ==== Filtro por período ====
@@ -363,7 +370,9 @@ with aba3:
                 (df_vendas["Data"] >= pd.to_datetime(data_inicio)) &
                 (df_vendas["Data"] <= pd.to_datetime(data_fim))
             ]
-            df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
+            # ==== Aplica filtro de Tipo ====
+            if tipo_selecionado != "Todos":
+                df_filtrado = df_filtrado[df_filtrado["Tipo"] == tipo_selecionado]
 
 
 
@@ -381,6 +390,10 @@ with aba3:
         )
         df_filtrado = df_vendas[df_vendas["Mes/Ano"].isin(meses_selecionados)]
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
+
+        if tipo_selecionado != "Todos":
+            df_filtrado = df_filtrado[df_filtrado["Tipo"] == tipo_selecionado]
+
     
     elif modo_periodo == "Anual":
         df_vendas["Ano"] = df_vendas["Data"].dt.strftime("%Y")
@@ -392,6 +405,10 @@ with aba3:
         )
         df_filtrado = df_vendas[df_vendas["Ano"].isin(anos_selecionados)]
         df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%Y")
+
+        if tipo_selecionado != "Todos":
+            df_filtrado = df_filtrado[df_filtrado["Tipo"] == tipo_selecionado]
+
     
     # ==== Aplica filtro de Loja ou Grupo ====
     if selecao != todos:
