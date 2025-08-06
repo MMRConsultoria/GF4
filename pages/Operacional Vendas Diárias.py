@@ -433,7 +433,7 @@ with aba3:
             st.write("🔍 Exemplo de chaves já existentes na N:", list(dados_n_existentes)[:5])
             st.write("📦 Exemplo de chaves novas geradas em df_final['N']:", df_final['N'].head().tolist())
 
-        novos_dados = []
+     
         duplicados = []  # Duplicados pela M
         suspeitos_n = []  # ⚠️ Possíveis duplicados pela N
 
