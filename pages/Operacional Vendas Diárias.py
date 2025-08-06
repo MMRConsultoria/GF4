@@ -378,7 +378,7 @@ with aba3:
         aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
         # Obter dados já existentes na aba
-        valores_existentes = aba_destino.get_all_values()
+        valores_existentes = aba_destino.get(f"A1:N500000")
 
         # Criar um conjunto de linhas existentes na coluna M (usada para verificar duplicação)
         dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # Ignorando cabeçalho, coluna M é a 13ª (índice 12)
