@@ -457,7 +457,7 @@ with aba3:
     linha_total = df_final.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
     linha_total["Grupo"] = "TOTAL"
     linha_total["Loja"] = ""
-    linha_total["Tipo"] = "TOTAL"
+    linha_total["Tipo"] = ""
     
     # Junta tudo: Lojas Ativas → TOTAL → Dados
     df_final = pd.concat([
