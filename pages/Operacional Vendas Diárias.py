@@ -386,14 +386,21 @@ with aba3:
         
         colunas_df_existente = valores_existentes_df.columns.str.strip().tolist()
         
+        # 🔍 Verificação da coluna N
+        dados_n_existentes = set()
         if "N" in colunas_df_existente:
-            dados_n_existentes = set(
-                valores_existentes_df["N"].astype(str).str.strip()
-            )
+            dados_n_existentes = set(valores_existentes_df["N"].astype(str).str.strip())
         else:
-            dados_n_existentes = set()
             st.warning("⚠️ A coluna 'N' não foi encontrada na planilha. Nenhuma checagem de duplicidade será feita com base nela.")
-
+        
+        # 🔍 Verificação da coluna M
+        dados_existentes = set()
+        if "M" in colunas_df_existente:
+            dados_existentes = set(valores_existentes_df["M"].astype(str).str.strip())
+        else:
+            st.warning("⚠️ A coluna 'M' não foi encontrada na planilha. Nenhuma checagem de duplicidade será feita com base nela.")
+        
+                
         # Criar um conjunto de linhas existentes na coluna M (usada para verificar duplicação)
         dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # Ignorando cabeçalho, coluna M é a 13ª (índice 12)
 
