@@ -346,7 +346,7 @@ with aba3:
         tipos_disponiveis.insert(0, "Todos")
         tipo_selecionado = st.selectbox("🏪 Tipo:", options=tipos_disponiveis, index=0)
 
-    df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
+    
     
     # ==== Filtro por período ====
     # ==== Filtro por período ====
@@ -374,7 +374,7 @@ with aba3:
             if tipo_selecionado != "Todos":
                 df_filtrado = df_filtrado[df_filtrado["Tipo"] == tipo_selecionado]
 
-
+            df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%d/%m/%Y")
 
     
     elif modo_periodo == "Mensal":
