@@ -538,6 +538,7 @@ with aba3:
     )
     from io import BytesIO
     from openpyxl import load_workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
     
     # ➤ Usa a mesma lógica da visualização: remove "Loja" se for modo Grupo
     df_exportar = df_final.drop(columns=["Loja"]) if modo_exibicao == "Grupo" else df_final.copy()
@@ -552,16 +553,52 @@ with aba3:
     wb = load_workbook(output)
     ws = wb["Relatório"]
     
-    # ➤ Detecta colunas de valor (não são "Grupo" nem "Loja")
-    colunas_valor = [col for col in df_exportar.columns if col not in ["Grupo", "Loja"]]
+    # === Estilos ===
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill("solid", fgColor="305496")  # Azul escuro
+    center_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    border = Border(
+        left=Side(style="thin"),
+        right=Side(style="thin"),
+        top=Side(style="thin"),
+        bottom=Side(style="thin")
+    )
     
-    # ➤ Aplica formatação "R$ #.##0,00" nas colunas numéricas
-    for col in colunas_valor:
-        col_idx = list(df_exportar.columns).index(col) + 1
-        for cell in ws.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx):
-            for c in cell:
-                if isinstance(c.value, (int, float)):
-                    c.number_format = '"R$" #,##0.00'
+    # ➤ Aplica estilo no cabeçalho
+    for cell in ws[1]:
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center_alignment
+        cell.border = border
+    
+    # ➤ Detecta nome da última coluna (geralmente "% Total")
+    ultima_coluna_nome = df_exportar.columns[-1]
+    
+    # ➤ Aplica formatação e estilo nas células
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, max_col=ws.max_column):
+        for cell in row:
+            cell.border = border
+            cell.alignment = center_alignment
+            col_name = ws.cell(row=1, column=cell.column).value  # nome do cabeçalho
+    
+            if isinstance(cell.value, (int, float)):
+                if col_name == "% Total":
+                    cell.number_format = "0.000%"
+                else:
+                    cell.number_format = '"R$" #,##0.00'
+    
+    # ➤ Ajusta a largura das colunas automaticamente
+    for col in ws.columns:
+        max_length = 0
+        col_letter = col[0].column_letter
+        for cell in col:
+            try:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            except:
+                pass
+        adjusted_width = max_length + 2
+        ws.column_dimensions[col_letter].width = adjusted_width
     
     # ➤ Salva para download
     output_final = BytesIO()
