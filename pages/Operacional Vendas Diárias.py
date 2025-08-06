@@ -384,9 +384,15 @@ with aba3:
             aba_destino, evaluate_formulas=True, dtype=str
         ).fillna("")
         
-        dados_n_existentes = set(
-            valores_existentes_df["N"].astype(str).str.strip()
-        )
+        colunas_df_existente = valores_existentes_df.columns.str.strip().tolist()
+        
+        if "N" in colunas_df_existente:
+            dados_n_existentes = set(
+                valores_existentes_df["N"].astype(str).str.strip()
+            )
+        else:
+            dados_n_existentes = set()
+            st.warning("⚠️ A coluna 'N' não foi encontrada na planilha. Nenhuma checagem de duplicidade será feita com base nela.")
 
         # Criar um conjunto de linhas existentes na coluna M (usada para verificar duplicação)
         dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # Ignorando cabeçalho, coluna M é a 13ª (índice 12)
