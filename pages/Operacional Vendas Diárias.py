@@ -378,7 +378,15 @@ with aba3:
         aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
 
         # Obter dados já existentes na aba
-        valores_existentes = aba_destino.get(f"A1:N500000")
+        from gspread_dataframe import get_as_dataframe
+
+        valores_existentes_df = get_as_dataframe(
+            aba_destino, evaluate_formulas=True, dtype=str
+        ).fillna("")
+        
+        dados_n_existentes = set(
+            valores_existentes_df["N"].astype(str).str.strip()
+        )
 
         # Criar um conjunto de linhas existentes na coluna M (usada para verificar duplicação)
         dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # Ignorando cabeçalho, coluna M é a 13ª (índice 12)
