@@ -421,11 +421,11 @@ with aba3:
         if "N" in colunas_planilha:
             idx_coluna_n = colunas_planilha.index("N")
             dados_n_existentes = set(
-            str(linha[idx_coluna_n]).strip()
-            for linha in valores_existentes[1:]
-            if len(linha) > idx_coluna_n and str(linha[idx_coluna_n]).strip()
-        )
-        else:
+                str(linha[idx_coluna_n]).strip()
+                for linha in valores_existentes[1:]
+                if len(linha) > idx_coluna_n and str(linha[idx_coluna_n]).strip()
+            )
+            else:
             dados_n_existentes = set()
 
            # 🔎 Diagnóstico visual (debug)
@@ -436,6 +436,7 @@ with aba3:
      
         duplicados = []  # Duplicados pela M
         suspeitos_n = []  # ⚠️ Possíveis duplicados pela N
+        novos_dados = []
 
         # =========================================
         # ✅ Verifica duplicidade pela M e depois N
