@@ -384,24 +384,16 @@ with aba3:
         dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # Ignorando cabeçalho, coluna M é a 13ª (índice 12)
 
         novos_dados = []
-        # ================================================
-        # ✅ 1. Criar a coluna N com Data + Código Everest
-        # ================================================
+       
         # ✅ Cria a coluna N diretamente, sem deixar a Data_Formatada como coluna a ser exportada
-        # ✅ Garante que 'Código Everest' está tratado como inteiro antes de montar a coluna N
         df_final['Código Everest'] = df_final['Código Everest'].apply(to_int_safe)
-        df_final = df_final[df_final['Código Everest'].notna() & (df_final['Código Everest'] != 0)]
-        # ✅ Cria a coluna N (Data + Código Everest) após aplicar o tratamento correto
-        # Cria coluna temporária com a data formatada real
-        df_final['Data_Formatada'] = pd.to_datetime(df_final['Data'], origin="1899-12-30", unit='D').dt.strftime('%Y-%m-%d')
-        
-        # Monta a coluna N com Data real + Código Everest
-        df_final['N'] = df_final['Data_Formatada'] + df_final['Código Everest'].astype(str)
-        
-        # Garante que não há espaços invisíveis
-        df_final['N'] = df_final['N'].astype(str).str.strip()
 
-        # Captura os nomes das colunas do df_final
+        df_final['Data_Formatada'] = pd.to_datetime(
+            df_final['Data'], origin="1899-12-30", unit='D'
+        ).dt.strftime('%Y-%m-%d')
+        df_final['N'] = df_final['Data_Formatada'] + df_final['Código Everest'].astype(str)
+        df_final['N'] = df_final['N'].astype(str).str.strip()
+        df_final = df_final[df_final['Código Everest'].notna() & (df_final['Código Everest'] != 0)]
         
         # ✅ Remove a coluna auxiliar antes de montar os dados
         if 'Data_Formatada' in df_final.columns:
