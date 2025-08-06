@@ -398,6 +398,11 @@ with aba3:
         # Criar um conjunto de linhas existentes na coluna M (usada para verificar duplicação)
         dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # Ignorando cabeçalho, coluna M é a 13ª (índice 12)
 
+        # Remove a coluna auxiliar antes de montar os dados
+        if "Data_Formatada" in df_final.columns:
+            df_final = df_final.drop(columns=["Data_Formatada"])
+        
+                
         novos_dados = []
         duplicados = []  # Armazenar os registros duplicados
         rows = df_final.fillna("").values.tolist()
