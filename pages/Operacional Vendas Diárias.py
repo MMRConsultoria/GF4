@@ -458,7 +458,7 @@ with aba3:
 
         
         # Adicionar o botão de atualização do Google Sheets
-        if todas_lojas_ok and st.button("📥 Enviar dados para o Google Sheets"):
+        if todas_lojas_ok and continuar_envio and st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
                     if novos_dados:
