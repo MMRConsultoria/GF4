@@ -445,35 +445,8 @@ with aba3:
             else:
                 novos_dados.append(linha)
                 dados_existentes.add(chave_m)
-        # ================================
-        # Verificação de duplicidade pela coluna N (entre registros não duplicados na M)
-        # ================================
-        
-        # Obter todas as colunas da aba para montar a posição da coluna N
-        colunas_planilha = valores_existentes[0]  # Cabeçalho
-        try:
-            idx_coluna_n = colunas_planilha.index("N")
-        except:
-            idx_coluna_n = -1  # Se não existir, ignora
-        
-        # Coletar valores existentes da coluna N (se existir)
-        dados_n_existentes = set()
-        if idx_coluna_n >= 0:
-            dados_n_existentes = set([linha[idx_coluna_n] for linha in valores_existentes[1:] if len(linha) > idx_coluna_n])
-        
-        # Lista de registros suspeitos na N (que não estavam na M)
-        suspeitos_n = []
-        
-        # Garante índice correto da coluna N
-        if "N" in colunas_planilha:
-            idx_coluna_n = colunas_planilha.index("N")
-        else:
-            idx_coluna_n = None
-        
-        
-                
-        # Se houver suspeitos, pede confirmação
-        continuar_envio = True
+                dados_n_existentes.add(chave_n) 
+
         
         if suspeitos_n:
             st.warning(f"⚠️ {len(suspeitos_n)} registro(s) já existem pela coluna N (Data + Código Everest).")
