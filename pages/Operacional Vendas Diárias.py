@@ -389,7 +389,7 @@ with aba3:
                 valores_existentes_df = get_as_dataframe(
                     aba_destino, evaluate_formulas=True, dtype=str
                 ).fillna("")
-                
+                valores_existentes = valores_existentes_df.values.tolist()  # ✅ Correção necessária aqui
                 colunas_df_existente = valores_existentes_df.columns.str.strip().tolist()
                 
                 # 🔍 Verificação da coluna N
