@@ -435,17 +435,21 @@ with aba3:
         
         # Verificar duplicação somente na coluna "M"
         for linha in rows:
-            chave_m = linha[-2]
-            chave_n = linha[-3]  # Coluna N
-        
+            chave_m = linha[-2]  # Coluna M (ok, está sempre no fim)
+            
+            # Captura chave_n de forma segura, via índice correto da coluna N
+            if idx_coluna_n != -1 and len(linha) > idx_coluna_n:
+                chave_n = linha[idx_coluna_n]
+            else:
+                chave_n = None
+
             if chave_m in dados_existentes:
                 duplicados.append(linha)
-            elif chave_n in dados_n_existentes:
+            elif chave_n and chave_n in dados_n_existentes:
                 suspeitos_n.append(linha)
             else:
                 novos_dados.append(linha)
                 dados_existentes.add(chave_m)
-
 
         # ================================
         # Verificação de duplicidade pela coluna N (entre registros não duplicados na M)
