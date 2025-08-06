@@ -443,8 +443,7 @@ with aba3:
                 # Diagnóstico: Ver interseções entre as chaves novas e existentes
                 chaves_novas = set(df_final["N"].tolist())
                 intersecao_n = chaves_novas & dados_n_existentes
-                st.write("🔁 Interseção entre N gerada e existente:", list(intersecao_n)[:5])
-                st.write("🔢 Total de interseções encontradas:", len(intersecao_n))
+               
                 # =========================================
                 # ✅ Verifica duplicidade pela M e depois N
                 # =========================================
