@@ -471,7 +471,14 @@ with aba3:
                 if suspeitos_n:
                     st.warning(f"⚠️ {len(suspeitos_n)} registro(s) já existem com a mesma Data + Código Everest (coluna N).")
                     st.write("🔍 Registros possivelmente duplicados:")
-                    st.dataframe(pd.DataFrame(suspeitos_n, columns=colunas_df), use_container_width=True)
+                    # 🔍 Cria uma cópia apenas para visualização
+                    df_exibir = pd.DataFrame(suspeitos_n, columns=colunas_df).copy()
+                
+                    # 🗓️ Converte o número serial para data legível (sem alterar o original)
+                    df_exibir["Data"] = pd.to_datetime(df_exibir["Data"], origin="1899-12-30", unit="D").dt.strftime("%d/%m/%Y")
+                
+                    # 📊 Exibe a tabela com a data formatada
+                    st.dataframe(df_exibir, use_container_width=True)
 
                     pode_enviar = st.checkbox("✅ Mesmo assim, desejo enviar os dados acima para o Google Sheets", value=False)
 
