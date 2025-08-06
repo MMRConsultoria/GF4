@@ -410,8 +410,27 @@ with aba3:
         novos_dados = []
         duplicados = []  # Armazenar os registros duplicados
         rows = df_final.fillna("").values.tolist()
+        suspeitos_n = []  # ✅ Adiciona esta linha aqui!
 
-       
+        
+       # ================================
+        # Verificação de duplicidade pela coluna N
+        # ================================
+        
+        # Pega o cabeçalho da planilha
+        colunas_planilha = valores_existentes[0]
+        
+        # Verifica se a coluna N existe
+        if "N" in colunas_planilha:
+            idx_coluna_n = colunas_planilha.index("N")
+            dados_n_existentes = set(
+                linha[idx_coluna_n]
+                for linha in valores_existentes[1:]
+                if len(linha) > idx_coluna_n and linha[idx_coluna_n] != ""
+            )
+        else:
+            idx_coluna_n = -1
+            dados_n_existentes = set()
 
         
         # Verificar duplicação somente na coluna "M"
