@@ -481,7 +481,7 @@ with aba3:
                         dados_para_enviar = novos_dados + suspeitos_n
         
                         # ✅ Calcula corretamente a primeira linha vazia
-                        primeira_linha_vazia = len(valores_existentes) + 1
+                        primeira_linha_vazia = len(valores_existentes_df) + 2  # +2 porque inclui cabeçalho e começa em A2
                         aba_destino.update(f"A{primeira_linha_vazia}", dados_para_enviar)
         
                         # Formatação
