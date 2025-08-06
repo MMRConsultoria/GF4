@@ -70,6 +70,7 @@ USUARIOS = [
     {"codigo": "1825", "email": "debora@grupofit.com.br", "senha": "klom52#@$65"}, 
     {"codigo": "1825", "email": "renata.favacho@grupofit.com.br", "senha": "Huom63@#$52"},
     {"codigo": "1825", "email": "marcos.bogli@grupofit.com.br", "senha": "Ahlk52@#$81"},
+    {"codigo": "1825", "email": "Contabilidade@grupofit.com.br", "senha": "hYhIO18@#$21"},
     {"codigo": "3377", "email": "maricelisrossi@gmail.com", "senha": "1825"}
 ]
 
