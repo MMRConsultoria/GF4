@@ -575,17 +575,31 @@ with aba3:
     ultima_coluna_nome = df_exportar.columns[-1]
     
     # ➤ Aplica formatação e estilo nas células
+    # ➤ Aplica formatação e estilo nas células
     for row in ws.iter_rows(min_row=2, max_row=ws.max_row, max_col=ws.max_column):
+        grupo_valor = row[1].value  # Coluna "Grupo" (segunda coluna)
+        estilo_fundo = None
+    
+        if isinstance(grupo_valor, str):
+            if grupo_valor.strip().upper() == "TOTAL":
+                estilo_fundo = PatternFill("solid", fgColor="F4B084")  # Laranja escuro
+            elif grupo_valor.strip().upper() == "LOJAS ATIVAS":
+                estilo_fundo = PatternFill("solid", fgColor="D9D9D9")  # Cinza claro
+    
         for cell in row:
             cell.border = border
             cell.alignment = center_alignment
-            col_name = ws.cell(row=1, column=cell.column).value  # nome do cabeçalho
+            if estilo_fundo:
+                cell.fill = estilo_fundo
+    
+            col_name = ws.cell(row=1, column=cell.column).value  # Nome da coluna
     
             if isinstance(cell.value, (int, float)):
                 if col_name == "% Total":
                     cell.number_format = "0.000%"
                 else:
                     cell.number_format = '"R$" #,##0.00'
+
     
     # ➤ Ajusta a largura das colunas automaticamente
     for col in ws.columns:
