@@ -331,6 +331,21 @@ with aba3:
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
         df_final = df_final.applymap(str)
         
+        # ================================
+        # Criar a coluna "N" (Data + Código Everest)
+        # ================================
+        
+        # Converte novamente para data formatada legível para gerar a coluna N
+        try:
+            df_final["Data_Formatada"] = pd.to_datetime(df_final["Data"], origin="1899-12-30", unit="D")
+        except:
+            df_final["Data_Formatada"] = pd.to_datetime(df_final["Data"], errors="coerce", dayfirst=True)
+        
+        # Garante que "Código Everest" seja string sem aspas
+        codigo_limpo = df_final["Código Everest"].astype(str).str.replace("'", "").str.strip()
+        
+        # Cria a coluna N
+        df_final["N"] = df_final["Data_Formatada"].dt.strftime("%Y-%m-%d") + "_" + codigo_limpo
 
       
 
@@ -383,6 +398,12 @@ with aba3:
         # Criar um conjunto de linhas existentes na coluna M (usada para verificar duplicação)
         dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # Ignorando cabeçalho, coluna M é a 13ª (índice 12)
 
+        # Remove a coluna auxiliar antes de montar os dados
+        if "Data_Formatada" in df_final.columns:
+            df_final = df_final.drop(columns=["Data_Formatada"])
+
+
+
         novos_dados = []
         duplicados = []  # Armazenar os registros duplicados
         rows = df_final.fillna("").values.tolist()
@@ -392,7 +413,7 @@ with aba3:
         
         # Verificar duplicação somente na coluna "M"
         for linha in rows:
-            chave_m = linha[-1]  # A chave da coluna M (última coluna)
+            chave_m = linha[-2]  # A chave da coluna M (última coluna)
             if chave_m not in dados_existentes:
                 novos_dados.append(linha)
                 dados_existentes.add(chave_m)  # Adiciona a chave da linha para não enviar novamente
