@@ -331,21 +331,6 @@ with aba3:
         # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
         df_final = df_final.applymap(str)
         
-        # ================================
-        # Criar a coluna "N" (Data + Código Everest)
-        # ================================
-        
-        # Converte novamente para data formatada legível para gerar a coluna N
-        try:
-            df_final["Data_Formatada"] = pd.to_datetime(df_final["Data"], origin="1899-12-30", unit="D")
-        except:
-            df_final["Data_Formatada"] = pd.to_datetime(df_final["Data"], errors="coerce", dayfirst=True)
-        
-        # Garante que "Código Everest" seja string sem aspas
-        codigo_limpo = df_final["Código Everest"].astype(str).str.replace("'", "").str.strip()
-        
-        # Cria a coluna N
-        df_final["N"] = df_final["Data_Formatada"].dt.strftime("%Y-%m-%d") + "_" + codigo_limpo
 
       
 
@@ -394,76 +379,28 @@ with aba3:
 
         # Obter dados já existentes na aba
         valores_existentes = aba_destino.get_all_values()
-        
-        
-        # Mostra últimas linhas com dados
-        
+
         # Criar um conjunto de linhas existentes na coluna M (usada para verificar duplicação)
         dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # Ignorando cabeçalho, coluna M é a 13ª (índice 12)
-
-        # Remove a coluna auxiliar antes de montar os dados
-        if "Data_Formatada" in df_final.columns:
-            df_final = df_final.drop(columns=["Data_Formatada"])
-
-        # Captura os nomes das colunas do df_final
-        colunas_df = df_final.columns.tolist()
-        
-        # Garante que vai usar o índice exato da coluna N
-        idx_coluna_n_df = colunas_df.index("N")
-        idx_coluna_m_df = colunas_df.index("M")
 
         novos_dados = []
         duplicados = []  # Armazenar os registros duplicados
         rows = df_final.fillna("").values.tolist()
-        suspeitos_n = []  # ✅ Adiciona esta linha aqui!
 
-        
-       # ================================
-        # Verificação de duplicidade pela coluna N
-        # ================================
-        
-        # Pega o cabeçalho da planilha
-        colunas_planilha = valores_existentes[0]
-        
-        # Verifica se a coluna N existe
-        if "N" in colunas_planilha:
-            idx_coluna_n = colunas_planilha.index("N")
-            dados_n_existentes = set(
-                linha[idx_coluna_n]
-                for linha in valores_existentes[1:]
-                if len(linha) > idx_coluna_n and linha[idx_coluna_n] != ""
-            )
-        else:
-            idx_coluna_n = -1
-            dados_n_existentes = set()
+       
 
         
         # Verificar duplicação somente na coluna "M"
         for linha in rows:
-            chave_m = linha[idx_coluna_m_df]
-            chave_n = linha[idx_coluna_n_df]
-            
-            if chave_m in dados_existentes:
-                duplicados.append(linha)
-            elif chave_n in dados_n_existentes:
-                suspeitos_n.append(linha)
-            else:
+            chave_m = linha[-1]  # A chave da coluna M (última coluna)
+            if chave_m not in dados_existentes:
                 novos_dados.append(linha)
-                dados_existentes.add(chave_m)
-                dados_n_existentes.add(chave_n) 
-        continuar_envio = True  # <- Adicione esta linha ANTES do if
-        
-        if suspeitos_n:
-            st.warning(f"⚠️ {len(suspeitos_n)} registro(s) já existem pela coluna N (Data + Código Everest).")
-            st.dataframe(pd.DataFrame(suspeitos_n, columns=colunas_df))
-            continuar_envio = st.checkbox("🔁 Desejo continuar mesmo assim", value=False)
-        
-        
+                dados_existentes.add(chave_m)  # Adiciona a chave da linha para não enviar novamente
+            else:
+                duplicados.append(linha)  # Adiciona a linha duplicada à lista
 
-
-        
         # Adicionar o botão de atualização do Google Sheets
-        if todas_lojas_ok and continuar_envio and st.button("📥 Enviar dados para o Google Sheets"):
+        if todas_lojas_ok and st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
                     if novos_dados:
