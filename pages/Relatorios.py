@@ -297,6 +297,12 @@ with aba3:
     df_vendas["Loja"] = df_vendas["Loja"].astype(str).str.strip().str.upper()
     df_vendas["Grupo"] = df_vendas["Grupo"].astype(str).str.strip()
 
+    # Merge com Tipo
+    df_vendas = df_vendas.merge(
+        df_empresa[["Loja", "Tipo"]],
+        on="Loja",
+        how="left"
+    )    
     df_vendas["Fat.Total"] = (
         df_vendas["Fat.Total"]
         .astype(str)
@@ -395,7 +401,7 @@ with aba3:
         
 
     # Agrupamento
-    chaves = ["Loja", "Grupo"] if modo_exibicao == "Loja" else ["Grupo"]
+    chaves = ["Tipo", "Loja", "Grupo"] if modo_exibicao == "Loja" else ["Tipo", "Grupo"]
     df_agrupado = df_filtrado.groupby(chaves + ["Período"], as_index=False)["Fat.Total"].sum()
 
     # Pivot
@@ -420,7 +426,7 @@ with aba3:
         df_pivot["Grupo"] = ""
 
     # Define ordem final: Grupo, Loja, depois períodos
-    colunas_finais = ["Grupo", "Loja"] + colunas_periodo
+    colunas_finais = ["Tipo", "Grupo", "Loja"] + colunas_periodo
     df_final = df_pivot[colunas_finais].copy()
 
     # Total acumulado (última coluna)
@@ -436,9 +442,10 @@ with aba3:
     
     # Monta linha com estrutura do df_final, já convertendo os valores para str (evita float!)
     linha_lojas = {col: "" for col in df_final.columns}
-    linha_lojas["Grupo"] = "Lojas Ativas"
-    linha_lojas["Loja"] = ""
-    
+    linha_total["Tipo"] = "TOTAL"
+    linha_total["Grupo"] = "TOTAL"
+    linha_total["Loja"] = ""
+        
     for periodo in df_lojas_por_periodo.index:
         if periodo in linha_lojas:
             linha_lojas[periodo] = str(int(df_lojas_por_periodo[periodo]))  # 👈 força int e depois str
@@ -473,7 +480,7 @@ with aba3:
                 axis=1
             )
     
-    df_formatado = df_formatado[["Grupo", "Loja"] + colunas_periodo]
+    df_formatado = df_formatado[["Tipo", "Grupo", "Loja"] + colunas_periodo]
 
     # Estilo para destacar TOTAL
     def aplicar_estilo(df):
