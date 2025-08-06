@@ -425,7 +425,7 @@ with aba3:
                 for linha in valores_existentes[1:]
                 if len(linha) > idx_coluna_n and str(linha[idx_coluna_n]).strip()
             )
-            else:
+        else:
             dados_n_existentes = set()
 
            # 🔎 Diagnóstico visual (debug)
