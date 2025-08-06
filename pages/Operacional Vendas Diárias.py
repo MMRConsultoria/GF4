@@ -384,71 +384,110 @@ with aba3:
         dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # Ignorando cabeçalho, coluna M é a 13ª (índice 12)
 
         novos_dados = []
-        duplicados = []  # Armazenar os registros duplicados
+        # ================================================
+        # ✅ 1. Criar a coluna N com Data + Código Everest
+        # ================================================
+        df_final['Data_Formatada'] = pd.to_datetime(df_final['Data'], origin="1899-12-30", unit='D').dt.strftime('%Y-%m-%d')
+        df_final['N'] = df_final['Data_Formatada'] + df_final['Código Everest'].astype(str)
+
+        # Captura os nomes das colunas do df_final
+        colunas_df = df_final.columns.tolist()
+        
+        # Garante que vai usar o índice exato da coluna N
+        idx_coluna_n_df = colunas_df.index("N")
+        idx_coluna_m_df = colunas_df.index("M")
+
+        # Obter linhas do DataFrame como lista de listas
         rows = df_final.fillna("").values.tolist()
 
-       
+        # Obter dados já existentes da planilha (coluna N)
+        colunas_planilha = valores_existentes[0]
 
-        
-        # Verificar duplicação somente na coluna "M"
+        if "N" in colunas_planilha:
+            idx_coluna_n = colunas_planilha.index("N")
+            dados_n_existentes = set(
+                linha[idx_coluna_n]
+                for linha in valores_existentes[1:]
+                if len(linha) > idx_coluna_n and linha[idx_coluna_n]
+            )
+        else:
+            dados_n_existentes = set()
+
+        dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # Coluna M: índice 12
+
+        novos_dados = []
+        duplicados = []  # Duplicados pela M
+        suspeitos_n = []  # ⚠️ Possíveis duplicados pela N
+
+        # =========================================
+        # ✅ Verifica duplicidade pela M e depois N
+        # =========================================
         for linha in rows:
-            chave_m = linha[-1]  # A chave da coluna M (última coluna)
-            if chave_m not in dados_existentes:
-                novos_dados.append(linha)
-                dados_existentes.add(chave_m)  # Adiciona a chave da linha para não enviar novamente
-            else:
-                duplicados.append(linha)  # Adiciona a linha duplicada à lista
+            chave_m = linha[idx_coluna_m_df]
+            chave_n = linha[idx_coluna_n_df]
 
-        # Adicionar o botão de atualização do Google Sheets
-        if todas_lojas_ok and st.button("📥 Enviar dados para o Google Sheets"):
+            if chave_m not in dados_existentes:
+                if chave_n in dados_n_existentes:
+                    suspeitos_n.append(linha)  # ⚠️ Duplicado pela N
+                else:
+                    novos_dados.append(linha)  # ✅ Livre para envio
+                dados_existentes.add(chave_m)
+            else:
+                duplicados.append(linha)  # ❌ Duplicado pela M
+
+        # ==================================================
+        # ✅ Mostra alerta para duplicidade pela coluna N
+        # ==================================================
+        pode_enviar = True  # Variável de controle
+
+        if suspeitos_n:
+            st.warning(f"⚠️ {len(suspeitos_n)} registro(s) já existem com a mesma Data + Código Everest (coluna N).")
+            st.write("🔍 Registros possivelmente duplicados:")
+            st.dataframe(pd.DataFrame(suspeitos_n, columns=colunas_df), use_container_width=True)
+
+            pode_enviar = st.checkbox("✅ Mesmo assim, desejo enviar os dados acima para o Google Sheets", value=False)
+
+        # =============================================
+        # 🟢 Só mostra o botão se permitido pelo checkbox
+        # =============================================
+        if todas_lojas_ok and pode_enviar and st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
                 try:
-                    if novos_dados:
-                        # Manter a primeira linha vazia para começar a inserção
-                        primeira_linha_vazia = len(valores_existentes) + 1
-                        
-                        # Enviar os novos dados para o Google Sheets
-                        aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
+                    if novos_dados or suspeitos_n:
+                        dados_para_enviar = novos_dados + suspeitos_n
 
-# ASPAS RESOLVIDO
-                        
-                        # 🔧 Aplicar formatação de data na coluna A (Data) - prbblema de aspas resolvido
+                        primeira_linha_vazia = len(valores_existentes) + 1
+                        aba_destino.update(f"A{primeira_linha_vazia}", dados_para_enviar)
+
+                        # (Sua formatação original continua igual...)
+
                         from gspread_formatting import CellFormat, NumberFormat, format_cell_range
 
                         data_format = CellFormat(
                             numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy')
                         )
 
-                        # 🔢 Formato para coluna Ano como número sem aspas
                         numero_format = CellFormat(
-                        numberFormat=NumberFormat(type='NUMBER', pattern='0')
+                            numberFormat=NumberFormat(type='NUMBER', pattern='0')
                         )
-                      
-                        
-                        # Considerando que a coluna A é onde está a data
-                        format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(novos_dados)}", data_format)
-                        format_cell_range(aba_destino, f"L2:L{primeira_linha_vazia + len(novos_dados)}", numero_format)  
-                        format_cell_range(aba_destino, f"D2:D{primeira_linha_vazia + len(novos_dados)}", numero_format)
-                        format_cell_range(aba_destino, f"F2:F{primeira_linha_vazia + len(novos_dados)}", numero_format)
 
+                        format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(dados_para_enviar)}", data_format)
+                        format_cell_range(aba_destino, f"L2:L{primeira_linha_vazia + len(dados_para_enviar)}", numero_format)  
+                        format_cell_range(aba_destino, f"D2:D{primeira_linha_vazia + len(dados_para_enviar)}", numero_format)
+                        format_cell_range(aba_destino, f"F2:F{primeira_linha_vazia + len(dados_para_enviar)}", numero_format)
 
-
-
-                        
-                        st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
+                        st.success(f"✅ {len(dados_para_enviar)} registro(s) enviado(s) com sucesso para o Google Sheets!")
 
                     if duplicados:
-                        st.warning(f"⚠️ {len(duplicados)} registro(s) foram duplicados e não foram enviados para o Google Sheets.")
-                        # Exibir as linhas duplicadas para o usuário
-                   #     st.write("Registros Duplicados:", duplicados)
-
-                   # else:
-                    #    st.info("✅ Dados atualizados google sheets.")
+                        st.warning(f"⚠️ {len(duplicados)} registro(s) foram duplicados pela Coluna M e não foram enviados.")
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
-    else:
-        st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
 
+
+       
+
+        
+        
     
     from datetime import datetime
     import requests
