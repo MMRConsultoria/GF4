@@ -388,8 +388,13 @@ with aba3:
         # ✅ 1. Criar a coluna N com Data + Código Everest
         # ================================================
         # ✅ Cria a coluna N diretamente, sem deixar a Data_Formatada como coluna a ser exportada
+        # ✅ Garante que 'Código Everest' está tratado como inteiro antes de montar a coluna N
+        df_final['Código Everest'] = df_final['Código Everest'].apply(to_int_safe)
+        df_final = df_final[df_final['Código Everest'].notna() & (df_final['Código Everest'] != 0)]
+        # ✅ Cria a coluna N (Data + Código Everest) após aplicar o tratamento correto
         data_formatada_tmp = pd.to_datetime(df_final['Data'], origin="1899-12-30", unit='D').dt.strftime('%Y-%m-%d')
         df_final['N'] = data_formatada_tmp + df_final['Código Everest'].astype(str)
+
         # Captura os nomes das colunas do df_final
         colunas_df = df_final.columns.tolist()
         
