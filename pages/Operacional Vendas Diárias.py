@@ -519,7 +519,7 @@ with aba3:
                         st.success(f"✅ {len(dados_para_enviar)} registro(s) enviado(s) com sucesso para o Google Sheets!")
 
                         if duplicados:
-                            st.warning(f"⚠️ {len(duplicados)} registro(s) foram duplicados pela Coluna M e não foram enviados.")
+                            st.warning(f"⚠️ {len(duplicados)} registro(s) duplicados na google sheets, não foram enviados.")
                     except Exception as e:
                         st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
