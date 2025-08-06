@@ -479,7 +479,7 @@ with aba3:
                     # 📊 Exibe a tabela com a data formatada
                     st.dataframe(df_exibir, use_container_width=True)
 
-                    #pode_enviar = st.checkbox("✅ Mesmo assim, desejo enviar os dados acima para o Google Sheets", value=False)
+                    pode_enviar = st.checkbox("", value=False)
 
                 # =============================================
                 # 🟢 Só mostra o botão se permitido pelo checkbox
