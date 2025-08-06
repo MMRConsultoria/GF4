@@ -411,7 +411,7 @@ with aba3:
         colunas_planilha = valores_existentes[0]
 
         if "N" in colunas_planilha:
-            idx_coluna_n = colunas_planilha.index()
+            idx_coluna_n = colunas_planilha.index("N")
             dados_n_existentes = set(
                 str(linha[idx_coluna_n]).strip()
                 for linha in valores_existentes[1:]
@@ -444,7 +444,7 @@ with aba3:
             linha_dict = dict(zip(colunas_df, linha))
 
             chave_m = str(linha_dict["M"]).strip()
-            chave_n = str(linha_dict[]).strip()
+            chave_n = str(linha_dict["N"]).strip()
 
             if chave_m not in dados_existentes:
                 if chave_n in dados_n_existentes:
