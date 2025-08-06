@@ -428,11 +428,10 @@ with aba3:
         else:
             dados_n_existentes = set()
 
-        dados_existentes = set(
-            str(linha[12]).strip()
-            for linha in valores_existentes[1:]
-            if len(linha) > 12 and str(linha[12]).strip()
-        )  # Coluna M: índice 12
+           # 🔎 Diagnóstico visual (debug)
+            st.write("🔎 Total registros existentes na coluna N:", len(dados_n_existentes))
+            st.write("🔍 Exemplo de chaves já existentes na N:", list(dados_n_existentes)[:5])
+            st.write("📦 Exemplo de chaves novas geradas em df_final['N']:", df_final['N'].head().tolist())
 
         novos_dados = []
         duplicados = []  # Duplicados pela M
