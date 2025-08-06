@@ -289,6 +289,10 @@ with aba1:
 
 
 
+# =======================================
+# Atualizar Google Sheets (Evitar duplicação)
+# =======================================
+
 with aba3:
     st.markdown("## 📤 Atualizar Google Sheets")
 
@@ -400,9 +404,15 @@ with aba3:
                             st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviados com sucesso!")
 
                         else:
+                            st.warning("⚠️ Atualização cancelada. Marque a opção para continuar com duplicidade na coluna N.")
+                    else:
+                        st.info("⚠️ Nenhum novo registro para enviar.")
 
-   
-    
+                except Exception as e:
+                    st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
+    else:
+        st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+
 
 
 # =======================================
