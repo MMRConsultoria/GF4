@@ -420,6 +420,43 @@ with aba3:
             else:
                 duplicados.append(linha)  # Adiciona a linha duplicada à lista
 
+
+        # ================================
+        # Verificação de duplicidade pela coluna N (entre registros não duplicados na M)
+        # ================================
+        
+        # Obter todas as colunas da aba para montar a posição da coluna N
+        colunas_planilha = valores_existentes[0]  # Cabeçalho
+        try:
+            idx_coluna_n = colunas_planilha.index("N")
+        except:
+            idx_coluna_n = -1  # Se não existir, ignora
+        
+        # Coletar valores existentes da coluna N (se existir)
+        dados_n_existentes = set()
+        if idx_coluna_n >= 0:
+            dados_n_existentes = set([linha[idx_coluna_n] for linha in valores_existentes[1:] if len(linha) > idx_coluna_n])
+        
+        # Lista de registros suspeitos na N (que não estavam na M)
+        suspeitos_n = []
+        
+        for linha in novos_dados:
+            chave_n = linha[-3]  # N está antes da M (linha[-2] é M, linha[-3] é N)
+            if chave_n in dados_n_existentes:
+                suspeitos_n.append(linha)
+        
+        # Se houver suspeitos, pede confirmação
+        continuar_envio = True
+        
+        if suspeitos_n:
+            st.warning(f"⚠️ {len(suspeitos_n)} registro(s) já existem pela coluna N (Data + Código Everest).")
+            st.dataframe(pd.DataFrame(suspeitos_n, columns=colunas_planilha))
+            continuar_envio = st.checkbox("🔁 Desejo continuar mesmo assim", value=False)
+        
+        
+
+
+        
         # Adicionar o botão de atualização do Google Sheets
         if todas_lojas_ok and st.button("📥 Enviar dados para o Google Sheets"):
             with st.spinner("🔄 Atualizando o Google Sheets..."):
