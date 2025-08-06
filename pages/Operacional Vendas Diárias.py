@@ -293,6 +293,7 @@ with aba1:
 # Atualizar Google Sheets (Evitar duplicação)
 # =======================================
 
+
 with aba3:
     st.markdown("## 📤 Atualizar Google Sheets")
 
@@ -303,18 +304,15 @@ with aba3:
     if 'df_final' in st.session_state:
         df_final = st.session_state.df_final.copy()
 
-        # Inicializa variáveis de controle no session_state
+        # Estado para controle de duplicidade N
         if "permitir_envio_com_n" not in st.session_state:
             st.session_state.permitir_envio_com_n = False
         if "verificacao_n_mostrada" not in st.session_state:
             st.session_state.verificacao_n_mostrada = False
 
-        lojas_nao_cadastradas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
-        todas_lojas_ok = len(lojas_nao_cadastradas) == 0
-
-        # ✅ Botão sempre visível
+        # ✅ Botão SEMPRE VISÍVEL
         if st.button("📥 Enviar dados para o Google Sheets"):
-            with st.spinner("🔄 Verificando duplicidades e atualizando..."):
+            with st.spinner("🔄 Verificando e atualizando..."):
                 try:
                     # 🔧 Preparação
                     df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
@@ -334,7 +332,7 @@ with aba3:
                     df_final['Código Everest'] = df_final['Código Everest'].apply(lambda x: int(str(x).replace("'", "").strip()) if str(x).strip() != "" else "")
                     df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(lambda x: int(str(x).replace("'", "").strip()) if str(x).strip() != "" else "")
 
-                    # 🔌 Conexão
+                    # 🔌 Conectar ao Sheets
                     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
                     credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
                     credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
@@ -342,13 +340,13 @@ with aba3:
 
                     planilha_destino = gc.open("Vendas diarias")
                     aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
-
                     valores_existentes = aba_destino.get_all_values()
-                    dados_existentes_m = set([linha[12] for linha in valores_existentes[1:]])
 
-                    # 🔍 Verificação duplicidade M
+                    # 🔍 Verificar M
+                    dados_existentes_m = set([linha[12] for linha in valores_existentes[1:]])
                     novos_dados, duplicados_m = [], []
                     rows = df_final.fillna("").values.tolist()
+
                     for linha in rows:
                         chave_m = linha[-1]
                         if chave_m not in dados_existentes_m:
@@ -360,12 +358,13 @@ with aba3:
                     if duplicados_m:
                         st.warning(f"🚫 {len(duplicados_m)} registro(s) foram descartados por duplicidade na coluna M.")
 
+                    # Se houver novos dados, verificar N
                     if novos_dados:
-                        # Verificação da N
                         df_novos = pd.DataFrame(novos_dados, columns=df_final.columns)
                         df_novos['Data_Formatada'] = pd.to_datetime(df_novos['Data'], origin='1899-12-30', unit='D')
                         df_novos['N'] = df_novos['Data_Formatada'].dt.strftime('%Y-%m-%d') + "_" + df_novos['Código Everest'].astype(str)
 
+                        # Dados existentes de N
                         dados_existentes_n = set()
                         for linha in valores_existentes[1:]:
                             try:
@@ -381,36 +380,43 @@ with aba3:
                         df_novos['Duplicado_N'] = df_novos['N'].isin(dados_existentes_n)
                         duplicados_n_df = df_novos[df_novos['Duplicado_N'] == True]
 
+                        # ⛔️ Se houver duplicidade N e o usuário ainda não aceitou, exibe e aguarda
                         if not duplicados_n_df.empty and not st.session_state.permitir_envio_com_n:
-                            st.warning(f"⚠️ {len(duplicados_n_df)} registro(s) possuem possível duplicidade por Data + Código Everest (coluna N):")
+                            st.warning(f"⚠️ {len(duplicados_n_df)} registro(s) possuem possível duplicidade na coluna N (Data + Código Everest):")
                             st.dataframe(duplicados_n_df[["Data_Formatada", "Loja", "Código Everest", "N"]])
                             st.session_state.verificacao_n_mostrada = True
-                            st.stop()
 
-                        # ✅ Enviar dados se permitido
-                        primeira_linha_vazia = len(valores_existentes) + 1
-                        aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
+                        # ✅ Se o usuário aceitou (checkbox marcado), envia
+                        elif st.session_state.permitir_envio_com_n or duplicados_n_df.empty:
+                            primeira_linha_vazia = len(valores_existentes) + 1
+                            aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
 
-                        from gspread_formatting import CellFormat, NumberFormat, format_cell_range
-                        data_format = CellFormat(numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy'))
-                        numero_format = CellFormat(numberFormat=NumberFormat(type='NUMBER', pattern='0'))
+                            from gspread_formatting import CellFormat, NumberFormat, format_cell_range
+                            data_format = CellFormat(numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy'))
+                            numero_format = CellFormat(numberFormat=NumberFormat(type='NUMBER', pattern='0'))
 
-                        format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(novos_dados)}", data_format)
-                        format_cell_range(aba_destino, f"L2:L{primeira_linha_vazia + len(novos_dados)}", numero_format)
-                        format_cell_range(aba_destino, f"D2:D{primeira_linha_vazia + len(novos_dados)}", numero_format)
-                        format_cell_range(aba_destino, f"F2:F{primeira_linha_vazia + len(novos_dados)}", numero_format)
+                            format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(novos_dados)}", data_format)
+                            format_cell_range(aba_destino, f"L2:L{primeira_linha_vazia + len(novos_dados)}", numero_format)
+                            format_cell_range(aba_destino, f"D2:D{primeira_linha_vazia + len(novos_dados)}", numero_format)
+                            format_cell_range(aba_destino, f"F2:F{primeira_linha_vazia + len(novos_dados)}", numero_format)
 
-                        st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviados com sucesso!")
-                        st.session_state.permitir_envio_com_n = False
-                        st.session_state.verificacao_n_mostrada = False
+                            st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviados com sucesso!")
+
+                            # Reset
+                            st.session_state.permitir_envio_com_n = False
+                            st.session_state.verificacao_n_mostrada = False
                     else:
                         st.info("⚠️ Nenhum novo registro para enviar.")
+
                 except Exception as e:
                     st.error(f"❌ Erro ao atualizar: {e}")
 
-        # ✅ Checkbox aparece após verificação de N
-        if st.session_state.verificacao_n_mostrada:
+        # ✅ Mostra checkbox fora do botão se houver duplicidade N
+        if st.session_state.verificacao_n_mostrada and not st.session_state.permitir_envio_com_n:
             st.session_state.permitir_envio_com_n = st.checkbox("✅ Desejo continuar mesmo com duplicidade na coluna N")
+            st.info("Após marcar a opção acima, clique novamente no botão para enviar.")
+    else:
+        st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
 
 
 
