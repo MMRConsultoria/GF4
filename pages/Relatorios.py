@@ -445,18 +445,19 @@ with aba3:
     
     # Monta linha com estrutura do df_final, já convertendo os valores para str (evita float!)
     linha_lojas = {col: "" for col in df_final.columns}
-    linha_total["Tipo"] = "TOTAL"
-    linha_total["Grupo"] = "TOTAL"
-    linha_total["Loja"] = ""
+    linha_lojas["Grupo"] = "Lojas Ativas"
+    linha_lojas["Loja"] = ""
+    linha_lojas["Tipo"] = ""
         
     for periodo in df_lojas_por_periodo.index:
         if periodo in linha_lojas:
             linha_lojas[periodo] = str(int(df_lojas_por_periodo[periodo]))  # 👈 força int e depois str
     
     # === Linha TOTAL ===
-    linha_total = df_final.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+    linha_total = df_final.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
     linha_total["Grupo"] = "TOTAL"
     linha_total["Loja"] = ""
+    linha_total["Tipo"] = "TOTAL"
     
     # Junta tudo: Lojas Ativas → TOTAL → Dados
     df_final = pd.concat([
