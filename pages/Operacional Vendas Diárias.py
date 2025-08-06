@@ -405,7 +405,12 @@ with aba3:
         if "Data_Formatada" in df_final.columns:
             df_final = df_final.drop(columns=["Data_Formatada"])
 
-
+        # Captura os nomes das colunas do df_final
+        colunas_df = df_final.columns.tolist()
+        
+        # Garante que vai usar o índice exato da coluna N
+        idx_coluna_n_df = colunas_df.index("N")
+        idx_coluna_m_df = colunas_df.index("M")
 
         novos_dados = []
         duplicados = []  # Armazenar os registros duplicados
@@ -435,9 +440,9 @@ with aba3:
         
         # Verificar duplicação somente na coluna "M"
         for linha in rows:
-            chave_m = linha[-2]  # Coluna M
-            chave_n = linha[-1]  # Coluna N (agora usamos sempre o último índice, garantido pelo df_final)
-
+            chave_m = linha[idx_coluna_m_df]
+            chave_n = linha[idx_coluna_n_df]
+            
             if chave_m in dados_existentes:
                 duplicados.append(linha)
             elif chave_n in dados_n_existentes:
@@ -450,7 +455,7 @@ with aba3:
         
         if suspeitos_n:
             st.warning(f"⚠️ {len(suspeitos_n)} registro(s) já existem pela coluna N (Data + Código Everest).")
-            st.dataframe(pd.DataFrame(suspeitos_n, columns=colunas_planilha))
+            st.dataframe(pd.DataFrame(suspeitos_n, columns=colunas_df))
             continuar_envio = st.checkbox("🔁 Desejo continuar mesmo assim", value=False)
         
         
