@@ -603,17 +603,20 @@ with aba3:
     from openpyxl.styles import Alignment
     from openpyxl.utils import get_column_letter
     # ➤ Ajusta a largura das colunas automaticamente
-    for col in ws.columns:
+    from openpyxl.utils import get_column_letter
+
+    # ➤ Ajusta a largura das colunas com base no valor formatado
+    for i, col_cells in enumerate(ws.iter_cols(min_row=1, max_row=ws.max_row), start=1):
         max_length = 0
-        col_letter = col[0].column_letter
-        for cell in col:
+        for cell in col_cells:
             try:
                 if cell.value:
-                    max_length = max(max_length, len(str(cell.value)))
+                    cell_str = str(cell.value)
+                    max_length = max(max_length, len(cell_str))
             except:
                 pass
-        adjusted_width = max_length + 2
-        ws.column_dimensions[col_letter].width = adjusted_width
+        col_letter = get_column_letter(i)
+        ws.column_dimensions[col_letter].width = max_length + 2
 
 
 
