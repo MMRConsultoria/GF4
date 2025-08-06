@@ -459,6 +459,13 @@ with aba3:
     # === Linha de Lojas Ativas (quantas lojas venderam algo em cada período) ===
     # === Linha de Lojas Ativas (quantas lojas venderam por período) ===
     df_lojas_por_periodo = df_filtrado.groupby("Período")["Loja"].nunique()
+
+    # Total da última coluna
+    total_geral = df_final[ultima_coluna_valor].sum()
+    
+    # Cria a nova coluna com o percentual sobre o total
+    df_final["% Total"] = df_final[ultima_coluna_valor] / total_geral
+
     
     # Monta linha com estrutura do df_final, já convertendo os valores para str (evita float!)
     linha_lojas = {col: "" for col in df_final.columns}
@@ -500,8 +507,11 @@ with aba3:
                 lambda row: formatar(row[col]) if row["Grupo"] not in ["Lojas Ativas"] else row[col],
                 axis=1
             )
-    
-    df_formatado = df_formatado[["Tipo", "Grupo", "Loja"] + colunas_periodo]
+    df_formatado = df_formatado[["Tipo", "Grupo", "Loja"] + colunas_periodo + ["% Total"]]
+    #df_formatado = df_formatado[["Tipo", "Grupo", "Loja"] + colunas_periodo]
+    # Formata a nova coluna de percentual
+    df_formatado["% Total"] = df_final["% Total"].apply(lambda x: f"{x:.1%}" if pd.notnull(x) else "")
+
 
     # Estilo para destacar TOTAL
     def aplicar_estilo(df):
