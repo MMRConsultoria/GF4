@@ -446,7 +446,7 @@ with aba3:
                 novos_dados.append(linha)
                 dados_existentes.add(chave_m)
                 dados_n_existentes.add(chave_n) 
-
+        continuar_envio = True  # <- Adicione esta linha ANTES do if
         
         if suspeitos_n:
             st.warning(f"⚠️ {len(suspeitos_n)} registro(s) já existem pela coluna N (Data + Código Everest).")
