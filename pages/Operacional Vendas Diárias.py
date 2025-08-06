@@ -440,11 +440,19 @@ with aba3:
         # Lista de registros suspeitos na N (que não estavam na M)
         suspeitos_n = []
         
-        for linha in novos_dados:
-            chave_n = linha[-3]  # N está antes da M (linha[-2] é M, linha[-3] é N)
-            if chave_n in dados_n_existentes:
-                suspeitos_n.append(linha)
+        # Garante índice correto da coluna N
+        if "N" in colunas_planilha:
+            idx_coluna_n = colunas_planilha.index("N")
+        else:
+            idx_coluna_n = None
         
+        # Verifica duplicidade real pela coluna N (com base no índice)
+        for linha in novos_dados:
+            if idx_coluna_n is not None and len(linha) > idx_coluna_n:
+                chave_n = linha[idx_coluna_n]
+                if chave_n in dados_n_existentes:
+                    suspeitos_n.append(linha)
+                
         # Se houver suspeitos, pede confirmação
         continuar_envio = True
         
