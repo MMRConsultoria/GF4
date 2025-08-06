@@ -383,7 +383,7 @@ with aba3:
         # Criar um conjunto de linhas existentes na coluna M (usada para verificar duplicação)
         dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # Ignorando cabeçalho, coluna M é a 13ª (índice 12)
 
-        novos_dados = []
+        #novos_dados = []
        
         # ✅ Cria a coluna N diretamente, sem deixar a Data_Formatada como coluna a ser exportada
         df_final['Código Everest'] = df_final['Código Everest'].apply(to_int_safe)
@@ -430,12 +430,21 @@ with aba3:
         suspeitos_n = []  # ⚠️ Possíveis duplicados pela N
         novos_dados = []
 
+
+
+        # Diagnóstico: Ver interseções entre as chaves novas e existentes
+        chaves_novas = set(df_final["N"].tolist())
+        intersecao_n = chaves_novas & dados_n_existentes
+        st.write("🔁 Interseção entre N gerada e existente:", list(intersecao_n)[:5])
+        st.write("🔢 Total de interseções encontradas:", len(intersecao_n))
         # =========================================
         # ✅ Verifica duplicidade pela M e depois N
         # =========================================
         for linha in rows:
-            chave_m = str(linha[idx_coluna_m_df]).strip()
-            chave_n = str(linha[idx_coluna_n_df]).strip()
+            linha_dict = dict(zip(colunas_df, linha))
+
+            chave_m = str(linha_dict["M"]).strip()
+            chave_n = str(linha_dict["N"]).strip()
 
             if chave_m not in dados_existentes:
                 if chave_n in dados_n_existentes:
