@@ -392,12 +392,22 @@ with aba3:
         df_final['Código Everest'] = df_final['Código Everest'].apply(to_int_safe)
         df_final = df_final[df_final['Código Everest'].notna() & (df_final['Código Everest'] != 0)]
         # ✅ Cria a coluna N (Data + Código Everest) após aplicar o tratamento correto
-        data_formatada_tmp = pd.to_datetime(df_final['Data'], origin="1899-12-30", unit='D').dt.strftime('%Y-%m-%d')
-        df_final['N'] = data_formatada_tmp + df_final['Código Everest'].astype(str)
+        # Cria coluna temporária com a data formatada real
+        df_final['Data_Formatada'] = pd.to_datetime(df_final['Data'], origin="1899-12-30", unit='D').dt.strftime('%Y-%m-%d')
+        
+        # Monta a coluna N com Data real + Código Everest
+        df_final['N'] = df_final['Data_Formatada'] + df_final['Código Everest'].astype(str)
+        
+        # Garante que não há espaços invisíveis
+        df_final['N'] = df_final['N'].astype(str).str.strip()
 
         # Captura os nomes das colunas do df_final
-        colunas_df = df_final.columns.tolist()
         
+        # ✅ Remove a coluna auxiliar antes de montar os dados
+        if 'Data_Formatada' in df_final.columns:
+            df_final = df_final.drop(columns=['Data_Formatada'])
+        colunas_df = df_final.columns.tolist()
+        # ✅ Garante que vai usar o índice exato da coluna N
         # Garante que vai usar o índice exato da coluna N
         idx_coluna_n_df = colunas_df.index("N")
         idx_coluna_m_df = colunas_df.index("M")
