@@ -467,38 +467,43 @@ with aba3:
             st.write("🔍 Registros possivelmente duplicados:")
             st.dataframe(pd.DataFrame(suspeitos_n, columns=colunas_df), use_container_width=True)
 
-           
-
             pode_enviar = st.checkbox("✅ Mesmo assim, desejo enviar os dados acima para o Google Sheets", value=False)
-            
-            # 🟢 Envia automaticamente ao marcar o checkbox
-            if todas_lojas_ok and pode_enviar:
-                with st.spinner("🔄 Atualizando o Google Sheets..."):
-                    try:
-                        if novos_dados or suspeitos_n:
-                            dados_para_enviar = novos_dados + suspeitos_n
-            
-                            primeira_linha_vazia = len(valores_existentes_df) + 2  # Ajuste: considerar cabeçalho
-                            aba_destino.update(f"A{primeira_linha_vazia}", dados_para_enviar)
-            
-                            # Formatações
-                            from gspread_formatting import CellFormat, NumberFormat, format_cell_range
-            
-                            data_format = CellFormat(numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy'))
-                            numero_format = CellFormat(numberFormat=NumberFormat(type='NUMBER', pattern='0'))
-            
-                            format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(dados_para_enviar)}", data_format)
-                            format_cell_range(aba_destino, f"L2:L{primeira_linha_vazia + len(dados_para_enviar)}", numero_format)  
-                            format_cell_range(aba_destino, f"D2:D{primeira_linha_vazia + len(dados_para_enviar)}", numero_format)
-                            format_cell_range(aba_destino, f"F2:F{primeira_linha_vazia + len(dados_para_enviar)}", numero_format)
-            
-                            st.success(f"✅ {len(dados_para_enviar)} registro(s) enviado(s) com sucesso para o Google Sheets!")
-            
-                        if duplicados:
-                            st.warning(f"⚠️ {len(duplicados)} registro(s) foram duplicados pela Coluna M e não foram enviados.")
-                    except Exception as e:
-                        st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
+        # =============================================
+        # 🟢 Só mostra o botão se permitido pelo checkbox
+        # =============================================
+        if todas_lojas_ok and pode_enviar and st.button("📥 Enviar dados para o Google Sheets"):
+            with st.spinner("🔄 Atualizando o Google Sheets..."):
+                try:
+                    if novos_dados or suspeitos_n:
+                        dados_para_enviar = novos_dados + suspeitos_n
+
+                        primeira_linha_vazia = len(valores_existentes) + 1
+                        aba_destino.update(f"A{primeira_linha_vazia}", dados_para_enviar)
+
+                        # (Sua formatação original continua igual...)
+
+                        from gspread_formatting import CellFormat, NumberFormat, format_cell_range
+
+                        data_format = CellFormat(
+                            numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy')
+                        )
+
+                        numero_format = CellFormat(
+                            numberFormat=NumberFormat(type='NUMBER', pattern='0')
+                        )
+
+                        format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(dados_para_enviar)}", data_format)
+                        format_cell_range(aba_destino, f"L2:L{primeira_linha_vazia + len(dados_para_enviar)}", numero_format)  
+                        format_cell_range(aba_destino, f"D2:D{primeira_linha_vazia + len(dados_para_enviar)}", numero_format)
+                        format_cell_range(aba_destino, f"F2:F{primeira_linha_vazia + len(dados_para_enviar)}", numero_format)
+
+                        st.success(f"✅ {len(dados_para_enviar)} registro(s) enviado(s) com sucesso para o Google Sheets!")
+
+                    if duplicados:
+                        st.warning(f"⚠️ {len(duplicados)} registro(s) foram duplicados pela Coluna M e não foram enviados.")
+                except Exception as e:
+                    st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
 
 
        
