@@ -472,7 +472,7 @@ with aba3:
                 # 🚨 Verifica duplicidade pela coluna N
                 # ================================
                 if suspeitos_n:
-                    st.warning("❌ Existem registros com mesma Data + Código Everest (coluna N). Corrija antes de continuar.")
+                    st.warning("❌ Existem registros possivelmente duplicados. Corrija antes de continuar.")
                     
                     df_exibir = pd.DataFrame(suspeitos_n, columns=colunas_df).copy()
                 
