@@ -460,11 +460,19 @@ with aba3:
     # === Linha de Lojas Ativas (quantas lojas venderam por período) ===
     df_lojas_por_periodo = df_filtrado.groupby("Período")["Loja"].nunique()
 
-    # Total da última coluna
-    total_geral = df_final[ultima_coluna_valor].sum()
+    # 🔢 Soma total de todas as colunas de valor
+    colunas_valor = colunas_periodo  # já está definido corretamente
+    soma_total_geral = df_final[colunas_valor].sum(numeric_only=True).sum()
     
-    # Cria a nova coluna com o percentual sobre o total
-    df_final["% Total"] = df_final[ultima_coluna_valor] / total_geral
+    # ➕ Cria uma coluna auxiliar com o total por linha
+    df_final["__soma_linha"] = df_final[colunas_valor].sum(axis=1, numeric_only=True)
+    
+    # 🎯 Calcula o percentual total com base na soma de todas as colunas
+    df_final["% Total"] = df_final["__soma_linha"] / soma_total_geral
+    
+    # 🧹 Remove a auxiliar
+    df_final = df_final.drop(columns=["__soma_linha"])
+
 
     
     # Monta linha com estrutura do df_final, já convertendo os valores para str (evita float!)
