@@ -600,7 +600,8 @@ with aba3:
                 else:
                     cell.number_format = '"R$" #,##0.00'
 
-    
+    from openpyxl.styles import Alignment
+    from openpyxl.utils import get_column_letter
     # ➤ Ajusta a largura das colunas automaticamente
     for col in ws.columns:
         max_length = 0
@@ -613,6 +614,27 @@ with aba3:
                 pass
         adjusted_width = max_length + 2
         ws.column_dimensions[col_letter].width = adjusted_width
+
+
+
+
+    # ➤ Alinha à esquerda as colunas "Tipo", "Grupo" e "Loja"
+    colunas_df = list(df_exportar.columns)
+    colunas_esquerda = ["Tipo", "Grupo", "Loja"]
+    for col_nome in colunas_esquerda:
+        if col_nome in colunas_df:
+            col_idx = colunas_df.index(col_nome) + 1
+            for cell in ws.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx):
+                for c in cell:
+                    c.alignment = Alignment(horizontal="left")
+    
+    # ➤ Define largura fixa da coluna "Loja" para 22
+    if "Loja" in colunas_df:
+        col_idx_loja = colunas_df.index("Loja")
+        col_letra_loja = chr(ord("A") + col_idx_loja)
+        ws.column_dimensions[col_letra_loja].width = 22
+
+
     
     # ➤ Salva para download
     output_final = BytesIO()
