@@ -394,7 +394,13 @@ with aba3:
 
         # Obter dados já existentes na aba
         valores_existentes = aba_destino.get_all_values()
-
+        colunas_planilha = valores_existentes[0]
+        st.write("🧪 Cabeçalho da planilha:", colunas_planilha)
+        
+        # Mostra últimas linhas com dados
+        st.write("🧪 Últimas linhas da planilha:")
+        for linha in valores_existentes[-5:]:
+            st.write(linha)
         # Criar um conjunto de linhas existentes na coluna M (usada para verificar duplicação)
         dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # Ignorando cabeçalho, coluna M é a 13ª (índice 12)
 
