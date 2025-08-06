@@ -417,7 +417,10 @@ with aba3:
             except:
                 return datetime.strptime("01/01/" + col, "%d/%m/%Y")
 
-    colunas_periodo = sorted([c for c in df_pivot.columns if c not in ["Loja", "Grupo"]], key=ordenar_datas)
+    colunas_periodo = sorted(
+        [c for c in df_pivot.columns if c not in ["Tipo", "Loja", "Grupo"]],
+        key=ordenar_datas
+    )
 
     # Garante que colunas existam
     if "Loja" not in df_pivot.columns:
