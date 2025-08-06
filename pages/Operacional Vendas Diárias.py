@@ -293,135 +293,127 @@ with aba1:
 # Atualizar Google Sheets (Evitar duplicação)
 # =======================================
 
+# =======================================
+# Atualizar Google Sheets (verificações só no envio)
+# =======================================
 with aba3:
+    st.markdown("## 📤 Atualizar Google Sheets com Verificação no Momento do Envio")
 
-    # 🔗 Link visível
+    # 🔗 Link para abrir a planilha
     st.markdown("""
-      🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing)
+      🔗 [Abrir planilha **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing)
     """, unsafe_allow_html=True)
 
-    if 'df_final' in st.session_state:
-        df_final = st.session_state.df_final.copy()
+    # Sessão para armazenar os dados carregados
+    if "valores_existentes" not in st.session_state:
+        st.session_state.valores_existentes = None
+        st.session_state.dados_existentes_m = set()
+        st.session_state.dados_existentes_n = set()
 
-        # Verifica lojas sem código Everest
+    # 🔘 Botão para carregar dados existentes
+    if st.button("🔄 Carregar dados atuais do Google Sheets"):
+        try:
+            scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+            credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+            credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+            gc = gspread.authorize(credentials)
+
+            planilha_destino = gc.open("Vendas diarias")
+            aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
+
+            valores = aba_destino.get_all_values()
+            st.session_state.valores_existentes = valores
+
+            st.success(f"✅ Dados carregados com sucesso! {len(valores)-1} linha(s) disponíveis para verificação.")
+        except Exception as e:
+            st.error(f"Erro ao carregar dados do Google Sheets: {e}")
+
+    # =============================
+    # Botão de envio e verificações
+    # =============================
+    if 'df_final' in st.session_state and st.session_state.valores_existentes:
+
+        df_final = st.session_state.df_final.copy()
+        valores_existentes = st.session_state.valores_existentes
+
+        # Só exibe botão se lojas estiverem ok
         lojas_nao_cadastradas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
         todas_lojas_ok = len(lojas_nao_cadastradas) == 0
 
-        # ========================
-        # 🔧 Coluna M (bloqueio obrigatório)
-        # ========================
-        df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
-                        df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
-        df_final['M'] = df_final['M'].apply(str)
+        # Checkbox de confirmação para enviar mesmo com duplicidade na coluna N
+        continuar_envio = st.checkbox("✅ Desejo continuar mesmo que existam duplicidades na coluna N")
 
-        # 🔧 Conversões e limpeza
-        df_final = df_final.applymap(str)
-
-        df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-        df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-        df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-        df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-
-        df_final['Data'] = pd.to_datetime(df_final['Data'].astype(str).str.replace("'", "").str.strip(), dayfirst=True)
-        df_final['Data'] = (df_final['Data'] - pd.Timestamp("1899-12-30")).dt.days
-
-        df_final['Ano'] = df_final['Ano'].apply(
-            lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
-        )
-
-        def to_int_safe(x):
-            try:
-                x_clean = str(x).replace("'", "").strip()
-                return int(x_clean)
-            except:
-                return ""
-
-        df_final['Código Everest'] = df_final['Código Everest'].apply(to_int_safe)
-        df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(to_int_safe)
-
-        # ========================
-        # Conectar ao Google Sheets
-        # ========================
-        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-        credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-        gc = gspread.authorize(credentials)
-
-        planilha_destino = gc.open("Vendas diarias")
-        aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
-
-        valores_existentes = aba_destino.get_all_values()
-
-        # Dados existentes pela coluna M (13ª coluna → índice 12)
-        dados_existentes_m = set([linha[12] for linha in valores_existentes[1:]])
-
-        # Dados existentes para verificação da coluna N
-        dados_existentes_n = set()
-        for linha in valores_existentes[1:]:
-            try:
-                data_cell = linha[0]  # Coluna A (Data)
-                cod_everest_cell = linha[3]  # Coluna D (Código Everest)
-                if data_cell and cod_everest_cell:
-                    data_n = pd.to_datetime(data_cell, dayfirst=True).strftime('%Y-%m-%d')
-                    chave_n = f"{data_n}_{str(cod_everest_cell).strip()}"
-                    dados_existentes_n.add(chave_n)
-            except:
-                continue
-
-        # ========================
-        # 🚧 Verificação pela coluna M
-        # ========================
-        novos_dados = []
-        duplicados = []
-
-        rows = df_final.fillna("").values.tolist()
-
-        for linha in rows:
-            chave_m = linha[-3]  # M está na antepenúltima coluna
-            if chave_m not in dados_existentes_m:
-                novos_dados.append(linha)
-                dados_existentes_m.add(chave_m)
-            else:
-                duplicados.append(linha)
-
-        # ⚠️ Alerta de duplicidade na coluna M (apenas informa, sem detalhar)
-        if duplicados:
-            qtd_descartados = len(duplicados)
-            st.warning(f"🚫 {qtd_descartados} registro(s) foram descartados por já existirem na base (duplicidade pela coluna **M**).")
-
-        # ========================
-        # ⚠️ Verificação pela coluna N (com detalhamento)
-        # ========================
-        if novos_dados:
-            df_envio = pd.DataFrame(novos_dados, columns=df_final.columns)
-            df_envio['Data_Formatada'] = pd.to_datetime(df_envio['Data'], origin='1899-12-30', unit='D')
-            df_envio['N'] = df_envio['Data_Formatada'].dt.strftime('%Y-%m-%d') + "_" + df_envio['Código Everest'].astype(str)
-            df_envio['Duplicado_N'] = df_envio['N'].isin(dados_existentes_n)
-
-            duplicados_n_df = df_envio[df_envio['Duplicado_N'] == True]
-
-            if not duplicados_n_df.empty:
-                qtd_n = len(duplicados_n_df)
-                st.warning(f"⚠️ {qtd_n} registro(s) possuem duplicidade na coluna **N** (Data + Código Everest). Confira abaixo:")
-                st.dataframe(duplicados_n_df[["Data_Formatada", "Loja", "Código Everest", "N"]])
-                continuar_envio = st.checkbox("✅ Desejo continuar mesmo assim (envio não será bloqueado)")
-            else:
-                continuar_envio = True
-        else:
-            continuar_envio = False  # não há dados a enviar
-
-        # ========================
-        # BOTÃO DE ENVIO
-        # ========================
-        if todas_lojas_ok and continuar_envio and st.button("📥 Enviar dados para o Google Sheets"):
-            with st.spinner("🔄 Atualizando o Google Sheets..."):
+        # Botão de envio com verificações
+        if todas_lojas_ok and st.button("📥 Enviar dados para o Google Sheets"):
+            with st.spinner("🔄 Verificando duplicidades e atualizando..."):
                 try:
+                    # === Refaz dados existentes M e N com base em valores atuais ===
+                    dados_existentes_m = set([linha[12] for linha in valores_existentes[1:]])
+
+                    dados_existentes_n = set()
+                    for linha in valores_existentes[1:]:
+                        try:
+                            data_cell = linha[0]
+                            cod_everest = linha[3]
+                            if data_cell and cod_everest:
+                                data_fmt = pd.to_datetime(data_cell, dayfirst=True).strftime('%Y-%m-%d')
+                                dados_existentes_n.add(f"{data_fmt}_{str(cod_everest).strip()}")
+                        except:
+                            continue
+
+                    # === Normalização e preparação ===
+                    df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
+                                    df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+                    df_final['M'] = df_final['M'].apply(str)
+
+                    df_final = df_final.applymap(str)
+
+                    df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+                    df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+                    df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+                    df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+
+                    df_final['Data'] = pd.to_datetime(df_final['Data'].astype(str).str.replace("'", "").str.strip(), dayfirst=True)
+                    df_final['Data'] = (df_final['Data'] - pd.Timestamp("1899-12-30")).dt.days
+
+                    df_final['Ano'] = df_final['Ano'].apply(lambda x: int(str(x).replace("'", "").strip()) if str(x).strip() != "" else "")
+                    df_final['Código Everest'] = df_final['Código Everest'].apply(lambda x: int(str(x).replace("'", "").strip()) if str(x).strip() != "" else "")
+                    df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(lambda x: int(str(x).replace("'", "").strip()) if str(x).strip() != "" else "")
+
+                    # 🚧 Verificação M
+                    novos_dados, duplicados = [], []
+                    rows = df_final.fillna("").values.tolist()
+                    for linha in rows:
+                        chave_m = linha[-3]
+                        if chave_m not in dados_existentes_m:
+                            novos_dados.append(linha)
+                            dados_existentes_m.add(chave_m)
+                        else:
+                            duplicados.append(linha)
+
+                    if duplicados:
+                        st.warning(f"🚫 {len(duplicados)} registro(s) foram descartados por já existirem na base (duplicidade na coluna M).")
+
+                    # ⚠️ Verificação N detalhada (nos válidos)
                     if novos_dados:
+                        df_envio = pd.DataFrame(novos_dados, columns=df_final.columns)
+                        df_envio['Data_Formatada'] = pd.to_datetime(df_envio['Data'], origin='1899-12-30', unit='D')
+                        df_envio['N'] = df_envio['Data_Formatada'].dt.strftime('%Y-%m-%d') + "_" + df_envio['Código Everest'].astype(str)
+                        df_envio['Duplicado_N'] = df_envio['N'].isin(dados_existentes_n)
+
+                        duplicados_n_df = df_envio[df_envio['Duplicado_N'] == True]
+
+                        if not duplicados_n_df.empty and not continuar_envio:
+                            st.warning(f"⚠️ {len(duplicados_n_df)} registro(s) com duplicidade na coluna N. Marque o checkbox acima se desejar continuar.")
+                            st.dataframe(duplicados_n_df[["Data_Formatada", "Loja", "Código Everest", "N"]])
+                            st.stop()
+
+                        # ✅ Envia os dados
+                        aba_destino = gc.open("Vendas diarias").worksheet("Fat Sistema Externo")
                         primeira_linha_vazia = len(valores_existentes) + 1
                         aba_destino.update(f"A{primeira_linha_vazia}", novos_dados)
 
                         from gspread_formatting import CellFormat, NumberFormat, format_cell_range
-
                         data_format = CellFormat(numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy'))
                         numero_format = CellFormat(numberFormat=NumberFormat(type='NUMBER', pattern='0'))
 
@@ -430,12 +422,16 @@ with aba3:
                         format_cell_range(aba_destino, f"D2:D{primeira_linha_vazia + len(novos_dados)}", numero_format)
                         format_cell_range(aba_destino, f"F2:F{primeira_linha_vazia + len(novos_dados)}", numero_format)
 
-                        st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviado(s) com sucesso para o Google Sheets!")
+                        st.success(f"✅ {len(novos_dados)} novo(s) registro(s) enviados com sucesso para o Google Sheets!")
+                    else:
+                        st.info("⚠️ Nenhum novo registro para enviar.")
                 except Exception as e:
-                    st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
-    else:
-        st.warning("⚠️ Primeiro faça o upload e o processamento na Aba 1.")
+                    st.error(f"❌ Erro ao atualizar: {e}")
 
+    elif 'df_final' in st.session_state and not st.session_state.valores_existentes:
+        st.info("ℹ️ Antes de continuar, clique em **🔄 Carregar dados atuais do Google Sheets**.")
+    else:
+        st.warning("⚠️ Nenhum dado carregado ainda. Faça o upload na Aba 1.")
 
 
 
