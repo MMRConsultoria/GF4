@@ -707,6 +707,11 @@ with aba4:
         # Validação para garantir que foram selecionadas 2 datas
         if isinstance(datas_selecionadas, (tuple, list)) and len(datas_selecionadas) == 2:
             data_inicio, data_fim = datas_selecionadas
+
+            # ⚠️ Bloqueia seleção entre meses diferentes
+            if data_inicio.month != data_fim.month or data_inicio.year != data_fim.year:
+                st.warning("⚠️ Selecione datas **dentro do mesmo mês** e **ano**. Não é permitido misturar meses no intervalo.")
+                st.stop()
         else:
             st.warning("⚠️ Por favor, selecione um intervalo com **duas datas** (início e fim).")
             st.stop()
@@ -1428,13 +1433,8 @@ with aba5:
         )
         if isinstance(datas_selecionadas, (tuple, list)) and len(datas_selecionadas) == 2:
             data_inicio, data_fim = datas_selecionadas
-
-            # ⚠️ Bloqueia seleção entre meses diferentes
-            if data_inicio.month != data_fim.month or data_inicio.year != data_fim.year:
-                st.warning("⚠️ Selecione datas **dentro do mesmo mês** e **ano**. Não é permitido misturar meses no intervalo.")
-                st.stop()
         else:
-            st.warning("⚠️ Selecione um intervalo com DUAS datas.")
+            st.warning("⚠️ Por favor, selecione um intervalo com **duas datas** (início e fim).")
             st.stop()
         
         # 💳 Filtro abaixo da data (não mais ao lado)
