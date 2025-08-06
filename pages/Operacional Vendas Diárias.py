@@ -401,9 +401,7 @@ with aba3:
             st.warning("⚠️ A coluna 'M' não foi encontrada na planilha. Nenhuma checagem de duplicidade será feita com base nela.")
         
                 
-        # Criar um conjunto de linhas existentes na coluna M (usada para verificar duplicação)
-        dados_existentes = set([linha[12] for linha in valores_existentes[1:]])  # Ignorando cabeçalho, coluna M é a 13ª (índice 12)
-
+       
         #novos_dados = []
        
         # ✅ Cria a coluna N diretamente, sem deixar a Data_Formatada como coluna a ser exportada
@@ -428,24 +426,7 @@ with aba3:
         # Obter linhas do DataFrame como lista de listas
         rows = df_final.fillna("").values.tolist()
 
-        # Obter dados já existentes da planilha (coluna N)
-        colunas_planilha = valores_existentes[0]
-
-        if "N" in colunas_planilha:
-            idx_coluna_n = colunas_planilha.index("N")
-            dados_n_existentes = set(
-                str(linha[idx_coluna_n]).strip()
-                for linha in valores_existentes[1:]
-                if len(linha) > idx_coluna_n and str(linha[idx_coluna_n]).strip()
-            )
-        else:
-            dados_n_existentes = set()
-
-           # 🔎 Diagnóstico visual (debug)
-            st.write("🔎 Total registros existentes na coluna N:", len(dados_n_existentes))
-            st.write("🔍 Exemplo de chaves já existentes na N:", list(dados_n_existentes)[:5])
-            st.write("📦 Exemplo de chaves novas geradas em df_final['N']:", df_final['N'].head().tolist())
-
+        
      
         duplicados = []  # Duplicados pela M
         suspeitos_n = []  # ⚠️ Possíveis duplicados pela N
