@@ -511,7 +511,7 @@ with aba3:
     #df_formatado = df_formatado[["Tipo", "Grupo", "Loja"] + colunas_periodo]
     # Formata a nova coluna de percentual
     df_percentual = pd.to_numeric(df_final["% Total"], errors="coerce")
-    df_formatado["% Total"] = df_percentual.apply(lambda x: f"{x:.1%}" if pd.notnull(x) else "")
+    df_formatado["% Total"] = df_percentual.apply(lambda x: f"{x:.2%}" if pd.notnull(x) else "")
 
     # Estilo para destacar TOTAL
     def aplicar_estilo(df):
