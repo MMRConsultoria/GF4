@@ -467,10 +467,13 @@ with aba3:
                 # ==================================================
                 pode_enviar = True  # Variável de controle
 
+               
+                # ================================
+                # 🚨 Verifica duplicidade pela coluna N
+                # ================================
                 if suspeitos_n:
-                    #st.warning(f"⚠️ {len(suspeitos_n)} registro(s) já existem com a mesma Data + Código Everest (coluna N).")
-                    st.write("🔍 Registros possivelmente duplicados:")
-                    # 🔍 Cria uma cópia apenas para visualização
+                    st.warning("❌ Existem registros com mesma Data + Código Everest (coluna N). Corrija antes de continuar.")
+                    
                     df_exibir = pd.DataFrame(suspeitos_n, columns=colunas_df).copy()
                 
                     # 🗓️ Converte o número serial para data legível (sem alterar o original)
@@ -478,8 +481,12 @@ with aba3:
                 
                     # 📊 Exibe a tabela com a data formatada
                     st.dataframe(df_exibir, use_container_width=True)
+                
+                    pode_enviar = False
+                else:
+                    pode_enviar = True
 
-                    pode_enviar = st.checkbox("", value=False)
+                    
 
                 # =============================================
                 # 🟢 Só mostra o botão se permitido pelo checkbox
