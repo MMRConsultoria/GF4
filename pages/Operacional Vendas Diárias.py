@@ -468,7 +468,7 @@ with aba3:
                 pode_enviar = True  # Variável de controle
 
                 if suspeitos_n:
-                    st.warning(f"⚠️ {len(suspeitos_n)} registro(s) já existem com a mesma Data + Código Everest (coluna N).")
+                    #st.warning(f"⚠️ {len(suspeitos_n)} registro(s) já existem com a mesma Data + Código Everest (coluna N).")
                     st.write("🔍 Registros possivelmente duplicados:")
                     # 🔍 Cria uma cópia apenas para visualização
                     df_exibir = pd.DataFrame(suspeitos_n, columns=colunas_df).copy()
