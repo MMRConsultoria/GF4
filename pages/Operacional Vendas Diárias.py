@@ -419,12 +419,16 @@ with aba3:
         
         # Verificar duplicação somente na coluna "M"
         for linha in rows:
-            chave_m = linha[-2]  # A chave da coluna M (última coluna)
-            if chave_m not in dados_existentes:
-                novos_dados.append(linha)
-                dados_existentes.add(chave_m)  # Adiciona a chave da linha para não enviar novamente
-            else:
-                duplicados.append(linha)  # Adiciona a linha duplicada à lista
+        chave_m = linha[-2]
+        chave_n = linha[-3]  # Coluna N
+    
+        if chave_m in dados_existentes:
+            duplicados.append(linha)
+        elif chave_n in dados_n_existentes:
+            suspeitos_n.append(linha)
+        else:
+            novos_dados.append(linha)
+            dados_existentes.add(chave_m)
 
 
         # ================================
