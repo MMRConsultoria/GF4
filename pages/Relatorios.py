@@ -371,7 +371,7 @@ with aba1:
             template="simple_white",
             xaxis_title=None,
             yaxis_title=None,
-            xaxis=dict(tickangle=-45, domain=[0.02, 1]),  # espaço p/ rótulo do ano
+            xaxis=dict(tickangle=-25, domain=[0.02, 1]),  # espaço p/ rótulo do ano
             showlegend=False,
             margin=dict(t=10, b=10, l=0, r=0),
             paper_bgcolor="white",
