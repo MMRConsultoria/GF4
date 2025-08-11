@@ -282,13 +282,13 @@ with aba1:
     
         # layout
         fig.update_layout(
-        template="simple_white",
-        xaxis_title=None, yaxis_title=None,
-        xaxis=dict(tickangle=-45, domain=[0.10, 1]),  # empurra as barras ~10% pra direita
-        showlegend=False,
-        margin=dict(t=10, b=10, l=90, r=0),          # espaço à esquerda p/ o rótulo do ano
-        paper_bgcolor="white", plot_bgcolor="white"
-    )
+            template="simple_white",
+            xaxis_title=None, yaxis_title=None,
+            xaxis=dict(tickangle=-45),
+            showlegend=False,                      # já temos os rótulos no início das linhas
+            margin=dict(t=10, b=10, l=0, r=0),
+            paper_bgcolor="white", plot_bgcolor="white"
+        )
     
         # rótulos das barras (pretos, fora)
         fig.update_traces(
