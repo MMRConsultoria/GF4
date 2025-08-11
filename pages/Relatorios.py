@@ -269,6 +269,9 @@ with aba1:
                 y=df_lin["Fat.Total"],
                 name=str(ano_l),
                 mode="lines+markers+text",  # adiciona o texto diretamente nos pontos se quiser
+                text=[f"{v:,.0f}" for v in df_lin["Fat.Total"]],  # valores formatados
+                textposition="top center",  # posição do texto acima do ponto
+                textfont=dict(size=11, color=cor_linha),
                 line=dict(color=cor_linha, width=4),
                 marker=dict(size=6, color=cor_linha)
             ))
