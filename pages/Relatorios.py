@@ -256,29 +256,34 @@ with aba1:
         ))
     
         # linhas grossas para os demais anos
-        for ano_l in sorted(anos_linhas):
+        # Definir cores fixas para destacar
+        cores_linhas_destaque = ["#FF0000", "#FFD700"]  # vermelho forte, amarelo ouro
+        
+        for idx, ano_l in enumerate(sorted(anos_linhas)):
             df_lin = series_por_ano(ano_l)
-            cor_base = color_map.get(str(ano_l), "#E5E7EB")
-            cor_linha = darken(cor_base, 0.6)
-    
+        
+            cor_linha = cores_linhas_destaque[idx % len(cores_linhas_destaque)]
+        
             fig.add_trace(go.Scatter(
-                x=df_lin["Nome Mês"], y=df_lin["Fat.Total"],
+                x=df_lin["Nome Mês"],
+                y=df_lin["Fat.Total"],
                 name=str(ano_l),
-                mode="lines+markers",
+                mode="lines+markers+text",  # adiciona o texto diretamente nos pontos se quiser
                 line=dict(color=cor_linha, width=4),
-                marker=dict(size=6)
+                marker=dict(size=6, color=cor_linha)
             ))
-    
-            # rótulo do ano próximo à primeira barra, no espaço livre
-            y0 = float(df_lin.loc[df_lin["Nome Mês"] == "Janeiro", "Fat.Total"].iloc[0]) if not df_lin.empty else 0
+        
+            # Rótulo do ano no início da linha
+            y0 = float(df_lin.loc[df_lin["Nome Mês"] == "Janeiro", "Fat.Total"].iloc[0])
             fig.add_annotation(
                 x="Janeiro", y=y0,
                 text=str(ano_l),
                 showarrow=False,
-                xanchor="right", yanchor="middle",
-                xshift=-60,   # desloca para a esquerda do ponto de Janeiro
+                xanchor="right", yanchor="bottom",
+                xshift=-60,  # empurra mais para fora
                 font=dict(color=cor_linha, size=12, family="Arial", weight="bold")
             )
+
     
         # layout
         fig.update_layout(
