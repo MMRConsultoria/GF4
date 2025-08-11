@@ -182,6 +182,35 @@ with aba1:
     anos_presentes = sorted(fat_mensal["Ano"].astype(str).unique())
     color_map = {ano: cores_pastel[i % len(cores_pastel)] for i, ano in enumerate(anos_presentes)}
 
+
+    # ===================================================
+    # 🎨 Mapeamento fixo de cores por posição do ano
+    # Último ano = cinza, penúltimo = amarelo, antepenúltimo = azul
+    # Repete o ciclo para anos mais antigos
+    # ===================================================
+    
+    # Ordena anos em ordem crescente
+    anos_presentes = sorted(fat_mensal["Ano"].astype(str).unique())
+    
+    # Cores fixas (em ordem de prioridade: último → cinza, penúltimo → amarelo, antepenúltimo → azul)
+    cores_ciclo = [
+        "#E5E7EB",  # cinza claro
+        "#FFF3B0",  # amarelo pastel
+        "#A3C4F3",  # azul pastel
+    ]
+    
+    # Cria um mapeamento ano → cor seguindo o padrão
+    color_map = {}
+    for i, ano in enumerate(reversed(anos_presentes)):  
+        cor = cores_ciclo[i % len(cores_ciclo)]  
+        color_map[ano] = cor
+    
+    # Inverte novamente para que fique ano mais antigo → cor correspondente
+    color_map = {ano: color_map[ano] for ano in anos_presentes}
+
+
+
+    
     fig = px.bar(
         fat_mensal,
         x="Nome Mês",
