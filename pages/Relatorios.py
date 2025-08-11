@@ -271,7 +271,7 @@ with aba1:
                 mode="lines+markers+text",  # adiciona o texto diretamente nos pontos se quiser
                 text=[f"{v/1_000_000:.1f} Mi" for v in df_lin["Fat.Total"]],
                 textposition="top center",
-                textfont=dict(size=11, color="black"),
+                textfont=dict(size=12, color="black", family="Arial Black, Arial, sans-serif"),  # 👈 negrito
                 line=dict(color=cor_linha, width=4),
                 marker=dict(size=6, color=cor_linha)
             ))
