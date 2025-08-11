@@ -212,104 +212,185 @@ with aba1:
 
     
     # ================================
-    # 📊 Faturamento Mensal — Último ano em BARRAS + até 2 anos anteriores em LINHAS
+    # 📊 Faturamento Mensal — Barras (ano mais recente) + Linhas (demais anos)
     # ================================
     import plotly.graph_objects as go
     
-    # 1) Definição das cores por recência (último=cinza, penúltimo=amarelo, antepenúltimo=azul)
-    cores_ciclo = ["#E5E7EB", "#FFF3B0", "#A3C4F3"]  # cinza, amarelo pastel, azul pastel
+    # ordem fixa dos meses
+    ordem_meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                   "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]
     
-    # anos presentes (após todos os filtros aplicados) como strings ordenadas
-    anos_presentes = sorted(fat_mensal["Ano"].astype(str).unique())
-    if len(anos_presentes) == 0:
-        st.warning("Sem dados para os filtros selecionados.")
+    # helper: garante todos os meses na ordem e preenche faltantes com 0
+    def series_por_ano(ano_str):
+        base = pd.DataFrame({"Nome Mês": ordem_meses})
+        s = fat_mensal[fat_mensal["Ano"] == str(ano_str)][["Nome Mês","Fat.Total"]]
+        return base.merge(s, on="Nome Mês", how="left").fillna({"Fat.Total": 0})
+    
+    # ano mais recente entre os selecionados
+    anos_sel = sorted(fat_mensal["Ano"].astype(int).unique())
+    if not anos_sel:
+        st.warning("Sem dados para os anos selecionados.")
     else:
-        # mapeia ano -> cor por recência (mais recente recebe a 1ª cor do ciclo)
-        color_map_linhas = {}
-        for i, ano in enumerate(reversed(anos_presentes)):
-            color_map_linhas[ano] = cores_ciclo[i % len(cores_ciclo)]
+        ano_barras = max(anos_sel)                  # barras
+        anos_linhas = [a for a in anos_sel if a != ano_barras]  # linhas
     
-        # 2) utilitários
-        ordem_meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-                       "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]
+        # função p/ escurecer um pouco a cor (linha mais forte)
+        def darken(hexcolor, factor=0.65):
+            hexcolor = hexcolor.lstrip("#")
+            r, g, b = int(hexcolor[0:2],16), int(hexcolor[2:4],16), int(hexcolor[4:6],16)
+            r = max(0, int(r*factor)); g = max(0, int(g*factor)); b = max(0, int(b*factor))
+            return f"#{r:02X}{g:02X}{b:02X}"
     
-        def series_por_ano(ano_str):
-            base = pd.DataFrame({"Nome Mês": ordem_meses})
-            s = fat_mensal[fat_mensal["Ano"] == ano_str][["Nome Mês","Fat.Total"]]
-            return base.merge(s, on="Nome Mês", how="left").fillna({"Fat.Total": 0})
-    
-        def fmt_si(v):
-            v = float(v)
-            if abs(v) >= 1_000_000_000:
-                return f"{v/1_000_000_000:.1f}B"
-            if abs(v) >= 1_000_000:
-                return f"{v/1_000_000:.1f}M"
-            if abs(v) >= 1_000:
-                return f"{v/1_000:.0f}k"
-            return f"{v:.0f}"
-    
-        # 3) define quem é barras e quem vira linha (limita linhas a 2 anos)
-        ultimo_ano = anos_presentes[-1]                 # barras
-        outros_anos = anos_presentes[:-1]               # candidatos a linhas
-        anos_linhas = outros_anos[-2:]                  # pega no máximo 2 mais recentes
+        # dados do ano das barras
+        df_bar = series_por_ano(ano_barras)
+        cor_barra = color_map.get(str(ano_barras), "#A3C4F3")
     
         fig = go.Figure()
     
-        # 4) BARRAS para o último ano
-        df_bar = series_por_ano(ultimo_ano)
+        # barras do ano mais recente
         fig.add_trace(go.Bar(
             x=df_bar["Nome Mês"], y=df_bar["Fat.Total"],
-            name=ultimo_ano,
-            marker_color=color_map_linhas[ultimo_ano],
-            opacity=0.95,
-            text=[fmt_si(v) for v in df_bar["Fat.Total"]],
-            textposition="outside",
-            textfont=dict(color="black", size=11)
+            name=str(ano_barras),
+            marker_color=cor_barra,
+            opacity=0.95
         ))
     
-        # 5) LINHAS para até 2 anos anteriores
-        for ano in anos_linhas:
-            df_lin = series_por_ano(ano)
-            cor = color_map_linhas[ano]
-            labels = [""] * (len(df_lin) - 1) + [fmt_si(df_lin["Fat.Total"].iloc[-1])]  # só último ponto
+        # linhas grossas para os demais anos
+        for ano_l in sorted(anos_linhas):
+            df_lin = series_por_ano(ano_l)
+            cor_base = color_map.get(str(ano_l), "#E5E7EB")
+            cor_linha = darken(cor_base, 0.6)
     
             fig.add_trace(go.Scatter(
                 x=df_lin["Nome Mês"], y=df_lin["Fat.Total"],
-                name=ano,
-                mode="lines+markers+text",
-                line=dict(color=cor, width=4),
-                marker=dict(size=6),
-                text=labels,
-                textposition="top center",
-                textfont=dict(size=12, color=cor, family="Arial"),
-                hovertemplate="%{x}<br>R$ %{y:,.0f}<extra>"+str(ano)+"</extra>"
+                name=str(ano_l),
+                mode="lines+markers",
+                line=dict(color=cor_linha, width=4),
+                marker=dict(size=6)
             ))
     
-            # Rótulo do ANO no primeiro ponto, deslocado para fora (evita encostar na 1ª barra)
-            y0 = float(df_lin["Fat.Total"].iloc[0])
+            # rótulo do ano no início da linha (em "Janeiro")
+            y0 = float(df_lin.loc[df_lin["Nome Mês"] == "Janeiro", "Fat.Total"].iloc[0])
             fig.add_annotation(
-                x=df_lin["Nome Mês"].iloc[0], y=y0,
-                text=str(ano),
+                x="Janeiro", y=y0,
+                text=str(ano_l),
                 showarrow=False,
-                xanchor="right", yanchor="middle",
-                xshift=-12,  # ajuste fino se precisar
-                font=dict(color=cor, size=13, family="Arial", weight="bold")
+                xanchor="right", yanchor="bottom",
+                xshift=-6,
+                font=dict(color=cor_linha, size=12, family="Arial", weight="bold")
             )
     
-        # 6) Layout
+        # layout
         fig.update_layout(
             template="simple_white",
             xaxis_title=None, yaxis_title=None,
             xaxis=dict(tickangle=-45),
-            showlegend=False,  # rótulo do ano já aparece no início da linha
-            margin=dict(t=10, b=10, l=60, r=10),
-            paper_bgcolor="white", plot_bgcolor="white",
-            barmode="group"
+            showlegend=False,                      # já temos os rótulos no início das linhas
+            margin=dict(t=10, b=10, l=0, r=0),
+            paper_bgcolor="white", plot_bgcolor="white"
         )
     
-        st.subheader("Faturamento Mensal")
-        st.plotly_chart(fig, use_container_width=True, theme=None)
+        # rótulos das barras (pretos, fora)
+        fig.update_traces(
+            selector=dict(type="bar"),
+            text=df_bar["Fat.Total"],
+            texttemplate="%{text:.2s}",
+            textposition="outside",
+            textfont=dict(color="black")
+        )
+    
+        
 
+
+    df_total = fat_mensal.groupby("Ano")["Fat.Total"].sum().reset_index()
+    df_total["Ano"] = df_total["Ano"].astype(int)
+    df_lojas["Ano"] = df_lojas["Ano"].astype(int)
+    df_total = df_total.merge(df_lojas, on="Ano", how="left")
+    df_total["AnoTexto"] = df_total.apply(
+        lambda row: f"{int(row['Ano'])}       R$ {row['Fat.Total']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
+    )
+    df_total["Ano"] = df_total["Ano"].astype(int)
+
+    # ORDEM CORRETA dos anos de cima para baixo (mais antigo no topo)
+    anos_ordenados = sorted(df_total["Ano"].unique())  # ex: [2023, 2024, 2025]
+    anos_ordenados_str = [str(ano) for ano in anos_ordenados]
+
+    # Converter a coluna "Ano" para string e categoria ordenada
+    df_total["Ano"] = df_total["Ano"].astype(str)
+    df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=anos_ordenados_str, ordered=True)
+
+    # Reordenar o dataframe com base na ordem correta
+    df_total = df_total.sort_values("Ano", ascending=True)
+    
+    fig_total = px.bar(
+        df_total,
+        x="Fat.Total",
+        y="Ano",
+        orientation="h",
+        color="Ano",
+        #text="AnoTexto",
+        color_discrete_map=color_map
+    )
+    #fig_total.update_traces(
+    #    textposition="inside",
+    #    textfont=dict(size=16, color="black", family="Arial", weight="bold"),
+    #    #textfont=dict(size=16, color="white"),
+    #    insidetextanchor="start",
+    #    showlegend=False
+    #)
+    #fig_total.update_traces(
+    #    textposition="outside",
+    #    textfont=dict(size=16, color="black", family="Arial", weight="bold"), 
+    #    #textfont=dict(size=16, color="white"),
+    #    showlegend=False
+    #)
+    for i, row in df_total.iterrows():
+        fig_total.add_annotation(
+            x=0.1,
+            y=row["Ano"],
+            text=row["AnoTexto"],
+            showarrow=False,
+            xanchor="left",
+            yanchor="middle",
+            font=dict(color="black", size=16, family="Arial", weight="bold"),
+            #font=dict(color="white", size=16),
+            xref="x",
+            yref="y"
+        )
+        fig_total.add_annotation(
+            x=row["Fat.Total"],
+            y=row["Ano"],
+            showarrow=False,
+            text=f"{int(row['Qtd_Lojas'])} Lojas",
+            xanchor="left",
+            yanchor="bottom",
+            yshift=-8,
+            font=dict(color="red", size=16, family="Arial", weight="bold"),
+            #font=dict(color="red", size=16, weight="bold"),
+            xref="x",
+            yref="y"
+        )
+    fig_total.update_layout(
+        height=130,
+        margin=dict(t=0, b=0, l=0, r=0),
+        title=None,
+        xaxis=dict(visible=False),
+        yaxis=dict(
+            categoryorder="array",
+            categoryarray=anos_ordenados_str,  # ordem natural: 2023 em cima, 2025 embaixo
+            showticklabels=False,
+            showgrid=False,
+            zeroline=False
+        ),
+        yaxis_title=None,
+        showlegend=False,
+        plot_bgcolor="rgba(0,0,0,0)"
+    )
+    st.subheader("Faturamento Anual")
+    st.plotly_chart(fig_total, use_container_width=True)
+    st.markdown("---")
+    st.subheader("Faturamento Mensal")
+    st.plotly_chart(fig, use_container_width=True, theme=None)
 
 # ================================
 # Aba 3: Relatórios Vendas
