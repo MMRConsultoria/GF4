@@ -77,6 +77,7 @@ aba1, aba3, aba4, aba5 = st.tabs([
     "📋 Relatórios Financeiros"
 ])
 # ================================
+# ================================
 # Aba 1: Graficos Anuais (Fat.Total + cores pastéis automáticas)
 # ================================
 with aba1:
@@ -84,15 +85,20 @@ with aba1:
     import numpy as np
     import pandas as pd
 
-    METRICA = "Fat.Total"  # <<< métrica única desta aba
+    METRICA = "Fat.Total"  # métrica única desta aba
 
     planilha = gc.open("Vendas diarias")
     aba = planilha.worksheet("Fat Sistema Externo")
     dados = aba.get_all_records()
     df = pd.DataFrame(dados)
 
-    # ✅ Limpa espaços invisíveis nos nomes das colunas
-    df.columns = df.columns.str.strip()
+    # ✅ Normalização PESADA dos cabeçalhos (remove NBSP/zero-width/LTR/RTL)
+    df.columns = (
+        pd.Index(df.columns)
+          .str.replace(r"[\u00A0\u200B-\u200F]", "", regex=True)  # NBSP e zero-widths
+          .str.replace(r"\s+", " ", regex=True)
+          .str.strip()
+    )
 
     # --- Limpeza robusta das colunas monetárias ---
     def limpar_coluna_monetaria(serie_original):
@@ -167,14 +173,8 @@ with aba1:
     # 🎨 Paleta pastel automática
     # ---------------------------
     pastel_palette = [
-        "#A3C4F3",  # azul claro
-        "#B9FBC0",  # verde menta
-        "#FFCFD2",  # rosa claro
-        "#FDE4CF",  # pêssego
-        "#CDEAC0",  # verde suave
-        "#E2ECE9",  # cinza-azulado claro
-        "#BDB2FF",  # lilás claro
-        "#FFC6FF",  # magenta claro
+        "#A3C4F3", "#B9FBC0", "#FFCFD2", "#FDE4CF",
+        "#CDEAC0", "#E2ECE9", "#BDB2FF", "#FFC6FF",
     ]
 
     def build_color_map(keys):
@@ -198,19 +198,13 @@ with aba1:
         text_auto=".2s",
         color_discrete_map=color_map
     )
-    fig.update_traces(
-        textposition="outside",
-        marker=dict(line=dict(width=0), opacity=0.88)
-    )
+    fig.update_traces(textposition="outside", marker=dict(line=dict(width=0), opacity=0.88))
     fig.update_layout(
         template="simple_white",
-        xaxis_title=None,
-        yaxis_title=None,
-        xaxis_tickangle=-45,
+        xaxis_title=None, yaxis_title=None, xaxis_tickangle=-45,
         showlegend=False,
         yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
-        paper_bgcolor="white",
-        plot_bgcolor="white",
+        paper_bgcolor="white", plot_bgcolor="white",
         margin=dict(t=10, b=10, l=0, r=0)
     )
 
@@ -247,59 +241,45 @@ with aba1:
     # Anotações neutras
     for _, row in df_total.iterrows():
         fig_total.add_annotation(
-            x=0,
-            y=row["Ano"],
-            text=row["AnoTexto"],
-            showarrow=False,
-            xanchor="left",
-            yanchor="middle",
-            font=dict(color="#5C5C5C", size=16),
-            xref="x",
-            yref="y",
-            xshift=8
+            x=0, y=row["Ano"], text=row["AnoTexto"], showarrow=False,
+            xanchor="left", yanchor="middle",
+            font=dict(color="#5C5C5C", size=16), xref="x", yref="y", xshift=8
         )
         fig_total.add_annotation(
-            x=row[METRICA],
-            y=row["Ano"],
-            showarrow=False,
+            x=row[METRICA], y=row["Ano"], showarrow=False,
             text=f"{int(row['Qtd_Lojas'])} Lojas",
-            xanchor="left",
-            yanchor="middle",
-            font=dict(color="#5C5C5C", size=14),
-            xref="x",
-            yref="y",
-            xshift=8
+            xanchor="left", yanchor="middle",
+            font=dict(color="#5C5C5C", size=14), xref="x", yref="y", xshift=8
         )
 
     fig_total.update_layout(
         template="simple_white",
-        height=130,
-        margin=dict(t=0, b=0, l=0, r=0),
+        height=130, margin=dict(t=0, b=0, l=0, r=0),
         xaxis=dict(visible=False),
         yaxis=dict(
             categoryorder="array",
             categoryarray=anos_ordenados_str,
-            showticklabels=False,
-            showgrid=False,
-            zeroline=False
+            showticklabels=False, showgrid=False, zeroline=False
         ),
         yaxis_title=None,
-        paper_bgcolor="white",
-        plot_bgcolor="white"
+        paper_bgcolor="white", plot_bgcolor="white"
     )
 
     # --- Checagens rápidas ---
     st.caption(f"✅ Métrica em uso: **{METRICA}**")
     soma_metric = df_anos[METRICA].sum()
     st.caption(f"Soma total no período filtrado: R$ {soma_metric:,.2f}".replace(",", "."))
+    if "Fat.Real" in df_anos.columns:
+        st.caption(f"(Comparativo) Σ Fat.Real: R$ {df_anos['Fat.Real'].sum():,.2f}".replace(",", "."))
 
-    # Renderização (sem tema pra manter os tons pastéis)
+    # Renderização (sem tema pra manter tons pastéis)
     st.subheader("Faturamento Anual")
     st.plotly_chart(fig_total, use_container_width=True, theme=None)
 
     st.markdown("---")
     st.subheader("Faturamento Mensal")
     st.plotly_chart(fig, use_container_width=True, theme=None)
+
 
 
 # ================================
