@@ -155,8 +155,8 @@ with aba1:
         color="Ano",
         barmode="group",
         text_auto=".2s",
-        custom_data=["MesAno"],
-        color_discrete_map=color_map
+        custom_data=["MesAno"]
+        
     )
     fig.update_traces(textposition="outside")
     fig.update_layout(
