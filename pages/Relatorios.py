@@ -353,10 +353,10 @@ with aba1:
     )
     
     # anota "acum. até ..." no ano atual
-    mask_atual = df_total["Ano"].astype(int) == ano_barras
-    df_total.loc[mask_atual, "AnoTexto"] = (
-        df_total.loc[mask_atual, "AnoTexto"] + f"  (acum. até {abbr.get(ultimo_mes, '')})"
-    )
+    #mask_atual = df_total["Ano"].astype(int) == ano_barras
+    #df_total.loc[mask_atual, "AnoTexto"] = (
+    #    df_total.loc[mask_atual, "AnoTexto"] + f"  (acum. até {abbr.get(ultimo_mes, '')})"
+    #)
     
     # ordem correta
     anos_ordenados = sorted(df_total["Ano"].unique())
