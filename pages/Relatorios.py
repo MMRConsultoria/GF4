@@ -151,7 +151,7 @@ with aba1:
     fig = px.bar(
         fat_mensal,
         x="Nome Mês",
-        y="Fat.Real",
+        y="Fat.Total",
         color="Ano",
         barmode="group",
         text_auto=".2s"
@@ -172,7 +172,7 @@ with aba1:
     df_lojas["Ano"] = df_lojas["Ano"].astype(int)
     df_total = df_total.merge(df_lojas, on="Ano", how="left")
     df_total["AnoTexto"] = df_total.apply(
-        lambda row: f"{int(row['Ano'])}       R$ {row['Fat.Real']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
+        lambda row: f"{int(row['Ano'])}       R$ {row['Fat.Total']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
     )
     df_total["Ano"] = df_total["Ano"].astype(int)
 
@@ -189,7 +189,7 @@ with aba1:
     
     fig_total = px.bar(
         df_total,
-        x="Fat.Real",
+        x="Fat.Total",
         y="Ano",
         orientation="h",
         color="Ano",
@@ -220,7 +220,7 @@ with aba1:
             yref="y"
         )
         fig_total.add_annotation(
-            x=row["Fat.Real"],
+            x=row["Fat.Total"],
             y=row["Ano"],
             showarrow=False,
             text=f"{int(row['Qtd_Lojas'])} Lojas",
