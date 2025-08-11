@@ -310,8 +310,7 @@ with aba1:
             plot_bgcolor="white"
         )
     
-        st.subheader("Faturamento Mensal")
-        st.plotly_chart(fig, use_container_width=True, theme=None)
+        
     
     # ================================
     # 📊 Faturamento Anual — Horizontal
@@ -366,6 +365,8 @@ with aba1:
     
     st.subheader("Faturamento Anual")
     st.plotly_chart(fig_total, use_container_width=True)
+    st.subheader("Faturamento Mensal")
+    st.plotly_chart(fig, use_container_width=True, theme=None)
     st.markdown("---")
 
 # ================================
