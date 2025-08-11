@@ -323,10 +323,12 @@ with aba1:
                 font=dict(color=cor_linha, size=12, family="Arial", weight="bold")
             )
     
-            fig.add_annotation(
-                xref="paper", yref="paper", x=0, y=1.12,
-                text=f"{ano_barras} parcial (acumulado até {dia_lbl}). Linhas = anos completos.",
-                showarrow=False, font=dict(size=12, color="#555")
+            fig_total.add_annotation(
+                xref="paper", yref="paper", x=1, y=1.10,
+                xanchor="right",
+                text=f"{ano_barras} parcial — acumulado até {dia_lbl}",
+                showarrow=False,
+                font=dict(size=12, color="#555")
             )
             
         # layout final
