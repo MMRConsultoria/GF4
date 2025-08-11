@@ -117,7 +117,21 @@ with aba1:
     anos_disponiveis = sorted(df["Ano"].dropna().unique())
     anos_comparacao = st.multiselect(" ", options=anos_disponiveis, default=anos_disponiveis)
 
-        # 🎯 Filtros lado a lado
+   
+ 
+
+    if "Data" in df.columns and "Fat.Total" in df.columns and "Ano" in df.columns:
+        df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Total"]).copy()
+    else:
+        st.error("❌ A aba 'Fat Sistema Externo' não contém as colunas necessárias: 'Data', 'Ano' ou 'Fat.Total'.")
+        st.stop()
+
+    
+    #df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Total"]).copy()
+    # Normalizar nomes das lojas para evitar duplicações por acento, espaço ou caixa
+    df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower()
+
+    # 🎯 Filtros lado a lado
     col1, col2 = st.columns(2)
     
     with col1:
@@ -134,24 +148,13 @@ with aba1:
     # 📌 Aplica filtro conforme escolha
     if selecao != "Todos":
         df_anos = df_anos[df_anos[tipo_filtro] == selecao]
- 
-
-    if "Data" in df.columns and "Fat.Total" in df.columns and "Ano" in df.columns:
-        df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Total"]).copy()
-    else:
-        st.error("❌ A aba 'Fat Sistema Externo' não contém as colunas necessárias: 'Data', 'Ano' ou 'Fat.Total'.")
-        st.stop()
-
     
-    #df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Total"]).copy()
-    # Normalizar nomes das lojas para evitar duplicações por acento, espaço ou caixa
-    df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower()
-
     # Calcular a quantidade de lojas únicas por ano (com base em loja + ano únicos)
     df_lojas = df_anos.drop_duplicates(subset=["Ano", "Loja"])
     df_lojas = df_lojas.groupby("Ano")["Loja"].nunique().reset_index()
     df_lojas.columns = ["Ano", "Qtd_Lojas"]
 
+     
 
     fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Total"].sum().reset_index()
 
