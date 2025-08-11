@@ -435,7 +435,9 @@ with aba1:
     )
     
     # ----- título dinâmico p/ Faturamento Anual -----
+    # ----- título dinâmico p/ Faturamento Anual -----
     from datetime import date
+    import numpy as np
     
     # último dia registrado do ano das barras (ano_barras)
     ultimo_registro = pd.to_datetime(
@@ -452,19 +454,37 @@ with aba1:
     if mostrar_parcial:
         titulo_anual += f" ({ano_barras} até {dia_lbl})"
     
-    # --- LAYOUT: gráficos à esquerda / tabelas à direita ---
-    import numpy as np  # se ainda não importou
+    # =================== RENDER: ANUAL NO TOPO (FULL WIDTH) ===================
+    fig_total.update_layout(
+        margin=dict(l=0, r=0, t=10, b=10),
+        xaxis=dict(domain=[0.0, 1.0])  # ocupa toda a largura
+    )
+    st.subheader(titulo_anual)
+    st.plotly_chart(fig_total, use_container_width=True, theme=None)
     
-    col_chart, col_tables = st.columns([0.68, 0.32])  # ajuste a proporção como preferir
+    # ============== CSS para tabelas compactas (fonte e padding menores) ==============
+    st.markdown("""
+    <style>
+    /* DataFrame (AgGrid) */
+    div[data-testid="stDataFrame"] table { font-size: 11px; }
+    div[data-testid="stDataFrame"] div[role="gridcell"] { padding: 2px 6px !important; }
+    div[data-testid="stDataFrame"] thead tr th { padding: 2px 6px !important; }
+    
+    /* st.table (caso use Styler) */
+    table { font-size: 11px; }
+    table th, table td { padding: 3px 6px; }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # =================== LINHA DE BAIXO: MENSAL (ESQ) + TABELAS (DIR) ===================
+    col_chart, col_tables = st.columns([0.66, 0.34])  # ajuste a proporção se quiser
     
     with col_chart:
-        # cola os gráficos mais à esquerda
-        fig_total.update_layout(xaxis=dict(domain=[0.0, 0.98]))
-        fig.update_layout(xaxis=dict(domain=[0.06, 0.98]))
-    
-        st.subheader(titulo_anual)
-        st.plotly_chart(fig_total, use_container_width=True, theme=None)
-    
+        # “cola” o mensal mais à esquerda
+        fig.update_layout(
+            margin=dict(l=0, r=0, t=10, b=10),
+            xaxis=dict(domain=[0.06, 0.98])
+        )
         st.subheader("Faturamento Mensal")
         st.plotly_chart(fig, use_container_width=True, theme=None)
     
@@ -477,10 +497,10 @@ with aba1:
         # recorta YTD (até o último mês do ano atual)
         ytd = df_anos[df_anos["Mês"] <= m_lim].copy()
     
-        # usa "Operação" se existir; senão, "Grupo"
-        dim = "Operação" if "Operação" in ytd.columns else "Grupo"
+        # usa "Operação" se existir; senão "Grupo"; senão "Loja"
+        dim = "Operação" if "Operação" in ytd.columns else ("Grupo" if "Grupo" in ytd.columns else "Loja")
     
-        # 1) OPERAÇÃO: Qtd de lojas por ano
+        # 1) OPERAÇÃO: Qtd de lojas por ano (YTD)
         tmp = ytd.copy()
         tmp["Loja_norm"] = tmp["Loja"].astype(str).str.strip().str.lower()
         tab_op = (tmp.drop_duplicates(subset=["Ano", dim, "Loja_norm"])
@@ -489,26 +509,23 @@ with aba1:
                      .reindex(columns=[ano_prev, int(ano_barras)], fill_value=0)
                      .reset_index())
         tab_op.columns = ["OPERAÇÃO", str(ano_prev), str(ano_barras)]
-    
         st.subheader("Operação")
-        st.dataframe(tab_op, hide_index=True, use_container_width=True)
+        st.dataframe(tab_op, hide_index=True, use_container_width=True, height=180)
     
         # 2) Índice de Crescimento (YTD)
         fat_ytd = (ytd.groupby(["Ano", dim])["Fat.Total"].sum()
                      .unstack("Ano")
                      .reindex(columns=[ano_prev, int(ano_barras)], fill_value=0.0))
-    
         cresc = fat_ytd.copy()
         cresc["Crescimento %"] = ((cresc[int(ano_barras)] / cresc[ano_prev]).replace([np.inf, -np.inf], np.nan) - 1.0) * 100
         cresc = (cresc[["Crescimento %"]].reset_index()
                     .sort_values("Crescimento %", ascending=False)
                     .fillna(0.0))
         cresc["Crescimento %"] = cresc["Crescimento %"].map(lambda v: f"{v:,.1f}%".replace(",", "X").replace(".", ",").replace("X", "."))
-    
         st.subheader("Índice de Crescimento (YTD)")
-        st.dataframe(cresc.rename(columns={dim: "OPERAÇÃO"}), hide_index=True, use_container_width=True)
+        st.dataframe(cresc.rename(columns={dim: "OPERAÇÃO"}), hide_index=True, use_container_width=True, height=180)
     
-        # 3) Participação de Faturamento (YTD) – ano atual
+        # 3) Participação Faturamento (YTD) – ano atual
         part = (ytd[ytd["Ano"] == int(ano_barras)]
                   .groupby(dim)["Fat.Total"].sum()
                   .reset_index()
@@ -517,14 +534,11 @@ with aba1:
         part["Participação"] = (part["Faturamento"] / total_atual * 100).fillna(0.0)
         part = part.sort_values("Participação", ascending=False)
         part["Participação"] = part["Participação"].map(lambda v: f"{v:,.1f}%".replace(",", "X").replace(".", ",").replace("X", "."))
-    
         st.subheader("Participação Faturamento (YTD)")
         st.dataframe(part[[dim, "Participação"]].rename(columns={dim: "OPERAÇÃO"}),
-                     hide_index=True, use_container_width=True)
+                     hide_index=True, use_container_width=True, height=180)
     
     st.markdown("---")
-
-
 
 
 # ================================
