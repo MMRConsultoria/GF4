@@ -184,9 +184,7 @@ with aba1:
 
 
 
-    # 📌 Aplica filtro conforme escolha
-    if selecao != "Todos":
-        df_anos = df_anos[df_anos[tipo_filtro] == selecao]
+   
     
     # Calcular a quantidade de lojas únicas por ano (com base em loja + ano únicos)
     df_lojas = df_anos.drop_duplicates(subset=["Ano", "Loja"])
