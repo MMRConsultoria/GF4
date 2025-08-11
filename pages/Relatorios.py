@@ -217,7 +217,7 @@ with aba1:
     )
     fig_total.update_traces(
         textposition="outside",
-        textfont=dict(size=16, color="black"),
+        textfont=dict(size=16, color="white"),
         showlegend=False
     )
     for i, row in df_total.iterrows():
