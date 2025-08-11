@@ -105,50 +105,84 @@ with aba1:
         if col in df.columns:
             df[col] = df[col].apply(limpar_valor)
 
+    # Datas e campos derivados
     df["Data"] = pd.to_datetime(df["Data"], errors="coerce", dayfirst=True)
     df["Ano"] = df["Data"].dt.year
     df["Mês"] = df["Data"].dt.month
     meses_portugues = {
-        1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
-        7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
+        1:"Janeiro",2:"Fevereiro",3:"Março",4:"Abril",5:"Maio",6:"Junho",
+        7:"Julho",8:"Agosto",9:"Setembro",10:"Outubro",11:"Novembro",12:"Dezembro"
     }
     df["Nome Mês"] = df["Mês"].map(meses_portugues)
-
-    anos_disponiveis = sorted(df["Ano"].dropna().unique())
-    default_anos = anos_disponiveis[-2:] if len(anos_disponiveis) >= 2 else anos_disponiveis
-    anos_comparacao = st.multiselect(
-        "Anos para comparar",
-        options=anos_disponiveis,
-        default=default_anos
-    )
-
-   
- 
-
-    if "Data" in df.columns and "Fat.Total" in df.columns and "Ano" in df.columns:
-        df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Total"]).copy()
-    else:
-        st.error("❌ A aba 'Fat Sistema Externo' não contém as colunas necessárias: 'Data', 'Ano' ou 'Fat.Total'.")
+    
+    # 0) Segurança: checa colunas mínimas
+    cols_min = {"Data","Ano","Fat.Total","Loja"}
+    if not cols_min.issubset(df.columns):
+        st.error("❌ A planilha precisa ter as colunas: Data, Ano, Fat.Total, Loja.")
         st.stop()
+    
+    # ===== Filtros lado a lado (Ano | Filtrar por | Selecionar | Tipo) =====
+    col_ano, col_tipo_filtro, col_alvo, col_tipo = st.columns([1.2, 1.0, 2.2, 1.2])
+    
+    with col_ano:
+        anos_disponiveis = sorted(df["Ano"].dropna().unique())
+        default_anos = anos_disponiveis[-2:] if len(anos_disponiveis) >= 2 else anos_disponiveis
+        anos_comparacao = st.multiselect(
+            "Ano",
+            options=anos_disponiveis,
+            default=default_anos
+        )
+    
+    # 1) Filtra o dataframe pelos anos escolhidos
+    df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data","Fat.Total"]).copy()
+    
+    # 2) Adiciona "Tipo" via Tabela Empresa (se existir)
+    try:
+        df_emp = df_empresa[["Loja","Tipo"]].copy()
+    except NameError:
+        df_emp = pd.DataFrame(columns=["Loja","Tipo"])
+    
+    df_emp["Loja_norm"]  = df_emp["Loja"].astype(str).str.strip().str.lower()
+    df_anos["Loja_norm"] = df_anos["Loja"].astype(str).str.strip().str.lower()
+    df_anos = df_anos.merge(df_emp[["Loja_norm","Tipo"]], on="Loja_norm", how="left")
+    df_anos.drop(columns=["Loja_norm"], inplace=True)
+    df_anos["Tipo"] = df_anos["Tipo"].fillna("Sem tipo")
+    
+    # 3) “Filtrar por” (Loja ou Grupo) – só mostra o que existir
+    opcoes_filtrar = [x for x in ["Loja","Grupo"] if x in df_anos.columns]
+    with col_tipo_filtro:
+        tipo_filtro = st.selectbox("Filtrar por", opcoes_filtrar, index=0)
+    
+    # 4) Multiselect dependente (pode escolher várias Lojas/Grupos)
+    with col_alvo:
+        opcoes_alvo = sorted(df_anos[tipo_filtro].astype(str).str.strip().dropna().unique())
+        selecoes_alvo = st.multiselect(
+            f"Selecionar {tipo_filtro}(s)",
+            options=opcoes_alvo,
+            default=[],  # vazio = todas
+            help="Deixe em branco para considerar todas."
+        )
+    
+    # 5) Filtro de Tipo (opcional)
+    with col_tipo:
+        tipos_opts = ["Todos"] + sorted(df_anos["Tipo"].dropna().astype(str).unique())
+        tipo_selecionado = st.selectbox("Tipo", options=tipos_opts, index=0)
+    
+    # 6) Aplica filtros escolhidos
+    if selecoes_alvo:
+        df_anos = df_anos[df_anos[tipo_filtro].isin(selecoes_alvo)]
+    if tipo_selecionado != "Todos":
+        df_anos = df_anos[df_anos["Tipo"] == tipo_selecionado]
+    
+    # 7) Contagem de lojas únicas por ano (normalizada)
+    _aux = df_anos.copy()
+    _aux["Loja_norm"] = _aux["Loja"].astype(str).str.strip().str.lower()
+    df_lojas = (_aux.drop_duplicates(subset=["Ano","Loja_norm"])
+                  .groupby("Ano")["Loja_norm"].nunique()
+                  .reset_index()
+                  .rename(columns={"Loja_norm":"Qtd_Lojas"}))
 
-    
-    #df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Total"]).copy()
-    # Normalizar nomes das lojas para evitar duplicações por acento, espaço ou caixa
-    df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower()
 
-    # 🎯 Filtros lado a lado
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        tipo_filtro = st.selectbox("Filtrar por:", ["Loja", "Grupo"], index=0)  # padrão Loja
-    
-    with col2:
-        if tipo_filtro == "Loja":
-            opcoes = sorted(df_anos["Loja"].unique())
-        else:
-            opcoes = sorted(df_anos["Grupo"].unique())
-    
-        selecao = st.selectbox(f"Selecionar {tipo_filtro}:", ["Todos"] + opcoes, index=0)  # padrão Todos
 
     # 📌 Aplica filtro conforme escolha
     if selecao != "Todos":
