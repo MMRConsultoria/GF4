@@ -195,7 +195,7 @@ with aba1:
     # Cores fixas (em ordem de prioridade: último → cinza, penúltimo → amarelo, antepenúltimo → azul)
     cores_ciclo = [
         "#08810E",  # cinza claro
-        "#085F7E",  # amarelo pastel
+        "#08627D",  # amarelo pastel
         "#A3C4F3",  # azul pastel
     ]
     
