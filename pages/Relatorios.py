@@ -179,7 +179,8 @@ with aba1:
     )
     fig.update_traces(
         textposition="outside",
-        textfont=dict(color="black", size=14, family="Arial", weight="bold"),  # texto preto e negrito
+        texttemplate="<b>%{text}</b>",  # força negrito no rótulo
+        textfont=dict(color="black", size=14, family="Arial"),
         marker=dict(line=dict(width=0), opacity=0.88)
     )
     fig.update_layout(
