@@ -147,7 +147,19 @@ with aba1:
     fat_mensal = fat_mensal.sort_values(["MesNum", "Ano"])
 
 
-    color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
+    # Paleta de cores pastel fixa (azul, cinza e amarelo claro)
+    cores_pastel = [
+        "#A3C4F3",  # azul pastel
+        "#BFD7FF",  # azul claro pastel
+        "#E2E8F0",  # cinza azulado claro
+        "#E5E7EB",  # cinza claro
+        "#FFF3B0",  # amarelo pastel
+        "#FDF6B2",  # amarelo claro
+    ]
+    
+    # Mapeia cada ano para uma cor pastel automaticamente
+    anos_presentes = sorted(fat_mensal["Ano"].astype(str).unique())
+    color_map = {ano: cores_pastel[i % len(cores_pastel)] for i, ano in enumerate(anos_presentes)}
 
     fig = px.bar(
         fat_mensal,
