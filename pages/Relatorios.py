@@ -154,8 +154,8 @@ with aba1:
         y="Fat.Real",
         color="Ano",
         barmode="group",
-        text_auto=".2s",
-        custom_data=["MesAno"]
+        text_auto=".2s"
+        
         
     )
     fig.update_traces(textposition="outside")
