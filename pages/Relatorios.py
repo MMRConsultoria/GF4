@@ -452,12 +452,78 @@ with aba1:
     if mostrar_parcial:
         titulo_anual += f" ({ano_barras} até {dia_lbl})"
     
-    st.subheader(titulo_anual)  # <-- substitui o st.subheader("Faturamento Anual")
-    st.plotly_chart(fig_total, use_container_width=True, theme=None)
+    # --- LAYOUT: gráficos à esquerda / tabelas à direita ---
+    import numpy as np  # se ainda não importou
     
-    st.subheader("Faturamento Mensal")
-    st.plotly_chart(fig, use_container_width=True, theme=None)
+    col_chart, col_tables = st.columns([0.68, 0.32])  # ajuste a proporção como preferir
+    
+    with col_chart:
+        # cola os gráficos mais à esquerda
+        fig_total.update_layout(xaxis=dict(domain=[0.0, 0.98]))
+        fig.update_layout(xaxis=dict(domain=[0.06, 0.98]))
+    
+        st.subheader(titulo_anual)
+        st.plotly_chart(fig_total, use_container_width=True, theme=None)
+    
+        st.subheader("Faturamento Mensal")
+        st.plotly_chart(fig, use_container_width=True, theme=None)
+    
+    with col_tables:
+        # ---------- Helpers ----------
+        meses_idx = {m: i+1 for i, m in enumerate(ordem_meses)}
+        m_lim = meses_idx.get(ultimo_mes, 12) if ultimo_mes else 12
+        ano_prev = int(ano_barras) - 1
+    
+        # recorta YTD (até o último mês do ano atual)
+        ytd = df_anos[df_anos["Mês"] <= m_lim].copy()
+    
+        # usa "Operação" se existir; senão, "Grupo"
+        dim = "Operação" if "Operação" in ytd.columns else "Grupo"
+    
+        # 1) OPERAÇÃO: Qtd de lojas por ano
+        tmp = ytd.copy()
+        tmp["Loja_norm"] = tmp["Loja"].astype(str).str.strip().str.lower()
+        tab_op = (tmp.drop_duplicates(subset=["Ano", dim, "Loja_norm"])
+                     .groupby(["Ano", dim])["Loja_norm"].nunique()
+                     .unstack("Ano")
+                     .reindex(columns=[ano_prev, int(ano_barras)], fill_value=0)
+                     .reset_index())
+        tab_op.columns = ["OPERAÇÃO", str(ano_prev), str(ano_barras)]
+    
+        st.subheader("Operação")
+        st.dataframe(tab_op, hide_index=True, use_container_width=True)
+    
+        # 2) Índice de Crescimento (YTD)
+        fat_ytd = (ytd.groupby(["Ano", dim])["Fat.Total"].sum()
+                     .unstack("Ano")
+                     .reindex(columns=[ano_prev, int(ano_barras)], fill_value=0.0))
+    
+        cresc = fat_ytd.copy()
+        cresc["Crescimento %"] = ((cresc[int(ano_barras)] / cresc[ano_prev]).replace([np.inf, -np.inf], np.nan) - 1.0) * 100
+        cresc = (cresc[["Crescimento %"]].reset_index()
+                    .sort_values("Crescimento %", ascending=False)
+                    .fillna(0.0))
+        cresc["Crescimento %"] = cresc["Crescimento %"].map(lambda v: f"{v:,.1f}%".replace(",", "X").replace(".", ",").replace("X", "."))
+    
+        st.subheader("Índice de Crescimento (YTD)")
+        st.dataframe(cresc.rename(columns={dim: "OPERAÇÃO"}), hide_index=True, use_container_width=True)
+    
+        # 3) Participação de Faturamento (YTD) – ano atual
+        part = (ytd[ytd["Ano"] == int(ano_barras)]
+                  .groupby(dim)["Fat.Total"].sum()
+                  .reset_index()
+                  .rename(columns={"Fat.Total": "Faturamento"}))
+        total_atual = part["Faturamento"].sum()
+        part["Participação"] = (part["Faturamento"] / total_atual * 100).fillna(0.0)
+        part = part.sort_values("Participação", ascending=False)
+        part["Participação"] = part["Participação"].map(lambda v: f"{v:,.1f}%".replace(",", "X").replace(".", ",").replace("X", "."))
+    
+        st.subheader("Participação Faturamento (YTD)")
+        st.dataframe(part[[dim, "Participação"]].rename(columns={dim: "OPERAÇÃO"}),
+                     hide_index=True, use_container_width=True)
+    
     st.markdown("---")
+
 
 
 
