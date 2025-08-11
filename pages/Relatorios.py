@@ -389,12 +389,7 @@ with aba1:
         lambda row: f"{int(row['Ano'])}     R$ {row['Fat.Total']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
     )
     
-    # anota "acum. até ..." no ano atual
-    #mask_atual = df_total["Ano"].astype(int) == ano_barras
-    #df_total.loc[mask_atual, "AnoTexto"] = (
-    #    df_total.loc[mask_atual, "AnoTexto"] + f"  (acum. até {abbr.get(ultimo_mes, '')})"
-    #)
-    
+      
     # ordem correta
     anos_ordenados = sorted(df_total["Ano"].unique())
     anos_ordenados_str = [str(ano) for ano in anos_ordenados]
@@ -435,7 +430,6 @@ with aba1:
     )
     
     # ----- título dinâmico p/ Faturamento Anual -----
-    # ----- título dinâmico p/ Faturamento Anual -----
     from datetime import date
     import numpy as np
     
@@ -465,17 +459,18 @@ with aba1:
     # ============== CSS para tabelas compactas (fonte e padding menores) ==============
     st.markdown("""
     <style>
-    /* DataFrame (AgGrid) */
-    div[data-testid="stDataFrame"] table { font-size: 11px; }
-    div[data-testid="stDataFrame"] div[role="gridcell"] { padding: 2px 6px !important; }
-    div[data-testid="stDataFrame"] thead tr th { padding: 2px 6px !important; }
+    /* compacta st.dataframe (AgGrid) */
+    div[data-testid="stDataFrame"] table { font-size: 10px; }
+    div[data-testid="stDataFrame"] thead tr th { padding: 1px 4px !important; }
+    div[data-testid="stDataFrame"] div[role="row"] { min-height: 18px; }
+    div[data-testid="stDataFrame"] div[role="gridcell"] { padding: 1px 4px !important; line-height: 1.1; }
     
-    /* st.table (caso use Styler) */
-    table { font-size: 11px; }
-    table th, table td { padding: 3px 6px; }
+    /* fallback para st.table (se usar) */
+    table { font-size: 10px; }
+    table th, table td { padding: 2px 4px; }
     </style>
     """, unsafe_allow_html=True)
-    
+        
     # =================== LINHA DE BAIXO: MENSAL (ESQ) + TABELAS (DIR) ===================
     col_chart, col_tables = st.columns([0.66, 0.34])  # ajuste a proporção se quiser
     
