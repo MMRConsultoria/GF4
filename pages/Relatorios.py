@@ -117,6 +117,24 @@ with aba1:
     anos_disponiveis = sorted(df["Ano"].dropna().unique())
     anos_comparacao = st.multiselect(" ", options=anos_disponiveis, default=anos_disponiveis)
 
+        # 🎯 Filtros lado a lado
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        tipo_filtro = st.selectbox("Filtrar por:", ["Loja", "Grupo"], index=0)  # padrão Loja
+    
+    with col2:
+        if tipo_filtro == "Loja":
+            opcoes = sorted(df_anos["Loja"].unique())
+        else:
+            opcoes = sorted(df_anos["Grupo"].unique())
+    
+        selecao = st.selectbox(f"Selecionar {tipo_filtro}:", ["Todos"] + opcoes, index=0)  # padrão Todos
+
+    # 📌 Aplica filtro conforme escolha
+    if selecao != "Todos":
+        df_anos = df_anos[df_anos[tipo_filtro] == selecao]
+ 
 
     if "Data" in df.columns and "Fat.Total" in df.columns and "Ano" in df.columns:
         df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Total"]).copy()
