@@ -211,24 +211,97 @@ with aba1:
 
 
     
-    fig = px.bar(
-        fat_mensal,
-        x="Nome Mês",
-        y="Fat.Total",
-        color="Ano",
-        barmode="group",
-        text_auto=".2s",
-        custom_data=["MesAno"],
-        color_discrete_map=color_map
-    )
-    fig.update_traces(textposition="outside")
-    fig.update_layout(
-        xaxis_title=None,
-        yaxis_title=None,
-        xaxis_tickangle=-45,
-        showlegend=False,
-        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False)
-    )
+    # ================================
+    # 📊 Faturamento Mensal — Barras (ano mais recente) + Linhas (demais anos)
+    # ================================
+    import plotly.graph_objects as go
+    
+    # ordem fixa dos meses
+    ordem_meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                   "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]
+    
+    # helper: garante todos os meses na ordem e preenche faltantes com 0
+    def series_por_ano(ano_str):
+        base = pd.DataFrame({"Nome Mês": ordem_meses})
+        s = fat_mensal[fat_mensal["Ano"] == str(ano_str)][["Nome Mês","Fat.Total"]]
+        return base.merge(s, on="Nome Mês", how="left").fillna({"Fat.Total": 0})
+    
+    # ano mais recente entre os selecionados
+    anos_sel = sorted(fat_mensal["Ano"].astype(int).unique())
+    if not anos_sel:
+        st.warning("Sem dados para os anos selecionados.")
+    else:
+        ano_barras = max(anos_sel)                  # barras
+        anos_linhas = [a for a in anos_sel if a != ano_barras]  # linhas
+    
+        # função p/ escurecer um pouco a cor (linha mais forte)
+        def darken(hexcolor, factor=0.65):
+            hexcolor = hexcolor.lstrip("#")
+            r, g, b = int(hexcolor[0:2],16), int(hexcolor[2:4],16), int(hexcolor[4:6],16)
+            r = max(0, int(r*factor)); g = max(0, int(g*factor)); b = max(0, int(b*factor))
+            return f"#{r:02X}{g:02X}{b:02X}"
+    
+        # dados do ano das barras
+        df_bar = series_por_ano(ano_barras)
+        cor_barra = color_map.get(str(ano_barras), "#A3C4F3")
+    
+        fig = go.Figure()
+    
+        # barras do ano mais recente
+        fig.add_trace(go.Bar(
+            x=df_bar["Nome Mês"], y=df_bar["Fat.Total"],
+            name=str(ano_barras),
+            marker_color=cor_barra,
+            opacity=0.95
+        ))
+    
+        # linhas grossas para os demais anos
+        for ano_l in sorted(anos_linhas):
+            df_lin = series_por_ano(ano_l)
+            cor_base = color_map.get(str(ano_l), "#E5E7EB")
+            cor_linha = darken(cor_base, 0.6)
+    
+            fig.add_trace(go.Scatter(
+                x=df_lin["Nome Mês"], y=df_lin["Fat.Total"],
+                name=str(ano_l),
+                mode="lines+markers",
+                line=dict(color=cor_linha, width=4),
+                marker=dict(size=6)
+            ))
+    
+            # rótulo do ano no início da linha (em "Janeiro")
+            y0 = float(df_lin.loc[df_lin["Nome Mês"] == "Janeiro", "Fat.Total"].iloc[0])
+            fig.add_annotation(
+                x="Janeiro", y=y0,
+                text=str(ano_l),
+                showarrow=False,
+                xanchor="right", yanchor="bottom",
+                xshift=-6,
+                font=dict(color=cor_linha, size=12, family="Arial", weight="bold")
+            )
+    
+        # layout
+        fig.update_layout(
+            template="simple_white",
+            xaxis_title=None, yaxis_title=None,
+            xaxis=dict(tickangle=-45),
+            showlegend=False,                      # já temos os rótulos no início das linhas
+            margin=dict(t=10, b=10, l=0, r=0),
+            paper_bgcolor="white", plot_bgcolor="white"
+        )
+    
+        # rótulos das barras (pretos, fora)
+        fig.update_traces(
+            selector=dict(type="bar"),
+            text=df_bar["Fat.Total"],
+            texttemplate="%{text:.2s}",
+            textposition="outside",
+            textfont=dict(color="black")
+        )
+    
+        st.subheader("Faturamento Mensal")
+        st.plotly_chart(fig, use_container_width=True, theme=None)
+
 
     df_total = fat_mensal.groupby("Ano")["Fat.Total"].sum().reset_index()
     df_total["Ano"] = df_total["Ano"].astype(int)
