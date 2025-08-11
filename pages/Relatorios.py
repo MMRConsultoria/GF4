@@ -211,13 +211,15 @@ with aba1:
     )
     fig_total.update_traces(
         textposition="inside",
-        textfont=dict(size=16, color="white"),
+        textfont=dict(size=16, color="black", family="Arial", weight="bold"),
+        #textfont=dict(size=16, color="white"),
         insidetextanchor="start",
         showlegend=False
     )
     fig_total.update_traces(
         textposition="outside",
-        textfont=dict(size=16, color="black"),
+        textfont=dict(size=16, color="black", family="Arial", weight="bold"), 
+        #textfont=dict(size=16, color="white"),
         showlegend=False
     )
     for i, row in df_total.iterrows():
@@ -228,7 +230,8 @@ with aba1:
             showarrow=False,
             xanchor="left",
             yanchor="middle",
-            font=dict(color="white", size=16),
+            font=dict(color="black", size=16, family="Arial", weight="bold"),
+            #font=dict(color="white", size=16),
             xref="x",
             yref="y"
         )
@@ -240,7 +243,8 @@ with aba1:
             xanchor="left",
             yanchor="bottom",
             yshift=-8,
-            font=dict(color="red", size=16, weight="bold"),
+            font=dict(color="red", size=16, family="Arial", weight="bold"),
+            #font=dict(color="red", size=16, weight="bold"),
             xref="x",
             yref="y"
         )
