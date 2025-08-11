@@ -183,13 +183,16 @@ with aba1:
         marker=dict(line=dict(width=0), opacity=0.88)
     )
     fig.update_layout(
+        template="simple_white",
         xaxis_title=None,
         yaxis_title=None,
         xaxis_tickangle=-45,
         showlegend=False,
-        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False)
+        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        margin=dict(t=10, b=10, l=0, r=0)
     )
-
     df_total = fat_mensal.groupby("Ano")["Fat.Total"].sum().reset_index()
     df_total["Ano"] = df_total["Ano"].astype(int)
     df_lojas["Ano"] = df_lojas["Ano"].astype(int)
