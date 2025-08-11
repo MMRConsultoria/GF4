@@ -177,7 +177,11 @@ with aba1:
         custom_data=["MesAno"],
         color_discrete_map=color_map
     )
-    fig.update_traces(textposition="outside")
+    fig.update_traces(
+        textposition="outside",
+        textfont=dict(color="black", size=14, family="Arial", weight="bold"),  # texto preto e negrito
+        marker=dict(line=dict(width=0), opacity=0.88)
+    )
     fig.update_layout(
         xaxis_title=None,
         yaxis_title=None,
