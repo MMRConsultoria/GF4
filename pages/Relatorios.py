@@ -146,7 +146,26 @@ with aba1:
     fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal["Ano"].str[-2:]
     fat_mensal = fat_mensal.sort_values(["MesNum", "Ano"])
 
-    color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
+
+    # 🎨 Paleta fixa (tons azul, cinza e amarelo claro, suaves)
+    cores_pastel = [
+        "#A3C4F3",  # azul pastel
+        "#BFD7FF",  # azul claro pastel
+        "#E2E8F0",  # cinza azulado claro
+        "#E5E7EB",  # cinza claro
+        "#FFF3B0",  # amarelo pastel
+        "#FDF6B2",  # amarelo claro
+    ]
+    
+    def build_color_map(keys):
+        keys_sorted = sorted(map(str, keys))
+        return {k: cores_pastel[i % len(cores_pastel)] for i, k in enumerate(keys_sorted)}
+    
+    anos_presentes = fat_mensal["Ano"].astype(str).unique().tolist()
+    color_map = build_color_map(anos_presentes)
+
+    
+    #color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
 
     fig = px.bar(
         fat_mensal,
