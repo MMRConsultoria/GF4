@@ -299,8 +299,7 @@ with aba1:
             textfont=dict(color="black")
         )
     
-        st.subheader("Faturamento Mensal")
-        st.plotly_chart(fig, use_container_width=True, theme=None)
+        
 
 
     df_total = fat_mensal.groupby("Ano")["Fat.Total"].sum().reset_index()
@@ -391,7 +390,7 @@ with aba1:
     st.plotly_chart(fig_total, use_container_width=True)
     st.markdown("---")
     st.subheader("Faturamento Mensal")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, theme=None)
 
 # ================================
 # Aba 3: Relatórios Vendas
