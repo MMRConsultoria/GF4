@@ -397,12 +397,31 @@ with aba1:
         plot_bgcolor="rgba(0,0,0,0)"
     )
     
-    # Render
-    st.subheader("Faturamento Anual")
+    # ----- título dinâmico p/ Faturamento Anual -----
+    from datetime import date
+    
+    # último dia registrado do ano das barras (ano_barras)
+    ultimo_registro = pd.to_datetime(
+        df_anos.loc[df_anos["Ano"] == ano_barras, "Data"].max()
+    )
+    dia_lbl = ultimo_registro.strftime("%d/%m") if pd.notnull(ultimo_registro) else ""
+    
+    # mostra o sufixo apenas quando for comparativo e ano em curso
+    comparando = len(comparativos) > 0
+    ano_em_curso = (int(ano_barras) == date.today().year)
+    mostrar_parcial = comparando and ano_em_curso and bool(dia_lbl)
+    
+    titulo_anual = "Faturamento Anual"
+    if mostrar_parcial:
+        titulo_anual += f" ({ano_barras} até {dia_lbl})"
+    
+    st.subheader(titulo_anual)  # <-- substitui o st.subheader("Faturamento Anual")
     st.plotly_chart(fig_total, use_container_width=True, theme=None)
+    
     st.subheader("Faturamento Mensal")
     st.plotly_chart(fig, use_container_width=True, theme=None)
     st.markdown("---")
+
 
 
 # ================================
