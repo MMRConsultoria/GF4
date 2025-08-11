@@ -115,7 +115,12 @@ with aba1:
     df["Nome Mês"] = df["Mês"].map(meses_portugues)
 
     anos_disponiveis = sorted(df["Ano"].dropna().unique())
-    anos_comparacao = st.multiselect(" ", options=anos_disponiveis, default=anos_disponiveis)
+    default_anos = anos_disponiveis[-2:] if len(anos_disponiveis) >= 2 else anos_disponiveis
+    anos_comparacao = st.multiselect(
+        "Anos para comparar",
+        options=anos_disponiveis,
+        default=default_anos
+    )
 
    
  
