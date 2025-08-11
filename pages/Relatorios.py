@@ -257,7 +257,7 @@ with aba1:
     
         # linhas grossas para os demais anos
         # Definir cores fixas para destacar
-        cores_linhas_destaque = ["#FF0000", "#FFD700"]  # vermelho forte, amarelo ouro
+        cores_linhas_destaque = ["#FFD700", "#FF0000" ]  # vermelho forte, amarelo ouro
         
         for idx, ano_l in enumerate(sorted(anos_linhas)):
             df_lin = series_por_ano(ano_l)
