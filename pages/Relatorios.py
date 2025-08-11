@@ -211,7 +211,7 @@ with aba1:
     )
     fig_total.update_traces(
         textposition="inside",
-        textfont=dict(size=16, color="white"),
+        textfont=dict(size=16, color="black"),
         insidetextanchor="start",
         showlegend=False
     )
