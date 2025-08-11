@@ -146,8 +146,29 @@ with aba1:
     fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal["Ano"].str[-2:]
     fat_mensal = fat_mensal.sort_values(["MesNum", "Ano"])
 
-    color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
-
+    # ---------------------------
+    # 🎨 Paleta pastel (azuis, cinzas e amarelo claro)
+    # ---------------------------
+    pastel_palette_limited = [
+        # azuis pastel
+        "#A3C4F3", "#BFD7FF", "#D7E3FC",
+        # cinzas pastel
+        "#E2E8F0", "#E5E7EB", "#F1F5F9",
+        # amarelo claro pastel
+        "#FFF3B0", "#FDF6B2",
+    ]
+    
+    def build_color_map(keys):
+        keys_sorted = sorted(map(str, keys))
+        return {k: pastel_palette_limited[i % len(pastel_palette_limited)]
+                for i, k in enumerate(keys_sorted)}
+    
+    anos_presentes = fat_mensal["Ano"].astype(str).unique().tolist()
+    color_map = build_color_map(anos_presentes)
+    
+    # ---------------------------
+    # 📊 Gráfico Mensal
+    # ---------------------------
     fig = px.bar(
         fat_mensal,
         x="Nome Mês",
@@ -158,33 +179,38 @@ with aba1:
         custom_data=["MesAno"],
         color_discrete_map=color_map
     )
-    fig.update_traces(textposition="outside")
+    fig.update_traces(
+        textposition="outside",
+        marker=dict(line=dict(width=0), opacity=0.88)  # sem contorno + leve transparência
+    )
     fig.update_layout(
+        template="simple_white",
         xaxis_title=None,
         yaxis_title=None,
         xaxis_tickangle=-45,
         showlegend=False,
-        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False)
+        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        margin=dict(t=10, b=10, l=0, r=0)
     )
-
+    
+    # ---------------------------
+    # 📊 Totais por Ano
+    # ---------------------------
     df_total = fat_mensal.groupby("Ano")["Fat.Total"].sum().reset_index()
     df_total["Ano"] = df_total["Ano"].astype(int)
     df_lojas["Ano"] = df_lojas["Ano"].astype(int)
     df_total = df_total.merge(df_lojas, on="Ano", how="left")
     df_total["AnoTexto"] = df_total.apply(
-        lambda row: f"{int(row['Ano'])}       R$ {row['Fat.Total']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
+        lambda row: f"{int(row['Ano'])}       R$ {row['Fat.Total']/1_000_000:,.1f} Mi".replace(",", "."),
+        axis=1
     )
-    df_total["Ano"] = df_total["Ano"].astype(int)
-
-    # ORDEM CORRETA dos anos de cima para baixo (mais antigo no topo)
-    anos_ordenados = sorted(df_total["Ano"].unique())  # ex: [2023, 2024, 2025]
+    
+    anos_ordenados = sorted(df_total["Ano"].unique())
     anos_ordenados_str = [str(ano) for ano in anos_ordenados]
-
-    # Converter a coluna "Ano" para string e categoria ordenada
     df_total["Ano"] = df_total["Ano"].astype(str)
     df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=anos_ordenados_str, ordered=True)
-
-    # Reordenar o dataframe com base na ordem correta
     df_total = df_total.sort_values("Ano", ascending=True)
     
     fig_total = px.bar(
@@ -193,65 +219,53 @@ with aba1:
         y="Ano",
         orientation="h",
         color="Ano",
-        text="AnoTexto",
         color_discrete_map=color_map
     )
     fig_total.update_traces(
-        textposition="inside",
-        textfont=dict(size=16, color="white"),
-        insidetextanchor="start",
-        showlegend=False
+        marker=dict(line=dict(width=0), opacity=0.9),
+        showlegend=False,
+        text=None  # sem texto dentro da barra; usamos anotações
     )
-    fig_total.update_traces(
-        textposition="outside",
-        textfont=dict(size=16),
-        showlegend=False
-    )
-    for i, row in df_total.iterrows():
+    
+    # anotações em cinza (sem vermelho)
+    for _, row in df_total.iterrows():
         fig_total.add_annotation(
-            x=0.1,
-            y=row["Ano"],
-            text=row["AnoTexto"],
-            showarrow=False,
-            xanchor="left",
-            yanchor="middle",
-            font=dict(color="white", size=16),
-            xref="x",
-            yref="y"
+            x=0, y=row["Ano"], text=row["AnoTexto"], showarrow=False,
+            xanchor="left", yanchor="middle",
+            font=dict(color="#5C5C5C", size=16), xref="x", yref="y", xshift=8
         )
         fig_total.add_annotation(
-            x=row["Fat.Total"],
-            y=row["Ano"],
-            showarrow=False,
+            x=row["Fat.Total"], y=row["Ano"], showarrow=False,
             text=f"{int(row['Qtd_Lojas'])} Lojas",
-            xanchor="left",
-            yanchor="bottom",
-            yshift=-8,
-            font=dict(color="red", size=16, weight="bold"),
-            xref="x",
-            yref="y"
+            xanchor="left", yanchor="middle",
+            font=dict(color="#5C5C5C", size=14), xref="x", yref="y", xshift=8
         )
+    
     fig_total.update_layout(
+        template="simple_white",
         height=130,
         margin=dict(t=0, b=0, l=0, r=0),
-        title=None,
         xaxis=dict(visible=False),
         yaxis=dict(
             categoryorder="array",
-            categoryarray=anos_ordenados_str,  # ordem natural: 2023 em cima, 2025 embaixo
-            showticklabels=False,
-            showgrid=False,
-            zeroline=False
+            categoryarray=anos_ordenados_str,
+            showticklabels=False, showgrid=False, zeroline=False
         ),
         yaxis_title=None,
-        showlegend=False,
-        plot_bgcolor="rgba(0,0,0,0)"
+        paper_bgcolor="white",
+        plot_bgcolor="white",
     )
+    
+    # ---------------------------
+    # Render (desliga tema do Streamlit pra manter as cores)
+    # ---------------------------
     st.subheader("Faturamento Anual")
-    st.plotly_chart(fig_total, use_container_width=True)
+    st.plotly_chart(fig_total, use_container_width=True, theme=None)
+    
     st.markdown("---")
     st.subheader("Faturamento Mensal")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, theme=None)
+
 
 
 # ================================
