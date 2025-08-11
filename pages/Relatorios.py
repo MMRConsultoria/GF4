@@ -77,181 +77,229 @@ aba1, aba3, aba4, aba5 = st.tabs([
     "📋 Relatórios Financeiros"
 ])
 # ================================
-# Aba 1: Graficos Anuais
+# Aba 1: Graficos Anuais (Fat.Total + cores pastéis automáticas)
 # ================================
 with aba1:
+    import plotly.express as px
+    import numpy as np
+    import pandas as pd
+
+    METRICA = "Fat.Total"  # <<< métrica única desta aba
+
     planilha = gc.open("Vendas diarias")
     aba = planilha.worksheet("Fat Sistema Externo")
     dados = aba.get_all_records()
     df = pd.DataFrame(dados)
 
-      
     # ✅ Limpa espaços invisíveis nos nomes das colunas
     df.columns = df.columns.str.strip()
-    
-    #st.write("🧪 Colunas carregadas:", df.columns.tolist())
-    
-    
-   
-    def limpar_valor(x):
-        try:
-            if isinstance(x, str):
-                return float(x.replace("R$", "").replace(".", "").replace(",", ".").strip())
-            return float(x)
-        except:
-            return None
+
+    # --- Limpeza robusta das colunas monetárias ---
+    def limpar_coluna_monetaria(serie_original):
+        serie = serie_original.astype(str).str.strip()
+        serie = (
+            serie.str.replace(r"R\$", "", regex=True)
+                 .str.replace(".", "", regex=False)
+                 .str.replace(",", ".", regex=False)
+        )
+        return pd.to_numeric(serie, errors="coerce")
 
     for col in ["Fat.Total", "Serv/Tx", "Fat.Real"]:
         if col in df.columns:
-            df[col] = df[col].apply(limpar_valor)
+            df[col] = limpar_coluna_monetaria(df[col])
 
+    # Datas e campos auxiliares
     df["Data"] = pd.to_datetime(df["Data"], errors="coerce", dayfirst=True)
     df["Ano"] = df["Data"].dt.year
     df["Mês"] = df["Data"].dt.month
+
     meses_portugues = {
         1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril", 5: "Maio", 6: "Junho",
         7: "Julho", 8: "Agosto", 9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
     }
     df["Nome Mês"] = df["Mês"].map(meses_portugues)
 
+    # Filtro de anos
     anos_disponiveis = sorted(df["Ano"].dropna().unique())
     anos_comparacao = st.multiselect(" ", options=anos_disponiveis, default=anos_disponiveis)
 
-
-    if "Data" in df.columns and "Fat.Total" in df.columns and "Ano" in df.columns:
-        df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Total"]).copy()
+    # ✅ Garante Data/Ano/Métrica
+    if "Data" in df.columns and METRICA in df.columns and "Ano" in df.columns:
+        df_anos = (
+            df[df["Ano"].isin(anos_comparacao)]
+            .dropna(subset=["Data", METRICA])
+            .copy()
+        )
     else:
-        st.error("❌ A aba 'Fat Sistema Externo' não contém as colunas necessárias: 'Data', 'Ano' ou 'Fat.Total'.")
+        st.error(f"❌ A aba 'Fat Sistema Externo' não contém as colunas necessárias: 'Data', 'Ano' ou '{METRICA}'.")
         st.stop()
 
-    
-    #df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Total"]).copy()
-    # Normalizar nomes das lojas para evitar duplicações por acento, espaço ou caixa
-    df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower()
+    # Normaliza nomes de loja
+    if "Loja" in df_anos.columns:
+        df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower()
 
-    # Calcular a quantidade de lojas únicas por ano (com base em loja + ano únicos)
-    df_lojas = df_anos.drop_duplicates(subset=["Ano", "Loja"])
-    df_lojas = df_lojas.groupby("Ano")["Loja"].nunique().reset_index()
-    df_lojas.columns = ["Ano", "Qtd_Lojas"]
+    # Qtd de lojas por ano
+    if "Loja" in df_anos.columns:
+        df_lojas = (
+            df_anos.drop_duplicates(subset=["Ano", "Loja"])
+                  .groupby("Ano")["Loja"].nunique()
+                  .reset_index()
+        )
+        df_lojas.columns = ["Ano", "Qtd_Lojas"]
+    else:
+        df_lojas = df_anos.groupby("Ano").size().reset_index(name="Qtd_Lojas")
 
+    # ======================
+    # Agregações usando METRICA
+    # ======================
+    fat_mensal = (
+        df_anos.groupby(["Nome Mês", "Ano"], as_index=False)[METRICA].sum()
+    )
 
-    fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Total"].sum().reset_index()
-
-    meses = {
-        "jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
-        "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12
-    }
+    meses = {"jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
+             "jul": 7, "ago": 8, "set": 9, "out": 10, "nov": 11, "dez": 12}
     fat_mensal["MesNum"] = fat_mensal["Nome Mês"].str[:3].str.lower().map(meses)
     fat_mensal["Ano"] = fat_mensal["Ano"].astype(str)
     fat_mensal["MesAno"] = fat_mensal["Nome Mês"].str[:3].str.capitalize() + "/" + fat_mensal["Ano"].str[-2:]
     fat_mensal = fat_mensal.sort_values(["MesNum", "Ano"])
 
-    color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
+    # ---------------------------
+    # 🎨 Paleta pastel automática
+    # ---------------------------
+    pastel_palette = [
+        "#A3C4F3",  # azul claro
+        "#B9FBC0",  # verde menta
+        "#FFCFD2",  # rosa claro
+        "#FDE4CF",  # pêssego
+        "#CDEAC0",  # verde suave
+        "#E2ECE9",  # cinza-azulado claro
+        "#BDB2FF",  # lilás claro
+        "#FFC6FF",  # magenta claro
+    ]
 
+    def build_color_map(keys):
+        cmap = {}
+        for i, k in enumerate(sorted(map(str, keys))):
+            cmap[k] = pastel_palette[i % len(pastel_palette)]
+        return cmap
+
+    anos_presentes = fat_mensal["Ano"].astype(str).unique().tolist()
+    color_map = build_color_map(anos_presentes)
+
+    # ================
+    # Gráfico Mensal
+    # ================
     fig = px.bar(
         fat_mensal,
         x="Nome Mês",
-        y="Fat.Total",
+        y=METRICA,
         color="Ano",
         barmode="group",
-        text_auto=".2s"
-        
-        
+        text_auto=".2s",
+        color_discrete_map=color_map
     )
-    fig.update_traces(textposition="outside")
+    fig.update_traces(
+        textposition="outside",
+        marker=dict(line=dict(width=0), opacity=0.88)
+    )
     fig.update_layout(
+        template="simple_white",
         xaxis_title=None,
         yaxis_title=None,
         xaxis_tickangle=-45,
         showlegend=False,
-        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False)
+        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        margin=dict(t=10, b=10, l=0, r=0)
     )
 
-    df_total = fat_mensal.groupby("Ano")["Fat.Total"].sum().reset_index()
+    # ==================
+    # Totais por Ano
+    # ==================
+    df_total = fat_mensal.groupby("Ano", as_index=False)[METRICA].sum()
     df_total["Ano"] = df_total["Ano"].astype(int)
     df_lojas["Ano"] = df_lojas["Ano"].astype(int)
     df_total = df_total.merge(df_lojas, on="Ano", how="left")
+
     df_total["AnoTexto"] = df_total.apply(
-        lambda row: f"{int(row['Ano'])}       R$ {row['Fat.Total']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
+        lambda row: f"{int(row['Ano'])}       R$ {row[METRICA]/1_000_000:,.1f} Mi".replace(",", "."),
+        axis=1
     )
-    df_total["Ano"] = df_total["Ano"].astype(int)
 
-    # ORDEM CORRETA dos anos de cima para baixo (mais antigo no topo)
-    anos_ordenados = sorted(df_total["Ano"].unique())  # ex: [2023, 2024, 2025]
+    anos_ordenados = sorted(df_total["Ano"].unique())
     anos_ordenados_str = [str(ano) for ano in anos_ordenados]
-
-    # Converter a coluna "Ano" para string e categoria ordenada
     df_total["Ano"] = df_total["Ano"].astype(str)
     df_total["Ano"] = pd.Categorical(df_total["Ano"], categories=anos_ordenados_str, ordered=True)
-
-    # Reordenar o dataframe com base na ordem correta
     df_total = df_total.sort_values("Ano", ascending=True)
-    
+
     fig_total = px.bar(
         df_total,
-        x="Fat.Total",
+        x=METRICA,
         y="Ano",
         orientation="h",
         color="Ano",
-        text="AnoTexto",
         color_discrete_map=color_map
     )
-    fig_total.update_traces(
-        textposition="inside",
-        textfont=dict(size=16, color="white"),
-        insidetextanchor="start",
-        showlegend=False
-    )
-    fig_total.update_traces(
-        textposition="outside",
-        textfont=dict(size=16),
-        showlegend=False
-    )
-    for i, row in df_total.iterrows():
+    fig_total.update_traces(marker=dict(line=dict(width=0), opacity=0.9), showlegend=False)
+    fig_total.update_traces(text=None)
+
+    # Anotações neutras
+    for _, row in df_total.iterrows():
         fig_total.add_annotation(
-            x=0.1,
+            x=0,
             y=row["Ano"],
             text=row["AnoTexto"],
             showarrow=False,
             xanchor="left",
             yanchor="middle",
-            font=dict(color="white", size=16),
+            font=dict(color="#5C5C5C", size=16),
             xref="x",
-            yref="y"
+            yref="y",
+            xshift=8
         )
         fig_total.add_annotation(
-            x=row["Fat.Total"],
+            x=row[METRICA],
             y=row["Ano"],
             showarrow=False,
             text=f"{int(row['Qtd_Lojas'])} Lojas",
             xanchor="left",
-            yanchor="bottom",
-            yshift=-8,
-            font=dict(color="red", size=16, weight="bold"),
+            yanchor="middle",
+            font=dict(color="#5C5C5C", size=14),
             xref="x",
-            yref="y"
+            yref="y",
+            xshift=8
         )
+
     fig_total.update_layout(
+        template="simple_white",
         height=130,
         margin=dict(t=0, b=0, l=0, r=0),
-        title=None,
         xaxis=dict(visible=False),
         yaxis=dict(
             categoryorder="array",
-            categoryarray=anos_ordenados_str,  # ordem natural: 2023 em cima, 2025 embaixo
+            categoryarray=anos_ordenados_str,
             showticklabels=False,
             showgrid=False,
             zeroline=False
         ),
         yaxis_title=None,
-        showlegend=False,
-        plot_bgcolor="rgba(0,0,0,0)"
+        paper_bgcolor="white",
+        plot_bgcolor="white"
     )
+
+    # --- Checagens rápidas ---
+    st.caption(f"✅ Métrica em uso: **{METRICA}**")
+    soma_metric = df_anos[METRICA].sum()
+    st.caption(f"Soma total no período filtrado: R$ {soma_metric:,.2f}".replace(",", "."))
+
+    # Renderização (sem tema pra manter os tons pastéis)
     st.subheader("Faturamento Anual")
-    st.plotly_chart(fig_total, use_container_width=True)
+    st.plotly_chart(fig_total, use_container_width=True, theme=None)
+
     st.markdown("---")
     st.subheader("Faturamento Mensal")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, theme=None)
 
 
 # ================================
