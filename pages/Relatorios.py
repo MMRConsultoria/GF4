@@ -209,19 +209,19 @@ with aba1:
         text="AnoTexto",
         color_discrete_map=color_map
     )
-    fig_total.update_traces(
-        textposition="inside",
-        textfont=dict(size=16, color="black", family="Arial", weight="bold"),
-        #textfont=dict(size=16, color="white"),
-        insidetextanchor="start",
-        showlegend=False
-    )
-    fig_total.update_traces(
-        textposition="outside",
-        textfont=dict(size=16, color="black", family="Arial", weight="bold"), 
-        #textfont=dict(size=16, color="white"),
-        showlegend=False
-    )
+    #fig_total.update_traces(
+    #    textposition="inside",
+    #    textfont=dict(size=16, color="black", family="Arial", weight="bold"),
+    #    #textfont=dict(size=16, color="white"),
+    #    insidetextanchor="start",
+    #    showlegend=False
+    #)
+    #fig_total.update_traces(
+    #    textposition="outside",
+    #    textfont=dict(size=16, color="black", family="Arial", weight="bold"), 
+    #    #textfont=dict(size=16, color="white"),
+    #    showlegend=False
+    #)
     for i, row in df_total.iterrows():
         fig_total.add_annotation(
             x=0.1,
