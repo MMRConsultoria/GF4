@@ -147,25 +147,7 @@ with aba1:
     fat_mensal = fat_mensal.sort_values(["MesNum", "Ano"])
 
 
-    # 🎨 Paleta fixa (tons azul, cinza e amarelo claro, suaves)
-    cores_pastel = [
-        "#A3C4F3",  # azul pastel
-        "#BFD7FF",  # azul claro pastel
-        "#E2E8F0",  # cinza azulado claro
-        "#E5E7EB",  # cinza claro
-        "#FFF3B0",  # amarelo pastel
-        "#FDF6B2",  # amarelo claro
-    ]
-    
-    def build_color_map(keys):
-        keys_sorted = sorted(map(str, keys))
-        return {k: cores_pastel[i % len(cores_pastel)] for i, k in enumerate(keys_sorted)}
-    
-    anos_presentes = fat_mensal["Ano"].astype(str).unique().tolist()
-    color_map = build_color_map(anos_presentes)
-
-    
-    #color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
+    color_map = {"2024": "#1f77b4", "2025": "#ff7f0e"}
 
     fig = px.bar(
         fat_mensal,
@@ -177,23 +159,15 @@ with aba1:
         custom_data=["MesAno"],
         color_discrete_map=color_map
     )
-    fig.update_traces(
-        textposition="outside",
-        texttemplate="<b>%{text}</b>",  # força negrito no rótulo
-        textfont=dict(color="black", size=14, family="Arial"),
-        marker=dict(line=dict(width=0), opacity=0.88)
-    )
+    fig.update_traces(textposition="outside")
     fig.update_layout(
-        template="simple_white",
         xaxis_title=None,
         yaxis_title=None,
         xaxis_tickangle=-45,
         showlegend=False,
-        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
-        paper_bgcolor="white",
-        plot_bgcolor="white",
-        margin=dict(t=10, b=10, l=0, r=0)
+        yaxis=dict(showticklabels=False, showgrid=False, zeroline=False)
     )
+
     df_total = fat_mensal.groupby("Ano")["Fat.Total"].sum().reset_index()
     df_total["Ano"] = df_total["Ano"].astype(int)
     df_lojas["Ano"] = df_lojas["Ano"].astype(int)
@@ -279,7 +253,6 @@ with aba1:
     st.markdown("---")
     st.subheader("Faturamento Mensal")
     st.plotly_chart(fig, use_container_width=True)
-
 
 # ================================
 # Aba 3: Relatórios Vendas
