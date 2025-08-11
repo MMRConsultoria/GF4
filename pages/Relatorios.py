@@ -118,14 +118,14 @@ with aba1:
     anos_comparacao = st.multiselect(" ", options=anos_disponiveis, default=anos_disponiveis)
 
 
-    if "Data" in df.columns and "Fat.Real" in df.columns and "Ano" in df.columns:
-        df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"]).copy()
+    if "Data" in df.columns and "Fat.Total" in df.columns and "Ano" in df.columns:
+        df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Total"]).copy()
     else:
-        st.error("❌ A aba 'Fat Sistema Externo' não contém as colunas necessárias: 'Data', 'Ano' ou 'Fat.Real'.")
+        st.error("❌ A aba 'Fat Sistema Externo' não contém as colunas necessárias: 'Data', 'Ano' ou 'Fat.Total'.")
         st.stop()
 
     
-    #df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Real"]).copy()
+    #df_anos = df[df["Ano"].isin(anos_comparacao)].dropna(subset=["Data", "Fat.Total"]).copy()
     # Normalizar nomes das lojas para evitar duplicações por acento, espaço ou caixa
     df_anos["Loja"] = df_anos["Loja"].astype(str).str.strip().str.lower()
 
@@ -135,7 +135,7 @@ with aba1:
     df_lojas.columns = ["Ano", "Qtd_Lojas"]
 
 
-    fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Real"].sum().reset_index()
+    fat_mensal = df_anos.groupby(["Nome Mês", "Ano"])["Fat.Total"].sum().reset_index()
 
     meses = {
         "jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
@@ -167,7 +167,7 @@ with aba1:
         yaxis=dict(showticklabels=False, showgrid=False, zeroline=False)
     )
 
-    df_total = fat_mensal.groupby("Ano")["Fat.Real"].sum().reset_index()
+    df_total = fat_mensal.groupby("Ano")["Fat.Total"].sum().reset_index()
     df_total["Ano"] = df_total["Ano"].astype(int)
     df_lojas["Ano"] = df_lojas["Ano"].astype(int)
     df_total = df_total.merge(df_lojas, on="Ano", how="left")
