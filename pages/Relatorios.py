@@ -276,7 +276,7 @@ with aba1:
                 text=str(ano_l),
                 showarrow=False,
                 xanchor="right", yanchor="middle",
-                xshift=-40,   # desloca para a esquerda do ponto de Janeiro
+                xshift=-60,   # desloca para a esquerda do ponto de Janeiro
                 font=dict(color=cor_linha, size=12, family="Arial", weight="bold")
             )
     
