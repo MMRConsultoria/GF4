@@ -206,7 +206,7 @@ with aba1:
         y="Ano",
         orientation="h",
         color="Ano",
-        text="AnoTexto",
+        #text="AnoTexto",
         color_discrete_map=color_map
     )
     #fig_total.update_traces(
