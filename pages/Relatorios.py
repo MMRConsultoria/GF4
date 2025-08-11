@@ -276,7 +276,7 @@ with aba1:
                 text=str(ano_l),
                 showarrow=False,
                 xanchor="right", yanchor="middle",
-                xshift=-25,   # desloca para a esquerda do ponto de Janeiro
+                xshift=-40,   # desloca para a esquerda do ponto de Janeiro
                 font=dict(color=cor_linha, size=12, family="Arial", weight="bold")
             )
     
@@ -284,7 +284,7 @@ with aba1:
         fig.update_layout(
             template="simple_white",
             xaxis_title=None, yaxis_title=None,
-            xaxis=dict(tickangle=-45, domain=[0.12, 1]),  # move barras um pouco pra direita
+            xaxis=dict(tickangle=-45, domain=[0.18, 1]),  # move barras um pouco pra direita
             showlegend=False,                      # já temos os rótulos no início das linhas
             margin=dict(t=10, b=10, l=0, r=0),
             paper_bgcolor="white", plot_bgcolor="white"
