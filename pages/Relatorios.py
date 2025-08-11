@@ -269,14 +269,14 @@ with aba1:
                 marker=dict(size=6)
             ))
     
-            # rótulo do ano no início da linha (esquerda do gráfico)
+            # rótulo do ano próximo à primeira barra, no espaço livre
             y0 = float(df_lin.loc[df_lin["Nome Mês"] == "Janeiro", "Fat.Total"].iloc[0]) if not df_lin.empty else 0
             fig.add_annotation(
-                x=-0.02, xref="paper",            # levemente fora da área do gráfico, à esquerda
-                y=y0, yref="y",
+                x="Janeiro", y=y0,
                 text=str(ano_l),
                 showarrow=False,
                 xanchor="right", yanchor="middle",
+                xshift=-25,   # desloca para a esquerda do ponto de Janeiro
                 font=dict(color=cor_linha, size=12, family="Arial", weight="bold")
             )
     
