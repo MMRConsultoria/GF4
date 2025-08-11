@@ -212,7 +212,6 @@ with aba1:
 
     
     # ================================
-    # ================================
     # 📊 Faturamento Mensal — Barras (ano mais recente) + Linhas (até 2 comparativos)
     # ================================
     import plotly.graph_objects as go
@@ -231,10 +230,18 @@ with aba1:
     def fmt_mi(x):
         return f"{x/1_000_000:.1f} Mi"
     
+    # abreviações de meses (usado também no Anual)
+    abbr = {"Janeiro":"JAN","Fevereiro":"FEV","Março":"MAR","Abril":"ABR","Maio":"MAI","Junho":"JUN",
+            "Julho":"JUL","Agosto":"AGO","Setembro":"SET","Outubro":"OUT","Novembro":"NOV","Dezembro":"DEZ"}
+    
+    ano_barras = None
+    ultimo_mes = None
+    
     # anos disponíveis no filtro atual
     anos_sel = sorted(fat_mensal["Ano"].astype(int).unique())
     if not anos_sel:
         st.warning("Sem dados para os anos selecionados.")
+        fig = go.Figure()
     else:
         ano_barras = max(anos_sel)  # ano atual (barras)
         # até 2 comparativos mais recentes para linhas
@@ -268,6 +275,17 @@ with aba1:
             textfont=dict(color="black", size=12, family="Arial Black, Arial, sans-serif")
         ))
     
+        # ⬇️ Anotação YTD / parcial do ano atual (UMA VEZ só)
+        mes_idx = {m:i for i,m in enumerate(ordem_meses)}
+        mes_atual_serie = fat_mensal.loc[fat_mensal["Ano"] == str(ano_barras), "Nome Mês"]
+        ultimo_mes = max(mes_atual_serie, key=lambda m: mes_idx.get(m, -1)) if not mes_atual_serie.empty else None
+    
+        fig.add_annotation(
+            xref="paper", yref="paper", x=0, y=1.12,
+            text=f"{ano_barras} parcial (acumulado até {abbr.get(ultimo_mes, '')}). Linhas = anos completos.",
+            showarrow=False, font=dict(size=12, color="#555")
+        )
+    
         # linhas: comparativo mais recente = vermelho, anterior = amarelo
         cores_linhas_fixas = ["#FF0000", "#FFD54F"]  # vermelho, amarelo pastel
         for idx, ano_l in enumerate(comparativos):
@@ -288,7 +306,7 @@ with aba1:
             ))
     
             # rótulo do ano no início da linha (à esquerda de Janeiro)
-            y0 = float(df_lin.loc[df_lin["Nome Mês"] == "Janeiro", "Fat.Total"].iloc[0])
+            y0 = float(df_lin.loc[df_lin["Nome Mês"] == "Janeiro", "Fat.Total"].iloc[0]) if not df_lin.empty else 0
             fig.add_annotation(
                 x="Janeiro", y=y0,
                 text=str(ano_l),
@@ -305,12 +323,10 @@ with aba1:
             yaxis_title=None,
             xaxis=dict(tickangle=-45, domain=[0.10, 1]),  # espaço p/ rótulo do ano
             showlegend=False,
-            margin=dict(t=10, b=10, l=0, r=0),
+            margin=dict(t=30, b=10, l=0, r=0),  # topo maior p/ caber a anotação
             paper_bgcolor="white",
             plot_bgcolor="white"
         )
-    
-        
     
     # ================================
     # 📊 Faturamento Anual — Horizontal
@@ -320,9 +336,16 @@ with aba1:
     df_lojas["Ano"] = df_lojas["Ano"].astype(int)
     df_total = df_total.merge(df_lojas, on="Ano", how="left")
     df_total["AnoTexto"] = df_total.apply(
-        lambda row: f"{int(row['Ano'])}     R$ {row['Fat.Total']/1_000_000:,.1f} Mi".replace(",", "."), axis=1
+        lambda row: f"{int(row['Ano'])}     R$ {row['Fat.Total']/1_000_000:,.1f} Mi".replace(",", "."),
+        axis=1
     )
-    df_total["Ano"] = df_total["Ano"].astype(int)
+    
+    # sufixo de parcial no ano atual (se existir)
+    if ano_barras is not None and ultimo_mes is not None:
+        mask_atual = df_total["Ano"].astype(int) == ano_barras
+        df_total.loc[mask_atual, "AnoTexto"] = (
+            df_total.loc[mask_atual, "AnoTexto"] + f"  (acum. até {abbr.get(ultimo_mes, '')})"
+        )
     
     # ordem correta
     anos_ordenados = sorted(df_total["Ano"].unique())
@@ -339,7 +362,7 @@ with aba1:
         color_discrete_map=color_map
     )
     
-    for i, row in df_total.iterrows():
+    for _, row in df_total.iterrows():
         fig_total.add_annotation(
             x=0.1, y=row["Ano"], text=row["AnoTexto"],
             showarrow=False, xanchor="left", yanchor="middle",
@@ -363,6 +386,7 @@ with aba1:
         plot_bgcolor="rgba(0,0,0,0)"
     )
     
+    # Ordem de exibição: Anual em cima, Mensal embaixo
     st.subheader("Faturamento Anual")
     st.plotly_chart(fig_total, use_container_width=True)
     st.subheader("Faturamento Mensal")
