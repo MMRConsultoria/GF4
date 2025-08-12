@@ -70,17 +70,12 @@ st.markdown("""
 # ================================
 # 3. Separação em ABAS
 # ================================
-aba1 = st.tabs([
-    
-    "📋 Rateio"
-])
-
-
+(tab_rateio,) = st.tabs(["📋 Rateio"])  # ✅ desembrulha a única aba
 
 # ================================
 # Aba 3: Relatórios Vendas
 # ================================
-with aba1:
+with tab_rateio:
     import pandas as pd
     import numpy as np
     import streamlit as st
