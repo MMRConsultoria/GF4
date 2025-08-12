@@ -77,6 +77,7 @@ st.markdown("""
 # ================================
 with tab_rateio:
     
+   
     import pandas as pd
     from datetime import datetime
     from io import BytesIO
@@ -152,13 +153,11 @@ with tab_rateio:
     df_final = df_pivot[colunas_finais].copy()
 
     # ==== Ordenação por subtotal de Tipo ====
-    # Calcula subtotal por Tipo (última coluna de período)
     ultima_col = colunas_periodo[-1]
     subtotais_tipo = df_final.groupby("Tipo")[ultima_col].sum().reset_index()
     subtotais_tipo = subtotais_tipo.sort_values(by=ultima_col, ascending=False)
     ordem_tipos = subtotais_tipo["Tipo"].tolist()
 
-    # Ordena df_final por Tipo e valor do último período (desc)
     df_final["ord_tipo"] = df_final["Tipo"].apply(lambda x: ordem_tipos.index(x) if x in ordem_tipos else 999)
     df_final = df_final.sort_values(by=["ord_tipo", ultima_col], ascending=[True, False]).drop(columns="ord_tipo")
 
@@ -174,7 +173,7 @@ with tab_rateio:
         linhas_com_subtotal.append(pd.DataFrame([subtotal]))
     df_final = pd.concat(linhas_com_subtotal, ignore_index=True)
 
-    # Lojas Ativas
+    # ==== Lojas Ativas ====
     df_lojas_por_periodo = df_filtrado.groupby("Período")["Loja"].nunique()
     linha_lojas = {col: "" for col in df_final.columns}
     linha_lojas["Grupo"] = "Lojas Ativas"
@@ -184,20 +183,23 @@ with tab_rateio:
         if periodo in linha_lojas:
             linha_lojas[periodo] = str(int(df_lojas_por_periodo[periodo]))
 
-    # Linha TOTAL
-    linha_total = df_final.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
+    # ==== Linha TOTAL (somente lojas, sem subtotais) ====
+    apenas_lojas = df_final[~df_final["Grupo"].str.startswith("Subtotal", na=False)]
+    apenas_lojas = apenas_lojas[apenas_lojas["Grupo"] != "Lojas Ativas"]
+    apenas_lojas = apenas_lojas[apenas_lojas["Grupo"] != "TOTAL"]
+    linha_total = apenas_lojas.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
     linha_total["Grupo"] = "TOTAL"
     linha_total["Loja"] = ""
     linha_total["Tipo"] = ""
 
-    # Junta Lojas Ativas e TOTAL no topo
+    # Junta no topo
     df_final = pd.concat([
         pd.DataFrame([linha_lojas]),
         pd.DataFrame([linha_total]),
         df_final
     ], ignore_index=True)
 
-    # ==== Formatação ====
+    # ==== Formatação valores ====
     def formatar(valor):
         try:
             return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -208,10 +210,33 @@ with tab_rateio:
         if col in df_final.columns:
             df_final[col] = df_final[col].apply(lambda x: formatar(x) if pd.notnull(x) else x)
 
-    # % Total
-    soma_total_geral = pd.to_numeric(df_final[colunas_periodo].stack(), errors="coerce").sum()
-    df_final["% Total"] = pd.to_numeric(df_final[colunas_periodo].sum(axis=1), errors="coerce") / soma_total_geral
-    df_final["% Total"] = df_final["% Total"].apply(lambda x: f"{x:.2%}" if pd.notnull(x) else "")
+    # ==== Percentual em relação ao subtotal do Tipo ====
+    df_percent = df_final.copy()
+    df_percent[ultima_col] = pd.to_numeric(df_percent[ultima_col], errors="coerce")
+
+    # Calcula base de percentual por Tipo
+    base_tipo = {}
+    for tipo in ordem_tipos:
+        subtotal_valor = df_percent.loc[df_percent["Grupo"] == f"Subtotal {tipo}", ultima_col].values
+        if len(subtotal_valor) > 0:
+            base_tipo[tipo] = subtotal_valor[0]
+
+    percents = []
+    for _, row in df_final.iterrows():
+        if row["Grupo"].startswith("Subtotal"):
+            percents.append("100.00%")
+        elif row["Grupo"] in ["TOTAL", "Lojas Ativas"]:
+            percents.append("")
+        else:
+            base = base_tipo.get(row["Tipo"], None)
+            if base and isinstance(row[ultima_col], (int, float)):
+                try:
+                    percents.append(f"{(float(str(row[ultima_col]).replace('R$','').replace('.','').replace(',','.')) / base):.2%}")
+                except:
+                    percents.append("")
+            else:
+                percents.append("")
+    df_final["% Total"] = percents
 
     # ==== Estilo ====
     def aplicar_estilo(df):
