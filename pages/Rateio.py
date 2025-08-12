@@ -79,8 +79,12 @@ with tab_rateio:
     import pandas as pd
     import numpy as np
     from datetime import datetime
+    from io import BytesIO
+    from openpyxl import load_workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from openpyxl.utils import get_column_letter
 
-    # 🎨 Estilo de selectbox/multiselect
+    # 🎨 Estilo visual para multiselect
     st.markdown("""
     <style>
     .stMultiSelect [data-baseweb="tag"] {
@@ -99,7 +103,7 @@ with tab_rateio:
     </style>
     """, unsafe_allow_html=True)
 
-    # Carrega dados
+    # ==== Carrega dados ====
     df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
     df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
 
@@ -116,9 +120,9 @@ with tab_rateio:
         df_empresa[["Loja", "Tipo"]],
         on="Loja",
         how="left"
-    )    
+    )
 
-    # Tratamento do Fat.Total
+    # Tratamento Fat.Total
     df_vendas["Fat.Total"] = (
         df_vendas["Fat.Total"]
         .astype(str)
@@ -165,17 +169,10 @@ with tab_rateio:
         fill_value=0
     ).reset_index()
 
-    # ==== Ordenação das colunas de período ====
-    def ordenar_datas(col):
-        return datetime.strptime("01/" + col, "%d/%m/%Y")
-
-    colunas_periodo = sorted(
-        [c for c in df_pivot.columns if c not in chaves],
-        key=ordenar_datas
-    )
-
-    # ==== Ordem final das colunas ====
-    df_final = df_pivot[chaves + colunas_periodo].copy()
+    # ==== Mantém ordem original ====
+    colunas_periodo = [c for c in df_pivot.columns if c not in ["Tipo", "Grupo", "Loja"]]
+    colunas_finais = ["Tipo", "Grupo", "Loja"] + colunas_periodo
+    df_final = df_pivot[colunas_finais].copy()
 
     # ==== Cálculo % Total ====
     soma_total_geral = df_final[colunas_periodo].sum(numeric_only=True).sum()
@@ -190,7 +187,7 @@ with tab_rateio:
     linha_total["Loja"] = ""
     df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
 
-    # ==== Formatação visual ====
+    # ==== Formatação ====
     def formatar(valor):
         try:
             return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -223,12 +220,7 @@ with tab_rateio:
         height=700
     )
 
-    # ==== Exportação para Excel ====
-    from io import BytesIO
-    from openpyxl import load_workbook
-    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-    from openpyxl.utils import get_column_letter
-
+    # ==== Exportação Excel ====
     df_exportar = df_final.copy()
     output = BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
@@ -248,14 +240,12 @@ with tab_rateio:
         bottom=Side(style="thin")
     )
 
-    # Cabeçalho
     for cell in ws[1]:
         cell.font = header_font
         cell.fill = header_fill
         cell.alignment = center_alignment
         cell.border = border
 
-    # Estilo linhas
     for row in ws.iter_rows(min_row=2, max_row=ws.max_row, max_col=ws.max_column):
         grupo_valor = row[1].value
         estilo_fundo = None
@@ -273,7 +263,6 @@ with tab_rateio:
                 else:
                     cell.number_format = '"R$" #,##0.00'
 
-    # Ajusta largura das colunas
     for i, col_cells in enumerate(ws.iter_cols(min_row=1, max_row=ws.max_row), start=1):
         max_length = 0
         for cell in col_cells:
@@ -281,7 +270,6 @@ with tab_rateio:
                 max_length = max(max_length, len(str(cell.value)))
         ws.column_dimensions[get_column_letter(i)].width = max_length + 2
 
-    # Alinha à esquerda colunas de texto
     colunas_df = list(df_exportar.columns)
     colunas_esquerda = ["Tipo", "Grupo", "Loja"]
     for col_nome in colunas_esquerda:
@@ -291,7 +279,6 @@ with tab_rateio:
                 for c in cell:
                     c.alignment = Alignment(horizontal="left")
 
-    # Salva final
     output_final = BytesIO()
     wb.save(output_final)
     output_final.seek(0)
