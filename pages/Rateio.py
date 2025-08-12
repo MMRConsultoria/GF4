@@ -76,9 +76,7 @@ st.markdown("""
 # Aba 3: Relatórios Vendas
 # ================================
 with tab_rateio:
-    
-   
-   
+
     import pandas as pd
     from datetime import datetime
     from io import BytesIO
@@ -136,7 +134,7 @@ with tab_rateio:
     if tipo_selecionado != "Todos":
         df_filtrado = df_filtrado[df_filtrado["Tipo"] == tipo_selecionado]
 
-    # ==== Agrupamento por Tipo + Grupo (sem lojas) ====
+    # ==== Agrupamento por Tipo + Grupo ====
     chaves = ["Tipo", "Grupo"]
     df_agrupado = df_filtrado.groupby(chaves + ["Período"], as_index=False)["Fat.Total"].sum()
 
@@ -148,19 +146,48 @@ with tab_rateio:
         fill_value=0
     ).reset_index()
 
-    # Mantém ordem original das colunas
+    # Mantém ordem original de colunas
     colunas_periodo = [c for c in df_pivot.columns if c not in ["Tipo", "Grupo"]]
     colunas_finais = ["Tipo", "Grupo"] + colunas_periodo
     df_final = df_pivot[colunas_finais].copy()
 
-    # Ordena pelo último período
+    # ==== Ordenação ====
     ultima_col = colunas_periodo[-1]
-    df_final = df_final.sort_values(by=ultima_col, ascending=False).reset_index(drop=True)
+    subtotais_tipo = df_final.groupby("Tipo")[ultima_col].sum().reset_index()
+    subtotais_tipo = subtotais_tipo.sort_values(by=ultima_col, ascending=False)
+    ordem_tipos = subtotais_tipo["Tipo"].tolist()
 
-    # ==== Percentual sobre o total geral ====
-    soma_total_geral = df_final[colunas_periodo].sum(numeric_only=True).sum()
-    df_final["% Total"] = df_final[colunas_periodo].sum(axis=1, numeric_only=True) / soma_total_geral
-    df_final["% Total"] = df_final["% Total"].apply(lambda x: f"{x:.2%}" if pd.notnull(x) else "")
+    df_final["ord_tipo"] = df_final["Tipo"].apply(lambda x: ordem_tipos.index(x) if x in ordem_tipos else 999)
+    df_final = df_final.sort_values(by=["ord_tipo", ultima_col], ascending=[True, False]).drop(columns="ord_tipo")
+
+    # ==== Monta subtotais por Tipo ====
+    linhas_com_subtotal = []
+    for tipo in ordem_tipos:
+        bloco_tipo = df_final[df_final["Tipo"] == tipo].copy()
+        linhas_com_subtotal.append(bloco_tipo)
+        subtotal = bloco_tipo.drop(columns=["Tipo", "Grupo"]).sum(numeric_only=True)
+        subtotal["Tipo"] = tipo
+        subtotal["Grupo"] = f"Subtotal {tipo}"
+        linhas_com_subtotal.append(pd.DataFrame([subtotal]))
+    df_final = pd.concat(linhas_com_subtotal, ignore_index=True)
+
+    # ==== Linha TOTAL no topo ====
+    apenas_grupos = df_final[~df_final["Grupo"].str.startswith("Subtotal", na=False)]
+    linha_total = apenas_grupos.drop(columns=["Tipo", "Grupo"]).sum(numeric_only=True)
+    linha_total["Tipo"] = ""
+    linha_total["Grupo"] = "TOTAL"
+    df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
+
+    # ==== Percentual apenas para grupos ====
+    total_geral = apenas_grupos[colunas_periodo].sum(numeric_only=True).sum()
+    percentuais = []
+    for _, row in df_final.iterrows():
+        if row["Grupo"].startswith("Subtotal") or row["Grupo"] == "TOTAL":
+            percentuais.append("")
+        else:
+            valor = pd.to_numeric(row[colunas_periodo], errors="coerce").sum()
+            percentuais.append(f"{valor/total_geral:.2%}" if total_geral > 0 else "")
+    df_final["% Total"] = percentuais
 
     # ==== Formatação valores ====
     def formatar(valor):
@@ -173,10 +200,16 @@ with tab_rateio:
         if col in df_final.columns:
             df_final[col] = df_final[col].apply(lambda x: formatar(x) if pd.notnull(x) else x)
 
-    # ==== Estilo TOTAL ====
+    # ==== Estilo ====
     def aplicar_estilo(df):
-        return df.style.apply(lambda row: ["font-weight: bold; background-color: #f0f0f0"] * len(row)
-                              if row["Grupo"] == "TOTAL" else ["" for _ in row], axis=1)
+        def estilo_linha(row):
+            if row["Grupo"] == "TOTAL":
+                return ["background-color: #f4b084; font-weight: bold"] * len(row)
+            elif "Subtotal" in str(row["Grupo"]):
+                return ["background-color: #d9d9d9; font-weight: bold"] * len(row)
+            else:
+                return ["" for _ in row]
+        return df.style.apply(estilo_linha, axis=1)
 
     st.dataframe(aplicar_estilo(df_final), use_container_width=True, height=700)
 
@@ -202,9 +235,18 @@ with tab_rateio:
         cell.border = border
 
     for row in ws.iter_rows(min_row=2, max_row=ws.max_row, max_col=ws.max_column):
+        grupo_valor = row[1].value
+        estilo_fundo = None
+        if isinstance(grupo_valor, str):
+            if grupo_valor.strip().upper() == "TOTAL":
+                estilo_fundo = PatternFill("solid", fgColor="F4B084")
+            elif "SUBTOTAL" in grupo_valor.strip().upper():
+                estilo_fundo = PatternFill("solid", fgColor="D9D9D9")
         for cell in row:
             cell.border = border
             cell.alignment = center_alignment
+            if estilo_fundo:
+                cell.fill = estilo_fundo
             col_name = ws.cell(row=1, column=cell.column).value
             if isinstance(cell.value, (int, float)):
                 if col_name == "% Total":
