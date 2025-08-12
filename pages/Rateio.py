@@ -78,6 +78,7 @@ st.markdown("""
 with tab_rateio:
     
    
+   
     import pandas as pd
     from datetime import datetime
     from io import BytesIO
@@ -135,8 +136,8 @@ with tab_rateio:
     if tipo_selecionado != "Todos":
         df_filtrado = df_filtrado[df_filtrado["Tipo"] == tipo_selecionado]
 
-    # Agrupamento fixo
-    chaves = ["Tipo", "Grupo", "Loja"]
+    # ==== Agrupamento por Tipo + Grupo (sem lojas) ====
+    chaves = ["Tipo", "Grupo"]
     df_agrupado = df_filtrado.groupby(chaves + ["Período"], as_index=False)["Fat.Total"].sum()
 
     # Pivot
@@ -147,57 +148,19 @@ with tab_rateio:
         fill_value=0
     ).reset_index()
 
-    # Mantém a ordem original de colunas
-    colunas_periodo = [c for c in df_pivot.columns if c not in ["Tipo", "Grupo", "Loja"]]
-    colunas_finais = ["Tipo", "Grupo", "Loja"] + colunas_periodo
+    # Mantém ordem original das colunas
+    colunas_periodo = [c for c in df_pivot.columns if c not in ["Tipo", "Grupo"]]
+    colunas_finais = ["Tipo", "Grupo"] + colunas_periodo
     df_final = df_pivot[colunas_finais].copy()
 
-    # ==== Ordenação por subtotal de Tipo ====
+    # Ordena pelo último período
     ultima_col = colunas_periodo[-1]
-    subtotais_tipo = df_final.groupby("Tipo")[ultima_col].sum().reset_index()
-    subtotais_tipo = subtotais_tipo.sort_values(by=ultima_col, ascending=False)
-    ordem_tipos = subtotais_tipo["Tipo"].tolist()
+    df_final = df_final.sort_values(by=ultima_col, ascending=False).reset_index(drop=True)
 
-    df_final["ord_tipo"] = df_final["Tipo"].apply(lambda x: ordem_tipos.index(x) if x in ordem_tipos else 999)
-    df_final = df_final.sort_values(by=["ord_tipo", ultima_col], ascending=[True, False]).drop(columns="ord_tipo")
-
-    # ==== Insere subtotal por Tipo depois das lojas ====
-    linhas_com_subtotal = []
-    for tipo in ordem_tipos:
-        bloco_tipo = df_final[df_final["Tipo"] == tipo].copy()
-        linhas_com_subtotal.append(bloco_tipo)
-        subtotal = bloco_tipo.drop(columns=["Tipo", "Grupo", "Loja"]).sum(numeric_only=True)
-        subtotal["Tipo"] = tipo
-        subtotal["Grupo"] = f"Subtotal {tipo}"
-        subtotal["Loja"] = ""
-        linhas_com_subtotal.append(pd.DataFrame([subtotal]))
-    df_final = pd.concat(linhas_com_subtotal, ignore_index=True)
-
-    # ==== Lojas Ativas ====
-    df_lojas_por_periodo = df_filtrado.groupby("Período")["Loja"].nunique()
-    linha_lojas = {col: "" for col in df_final.columns}
-    linha_lojas["Grupo"] = "Lojas Ativas"
-    linha_lojas["Loja"] = ""
-    linha_lojas["Tipo"] = ""
-    for periodo in df_lojas_por_periodo.index:
-        if periodo in linha_lojas:
-            linha_lojas[periodo] = str(int(df_lojas_por_periodo[periodo]))
-
-    # ==== Linha TOTAL (somente lojas, sem subtotais) ====
-    apenas_lojas = df_final[~df_final["Grupo"].str.startswith("Subtotal", na=False)]
-    apenas_lojas = apenas_lojas[apenas_lojas["Grupo"] != "Lojas Ativas"]
-    apenas_lojas = apenas_lojas[apenas_lojas["Grupo"] != "TOTAL"]
-    linha_total = apenas_lojas.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
-    linha_total["Grupo"] = "TOTAL"
-    linha_total["Loja"] = ""
-    linha_total["Tipo"] = ""
-
-    # Junta no topo
-    df_final = pd.concat([
-        pd.DataFrame([linha_lojas]),
-        pd.DataFrame([linha_total]),
-        df_final
-    ], ignore_index=True)
+    # ==== Percentual sobre o total geral ====
+    soma_total_geral = df_final[colunas_periodo].sum(numeric_only=True).sum()
+    df_final["% Total"] = df_final[colunas_periodo].sum(axis=1, numeric_only=True) / soma_total_geral
+    df_final["% Total"] = df_final["% Total"].apply(lambda x: f"{x:.2%}" if pd.notnull(x) else "")
 
     # ==== Formatação valores ====
     def formatar(valor):
@@ -210,46 +173,10 @@ with tab_rateio:
         if col in df_final.columns:
             df_final[col] = df_final[col].apply(lambda x: formatar(x) if pd.notnull(x) else x)
 
-    # ==== Percentual em relação ao subtotal do Tipo ====
-    df_percent = df_final.copy()
-    df_percent[ultima_col] = pd.to_numeric(df_percent[ultima_col], errors="coerce")
-
-    # Calcula base de percentual por Tipo
-    base_tipo = {}
-    for tipo in ordem_tipos:
-        subtotal_valor = df_percent.loc[df_percent["Grupo"] == f"Subtotal {tipo}", ultima_col].values
-        if len(subtotal_valor) > 0:
-            base_tipo[tipo] = subtotal_valor[0]
-
-    percents = []
-    for _, row in df_final.iterrows():
-        if row["Grupo"].startswith("Subtotal"):
-            percents.append("100.00%")
-        elif row["Grupo"] in ["TOTAL", "Lojas Ativas"]:
-            percents.append("")
-        else:
-            base = base_tipo.get(row["Tipo"], None)
-            if base and isinstance(row[ultima_col], (int, float)):
-                try:
-                    percents.append(f"{(float(str(row[ultima_col]).replace('R$','').replace('.','').replace(',','.')) / base):.2%}")
-                except:
-                    percents.append("")
-            else:
-                percents.append("")
-    df_final["% Total"] = percents
-
-    # ==== Estilo ====
+    # ==== Estilo TOTAL ====
     def aplicar_estilo(df):
-        def estilo_linha(row):
-            if row["Grupo"] == "TOTAL":
-                return ["background-color: #f4b084; font-weight: bold"] * len(row)
-            elif "Subtotal" in str(row["Grupo"]):
-                return ["background-color: #d9d9d9; font-weight: bold"] * len(row)
-            elif row["Grupo"] == "Lojas Ativas":
-                return ["background-color: #eeeeee; font-style: italic"] * len(row)
-            else:
-                return ["" for _ in row]
-        return df.style.apply(estilo_linha, axis=1)
+        return df.style.apply(lambda row: ["font-weight: bold; background-color: #f0f0f0"] * len(row)
+                              if row["Grupo"] == "TOTAL" else ["" for _ in row], axis=1)
 
     st.dataframe(aplicar_estilo(df_final), use_container_width=True, height=700)
 
@@ -275,20 +202,9 @@ with tab_rateio:
         cell.border = border
 
     for row in ws.iter_rows(min_row=2, max_row=ws.max_row, max_col=ws.max_column):
-        grupo_valor = row[1].value
-        estilo_fundo = None
-        if isinstance(grupo_valor, str):
-            if grupo_valor.strip().upper() == "TOTAL":
-                estilo_fundo = PatternFill("solid", fgColor="F4B084")
-            elif "SUBTOTAL" in grupo_valor.strip().upper():
-                estilo_fundo = PatternFill("solid", fgColor="D9D9D9")
-            elif grupo_valor.strip().upper() == "LOJAS ATIVAS":
-                estilo_fundo = PatternFill("solid", fgColor="E6E6E6")
         for cell in row:
             cell.border = border
             cell.alignment = center_alignment
-            if estilo_fundo:
-                cell.fill = estilo_fundo
             col_name = ws.cell(row=1, column=cell.column).value
             if isinstance(cell.value, (int, float)):
                 if col_name == "% Total":
@@ -303,7 +219,7 @@ with tab_rateio:
                 max_length = max(max_length, len(str(cell.value)))
         ws.column_dimensions[get_column_letter(i)].width = max_length + 2
 
-    for col_nome in ["Tipo", "Grupo", "Loja"]:
+    for col_nome in ["Tipo", "Grupo"]:
         if col_nome in df_exportar.columns:
             col_idx = df_exportar.columns.get_loc(col_nome) + 1
             for cell in ws.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx):
@@ -317,6 +233,6 @@ with tab_rateio:
     st.download_button(
         label="📥 Baixar Excel",
         data=output_final,
-        file_name="Relatorio_Vendas_Mensal.xlsx",
+        file_name="Resumo_Grupos_Mensal.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
