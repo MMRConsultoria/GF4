@@ -70,40 +70,20 @@ st.markdown("""
 # ================================
 # 3. Separação em ABAS
 # ================================
-(tab_rateio,) = st.tabs(["📋 Rateio"])  # ✅ desembrulha a única aba
+(tab_rateio,) = st.tabs(["📋 Rateio"])
 
 # ================================
 # Aba 3: Relatórios Vendas
 # ================================
 with tab_rateio:
     import pandas as pd
-    import numpy as np
     from datetime import datetime
     from io import BytesIO
     from openpyxl import load_workbook
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
     from openpyxl.utils import get_column_letter
 
-    # 🎨 Estilo visual para multiselect
-    st.markdown("""
-    <style>
-    .stMultiSelect [data-baseweb="tag"] {
-        background-color: transparent !important;
-        color: black !important;
-        font-weight: 500 !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding: 2px 6px !important;
-        margin: 2px 4px !important;
-    }
-    .stMultiSelect > div {
-        background-color: transparent !important;
-        border: none !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # ==== Carrega dados ====
+    # Carrega dados
     df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
     df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
 
@@ -116,13 +96,9 @@ with tab_rateio:
     df_vendas["Grupo"] = df_vendas["Grupo"].astype(str).str.strip()
 
     # Merge com Tipo
-    df_vendas = df_vendas.merge(
-        df_empresa[["Loja", "Tipo"]],
-        on="Loja",
-        how="left"
-    )
+    df_vendas = df_vendas.merge(df_empresa[["Loja", "Tipo"]], on="Loja", how="left")
 
-    # Tratamento Fat.Total
+    # Ajusta Fat.Total
     df_vendas["Fat.Total"] = (
         df_vendas["Fat.Total"]
         .astype(str)
@@ -157,11 +133,11 @@ with tab_rateio:
     if tipo_selecionado != "Todos":
         df_filtrado = df_filtrado[df_filtrado["Tipo"] == tipo_selecionado]
 
-    # ==== Agrupamento fixo ====
+    # Agrupamento fixo
     chaves = ["Tipo", "Grupo", "Loja"]
     df_agrupado = df_filtrado.groupby(chaves + ["Período"], as_index=False)["Fat.Total"].sum()
 
-    # ==== Pivot ====
+    # Pivot
     df_pivot = df_agrupado.pivot_table(
         index=chaves,
         columns="Período",
@@ -169,58 +145,72 @@ with tab_rateio:
         fill_value=0
     ).reset_index()
 
-    # ==== Mantém ordem original ====
+    # Mantém a ordem original de colunas
     colunas_periodo = [c for c in df_pivot.columns if c not in ["Tipo", "Grupo", "Loja"]]
     colunas_finais = ["Tipo", "Grupo", "Loja"] + colunas_periodo
     df_final = df_pivot[colunas_finais].copy()
 
-    # ==== Cálculo % Total ====
-    soma_total_geral = df_final[colunas_periodo].sum(numeric_only=True).sum()
-    df_final["__soma_linha"] = df_final[colunas_periodo].sum(axis=1, numeric_only=True)
-    df_final["% Total"] = df_final["__soma_linha"] / soma_total_geral
-    df_final = df_final.drop(columns=["__soma_linha"])
+    # Ordena pelo último período
+    ultima_coluna_valor = colunas_periodo[-1]
+    df_final["__ordem"] = df_final[ultima_coluna_valor]
+    df_final = df_final.sort_values(by="__ordem", ascending=False).drop(columns="__ordem").reset_index(drop=True)
 
-    # ==== Linha TOTAL ====
-    linha_total = df_final.drop(columns=["Tipo", "Grupo", "Loja"]).sum(numeric_only=True)
-    linha_total["Tipo"] = ""
+    # Lojas Ativas
+    df_lojas_por_periodo = df_filtrado.groupby("Período")["Loja"].nunique()
+    linha_lojas = {col: "" for col in df_final.columns}
+    linha_lojas["Grupo"] = "Lojas Ativas"
+    linha_lojas["Loja"] = ""
+    linha_lojas["Tipo"] = ""
+    for periodo in df_lojas_por_periodo.index:
+        if periodo in linha_lojas:
+            linha_lojas[periodo] = str(int(df_lojas_por_periodo[periodo]))
+
+    # Linha TOTAL
+    linha_total = df_final.drop(columns=["Grupo", "Loja", "Tipo"]).sum(numeric_only=True)
     linha_total["Grupo"] = "TOTAL"
     linha_total["Loja"] = ""
-    df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
+    linha_total["Tipo"] = ""
 
-    # ==== Formatação ====
+    # Junta
+    df_final = pd.concat([
+        pd.DataFrame([linha_lojas]),
+        pd.DataFrame([linha_total]),
+        df_final
+    ], ignore_index=True)
+
+    # Formatação
     def formatar(valor):
         try:
             return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
         except:
             return valor
 
-    df_formatado = df_final.copy()
     for col in colunas_periodo:
-        if col in df_formatado.columns:
-            df_formatado[col] = df_formatado[col].apply(lambda x: formatar(x) if pd.notnull(x) else "")
+        if col in df_final.columns:
+            df_final[col] = df_final.apply(
+                lambda row: formatar(row[col]) if row["Grupo"] not in ["Lojas Ativas"] else row[col],
+                axis=1
+            )
 
-    df_formatado["% Total"] = pd.to_numeric(df_final["% Total"], errors="coerce").apply(
-        lambda x: f"{x:.2%}" if pd.notnull(x) else ""
-    )
+    # % Total
+    soma_total_geral = df_final[colunas_periodo].apply(pd.to_numeric, errors="coerce").sum(numeric_only=True).sum()
+    df_final["% Total"] = df_final[colunas_periodo].apply(pd.to_numeric, errors="coerce").sum(axis=1) / soma_total_geral
+    df_final["% Total"] = df_final["% Total"].apply(lambda x: f"{x:.2%}" if pd.notnull(x) else "")
 
-    # ==== Estilo TOTAL ====
+    # Estilo
     def aplicar_estilo(df):
         def estilo_linha(row):
             if row["Grupo"] == "TOTAL":
                 return ["background-color: #f0f0f0; font-weight: bold"] * len(row)
+            elif row["Grupo"] == "Lojas Ativas":
+                return ["background-color: #eeeeee; font-style: italic"] * len(row)
             else:
                 return ["" for _ in row]
         return df.style.apply(estilo_linha, axis=1)
 
-    tabela_final = aplicar_estilo(df_formatado)
+    st.dataframe(aplicar_estilo(df_final), use_container_width=True, height=700)
 
-    st.dataframe(
-        tabela_final,
-        use_container_width=True,
-        height=700
-    )
-
-    # ==== Exportação Excel ====
+    # Exporta para Excel
     df_exportar = df_final.copy()
     output = BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
@@ -233,12 +223,7 @@ with tab_rateio:
     header_font = Font(bold=True, color="FFFFFF")
     header_fill = PatternFill("solid", fgColor="305496")
     center_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-    border = Border(
-        left=Side(style="thin"),
-        right=Side(style="thin"),
-        top=Side(style="thin"),
-        bottom=Side(style="thin")
-    )
+    border = Border(left=Side(style="thin"), right=Side(style="thin"), top=Side(style="thin"), bottom=Side(style="thin"))
 
     for cell in ws[1]:
         cell.font = header_font
@@ -249,8 +234,11 @@ with tab_rateio:
     for row in ws.iter_rows(min_row=2, max_row=ws.max_row, max_col=ws.max_column):
         grupo_valor = row[1].value
         estilo_fundo = None
-        if isinstance(grupo_valor, str) and grupo_valor.strip().upper() == "TOTAL":
-            estilo_fundo = PatternFill("solid", fgColor="F4B084")
+        if isinstance(grupo_valor, str):
+            if grupo_valor.strip().upper() == "TOTAL":
+                estilo_fundo = PatternFill("solid", fgColor="F4B084")
+            elif grupo_valor.strip().upper() == "LOJAS ATIVAS":
+                estilo_fundo = PatternFill("solid", fgColor="D9D9D9")
         for cell in row:
             cell.border = border
             cell.alignment = center_alignment
@@ -270,11 +258,9 @@ with tab_rateio:
                 max_length = max(max_length, len(str(cell.value)))
         ws.column_dimensions[get_column_letter(i)].width = max_length + 2
 
-    colunas_df = list(df_exportar.columns)
-    colunas_esquerda = ["Tipo", "Grupo", "Loja"]
-    for col_nome in colunas_esquerda:
-        if col_nome in colunas_df:
-            col_idx = colunas_df.index(col_nome) + 1
+    for col_nome in ["Tipo", "Grupo", "Loja"]:
+        if col_nome in df_exportar.columns:
+            col_idx = df_exportar.columns.get_loc(col_nome) + 1
             for cell in ws.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx):
                 for c in cell:
                     c.alignment = Alignment(horizontal="left")
