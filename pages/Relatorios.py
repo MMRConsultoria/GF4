@@ -472,7 +472,7 @@ with aba1:
     """, unsafe_allow_html=True)
         
     # =================== LINHA DE BAIXO: MENSAL (ESQ) + TABELAS (DIR) ===================
-    col_chart, col_tables = st.columns([0.66, 0.34])  # ajuste a proporção se quiser
+    col_chart, col_tables = st.columns([0.80, 0.20])  # ajuste a proporção se quiser
     
     with col_chart:
         # “cola” o mensal mais à esquerda
@@ -505,7 +505,7 @@ with aba1:
                      .reset_index())
         tab_op.columns = ["OPERAÇÃO", str(ano_prev), str(ano_barras)]
         st.subheader("Operação")
-        st.dataframe(tab_op, hide_index=True, use_container_width=True, height=180)
+        st.dataframe(tab_op, hide_index=True, use_container_width=True, height=120)
     
         # 2) Índice de Crescimento (YTD)
         fat_ytd = (ytd.groupby(["Ano", dim])["Fat.Total"].sum()
@@ -518,7 +518,7 @@ with aba1:
                     .fillna(0.0))
         cresc["Crescimento %"] = cresc["Crescimento %"].map(lambda v: f"{v:,.1f}%".replace(",", "X").replace(".", ",").replace("X", "."))
         st.subheader("Índice de Crescimento (YTD)")
-        st.dataframe(cresc.rename(columns={dim: "OPERAÇÃO"}), hide_index=True, use_container_width=True, height=180)
+        st.dataframe(cresc.rename(columns={dim: "OPERAÇÃO"}), hide_index=True, use_container_width=True, height=120)
     
         # 3) Participação Faturamento (YTD) – ano atual
         part = (ytd[ytd["Ano"] == int(ano_barras)]
@@ -531,7 +531,7 @@ with aba1:
         part["Participação"] = part["Participação"].map(lambda v: f"{v:,.1f}%".replace(",", "X").replace(".", ",").replace("X", "."))
         st.subheader("Participação Faturamento (YTD)")
         st.dataframe(part[[dim, "Participação"]].rename(columns={dim: "OPERAÇÃO"}),
-                     hide_index=True, use_container_width=True, height=180)
+                     hide_index=True, use_container_width=True, height=120)
     
     st.markdown("---")
 
