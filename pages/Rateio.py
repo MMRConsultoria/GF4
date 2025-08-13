@@ -90,219 +90,219 @@ st.markdown("""
 # ================================
 
 
-    import pandas as pd
-    from datetime import datetime
-    from io import BytesIO
-    from openpyxl import load_workbook
-    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-    from openpyxl.utils import get_column_letter
+import pandas as pd
+from datetime import datetime
+from io import BytesIO
+from openpyxl import load_workbook
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from openpyxl.utils import get_column_letter
 
-    # Carrega dados
-    df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
-    df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
+# Carrega dados
+df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
+df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
 
-    # Normalização
-    df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
-    df_empresa["Grupo"] = df_empresa["Grupo"].str.strip()
-    df_vendas.columns = df_vendas.columns.str.strip()
-    df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], dayfirst=True, errors="coerce")
-    df_vendas["Loja"] = df_vendas["Loja"].astype(str).str.strip().str.upper()
-    df_vendas["Grupo"] = df_vendas["Grupo"].astype(str).str.strip()
+# Normalização
+df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
+df_empresa["Grupo"] = df_empresa["Grupo"].str.strip()
+df_vendas.columns = df_vendas.columns.str.strip()
+df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], dayfirst=True, errors="coerce")
+df_vendas["Loja"] = df_vendas["Loja"].astype(str).str.strip().str.upper()
+df_vendas["Grupo"] = df_vendas["Grupo"].astype(str).str.strip()
 
-    # Merge com Tipo
-    df_vendas = df_vendas.merge(df_empresa[["Loja", "Tipo"]], on="Loja", how="left")
+# Merge com Tipo
+df_vendas = df_vendas.merge(df_empresa[["Loja", "Tipo"]], on="Loja", how="left")
 
-    # Ajusta Fat.Total
-    df_vendas["Fat.Total"] = (
-        df_vendas["Fat.Total"]
-        .astype(str)
-        .str.replace("R$", "", regex=False)
-        .str.replace("(", "-", regex=False)
-        .str.replace(")", "", regex=False)
-        .str.replace(" ", "", regex=False)
-        .str.replace(".", "", regex=False)
-        .str.replace(",", ".", regex=False)
+# Ajusta Fat.Total
+df_vendas["Fat.Total"] = (
+    df_vendas["Fat.Total"]
+    .astype(str)
+    .str.replace("R$", "", regex=False)
+    .str.replace("(", "-", regex=False)
+    .str.replace(")", "", regex=False)
+    .str.replace(" ", "", regex=False)
+    .str.replace(".", "", regex=False)
+    .str.replace(",", ".", regex=False)
+)
+df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
+
+
+# ==== Filtros lado a lado ====
+col1, col2 = st.columns([1, 2])
+
+with col1:
+    tipos_disponiveis = sorted(df_vendas["Tipo"].dropna().unique())
+    tipos_disponiveis.insert(0, "Todos")
+    tipo_selecionado = st.selectbox("🏪 Tipo:", options=tipos_disponiveis, index=0)
+
+with col2:
+    df_vendas["Mes/Ano"] = df_vendas["Data"].dt.strftime("%m/%Y")
+    meses_disponiveis = sorted(
+        df_vendas["Mes/Ano"].unique(),
+        key=lambda x: datetime.strptime("01/" + x, "%d/%m/%Y")
     )
-    df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
-
-    
-    # ==== Filtros lado a lado ====
-    col1, col2 = st.columns([1, 2])
-    
-    with col1:
-        tipos_disponiveis = sorted(df_vendas["Tipo"].dropna().unique())
-        tipos_disponiveis.insert(0, "Todos")
-        tipo_selecionado = st.selectbox("🏪 Tipo:", options=tipos_disponiveis, index=0)
-    
-    with col2:
-        df_vendas["Mes/Ano"] = df_vendas["Data"].dt.strftime("%m/%Y")
-        meses_disponiveis = sorted(
-            df_vendas["Mes/Ano"].unique(),
-            key=lambda x: datetime.strptime("01/" + x, "%d/%m/%Y")
-        )
-        meses_selecionados = st.multiselect(
-            "🗓️ Selecione os meses:",
-            options=meses_disponiveis,
-            default=[datetime.today().strftime("%m/%Y")]
-        )
-
-    df_filtrado = df_vendas[df_vendas["Mes/Ano"].isin(meses_selecionados)]
-    df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
-
-    if tipo_selecionado != "Todos":
-        df_filtrado = df_filtrado[df_filtrado["Tipo"] == tipo_selecionado]
-
-    # ==== Agrupamento por Tipo + Grupo ====
-    chaves = ["Tipo", "Grupo"]
-    df_agrupado = df_filtrado.groupby(chaves + ["Período"], as_index=False)["Fat.Total"].sum()
-
-    # Pivot
-    df_pivot = df_agrupado.pivot_table(
-        index=chaves,
-        columns="Período",
-        values="Fat.Total",
-        fill_value=0
-    ).reset_index()
-
-    # Mantém ordem original de colunas
-    colunas_periodo = [c for c in df_pivot.columns if c not in ["Tipo", "Grupo"]]
-    colunas_finais = ["Tipo", "Grupo"] + colunas_periodo
-    df_final = df_pivot[colunas_finais].copy()
-
-    # ==== Ordenação ====
-    ultima_col = colunas_periodo[-1]
-    subtotais_tipo = df_final.groupby("Tipo")[ultima_col].sum().reset_index()
-    subtotais_tipo = subtotais_tipo.sort_values(by=ultima_col, ascending=False)
-    ordem_tipos = subtotais_tipo["Tipo"].tolist()
-
-    df_final["ord_tipo"] = df_final["Tipo"].apply(lambda x: ordem_tipos.index(x) if x in ordem_tipos else 999)
-    df_final = df_final.sort_values(by=["ord_tipo", ultima_col], ascending=[True, False]).drop(columns="ord_tipo")
-
-    # ==== Monta subtotais por Tipo ====
-    linhas_com_subtotal = []
-    for tipo in ordem_tipos:
-        bloco_tipo = df_final[df_final["Tipo"] == tipo].copy()
-        linhas_com_subtotal.append(bloco_tipo)
-        subtotal = bloco_tipo.drop(columns=["Tipo", "Grupo"]).sum(numeric_only=True)
-        subtotal["Tipo"] = tipo
-        subtotal["Grupo"] = f"Subtotal {tipo}"
-        linhas_com_subtotal.append(pd.DataFrame([subtotal]))
-    df_final = pd.concat(linhas_com_subtotal, ignore_index=True)
-
-    # ==== Linha TOTAL no topo ====
-    apenas_grupos = df_final[~df_final["Grupo"].str.startswith("Subtotal", na=False)]
-    linha_total = apenas_grupos.drop(columns=["Tipo", "Grupo"]).sum(numeric_only=True)
-    linha_total["Tipo"] = ""
-    linha_total["Grupo"] = "TOTAL"
-    df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
-    
-    # ==== Calcula coluna "Total" ====
-    df_final["Total"] = df_final[colunas_periodo].apply(pd.to_numeric, errors="coerce").sum(axis=1)
-    
-    # ==== Percentual apenas para grupos ====
-    # ==== Percentual apenas para grupos ====
-    total_geral = df_final.loc[~df_final["Grupo"].str.startswith("Subtotal", na=False) &
-                               (df_final["Grupo"] != "TOTAL"), "Total"].sum()
-    df_final["% Total"] = df_final.apply(
-        lambda row: f"{(row['Total']/total_geral):.2%}" 
-        if (not row["Grupo"].startswith("Subtotal") and row["Grupo"] != "TOTAL" and total_geral > 0) else "",
-        axis=1
+    meses_selecionados = st.multiselect(
+        "🗓️ Selecione os meses:",
+        options=meses_disponiveis,
+        default=[datetime.today().strftime("%m/%Y")]
     )
-    
-    # ==== Reordenar colunas ====
-    colunas_finais = ["Tipo", "Grupo", "Total", "% Total"] + colunas_periodo
-    df_final = df_final[colunas_finais]
-    # Renomeia para "Rateio" e deixa em branco
-    df_final.rename(columns={df_final.columns[-1]: "Rateio"}, inplace=True)
-    df_final["Rateio"] = ""
-    # ==== Função de formatação ====
-    def formatar(valor):
-        try:
-            return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        except:
-            return valor
-    
-    # ==== Formatação valores ====
-    for col in ["Total"] + colunas_periodo:
-        if col in df_final.columns:
-            df_final[col] = df_final[col].apply(lambda x: formatar(x) if pd.notnull(x) and x != "" else x)
+
+df_filtrado = df_vendas[df_vendas["Mes/Ano"].isin(meses_selecionados)]
+df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
+
+if tipo_selecionado != "Todos":
+    df_filtrado = df_filtrado[df_filtrado["Tipo"] == tipo_selecionado]
+
+# ==== Agrupamento por Tipo + Grupo ====
+chaves = ["Tipo", "Grupo"]
+df_agrupado = df_filtrado.groupby(chaves + ["Período"], as_index=False)["Fat.Total"].sum()
+
+# Pivot
+df_pivot = df_agrupado.pivot_table(
+    index=chaves,
+    columns="Período",
+    values="Fat.Total",
+    fill_value=0
+).reset_index()
+
+# Mantém ordem original de colunas
+colunas_periodo = [c for c in df_pivot.columns if c not in ["Tipo", "Grupo"]]
+colunas_finais = ["Tipo", "Grupo"] + colunas_periodo
+df_final = df_pivot[colunas_finais].copy()
+
+# ==== Ordenação ====
+ultima_col = colunas_periodo[-1]
+subtotais_tipo = df_final.groupby("Tipo")[ultima_col].sum().reset_index()
+subtotais_tipo = subtotais_tipo.sort_values(by=ultima_col, ascending=False)
+ordem_tipos = subtotais_tipo["Tipo"].tolist()
+
+df_final["ord_tipo"] = df_final["Tipo"].apply(lambda x: ordem_tipos.index(x) if x in ordem_tipos else 999)
+df_final = df_final.sort_values(by=["ord_tipo", ultima_col], ascending=[True, False]).drop(columns="ord_tipo")
+
+# ==== Monta subtotais por Tipo ====
+linhas_com_subtotal = []
+for tipo in ordem_tipos:
+    bloco_tipo = df_final[df_final["Tipo"] == tipo].copy()
+    linhas_com_subtotal.append(bloco_tipo)
+    subtotal = bloco_tipo.drop(columns=["Tipo", "Grupo"]).sum(numeric_only=True)
+    subtotal["Tipo"] = tipo
+    subtotal["Grupo"] = f"Subtotal {tipo}"
+    linhas_com_subtotal.append(pd.DataFrame([subtotal]))
+df_final = pd.concat(linhas_com_subtotal, ignore_index=True)
+
+# ==== Linha TOTAL no topo ====
+apenas_grupos = df_final[~df_final["Grupo"].str.startswith("Subtotal", na=False)]
+linha_total = apenas_grupos.drop(columns=["Tipo", "Grupo"]).sum(numeric_only=True)
+linha_total["Tipo"] = ""
+linha_total["Grupo"] = "TOTAL"
+df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
+
+# ==== Calcula coluna "Total" ====
+df_final["Total"] = df_final[colunas_periodo].apply(pd.to_numeric, errors="coerce").sum(axis=1)
+
+# ==== Percentual apenas para grupos ====
+# ==== Percentual apenas para grupos ====
+total_geral = df_final.loc[~df_final["Grupo"].str.startswith("Subtotal", na=False) &
+                           (df_final["Grupo"] != "TOTAL"), "Total"].sum()
+df_final["% Total"] = df_final.apply(
+    lambda row: f"{(row['Total']/total_geral):.2%}" 
+    if (not row["Grupo"].startswith("Subtotal") and row["Grupo"] != "TOTAL" and total_geral > 0) else "",
+    axis=1
+)
+
+# ==== Reordenar colunas ====
+colunas_finais = ["Tipo", "Grupo", "Total", "% Total"] + colunas_periodo
+df_final = df_final[colunas_finais]
+# Renomeia para "Rateio" e deixa em branco
+df_final.rename(columns={df_final.columns[-1]: "Rateio"}, inplace=True)
+df_final["Rateio"] = ""
+# ==== Função de formatação ====
+def formatar(valor):
+    try:
+        return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except:
+        return valor
+
+# ==== Formatação valores ====
+for col in ["Total"] + colunas_periodo:
+    if col in df_final.columns:
+        df_final[col] = df_final[col].apply(lambda x: formatar(x) if pd.notnull(x) and x != "" else x)
 
 
-    # ==== Estilo ====
-    def aplicar_estilo(df):
-        def estilo_linha(row):
-            if row["Grupo"] == "TOTAL":
-                return ["background-color: #f4b084; font-weight: bold"] * len(row)
-            elif "Subtotal" in str(row["Grupo"]):
-                return ["background-color: #d9d9d9; font-weight: bold"] * len(row)
-            else:
-                return ["" for _ in row]
-        return df.style.apply(estilo_linha, axis=1)
+# ==== Estilo ====
+def aplicar_estilo(df):
+    def estilo_linha(row):
+        if row["Grupo"] == "TOTAL":
+            return ["background-color: #f4b084; font-weight: bold"] * len(row)
+        elif "Subtotal" in str(row["Grupo"]):
+            return ["background-color: #d9d9d9; font-weight: bold"] * len(row)
+        else:
+            return ["" for _ in row]
+    return df.style.apply(estilo_linha, axis=1)
 
-    st.dataframe(aplicar_estilo(df_final), use_container_width=True, height=700)
+st.dataframe(aplicar_estilo(df_final), use_container_width=True, height=700)
 
-    # ==== Exporta Excel ====
-    df_exportar = df_final.copy()
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df_exportar.to_excel(writer, index=False, sheet_name="Relatório")
-    output.seek(0)
+# ==== Exporta Excel ====
+df_exportar = df_final.copy()
+output = BytesIO()
+with pd.ExcelWriter(output, engine="openpyxl") as writer:
+    df_exportar.to_excel(writer, index=False, sheet_name="Relatório")
+output.seek(0)
 
-    wb = load_workbook(output)
-    ws = wb["Relatório"]
+wb = load_workbook(output)
+ws = wb["Relatório"]
 
-    header_font = Font(bold=True, color="FFFFFF")
-    header_fill = PatternFill("solid", fgColor="305496")
-    center_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-    border = Border(left=Side(style="thin"), right=Side(style="thin"), top=Side(style="thin"), bottom=Side(style="thin"))
+header_font = Font(bold=True, color="FFFFFF")
+header_fill = PatternFill("solid", fgColor="305496")
+center_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+border = Border(left=Side(style="thin"), right=Side(style="thin"), top=Side(style="thin"), bottom=Side(style="thin"))
 
-    for cell in ws[1]:
-        cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = center_alignment
+for cell in ws[1]:
+    cell.font = header_font
+    cell.fill = header_fill
+    cell.alignment = center_alignment
+    cell.border = border
+
+for row in ws.iter_rows(min_row=2, max_row=ws.max_row, max_col=ws.max_column):
+    grupo_valor = row[1].value
+    estilo_fundo = None
+    if isinstance(grupo_valor, str):
+        if grupo_valor.strip().upper() == "TOTAL":
+            estilo_fundo = PatternFill("solid", fgColor="F4B084")
+        elif "SUBTOTAL" in grupo_valor.strip().upper():
+            estilo_fundo = PatternFill("solid", fgColor="D9D9D9")
+    for cell in row:
         cell.border = border
+        cell.alignment = center_alignment
+        if estilo_fundo:
+            cell.fill = estilo_fundo
+        col_name = ws.cell(row=1, column=cell.column).value
+        if isinstance(cell.value, (int, float)):
+            if col_name == "% Total":
+                cell.number_format = "0.000%"
+            else:
+                cell.number_format = '"R$" #,##0.00'
 
-    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, max_col=ws.max_column):
-        grupo_valor = row[1].value
-        estilo_fundo = None
-        if isinstance(grupo_valor, str):
-            if grupo_valor.strip().upper() == "TOTAL":
-                estilo_fundo = PatternFill("solid", fgColor="F4B084")
-            elif "SUBTOTAL" in grupo_valor.strip().upper():
-                estilo_fundo = PatternFill("solid", fgColor="D9D9D9")
-        for cell in row:
-            cell.border = border
-            cell.alignment = center_alignment
-            if estilo_fundo:
-                cell.fill = estilo_fundo
-            col_name = ws.cell(row=1, column=cell.column).value
-            if isinstance(cell.value, (int, float)):
-                if col_name == "% Total":
-                    cell.number_format = "0.000%"
-                else:
-                    cell.number_format = '"R$" #,##0.00'
+for i, col_cells in enumerate(ws.iter_cols(min_row=1, max_row=ws.max_row), start=1):
+    max_length = 0
+    for cell in col_cells:
+        if cell.value:
+            max_length = max(max_length, len(str(cell.value)))
+    ws.column_dimensions[get_column_letter(i)].width = max_length + 2
 
-    for i, col_cells in enumerate(ws.iter_cols(min_row=1, max_row=ws.max_row), start=1):
-        max_length = 0
-        for cell in col_cells:
-            if cell.value:
-                max_length = max(max_length, len(str(cell.value)))
-        ws.column_dimensions[get_column_letter(i)].width = max_length + 2
+for col_nome in ["Tipo", "Grupo"]:
+    if col_nome in df_exportar.columns:
+        col_idx = df_exportar.columns.get_loc(col_nome) + 1
+        for cell in ws.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx):
+            for c in cell:
+                c.alignment = Alignment(horizontal="left")
 
-    for col_nome in ["Tipo", "Grupo"]:
-        if col_nome in df_exportar.columns:
-            col_idx = df_exportar.columns.get_loc(col_nome) + 1
-            for cell in ws.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx):
-                for c in cell:
-                    c.alignment = Alignment(horizontal="left")
+output_final = BytesIO()
+wb.save(output_final)
+output_final.seek(0)
 
-    output_final = BytesIO()
-    wb.save(output_final)
-    output_final.seek(0)
-
-    st.download_button(
-        label="📥 Baixar Excel",
-        data=output_final,
-        file_name="Resumo_Grupos_Mensal.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+st.download_button(
+    label="📥 Baixar Excel",
+    data=output_final,
+    file_name="Resumo_Grupos_Mensal.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
