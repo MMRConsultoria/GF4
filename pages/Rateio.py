@@ -244,7 +244,7 @@ df_final["perc_num"] = df_final["% Total"].apply(
 )
 
 # ==== Preenche a coluna Rateio proporcional ao subtotal do Tipo (pela coluna Total) ====
-df_final["Rateio"] = np.nan
+df_final["Rateio"] = 0.0
 mask_validas = (~df_final["Grupo"].str.startswith("Subtotal", na=False)) & (df_final["Grupo"] != "TOTAL")
 
 for tipo, valor_rateio_tipo in valores_rateio_por_tipo.items():
