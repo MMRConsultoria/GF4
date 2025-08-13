@@ -524,7 +524,7 @@ with aba1:
         tab_op_exibe["OPERAÇÃO"] = tab_op_exibe["OPERAÇÃO"].map(lambda x: encurta(x, 10))
         
         st.markdown("##### Operação")
-        st.dataframe(tab_op_exibe, hide_index=True, use_container_width=True, height=90)
+        st.dataframe(tab_op_exibe, hide_index=True, use_container_width=True, height=120)
         
         # =========================
         # 2) Índice de Crescimento (YTD) — SEMPRE baseado no último ano filtrado
@@ -550,8 +550,8 @@ with aba1:
             lambda v: f"{v:,.1f}%".replace(",", "X").replace(".", ",").replace("X", ".")
         )
         
-        st.markdown("#####Crescimento")
-        st.dataframe(cresc, hide_index=True, use_container_width=True, height=90)
+        st.markdown("Crescimento")
+        st.dataframe(cresc, hide_index=True, use_container_width=True, height=120)
         
         # =========================
         # 3) Participação Faturamento (YTD) — SEMPRE do último ano filtrado
@@ -572,7 +572,7 @@ with aba1:
         )
         
         st.markdown("##### %Faturamento")
-        st.dataframe(part_exibe, hide_index=True, use_container_width=True, height=90)
+        st.dataframe(part_exibe, hide_index=True, use_container_width=True, height=120)
         
         # ---- CSS para compactar essas tabelas (fonte/padding/linhas) ----
         st.markdown("""
