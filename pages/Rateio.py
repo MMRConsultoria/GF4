@@ -475,3 +475,13 @@ def gerar_pdf(df, mes_rateio, usuario):
     buffer.close()
     return pdf_value
 
+# ====== Chamada no seu Streamlit ======
+usuario_logado = st.session_state.get("usuario_logado", "Usuário Desconhecido")
+pdf_bytes = gerar_pdf(df_view, mes_rateio="Agosto/2025", usuario=usuario_logado)
+
+st.download_button(
+    label="📄 Baixar PDF",
+    data=pdf_bytes,
+    file_name=f"Rateio_{datetime.now().strftime('%Y%m%d')}.pdf",
+    mime="application/pdf"
+)
