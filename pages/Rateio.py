@@ -177,28 +177,27 @@ with tab_rateio:
     linha_total["Tipo"] = ""
     linha_total["Grupo"] = "TOTAL"
     df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
-
+    
+    # ==== Calcula coluna "Total" ====
+    df_final["Total"] = df_final[colunas_periodo].apply(pd.to_numeric, errors="coerce").sum(axis=1)
+    
     # ==== Percentual apenas para grupos ====
-    total_geral = apenas_grupos[colunas_periodo].sum(numeric_only=True).sum()
-    percentuais = []
-    for _, row in df_final.iterrows():
-        if row["Grupo"].startswith("Subtotal") or row["Grupo"] == "TOTAL":
-            percentuais.append("")
-        else:
-            valor = pd.to_numeric(row[colunas_periodo], errors="coerce").sum()
-            percentuais.append(f"{valor/total_geral:.2%}" if total_geral > 0 else "")
-    df_final["% Total"] = percentuais
-
+    total_geral = df_final.loc[~df_final["Grupo"].str.startswith("Subtotal", na=False) &
+                               (df_final["Grupo"] != "TOTAL"), "Total"].sum()
+    df_final["% Total"] = df_final.apply(
+        lambda row: f"{(row['Total']/total_geral):.2%}" 
+        if (not row["Grupo"].startswith("Subtotal") and row["Grupo"] != "TOTAL" and total_geral > 0) else "",
+        axis=1
+    )
+    
+    # ==== Reordenar colunas ====
+    colunas_finais = ["Tipo", "Grupo", "Total", "% Total"] + colunas_periodo
+    df_final = df_final[colunas_finais]
+    
     # ==== Formatação valores ====
-    def formatar(valor):
-        try:
-            return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        except:
-            return valor
-
-    for col in colunas_periodo:
+    for col in ["Total"] + colunas_periodo:
         if col in df_final.columns:
-            df_final[col] = df_final[col].apply(lambda x: formatar(x) if pd.notnull(x) else x)
+            df_final[col] = df_final[col].apply(lambda x: formatar(x) if pd.notnull(x) and x != "" else x)
 
     # ==== Estilo ====
     def aplicar_estilo(df):
