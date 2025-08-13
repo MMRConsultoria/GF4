@@ -129,9 +129,9 @@ if st.button("Entrar"):
         st.session_state["acesso_liberado"] = True
         st.session_state["empresa"] = codigo
         st.session_state["usuario_logado"] = email
-
-        registrar_acesso(email)  # ✅ registra acesso na planilha
-        
+        registrar_acesso(email)
         st.switch_page("Home.py")
+
     else:
         st.error("❌ Código, e-mail ou senha incorretos.")
+
