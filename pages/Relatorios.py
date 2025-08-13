@@ -493,60 +493,99 @@ with aba1:
         # ---------- Helpers ----------
         meses_idx = {m: i+1 for i, m in enumerate(ordem_meses)}
         m_lim = meses_idx.get(ultimo_mes, 12) if ultimo_mes else 12
-        ano_prev = int(ano_barras) - 1
         
-        # recorta YTD (até o último mês do ano atual)
+        ano_atual = int(ano_barras)          # <- último ano filtrado
+        ano_prev  = ano_atual - 1
+        
+        # Recorte YTD (até o último mês do ano atual)
         ytd = df_anos[df_anos["Mês"] <= m_lim].copy()
-    
-        # usa "Operação" se existir; senão "Grupo"; senão "Loja"
+        
+        # Usa "Operação" se existir; senão "Grupo"; senão "Loja"
         dim = "Operação" if "Operação" in ytd.columns else ("Grupo" if "Grupo" in ytd.columns else "Loja")
         
-        # 1) OPERAÇÃO: Qtd de lojas por ano (YTD)
+        # Função para encurtar nomes (melhora o espaçamento)
+        def encurta(txt, limite=10):
+            s = str(txt).strip()
+            return (s[:limite] + "…") if len(s) > limite else s
+        
+        # =========================
+        # 1) OPERAÇÃO: Qtd de lojas por ano (YTD)  (mantém 2 colunas: prev e atual)
+        # =========================
         tmp = ytd.copy()
         tmp["Loja_norm"] = tmp["Loja"].astype(str).str.strip().str.lower()
         tab_op = (tmp.drop_duplicates(subset=["Ano", dim, "Loja_norm"])
                      .groupby(["Ano", dim])["Loja_norm"].nunique()
                      .unstack("Ano")
-                     .reindex(columns=[ano_prev, int(ano_barras)], fill_value=0)
+                     .reindex(columns=[ano_prev, ano_atual], fill_value=0)
                      .reset_index())
-        tab_op.columns = ["OPERAÇÃO", str(ano_prev), str(ano_barras)]
-        st.subheader("Operação")
-        st.dataframe(tab_op, hide_index=True, use_container_width=True, height=180)
-    
-        # 2) Índice de Crescimento (YTD)
+        
+        tab_op.columns = ["OPERAÇÃO", str(ano_prev), str(ano_atual)]
+        tab_op_exibe = tab_op.copy()
+        tab_op_exibe["OPERAÇÃO"] = tab_op_exibe["OPERAÇÃO"].map(lambda x: encurta(x, 10))
+        
+        st.markdown("##### Operação")
+        st.dataframe(tab_op_exibe, hide_index=True, use_container_width=True, height=90)
+        
+        # =========================
+        # 2) Índice de Crescimento (YTD) — SEMPRE baseado no último ano filtrado
+        #    Crescimento % = (YTD[ano_atual] / YTD[ano_prev] - 1)*100
+        # =========================
         fat_ytd = (ytd.groupby(["Ano", dim])["Fat.Total"].sum()
                      .unstack("Ano")
-                     .reindex(columns=[ano_prev, int(ano_barras)], fill_value=0.0))
+                     .reindex(columns=[ano_prev, ano_atual], fill_value=0.0))
+        
         cresc = fat_ytd.copy()
-        cresc["Crescimento %"] = ((cresc[int(ano_barras)] / cresc[ano_prev]).replace([np.inf, -np.inf], np.nan) - 1.0) * 100
-        cresc = (cresc[["Crescimento %"]].reset_index()
-                    .sort_values("Crescimento %", ascending=False)
-                    .fillna(0.0))
-        cresc["Crescimento %"] = cresc["Crescimento %"].map(lambda v: f"{v:,.1f}%".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.subheader("Crescimento")
-        st.dataframe(cresc.rename(columns={dim: "OPERAÇÃO"}), hide_index=True, use_container_width=True, height=180)
-    
-        # 3) Participação Faturamento (YTD)
-        part = (ytd[ytd["Ano"] == int(ano_barras)]
+        cresc["Crescimento %"] = (
+            (cresc[ano_atual] / cresc[ano_prev]).replace([np.inf, -np.inf], np.nan) - 1.0
+        ) * 100
+        
+        cresc = (cresc[["Crescimento %"]]
+                 .reset_index()
+                 .sort_values("Crescimento %", ascending=False)
+                 .fillna(0.0))
+        
+        cresc.rename(columns={dim: "OPERAÇÃO"}, inplace=True)
+        cresc["OPERAÇÃO"] = cresc["OPERAÇÃO"].map(lambda x: encurta(x, 10))
+        cresc["Crescimento %"] = cresc["Crescimento %"].map(
+            lambda v: f"{v:,.1f}%".replace(",", "X").replace(".", ",").replace("X", ".")
+        )
+        
+        st.markdown("#####Crescimento")
+        st.dataframe(cresc, hide_index=True, use_container_width=True, height=90)
+        
+        # =========================
+        # 3) Participação Faturamento (YTD) — SEMPRE do último ano filtrado
+        # =========================
+        part = (ytd[ytd["Ano"] == ano_atual]
                   .groupby(dim)["Fat.Total"].sum()
                   .reset_index()
                   .rename(columns={"Fat.Total": "Faturamento"}))
+        
         total_atual = part["Faturamento"].sum()
         part["Participação"] = (part["Faturamento"] / total_atual * 100).fillna(0.0)
         part = part.sort_values("Participação", ascending=False)
-        part["Participação"] = part["Participação"].map(lambda v: f"{v:,.1f}%".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.subheader("Participação")
-        st.dataframe(part[[dim, "Participação"]].rename(columns={dim: "OPERAÇÃO"}),
-                     hide_index=True, use_container_width=True, height=180)
-    
-        # CSS para reduzir padding e fonte dessas tabelas
+        
+        part_exibe = part[[dim, "Participação"]].rename(columns={dim: "OPERAÇÃO"}).copy()
+        part_exibe["OPERAÇÃO"] = part_exibe["OPERAÇÃO"].map(lambda x: encurta(x, 10))
+        part_exibe["Participação"] = part_exibe["Participação"].map(
+            lambda v: f"{v:,.1f}%".replace(",", "X").replace(".", ",").replace("X", ".")
+        )
+        
+        st.markdown("##### %Faturamento")
+        st.dataframe(part_exibe, hide_index=True, use_container_width=True, height=90)
+        
+        # ---- CSS para compactar essas tabelas (fonte/padding/linhas) ----
         st.markdown("""
         <style>
-        div[data-testid="stDataFrame"] table { font-size: 9px !important; }
-        div[data-testid="stDataFrame"] thead tr th { padding: 0px 3px !important; }
-        div[data-testid="stDataFrame"] div[role="gridcell"] { padding: 0px 3px !important; }
+        /* Fonte menor e menos padding nas tabelas renderizadas nesta coluna */
+        div[data-testid="stDataFrame"] table { font-size: 9px; }
+        div[data-testid="stDataFrame"] thead tr th { padding: 0 3px !important; }
+        div[data-testid="stDataFrame"] div[role="gridcell"] { padding: 0 3px !important; line-height: 1 !important; }
+        /* Títulos menores e com menos margem */
+        h5 { margin: 6px 0 4px 0 !important; }
         </style>
         """, unsafe_allow_html=True)
+
 
 # ================================
 # Aba 3: Relatórios Vendas
