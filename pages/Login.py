@@ -128,7 +128,7 @@ if st.button("Entrar"):
     if usuario_encontrado:
         st.session_state["acesso_liberado"] = True
         st.session_state["empresa"] = codigo
-        st.session_state["usuario"] = email  # opcional: guardar quem entrou
+        st.session_state["usuario_logado"] = email
 
         registrar_acesso(email)  # ✅ registra acesso na planilha
         
