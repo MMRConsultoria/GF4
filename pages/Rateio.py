@@ -239,23 +239,29 @@ for i in range(0, len(tipos_unicos), COLS_POR_LINHA):
             )
 
 # ==== Preenche a coluna Rateio proporcional ao % Total (por Tipo) ====
+# ==== Rateio = valor digitado do Tipo × % Total da própria linha ====
+
+# 1) Garante uma versão numérica do % (ex.: "42,15%" -> 0.4215)
 df_final["perc_num"] = df_final["% Total"].apply(
     lambda x: pd.to_numeric(str(x).replace("%", "").replace(",", "."), errors="coerce") / 100
 )
 
-# ==== Preenche a coluna Rateio proporcional ao subtotal do Tipo (pela coluna Total) ====
+# 2) Começa com Rateio zerado
 df_final["Rateio"] = 0.0
+
+# 3) Só calcula nas linhas "normais" (ignora TOTAL e Subtotal)
 mask_validas = (~df_final["Grupo"].str.startswith("Subtotal", na=False)) & (df_final["Grupo"] != "TOTAL")
 
-for tipo, valor_rateio_tipo in valores_rateio_por_tipo.items():
-    if valor_rateio_tipo and valor_rateio_tipo > 0:
-        mask_tipo = (df_final["Tipo"] == tipo) & mask_validas
-        subtotal_tipo = df_final.loc[mask_tipo, "Total"].sum()
-        if subtotal_tipo > 0:
-            df_final.loc[mask_tipo, "Rateio"] = (
-                df_final.loc[mask_tipo, "Total"] / subtotal_tipo
-            ) * valor_rateio_tipo
-df_final.loc[~mask_validas, "Rateio"] = ""
+# 4) Para cada Tipo, aplica: Rateio_linha = valor_digitado_do_tipo × perc_num_da_linha
+for tipo, valor_digitado in valores_rateio_por_tipo.items():
+    if valor_digitado and valor_digitado > 0:
+        mask = (df_final["Tipo"] == tipo) & mask_validas
+        df_final.loc[mask, "Rateio"] = valor_digitado * df_final.loc[mask, "perc_num"]
+
+# 5) Mantém TOTAL/Subtotal com 0
+df_final.loc[~mask_validas, "Rateio"] = 0.0
+
+# 6) Limpa a auxiliar
 df_final.drop(columns=["perc_num"], inplace=True)
 
 
