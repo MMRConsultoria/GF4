@@ -418,13 +418,14 @@ def gerar_pdf(df_view, mes_rateio, usuario):
     elementos = []
     estilos = getSampleStyleSheet()
 
-    # Logo
+    # Dentro da função gerar_pdf
     try:
-        logo = Image("logo_empresa.png", width=120, height=50)  # ajuste tamanho
+        url_logo = "https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo_grupofit.png"
+        img_bytes = BytesIO(requests.get(url_logo).content)
+        logo = Image(img_bytes, width=120, height=50)
         elementos.append(logo)
     except:
-        pass  # caso logo não exista, segue sem ele
-
+        pass  # se não conseguir carregar, continua sem logo
     # Cabeçalho
     data_geracao = datetime.now().strftime("%d/%m/%Y %H:%M")
     elementos.append(Paragraph(f"<b>Mês do Rateio:</b> {mes_rateio}", estilos["Normal"]))
