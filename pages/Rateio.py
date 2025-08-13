@@ -363,7 +363,8 @@ for row in ws.iter_rows(min_row=2, max_row=ws.max_row, max_col=ws.max_column):
         col_name = ws.cell(row=1, column=cell.column).value
         if isinstance(cell.value, (int, float)):
             if col_name == "% Total":
-                cell.number_format = "0.000%"
+                cell.value = f"{cell.value:.2f}%"
+                cell.number_format = 'General'
             else:
                 cell.number_format = '"R$" #,##0.00'
 
