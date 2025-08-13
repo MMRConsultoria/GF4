@@ -243,27 +243,35 @@ for i in range(0, len(tipos_unicos), COLS_POR_LINHA):
 
 
 
-# Converte % Total para número
-df_final["perc_num"] = df_final["% Total"].apply(
-    lambda x: pd.to_numeric(str(x).replace("%", "").replace(",", "."), errors="coerce") / 100
-)
-
-# Inicializa coluna Rateio
-df_final["Rateio"] = ""
-
-# Aplica cálculo de Rateio por Tipo
-for tipo, valor_total in valores_rateio_por_tipo.items():
-    if valor_total > 0:
-        mask = df_final["Tipo"] == tipo
-        df_final.loc[mask, "Rateio"] = df_final.loc[mask, "perc_num"] * valor_total
-
-# Remove coluna auxiliar
-df_final.drop(columns=["perc_num"], inplace=True)
-
-# Formata Rateio como moeda
-df_final["Rateio"] = df_final["Rateio"].apply(
-    lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notnull(x) and x != "" else ""
-)
+    # ==== Preenche a coluna Rateio proporcional ao % Total (por Tipo) ====
+    
+    # 1) Converte "% Total" para número (0.4229, 0.3180, etc.)
+    df_final["perc_num"] = df_final["% Total"].apply(
+        lambda x: pd.to_numeric(str(x).replace("%", "").replace(",", "."), errors="coerce") / 100
+    )
+    
+    # 2) Começa limpando/garantindo a coluna Rateio
+    df_final["Rateio"] = np.nan
+    
+    # 3) Ignora TOTAL e SUBTOTAL nas distribuições
+    mask_validas = (~df_final["Grupo"].str.startswith("Subtotal", na=False)) & (df_final["Grupo"] != "TOTAL")
+    
+    # 4) Para cada Tipo, aplica: Rateio_linha = (% Total da linha) * (valor digitado para o Tipo)
+    for tipo, valor_total in valores_rateio_por_tipo.items():
+        if valor_total and valor_total > 0:
+            mask_tipo = (df_final["Tipo"] == tipo) & mask_validas
+            df_final.loc[mask_tipo, "Rateio"] = df_final.loc[mask_tipo, "perc_num"] * valor_total
+    
+    # 5) Linhas não válidas (TOTAL/Subtotal) ficam em branco
+    df_final.loc[~mask_validas, "Rateio"] = ""
+    
+    # 6) Remove a auxiliar
+    df_final.drop(columns=["perc_num"], inplace=True)
+    
+    # Formata Rateio como moeda
+    df_final["Rateio"] = df_final["Rateio"].apply(
+        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notnull(x) and x != "" else ""
+    )
 
 # ==== Reordenar colunas ====
 colunas_finais = ["Tipo", "Grupo", "Total", "% Total"] + colunas_periodo
