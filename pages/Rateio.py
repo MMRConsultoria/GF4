@@ -182,6 +182,7 @@ with tab_rateio:
     df_final["Total"] = df_final[colunas_periodo].apply(pd.to_numeric, errors="coerce").sum(axis=1)
     
     # ==== Percentual apenas para grupos ====
+    # ==== Percentual apenas para grupos ====
     total_geral = df_final.loc[~df_final["Grupo"].str.startswith("Subtotal", na=False) &
                                (df_final["Grupo"] != "TOTAL"), "Total"].sum()
     df_final["% Total"] = df_final.apply(
@@ -194,10 +195,18 @@ with tab_rateio:
     colunas_finais = ["Tipo", "Grupo", "Total", "% Total"] + colunas_periodo
     df_final = df_final[colunas_finais]
     
+    # ==== Função de formatação ====
+    def formatar(valor):
+        try:
+            return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        except:
+            return valor
+    
     # ==== Formatação valores ====
     for col in ["Total"] + colunas_periodo:
         if col in df_final.columns:
             df_final[col] = df_final[col].apply(lambda x: formatar(x) if pd.notnull(x) and x != "" else x)
+
 
     # ==== Estilo ====
     def aplicar_estilo(df):
