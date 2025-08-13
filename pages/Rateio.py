@@ -403,67 +403,75 @@ st.download_button(
     file_name="Resumo_Grupos_Mensal.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
-import requests
-from io import BytesIO
-from reportlab.platypus import Image
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+from datetime import datetime
+import pytz
+import io
 
-def gerar_pdf(df_view, mes_rateio, usuario):
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4,
-                            rightMargin=20, leftMargin=20,
-                            topMargin=30, bottomMargin=20)
+def gerar_pdf(df, mes_rateio, usuario):
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        topMargin=30,
+        bottomMargin=30,
+        leftMargin=20,
+        rightMargin=20
+    )
+
     elementos = []
     estilos = getSampleStyleSheet()
+    estilo_normal = estilos["Normal"]
+    estilo_titulo = estilos["Heading1"]
 
-    # === Logo remoto ===
-    logo_url = "https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo_grupofit.png"
+    # Logo
     try:
-        resp = requests.get(logo_url)
-        if resp.status_code == 200:
-            logo_bytes = BytesIO(resp.content)
-            logo = Image(logo_bytes, width=120, height=50)  # Ajuste tamanho
-            elementos.append(logo)
-    except Exception as e:
-        print(f"Erro ao carregar logo: {e}")
+        logo_url = "https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo_grupofit.png"
+        img = Image(logo_url, width=100, height=40)
+        elementos.append(img)
+    except:
+        pass
 
-    from datetime import datetime
-    import pytz
-    
-    # Define o fuso horário do Brasil
+    # Título
+    elementos.append(Paragraph(f"<b>Rateio - {mes_rateio}</b>", estilo_titulo))
+
+    # Data no fuso correto
     fuso_brasilia = pytz.timezone("America/Sao_Paulo")
-        
-    # Cabeçalho
     data_geracao = datetime.now(fuso_brasilia).strftime("%d/%m/%Y %H:%M")
-    elementos.append(Paragraph(f"<b>Mês do Rateio:</b> {mes_rateio}", estilos["Normal"]))
-    elementos.append(Paragraph(f"<b>Usuário:</b> {usuario}", estilos["Normal"]))
-    elementos.append(Paragraph(f"<b>Data de Geração:</b> {data_geracao}", estilos["Normal"]))
+
+    elementos.append(Paragraph(f"<b>Usuário:</b> {usuario}", estilo_normal))
+    elementos.append(Paragraph(f"<b>Data de Geração:</b> {data_geracao}", estilo_normal))
     elementos.append(Spacer(1, 12))
 
-    # Tabela de dados
-    tabela_dados = [df_view.columns.tolist()] + df_view.values.tolist()
-    tabela = Table(tabela_dados, repeatRows=1)
+    # Converte DataFrame para lista
+    dados_tabela = [df.columns.tolist()] + df.values.tolist()
+
+    # Tabela formatada
+    tabela = Table(dados_tabela, repeatRows=1)
+
     tabela.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#F2F2F2")),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-        ('FONTSIZE', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#003366")),  # Cabeçalho azul escuro
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("ALIGN", (1, 1), (-1, -1), "CENTER"),
+        ("ALIGN", (0, 0), (0, -1), "LEFT"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+        ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
     ]))
+
+    # Alternância de cor nas linhas
+    for i in range(1, len(dados_tabela)):
+        bg_color = colors.whitesmoke if i % 2 == 0 else colors.lightgrey
+        tabela.setStyle(TableStyle([("BACKGROUND", (0, i), (-1, i), bg_color)]))
+
     elementos.append(tabela)
 
     doc.build(elementos)
-    buffer.seek(0)
-    return buffer
+    pdf_value = buffer.getvalue()
+    buffer.close()
+    return pdf_value
 
-# ====== Chamada no seu Streamlit ======
-usuario_logado = st.session_state.get("usuario_logado", "Usuário Desconhecido")
-pdf_bytes = gerar_pdf(df_view, mes_rateio="Agosto/2025", usuario=usuario_logado)
-
-st.download_button(
-    label="📄 Baixar PDF",
-    data=pdf_bytes,
-    file_name=f"Rateio_{datetime.now().strftime('%Y%m%d')}.pdf",
-    mime="application/pdf"
-)
