@@ -66,18 +66,20 @@ st.markdown("""
         <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatórios</h1>
     </div>
 """, unsafe_allow_html=True)
- st.markdown("""
+
+  # 🎨 Remove fundo vermelho e deixa texto preto no multiselect
+st.markdown("""
     <style>
     /* Escopo só para multiselect */
     div[data-testid="stMultiSelect"] [data-baseweb="tag"] {
-        background-color: transparent !important;
-        border: 1px solid #ccc !important;
-        color: black !important;
+        background-color: transparent !important; /* sem fundo */
+        border: 1px solid #ccc !important;        /* borda cinza */
+        color: black !important;                  /* texto preto */
     }
-    /* Texto dentro do item selecionado */
+    /* Texto e ícone dentro do item selecionado */
     div[data-testid="stMultiSelect"] [data-baseweb="tag"] * {
         color: black !important;
-        fill: black !important; /* Ícone do X */
+        fill: black !important;                   /* ícone X */
     }
     /* Área interna do multiselect sem fundo */
     div[data-testid="stMultiSelect"] > div {
