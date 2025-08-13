@@ -246,14 +246,18 @@ df_final["perc_num"] = df_final["% Total"].apply(
     lambda x: pd.to_numeric(str(x).replace("%", "").replace(",", "."), errors="coerce") / 100
 )
 
+# ==== Preenche a coluna Rateio proporcional ao subtotal do Tipo (pela coluna Total) ====
 df_final["Rateio"] = np.nan
 mask_validas = (~df_final["Grupo"].str.startswith("Subtotal", na=False)) & (df_final["Grupo"] != "TOTAL")
 
-for tipo, valor_total in valores_rateio_por_tipo.items():
-    if valor_total and valor_total > 0:
+for tipo, valor_rateio_tipo in valores_rateio_por_tipo.items():
+    if valor_rateio_tipo and valor_rateio_tipo > 0:
         mask_tipo = (df_final["Tipo"] == tipo) & mask_validas
-        df_final.loc[mask_tipo, "Rateio"] = df_final.loc[mask_tipo, "perc_num"] * valor_total
-
+        subtotal_tipo = df_final.loc[mask_tipo, "Total"].sum()
+        if subtotal_tipo > 0:
+            df_final.loc[mask_tipo, "Rateio"] = (
+                df_final.loc[mask_tipo, "Total"] / subtotal_tipo
+            ) * valor_rateio_tipo
 df_final.loc[~mask_validas, "Rateio"] = ""
 df_final.drop(columns=["perc_num"], inplace=True)
 
