@@ -199,10 +199,7 @@ linha_total["Tipo"] = ""
 linha_total["Grupo"] = "TOTAL"
 df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
 
-# ==== Calcula coluna "Total" ====
-df_final["Total"] = df_final[colunas_periodo].apply(pd.to_numeric, errors="coerce").sum(axis=1)
 
-# ==== Percentual apenas para grupos ====
 # ==== Percentual apenas para grupos ====
 total_geral = df_final.loc[~df_final["Grupo"].str.startswith("Subtotal", na=False) &
                            (df_final["Grupo"] != "TOTAL"), "Total"].sum()
@@ -260,7 +257,7 @@ df_final.drop(columns=["perc_num"], inplace=True)
 
 # ==== Reordenar colunas ====
 # ==== Reordenar colunas (Rateio no fim) ====
-colunas_finais = ["Tipo", "Grupo", "Total", "% Total"] + colunas_periodo + ["Rateio"]
+colunas_finais = ["Tipo", "Grupo", "Total", "% Total", "Rateio"]
 df_final = df_final[colunas_finais]
 # ==== Função de formatação ====
 
@@ -274,10 +271,11 @@ def formatar(valor):
         return valor
 
 # Formata todas as colunas numéricas (inclusive Rateio)
-for col in ["Total"] + colunas_periodo + ["Rateio"]:
+for col in ["Total", "Rateio"]:
     if col in df_view.columns:
-        df_view[col] = df_view[col].apply(lambda x: formatar(x) if pd.notnull(x) and x != "" else x)
-
+        df_view[col] = df_view[col].apply(
+            lambda x: formatar(x) if pd.notnull(x) and x != "" else x
+        )
 # ==== Estilo ====
 def aplicar_estilo(df):
     def estilo_linha(row):
