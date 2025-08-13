@@ -175,8 +175,8 @@ df_final["% Total"] = df_final["Total"] / total_geral
 
 # ==== Ordenação ====
 
-subtotais_tipo = df_final.groupby("Tipo")[ultima_col].sum().reset_index()
-subtotais_tipo = subtotais_tipo.sort_values(by=ultima_col, ascending=False)
+subtotais_tipo = df_final.groupby("Tipo")["Total"].sum().reset_index()
+subtotais_tipo = subtotais_tipo.sort_values(by="Total", ascending=False)
 ordem_tipos = subtotais_tipo["Tipo"].tolist()
 
 df_final["ord_tipo"] = df_final["Tipo"].apply(lambda x: ordem_tipos.index(x) if x in ordem_tipos else 999)
