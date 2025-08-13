@@ -169,6 +169,10 @@ df_final = df_agrupado.groupby(["Tipo", "Grupo"], as_index=False)["Fat.Total"].s
 # Renomeia para "Total"
 df_final.rename(columns={"Fat.Total": "Total"}, inplace=True)
 
+# 🔹 Garante que a coluna Rateio comece zerada
+df_final["Rateio"] = 0.0
+
+
 # Calcula % Total
 total_geral = df_final["Total"].sum()
 df_final["% Total"] = df_final["Total"] / total_geral
