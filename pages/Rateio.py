@@ -426,8 +426,14 @@ def gerar_pdf(df_view, mes_rateio, usuario):
     except Exception as e:
         print(f"Erro ao carregar logo: {e}")
 
+    from datetime import datetime
+    import pytz
+    
+    # Define o fuso horário do Brasil
+    fuso_brasilia = pytz.timezone("America/Sao_Paulo")
+        
     # Cabeçalho
-    data_geracao = datetime.now().strftime("%d/%m/%Y %H:%M")
+    data_geracao = datetime.now(fuso_brasilia).strftime("%d/%m/%Y %H:%M")
     elementos.append(Paragraph(f"<b>Mês do Rateio:</b> {mes_rateio}", estilos["Normal"]))
     elementos.append(Paragraph(f"<b>Usuário:</b> {usuario}", estilos["Normal"]))
     elementos.append(Paragraph(f"<b>Data de Geração:</b> {data_geracao}", estilos["Normal"]))
@@ -450,8 +456,7 @@ def gerar_pdf(df_view, mes_rateio, usuario):
     doc.build(elementos)
     buffer.seek(0)
     return buffer
-st.write("DEBUG session_state keys:", list(st.session_state.keys()))
-st.write("DEBUG usuario_logado:", st.session_state.get("usuario_logado"))
+
 # ====== Chamada no seu Streamlit ======
 usuario_logado = st.session_state.get("usuario_logado", "Usuário Desconhecido")
 pdf_bytes = gerar_pdf(df_view, mes_rateio="Agosto/2025", usuario=usuario_logado)
