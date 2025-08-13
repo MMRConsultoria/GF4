@@ -18,6 +18,9 @@ from datetime import datetime, date
 from datetime import datetime, date, timedelta
 from calendar import monthrange
 from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image as RLImage, Spacer
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
 
 
 #st.set_page_config(page_title="Painel Agrupado", layout="wide")
