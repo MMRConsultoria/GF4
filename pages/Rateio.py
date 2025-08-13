@@ -67,6 +67,7 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 # Remove fundo vermelho do multiselect
+# Remove fundo vermelho e deixa texto preto no multiselect
 st.markdown("""
     <style>
     div[data-baseweb="tag"] {
@@ -74,9 +75,11 @@ st.markdown("""
         border: 1px solid #ccc !important;
         color: black !important;
     }
+    div[data-baseweb="tag"] span {
+        color: black !important;
+    }
     </style>
 """, unsafe_allow_html=True)
-
 # ================================
 # 3. Separação em ABAS
 # ================================
