@@ -215,10 +215,6 @@ df_final["% Total"] = df_final.apply(
     axis=1
 )
 
-if "% Total" in df_view.columns:
-    df_view["% Total"] = df_view["% Total"].apply(
-        lambda x: f"{x:.3f}%" if pd.notnull(x) else ""
-    )
 
 
 # ==== Inputs de Rateio por Tipo (lado a lado) ====
@@ -306,6 +302,12 @@ for col in ["Total", "Rateio"]:
         df_view[col] = df_view[col].apply(
             lambda x: formatar(x) if pd.notnull(x) and x != "" else x
         )
+# Formata só para exibir (3 casas decimais)
+if "% Total" in df_view.columns:
+    df_view["% Total"] = df_view["% Total"].apply(
+        lambda x: f"{x:.3f}%" if pd.notnull(x) else ""
+    )
+
 # ==== Estilo ====
 def aplicar_estilo(df):
     def estilo_linha(row):
