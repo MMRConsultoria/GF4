@@ -453,7 +453,7 @@ def gerar_pdf(df_view, mes_rateio, usuario):
 st.write("DEBUG session_state keys:", list(st.session_state.keys()))
 st.write("DEBUG usuario_logado:", st.session_state.get("usuario_logado"))
 # ====== Chamada no seu Streamlit ======
-usuario_logado = st.session_state.get("usuario_email", "Usuário Desconhecido")
+usuario_logado = st.session_state.get("usuario_logado", "Usuário Desconhecido")
 pdf_bytes = gerar_pdf(df_view, mes_rateio="Agosto/2025", usuario=usuario_logado)
 
 st.download_button(
