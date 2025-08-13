@@ -399,33 +399,29 @@ st.download_button(
     file_name="Resumo_Grupos_Mensal.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image, Spacer
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
+import requests
 from io import BytesIO
-from datetime import datetime
+from reportlab.platypus import Image
 
-# ===== Exportar PDF =====
 def gerar_pdf(df_view, mes_rateio, usuario):
     buffer = BytesIO()
-
-    # Define o PDF
     doc = SimpleDocTemplate(buffer, pagesize=A4,
                             rightMargin=20, leftMargin=20,
                             topMargin=30, bottomMargin=20)
-
     elementos = []
     estilos = getSampleStyleSheet()
 
-    # Dentro da função gerar_pdf
+    # === Logo remoto ===
+    logo_url = "https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo_grupofit.png"
     try:
-        url_logo = "https://raw.githubusercontent.com/MMRConsultoria/mmr-site/main/logo_grupofit.png"
-        img_bytes = BytesIO(requests.get(url_logo).content)
-        logo = Image(img_bytes, width=120, height=50)
-        elementos.append(logo)
-    except:
-        pass  # se não conseguir carregar, continua sem logo
+        resp = requests.get(logo_url)
+        if resp.status_code == 200:
+            logo_bytes = BytesIO(resp.content)
+            logo = Image(logo_bytes, width=120, height=50)  # Ajuste tamanho
+            elementos.append(logo)
+    except Exception as e:
+        print(f"Erro ao carregar logo: {e}")
+
     # Cabeçalho
     data_geracao = datetime.now().strftime("%d/%m/%Y %H:%M")
     elementos.append(Paragraph(f"<b>Mês do Rateio:</b> {mes_rateio}", estilos["Normal"]))
@@ -433,13 +429,11 @@ def gerar_pdf(df_view, mes_rateio, usuario):
     elementos.append(Paragraph(f"<b>Data de Geração:</b> {data_geracao}", estilos["Normal"]))
     elementos.append(Spacer(1, 12))
 
-    # Converte DataFrame para lista de listas
+    # Tabela de dados
     tabela_dados = [df_view.columns.tolist()] + df_view.values.tolist()
-
-    # Tabela
     tabela = Table(tabela_dados, repeatRows=1)
     tabela.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#F2F2F2")),  # Cabeçalho
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#F2F2F2")),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
@@ -447,16 +441,16 @@ def gerar_pdf(df_view, mes_rateio, usuario):
         ('FONTSIZE', (0, 0), (-1, -1), 8),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
     ]))
-
     elementos.append(tabela)
 
-    # Gera o PDF
     doc.build(elementos)
     buffer.seek(0)
     return buffer
 
-# ===== Botão para baixar PDF no Streamlit =====
-pdf_bytes = gerar_pdf(df_view, mes_rateio="Agosto/2025", usuario="João da Silva")
+# ====== Chamada no seu Streamlit ======
+usuario_logado = st.session_state.get("usuario_email", "Usuário Desconhecido")
+pdf_bytes = gerar_pdf(df_view, mes_rateio="Agosto/2025", usuario=usuario_logado)
+
 st.download_button(
     label="📄 Baixar PDF",
     data=pdf_bytes,
