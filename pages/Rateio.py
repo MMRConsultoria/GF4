@@ -241,28 +241,36 @@ for i in range(0, len(tipos_unicos), COLS_POR_LINHA):
 # ==== Preenche a coluna Rateio proporcional ao % Total (por Tipo) ====
 # ==== Rateio = valor digitado do Tipo × % Total da própria linha ====
 
-# 1) Garante uma versão numérica do % (ex.: "42,15%" -> 0.4215)
+# ==== Calcula coluna Rateio ====
+df_final["Rateio"] = 0.0  # começa zerado
+
+# converte % Total para número (sem símbolo e vírgula)
 df_final["perc_num"] = df_final["% Total"].apply(
     lambda x: pd.to_numeric(str(x).replace("%", "").replace(",", "."), errors="coerce") / 100
 )
 
-# 2) Começa com Rateio zerado
-df_final["Rateio"] = 0.0
+# aplica o cálculo: valor digitado * percentual da linha
+for tipo, valor_total in valores_rateio_por_tipo.items():
+    if valor_total and valor_total > 0:
+        mask_tipo = df_final["Tipo"] == tipo
+        df_final.loc[mask_tipo, "Rateio"] = df_final.loc[mask_tipo, "perc_num"] * valor_total
 
-# 3) Só calcula nas linhas "normais" (ignora TOTAL e Subtotal)
-mask_validas = (~df_final["Grupo"].str.startswith("Subtotal", na=False)) & (df_final["Grupo"] != "TOTAL")
+# soma dos rateios para as linhas de subtotal
+for tipo in tipos_unicos:
+    mask_subtotal = df_final["Grupo"] == f"Subtotal {tipo}"
+    if mask_subtotal.any():
+        soma_tipo = df_final.loc[(df_final["Tipo"] == tipo) & (~df_final["Grupo"].str.startswith("Subtotal")), "Rateio"].sum()
+        df_final.loc[mask_subtotal, "Rateio"] = soma_tipo
 
-# 4) Para cada Tipo, aplica: Rateio_linha = valor_digitado_do_tipo × perc_num_da_linha
-for tipo, valor_digitado in valores_rateio_por_tipo.items():
-    if valor_digitado and valor_digitado > 0:
-        mask = (df_final["Tipo"] == tipo) & mask_validas
-        df_final.loc[mask, "Rateio"] = valor_digitado * df_final.loc[mask, "perc_num"]
+# soma geral para a linha TOTAL
+mask_total = df_final["Grupo"] == "TOTAL"
+if mask_total.any():
+    soma_total = df_final.loc[~df_final["Grupo"].str.startswith("Subtotal"), "Rateio"].sum()
+    df_final.loc[mask_total, "Rateio"] = soma_total
 
-# 5) Mantém TOTAL/Subtotal com 0
-df_final.loc[~mask_validas, "Rateio"] = 0.0
-
-# 6) Limpa a auxiliar
+# remove coluna auxiliar
 df_final.drop(columns=["perc_num"], inplace=True)
+
 
 
 # ==== Reordenar colunas ====
