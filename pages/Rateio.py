@@ -449,9 +449,10 @@ def gerar_pdf(df, mes_rateio, usuario):
     # Converte DataFrame para lista
     dados_tabela = [df.columns.tolist()] + df.values.tolist()
 
-    # Tabela formatada
+    # Tabela
     tabela = Table(dados_tabela, repeatRows=1)
 
+    # Estilo inicial
     tabela.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#003366")),  # Cabeçalho azul escuro
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
@@ -463,10 +464,17 @@ def gerar_pdf(df, mes_rateio, usuario):
         ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
     ]))
 
-    # Alternância de cor nas linhas
+    # Aplica cor fixa nas linhas
     for i in range(1, len(dados_tabela)):
-        bg_color = colors.whitesmoke if i % 2 == 0 else colors.lightgrey
-        tabela.setStyle(TableStyle([("BACKGROUND", (0, i), (-1, i), bg_color)]))
+        linha_texto = str(dados_tabela[i][0]).strip().upper()
+
+        if "SUBTOTAL" in linha_texto:
+            # Cinza mais escuro para subtotal
+            tabela.setStyle(TableStyle([("BACKGROUND", (0, i), (-1, i), colors.HexColor("#BFBFBF"))]))
+            tabela.setStyle(TableStyle([("FONTNAME", (0, i), (-1, i), "Helvetica-Bold")]))
+        else:
+            # Cinza claro para linhas normais
+            tabela.setStyle(TableStyle([("BACKGROUND", (0, i), (-1, i), colors.HexColor("#F2F2F2"))]))
 
     elementos.append(tabela)
 
@@ -474,6 +482,7 @@ def gerar_pdf(df, mes_rateio, usuario):
     pdf_value = buffer.getvalue()
     buffer.close()
     return pdf_value
+
 
 # ====== Chamada no seu Streamlit ======
 usuario_logado = st.session_state.get("usuario_logado", "Usuário Desconhecido")
