@@ -17,6 +17,7 @@ from st_aggrid import AgGrid, GridOptionsBuilder
 from datetime import datetime, date
 from datetime import datetime, date, timedelta
 from calendar import monthrange
+from reportlab.lib.pagesizes import A4
 
 
 #st.set_page_config(page_title="Painel Agrupado", layout="wide")
