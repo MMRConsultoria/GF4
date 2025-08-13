@@ -66,6 +66,16 @@ st.markdown("""
         <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatórios</h1>
     </div>
 """, unsafe_allow_html=True)
+# Remove fundo vermelho do multiselect
+st.markdown("""
+    <style>
+    div[data-baseweb="tag"] {
+        background-color: transparent !important;
+        border: 1px solid #ccc !important;
+        color: black !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # ================================
 # 3. Separação em ABAS
@@ -117,17 +127,26 @@ with tab_rateio:
     tipos_disponiveis.insert(0, "Todos")
     tipo_selecionado = st.selectbox("🏪 Tipo:", options=tipos_disponiveis, index=0)
 
-    # ==== Período fixo: Mensal ====
-    df_vendas["Mes/Ano"] = df_vendas["Data"].dt.strftime("%m/%Y")
-    meses_disponiveis = sorted(
-        df_vendas["Mes/Ano"].unique(),
-        key=lambda x: datetime.strptime("01/" + x, "%d/%m/%Y")
-    )
-    meses_selecionados = st.multiselect(
-        "🗓️ Selecione os meses:",
-        options=meses_disponiveis,
-        default=[datetime.today().strftime("%m/%Y")]
-    )
+    # ==== Filtros lado a lado ====
+    col1, col2 = st.columns([1, 2])
+    
+    with col1:
+        tipos_disponiveis = sorted(df_vendas["Tipo"].dropna().unique())
+        tipos_disponiveis.insert(0, "Todos")
+        tipo_selecionado = st.selectbox("🏪 Tipo:", options=tipos_disponiveis, index=0)
+    
+    with col2:
+        df_vendas["Mes/Ano"] = df_vendas["Data"].dt.strftime("%m/%Y")
+        meses_disponiveis = sorted(
+            df_vendas["Mes/Ano"].unique(),
+            key=lambda x: datetime.strptime("01/" + x, "%d/%m/%Y")
+        )
+        meses_selecionados = st.multiselect(
+            "🗓️ Selecione os meses:",
+            options=meses_disponiveis,
+            default=[datetime.today().strftime("%m/%Y")]
+        )
+
     df_filtrado = df_vendas[df_vendas["Mes/Ano"].isin(meses_selecionados)]
     df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
 
