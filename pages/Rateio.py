@@ -327,6 +327,12 @@ def aplicar_estilo(df):
 # Exibe a cópia formatada
 st.dataframe(aplicar_estilo(df_view), use_container_width=True, height=700)
 # ==== Exporta Excel ====
+
+
+if "% Total" in df_final.columns:
+    df_final["% Total"] = df_final["% Total"] / 100
+
+
 df_exportar = df_final.copy()
 output = BytesIO()
 with pd.ExcelWriter(output, engine="openpyxl") as writer:
