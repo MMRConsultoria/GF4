@@ -505,7 +505,7 @@ with aba1:
                      .reset_index())
         tab_op.columns = ["OPERAÇÃO", str(ano_prev), str(ano_barras)]
         st.subheader("Operação")
-        st.dataframe(tab_op, hide_index=True, use_container_width=True, height=120)
+        st.dataframe(tab_op, hide_index=True, use_container_width=True, height=150)
     
         # 2) Índice de Crescimento (YTD)
         fat_ytd = (ytd.groupby(["Ano", dim])["Fat.Total"].sum()
