@@ -367,8 +367,8 @@ for row in ws.iter_rows(min_row=2, max_row=ws.max_row, max_col=ws.max_column):
                     cell.number_format = '0.00%'  # Formato percentual com 2 casas
                 else:
                     cell.number_format = '0.00%'
-                else:
-                    cell.number_format = '"R$" #,##0.00'
+            else:
+                cell.number_format = '"R$" #,##0.00'
 
 for i, col_cells in enumerate(ws.iter_cols(min_row=1, max_row=ws.max_row), start=1):
     max_length = 0
