@@ -122,11 +122,7 @@ with tab_rateio:
     )
     df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
 
-    # ==== Filtro de Tipo ====
-    tipos_disponiveis = sorted(df_vendas["Tipo"].dropna().unique())
-    tipos_disponiveis.insert(0, "Todos")
-    tipo_selecionado = st.selectbox("🏪 Tipo:", options=tipos_disponiveis, index=0)
-
+    
     # ==== Filtros lado a lado ====
     col1, col2 = st.columns([1, 2])
     
