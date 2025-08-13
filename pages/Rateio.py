@@ -172,9 +172,9 @@ df_pivot = df_agrupado.pivot_table(
 ).reset_index()
 
 # Mantém ordem original de colunas
-colunas_periodo = [c for c in df_pivot.columns if c not in ["Tipo", "Grupo"]]
-colunas_finais = ["Tipo", "Grupo"] + colunas_periodo
-df_final = df_pivot[colunas_finais].copy()
+#colunas_periodo = [c for c in df_pivot.columns if c not in ["Tipo", "Grupo"]]
+#colunas_finais = ["Tipo", "Grupo"] + colunas_periodo
+#df_final = df_pivot[colunas_finais].copy()
 
 # ==== Ordenação ====
 ultima_col = colunas_periodo[-1]
