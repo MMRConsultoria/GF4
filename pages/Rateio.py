@@ -330,8 +330,7 @@ st.dataframe(aplicar_estilo(df_view), use_container_width=True, height=700)
 
 
 if "% Total" in df_final.columns:
-    df_final["% Total"] = df_final["% Total"] / 100
-
+    df_final["% Total"] = pd.to_numeric(df_final["% Total"], errors="coerce") / 100
 
 df_exportar = df_final.copy()
 output = BytesIO()
