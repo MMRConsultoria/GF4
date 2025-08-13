@@ -241,56 +241,42 @@ for i in range(0, len(tipos_unicos), COLS_POR_LINHA):
                 key=f"rateio_{tipo}"
             )
 
+# ==== Preenche a coluna Rateio proporcional ao % Total (por Tipo) ====
+df_final["perc_num"] = df_final["% Total"].apply(
+    lambda x: pd.to_numeric(str(x).replace("%", "").replace(",", "."), errors="coerce") / 100
+)
 
+df_final["Rateio"] = np.nan
+mask_validas = (~df_final["Grupo"].str.startswith("Subtotal", na=False)) & (df_final["Grupo"] != "TOTAL")
 
-    # ==== Preenche a coluna Rateio proporcional ao % Total (por Tipo) ====
-    
-    # 1) Converte "% Total" para número (0.4229, 0.3180, etc.)
-    df_final["perc_num"] = df_final["% Total"].apply(
-        lambda x: pd.to_numeric(str(x).replace("%", "").replace(",", "."), errors="coerce") / 100
-    )
-    
-    # 2) Começa limpando/garantindo a coluna Rateio
-    df_final["Rateio"] = np.nan
-    
-    # 3) Ignora TOTAL e SUBTOTAL nas distribuições
-    mask_validas = (~df_final["Grupo"].str.startswith("Subtotal", na=False)) & (df_final["Grupo"] != "TOTAL")
-    
-    # 4) Para cada Tipo, aplica: Rateio_linha = (% Total da linha) * (valor digitado para o Tipo)
-    for tipo, valor_total in valores_rateio_por_tipo.items():
-        if valor_total and valor_total > 0:
-            mask_tipo = (df_final["Tipo"] == tipo) & mask_validas
-            df_final.loc[mask_tipo, "Rateio"] = df_final.loc[mask_tipo, "perc_num"] * valor_total
-    
-    # 5) Linhas não válidas (TOTAL/Subtotal) ficam em branco
-    df_final.loc[~mask_validas, "Rateio"] = ""
-    
-    # 6) Remove a auxiliar
-    df_final.drop(columns=["perc_num"], inplace=True)
-    
-    # Formata Rateio como moeda
-    df_final["Rateio"] = df_final["Rateio"].apply(
-        lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notnull(x) and x != "" else ""
-    )
+for tipo, valor_total in valores_rateio_por_tipo.items():
+    if valor_total and valor_total > 0:
+        mask_tipo = (df_final["Tipo"] == tipo) & mask_validas
+        df_final.loc[mask_tipo, "Rateio"] = df_final.loc[mask_tipo, "perc_num"] * valor_total
+
+df_final.loc[~mask_validas, "Rateio"] = ""
+df_final.drop(columns=["perc_num"], inplace=True)
+
 
 # ==== Reordenar colunas ====
-colunas_finais = ["Tipo", "Grupo", "Total", "% Total"] + colunas_periodo
+# ==== Reordenar colunas (Rateio no fim) ====
+colunas_finais = ["Tipo", "Grupo", "Total", "% Total"] + colunas_periodo + ["Rateio"]
 df_final = df_final[colunas_finais]
-# Renomeia para "Rateio" e deixa em branco
-df_final.rename(columns={df_final.columns[-1]: "Rateio"}, inplace=True)
-df_final["Rateio"] = ""
 # ==== Função de formatação ====
+
+# ==== Cópia para exibição com formatação ====
+df_view = df_final.copy()
+
 def formatar(valor):
     try:
         return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     except:
         return valor
 
-# ==== Formatação valores ====
-for col in ["Total"] + colunas_periodo:
-    if col in df_final.columns:
-        df_final[col] = df_final[col].apply(lambda x: formatar(x) if pd.notnull(x) and x != "" else x)
-
+# Formata todas as colunas numéricas (inclusive Rateio)
+for col in ["Total"] + colunas_periodo + ["Rateio"]:
+    if col in df_view.columns:
+        df_view[col] = df_view[col].apply(lambda x: formatar(x) if pd.notnull(x) and x != "" else x)
 
 # ==== Estilo ====
 def aplicar_estilo(df):
@@ -303,8 +289,8 @@ def aplicar_estilo(df):
             return ["" for _ in row]
     return df.style.apply(estilo_linha, axis=1)
 
-st.dataframe(aplicar_estilo(df_final), use_container_width=True, height=700)
-
+# Exibe a cópia formatada
+st.dataframe(aplicar_estilo(df_view), use_container_width=True, height=700)
 # ==== Exporta Excel ====
 df_exportar = df_final.copy()
 output = BytesIO()
