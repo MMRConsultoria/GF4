@@ -83,12 +83,12 @@ st.markdown("""
 # ================================
 # 3. Separação em ABAS
 # ================================
-(tab_rateio,) = st.tabs(["📋 Rateio"])
+
 
 # ================================
 # Aba 3: Relatórios Vendas
 # ================================
-with tab_rateio:
+
 
     import pandas as pd
     from datetime import datetime
