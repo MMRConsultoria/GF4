@@ -310,7 +310,7 @@ for col in ["Total", "Rateio"]:
 # Formata só para exibir (3 casas decimais)
 if "% Total" in df_view.columns:
     df_view["% Total"] = pd.to_numeric(df_view["% Total"], errors="coerce").apply(
-    lambda x: f"{x:.3f}%" if pd.notnull(x) else ""
+    lambda x: f"{x:.2f}%" if pd.notnull(x) else ""
 )
 
 # ==== Estilo ====
