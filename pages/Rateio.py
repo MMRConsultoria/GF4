@@ -163,23 +163,15 @@ if tipo_selecionado != "Todos":
 chaves = ["Tipo", "Grupo"]
 df_agrupado = df_filtrado.groupby(chaves + ["Período"], as_index=False)["Fat.Total"].sum()
 
-# Pivot
-df_pivot = df_agrupado.pivot_table(
-    index=chaves,
-    columns="Período",
-    values="Fat.Total",
-    fill_value=0
-).reset_index()
+# Agrupa direto sem criar coluna de mês/ano
+df_final = df_agrupado.groupby(["Tipo", "Grupo"], as_index=False)["Fat.Total"].sum()
 
-# Remove explicitamente a coluna "08/2025" da lista de períodos
-colunas_periodo = [
-    c for c in df_pivot.columns
-    if c not in ["Tipo", "Grupo"] and c != "08/2025"
-]
+# Renomeia para "Total"
+df_final.rename(columns={"Fat.Total": "Total"}, inplace=True)
 
-# Monta o dataframe final sem a coluna indesejada
-colunas_finais = ["Tipo", "Grupo"] + colunas_periodo
-df_final = df_pivot[colunas_finais].copy()
+# Calcula % Total
+total_geral = df_final["Total"].sum()
+df_final["% Total"] = df_final["Total"] / total_geral
 
 # ==== Ordenação ====
 ultima_col = colunas_periodo[-1]
