@@ -171,10 +171,15 @@ df_pivot = df_agrupado.pivot_table(
     fill_value=0
 ).reset_index()
 
-# Mantém ordem original de colunas
-#colunas_periodo = [c for c in df_pivot.columns if c not in ["Tipo", "Grupo"]]
-#colunas_finais = ["Tipo", "Grupo"] + colunas_periodo
-#df_final = df_pivot[colunas_finais].copy()
+# Remove explicitamente a coluna "08/2025" da lista de períodos
+colunas_periodo = [
+    c for c in df_pivot.columns
+    if c not in ["Tipo", "Grupo"] and c != "08/2025"
+]
+
+# Monta o dataframe final sem a coluna indesejada
+colunas_finais = ["Tipo", "Grupo"] + colunas_periodo
+df_final = df_pivot[colunas_finais].copy()
 
 # ==== Ordenação ====
 ultima_col = colunas_periodo[-1]
