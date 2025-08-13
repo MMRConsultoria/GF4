@@ -262,7 +262,7 @@ for tipo in df_final["Tipo"].unique():
     
     # Calcula % Total relativo ao subtotal do tipo
     if subtotal_tipo > 0:
-        df_final.loc[mask_tipo, "% Total"] = (df_final.loc[mask_tipo, "Total"] / subtotal_tipo) * 100
+       df_final.loc[mask_tipo, "% Total"] = (df_final.loc[mask_tipo, "Total"] / subtotal_tipo)
     
     # Linha subtotal do tipo = 100%
     df_final.loc[df_final["Grupo"] == f"Subtotal {tipo}", "% Total"] = 100
