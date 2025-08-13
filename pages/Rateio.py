@@ -66,16 +66,25 @@ st.markdown("""
         <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatórios</h1>
     </div>
 """, unsafe_allow_html=True)
- /* Remove o fundo da área de seleção */
-    .stMultiSelect > div {
+ st.markdown("""
+    <style>
+    /* Escopo só para multiselect */
+    div[data-testid="stMultiSelect"] [data-baseweb="tag"] {
         background-color: transparent !important;
-        border: none !important;
+        border: 1px solid #ccc !important;
+        color: black !important;
+    }
+    /* Texto dentro do item selecionado */
+    div[data-testid="stMultiSelect"] [data-baseweb="tag"] * {
+        color: black !important;
+        fill: black !important; /* Ícone do X */
+    }
+    /* Área interna do multiselect sem fundo */
+    div[data-testid="stMultiSelect"] > div {
+        background-color: transparent !important;
     }
     </style>
-    """, unsafe_allow_html=True)
-
-
-
+""", unsafe_allow_html=True)
 # ================================
 # 3. Separação em ABAS
 # ================================
