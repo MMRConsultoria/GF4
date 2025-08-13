@@ -465,11 +465,12 @@ def gerar_pdf(df, mes_rateio, usuario):
     ]))
 
     # Aplica cor fixa nas linhas
+    # Aplica cor fixa nas linhas
     for i in range(1, len(dados_tabela)):
-        linha_texto = str(dados_tabela[i][0]).strip().upper()
+        linha_texto = str(dados_tabela[i][0]).strip().lower()
 
-        if "SUBTOTAL" in linha_texto:
-            # Cinza mais escuro para subtotal
+        if "subtotal" in linha_texto or "total" == linha_texto:
+            # Cinza mais escuro para subtotal e total
             tabela.setStyle(TableStyle([("BACKGROUND", (0, i), (-1, i), colors.HexColor("#BFBFBF"))]))
             tabela.setStyle(TableStyle([("FONTNAME", (0, i), (-1, i), "Helvetica-Bold")]))
         else:
