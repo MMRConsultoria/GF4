@@ -277,7 +277,9 @@ for tipo in df_final["Tipo"].unique():
 
 # Linha TOTAL não precisa % nem Rateio calculado — opcional
 df_final.loc[df_final["Grupo"] == "TOTAL", "% Total"] = ""
-df_final.loc[df_final["Grupo"] == "TOTAL", "Rateio"] = df_final["Rateio"].sum()
+# Soma apenas as linhas de grupo (sem Subtotal e sem TOTAL)
+mask_linhas_normais = ~df_final["Grupo"].str.startswith("Subtotal") & (df_final["Grupo"] != "TOTAL")
+df_final.loc[df_final["Grupo"] == "TOTAL", "Rateio"] = df_final.loc[mask_linhas_normais, "Rateio"].sum()
 
 
 
