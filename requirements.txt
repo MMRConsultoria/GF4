@@ -10,3 +10,4 @@ gspread-formatting
 plotly
 streamlit-aggrid
 unidecode
+reportlab
