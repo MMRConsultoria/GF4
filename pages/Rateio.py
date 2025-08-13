@@ -215,14 +215,33 @@ df_final["% Total"] = df_final.apply(
     if (not row["Grupo"].startswith("Subtotal") and row["Grupo"] != "TOTAL" and total_geral > 0) else "",
     axis=1
 )
-# ==== Campos de entrada de Rateio por Tipo ====
+
+# ==== Inputs de Rateio por Tipo (lado a lado) ====
+# usa a ordem já calculada; se não existir, cria a partir do df_final
+tipos_base = ordem_tipos if 'ordem_tipos' in locals() else \
+    [t for t in df_final["Tipo"].dropna().unique() if str(t).strip() != ""]
+
+# evita itens vazios e mantém só Tipos válidos
+tipos_unicos = [t for t in tipos_base if str(t).strip() != ""]
+
+# quantos campos por linha (ajuste para 2, 3, 4...)
+COLS_POR_LINHA = 3
+
+# dicionário com os valores digitados (vamos usar na próxima etapa)
 valores_rateio_por_tipo = {}
-for tipo in df_final["Tipo"].unique():
-    if tipo and not str(tipo).strip() == "":
-        valores_rateio_por_tipo[tipo] = st.number_input(
-            f"💰 Valor total para Rateio - {tipo}",
-            min_value=0.0, step=1000.0, format="%.2f"
-        )
+
+for i in range(0, len(tipos_unicos), COLS_POR_LINHA):
+    linha = tipos_unicos[i:i+COLS_POR_LINHA]
+    cols = st.columns(len(linha))
+    for c, tipo in zip(cols, linha):
+        with c:
+            valores_rateio_por_tipo[tipo] = st.number_input(
+                f"💰 Rateio — {tipo}",
+                min_value=0.0, step=1000.0, format="%.2f",
+                key=f"rateio_{tipo}"
+            )
+
+
 
 # Converte % Total para número
 df_final["perc_num"] = df_final["% Total"].apply(
