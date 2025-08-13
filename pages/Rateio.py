@@ -194,7 +194,9 @@ with tab_rateio:
     # ==== Reordenar colunas ====
     colunas_finais = ["Tipo", "Grupo", "Total", "% Total"] + colunas_periodo
     df_final = df_final[colunas_finais]
-    
+    # Renomeia para "Rateio" e deixa em branco
+    df_final.rename(columns={df_final.columns[-1]: "Rateio"}, inplace=True)
+    df_final["Rateio"] = ""
     # ==== Função de formatação ====
     def formatar(valor):
         try:
