@@ -271,9 +271,19 @@ for tipo in df_final["Tipo"].unique():
     rateio_tipo = df_final.loc[mask_tipo, "Rateio"].sum()
     df_final.loc[df_final["Grupo"] == f"Subtotal {tipo}", "Rateio"] = rateio_tipo
 
-# Linha TOTAL não precisa % nem Rateio calculado — opcional
-df_final.loc[df_final["Grupo"] == "TOTAL", "% Total"] = ""
-df_final.loc[df_final["Grupo"] == "TOTAL", "Rateio"] = df_final["Rateio"].sum()
+ ======================================================
+# 🔹 Linha TOTAL
+# ======================================================
+# TOTAL no % Total = soma dos subtotais
+total_geral = df_final.loc[df_final["Grupo"].str.startswith("Subtotal"), "Total"].sum()
+if total_geral > 0:
+    df_final.loc[df_final["Grupo"] == "TOTAL", "% Total"] = 100
+
+# TOTAL no Rateio = soma apenas dos subtotais
+total_rateio = df_final.loc[df_final["Grupo"].str.startswith("Subtotal"), "Rateio"].sum()
+df_final.loc[df_final["Grupo"] == "TOTAL", "Rateio"] = total_rateio
+
+
 
 
 # ==== Reordenar colunas ====
