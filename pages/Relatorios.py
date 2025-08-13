@@ -459,15 +459,20 @@ with aba1:
     # ============== CSS para tabelas compactas (fonte e padding menores) ==============
     st.markdown("""
     <style>
-    /* compacta st.dataframe (AgGrid) */
-    div[data-testid="stDataFrame"] table { font-size: 10px; }
-    div[data-testid="stDataFrame"] thead tr th { padding: 1px 4px !important; }
-    div[data-testid="stDataFrame"] div[role="row"] { min-height: 18px; }
-    div[data-testid="stDataFrame"] div[role="gridcell"] { padding: 1px 4px !important; line-height: 1.1; }
-    
-    /* fallback para st.table (se usar) */
-    table { font-size: 10px; }
-    table th, table td { padding: 2px 4px; }
+    /* Fonte e altura menores apenas na tabela de Participação */
+    div[data-testid="stDataFrame"][aria-label*="Participação Faturamento"] table {
+        font-size: 9px !important;
+    }
+    div[data-testid="stDataFrame"][aria-label*="Participação Faturamento"] thead tr th {
+        padding: 0px 3px !important;
+    }
+    div[data-testid="stDataFrame"][aria-label*="Participação Faturamento"] div[role="row"] {
+        min-height: 16px !important;
+    }
+    div[data-testid="stDataFrame"][aria-label*="Participação Faturamento"] div[role="gridcell"] {
+        padding: 0px 3px !important;
+        line-height: 1 !important;
+    }
     </style>
     """, unsafe_allow_html=True)
         
