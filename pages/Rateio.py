@@ -174,7 +174,7 @@ total_geral = df_final["Total"].sum()
 df_final["% Total"] = df_final["Total"] / total_geral
 
 # ==== Ordenação ====
-ultima_col = colunas_periodo[-1]
+
 subtotais_tipo = df_final.groupby("Tipo")[ultima_col].sum().reset_index()
 subtotais_tipo = subtotais_tipo.sort_values(by=ultima_col, ascending=False)
 ordem_tipos = subtotais_tipo["Tipo"].tolist()
