@@ -523,7 +523,7 @@ with aba1:
                     .sort_values("Crescimento %", ascending=False)
                     .fillna(0.0))
         cresc["Crescimento %"] = cresc["Crescimento %"].map(lambda v: f"{v:,.1f}%".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.subheader("Índice de Crescimento (YTD)")
+        st.subheader("Crescimento")
         st.dataframe(cresc.rename(columns={dim: "OPERAÇÃO"}), hide_index=True, use_container_width=True, height=180)
     
         # 3) Participação Faturamento (YTD)
@@ -535,7 +535,7 @@ with aba1:
         part["Participação"] = (part["Faturamento"] / total_atual * 100).fillna(0.0)
         part = part.sort_values("Participação", ascending=False)
         part["Participação"] = part["Participação"].map(lambda v: f"{v:,.1f}%".replace(",", "X").replace(".", ",").replace("X", "."))
-        st.subheader("Participação Faturamento (YTD)")
+        st.subheader("Participação")
         st.dataframe(part[[dim, "Participação"]].rename(columns={dim: "OPERAÇÃO"}),
                      hide_index=True, use_container_width=True, height=180)
     
