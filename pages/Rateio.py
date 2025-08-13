@@ -207,11 +207,19 @@ df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
 # ==== Percentual apenas para grupos ====
 total_geral = df_final.loc[~df_final["Grupo"].str.startswith("Subtotal", na=False) &
                            (df_final["Grupo"] != "TOTAL"), "Total"].sum()
+
+
 df_final["% Total"] = df_final.apply(
-    lambda row: f"{(row['Total']/total_geral):.2%}" 
-    if (not row["Grupo"].startswith("Subtotal") and row["Grupo"] != "TOTAL" and total_geral > 0) else "",
+    lambda row: (row['Total']/total_geral) * 100 
+    if (not row["Grupo"].startswith("Subtotal") and row["Grupo"] != "TOTAL" and total_geral > 0) else np.nan,
     axis=1
 )
+
+if "% Total" in df_view.columns:
+    df_view["% Total"] = df_view["% Total"].apply(
+        lambda x: f"{x:.3f}%" if pd.notnull(x) else ""
+    )
+
 
 # ==== Inputs de Rateio por Tipo (lado a lado) ====
 # usa a ordem já calculada; se não existir, cria a partir do df_final
