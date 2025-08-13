@@ -180,8 +180,7 @@ subtotais_tipo = subtotais_tipo.sort_values(by="Total", ascending=False)
 ordem_tipos = subtotais_tipo["Tipo"].tolist()
 
 df_final["ord_tipo"] = df_final["Tipo"].apply(lambda x: ordem_tipos.index(x) if x in ordem_tipos else 999)
-df_final = df_final.sort_values(by=["ord_tipo", ultima_col], ascending=[True, False]).drop(columns="ord_tipo")
-
+df_final = df_final.sort_values(by=["ord_tipo", "Total"], ascending=[True, False]).drop(columns="ord_tipo")
 # ==== Monta subtotais por Tipo ====
 linhas_com_subtotal = []
 for tipo in ordem_tipos:
