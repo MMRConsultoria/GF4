@@ -66,20 +66,26 @@ st.markdown("""
         <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatórios</h1>
     </div>
 """, unsafe_allow_html=True)
-# Remove fundo vermelho do multiselect
 # Remove fundo vermelho e deixa texto preto no multiselect
 st.markdown("""
     <style>
+    /* Container do item selecionado */
     div[data-baseweb="tag"] {
         background-color: transparent !important;
         border: 1px solid #ccc !important;
         color: black !important;
     }
-    div[data-baseweb="tag"] span {
+    /* Texto do item selecionado */
+    div[data-baseweb="tag"] div {
         color: black !important;
+    }
+    /* Ícone de fechar (X) */
+    div[data-baseweb="tag"] svg {
+        fill: black !important;
     }
     </style>
 """, unsafe_allow_html=True)
+
 # ================================
 # 3. Separação em ABAS
 # ================================
