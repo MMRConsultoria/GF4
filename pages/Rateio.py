@@ -215,6 +215,36 @@ df_final["% Total"] = df_final.apply(
     if (not row["Grupo"].startswith("Subtotal") and row["Grupo"] != "TOTAL" and total_geral > 0) else "",
     axis=1
 )
+# ==== Campos de entrada de Rateio por Tipo ====
+valores_rateio_por_tipo = {}
+for tipo in df_final["Tipo"].unique():
+    if tipo and not str(tipo).strip() == "":
+        valores_rateio_por_tipo[tipo] = st.number_input(
+            f"💰 Valor total para Rateio - {tipo}",
+            min_value=0.0, step=1000.0, format="%.2f"
+        )
+
+# Converte % Total para número
+df_final["perc_num"] = df_final["% Total"].apply(
+    lambda x: pd.to_numeric(str(x).replace("%", "").replace(",", "."), errors="coerce") / 100
+)
+
+# Inicializa coluna Rateio
+df_final["Rateio"] = ""
+
+# Aplica cálculo de Rateio por Tipo
+for tipo, valor_total in valores_rateio_por_tipo.items():
+    if valor_total > 0:
+        mask = df_final["Tipo"] == tipo
+        df_final.loc[mask, "Rateio"] = df_final.loc[mask, "perc_num"] * valor_total
+
+# Remove coluna auxiliar
+df_final.drop(columns=["perc_num"], inplace=True)
+
+# Formata Rateio como moeda
+df_final["Rateio"] = df_final["Rateio"].apply(
+    lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notnull(x) and x != "" else ""
+)
 
 # ==== Reordenar colunas ====
 colunas_finais = ["Tipo", "Grupo", "Total", "% Total"] + colunas_periodo
