@@ -467,7 +467,7 @@ def gerar_pdf(df, mes_rateio, usuario):
     # Aplica cor fixa nas linhas
     # Aplica cor fixa nas linhas
     for i in range(1, len(dados_tabela)):
-        linha_texto = str(dados_tabela[i][0]).strip().lower()
+        linha_texto = str(dados_tabela[i][1]).strip().lower()
 
         if "subtotal" in linha_texto or "total" == linha_texto:
             # Cinza mais escuro para subtotal e total
