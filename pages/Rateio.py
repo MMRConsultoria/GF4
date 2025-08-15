@@ -1,4 +1,408 @@
-# ================== Imports ==================
+# pages/PainelResultados.py
+import streamlit as st
+st.set_page_config(page_title="Vendas Diarias", layout="wide")  # ✅ Escolha um título só
+
+import streamlit as st
+import pandas as pd
+import numpy as np
+from io import BytesIO
+from datetime import datetime
+import re
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import json
+import plotly.express as px
+import io
+from st_aggrid import AgGrid, GridOptionsBuilder
+from datetime import datetime, date
+from datetime import datetime, date, timedelta
+from calendar import monthrange
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image as RLImage, Spacer
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+
+
+#st.set_page_config(page_title="Painel Agrupado", layout="wide")
+#st.set_page_config(page_title="Vendas Diarias", layout="wide")
+# 🔒 Bloqueia o acesso caso o usuário não esteja logado
+if not st.session_state.get("acesso_liberado"):
+    st.stop()
+
+# ================================
+# 1. Conexão com Google Sheets
+# ================================
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+gc = gspread.authorize(credentials)
+planilha_empresa = gc.open("Vendas diarias")
+df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
+
+# ================================
+# 2. Configuração inicial do app
+# ================================
+
+
+# 🎨 Estilizar abas
+st.markdown("""
+    <style>
+    .stApp { background-color: #f9f9f9; }
+    div[data-baseweb="tab-list"] { margin-top: 20px; }
+    button[data-baseweb="tab"] {
+        background-color: #f0f2f6;
+        border-radius: 10px;
+        padding: 10px 20px;
+        margin-right: 10px;
+        transition: all 0.3s ease;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    button[data-baseweb="tab"]:hover { background-color: #dce0ea; color: black; }
+    button[data-baseweb="tab"][aria-selected="true"] { background-color: #0366d6; color: white; }
+    </style>
+""", unsafe_allow_html=True)
+
+# Cabeçalho bonito
+st.markdown("""
+    <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
+        <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
+        <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Rateio</h1>
+    </div>
+""", unsafe_allow_html=True)
+
+  # 🎨 Remove fundo e borda do multiselect, deixa só texto preto
+st.markdown("""
+    <style>
+    /* Itens selecionados */
+    div[data-testid="stMultiSelect"] [data-baseweb="tag"] {
+        background-color: transparent !important; /* sem fundo */
+        border: none !important;                   /* sem borda */
+        color: black !important;                   /* texto preto */
+    }
+    /* Texto e ícone dentro do item selecionado */
+    div[data-testid="stMultiSelect"] [data-baseweb="tag"] * {
+        color: black !important;
+        fill: black !important;                    /* ícone X */
+    }
+    /* Área interna do multiselect sem fundo */
+    div[data-testid="stMultiSelect"] > div {
+        background-color: transparent !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+# ================================
+# 3. Separação em ABAS
+# ================================
+
+
+# ================================
+# Aba 3: Relatórios Vendas
+# ================================
+
+
+import pandas as pd
+from datetime import datetime
+from io import BytesIO
+from openpyxl import load_workbook
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from openpyxl.utils import get_column_letter
+
+# Carrega dados
+df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
+df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
+
+# Normalização
+df_empresa["Loja"] = df_empresa["Loja"].str.strip().str.upper()
+df_empresa["Grupo"] = df_empresa["Grupo"].str.strip()
+df_vendas.columns = df_vendas.columns.str.strip()
+df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], dayfirst=True, errors="coerce")
+df_vendas["Loja"] = df_vendas["Loja"].astype(str).str.strip().str.upper()
+df_vendas["Grupo"] = df_vendas["Grupo"].astype(str).str.strip()
+
+# Merge com Tipo
+df_vendas = df_vendas.merge(df_empresa[["Loja", "Tipo"]], on="Loja", how="left")
+
+# Ajusta Fat.Total
+df_vendas["Fat.Total"] = (
+    df_vendas["Fat.Total"]
+    .astype(str)
+    .str.replace("R$", "", regex=False)
+    .str.replace("(", "-", regex=False)
+    .str.replace(")", "", regex=False)
+    .str.replace(" ", "", regex=False)
+    .str.replace(".", "", regex=False)
+    .str.replace(",", ".", regex=False)
+)
+df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
+
+
+# ==== Filtros lado a lado ====
+col1, col2 = st.columns([1, 2])
+
+with col1:
+    tipos_disponiveis = sorted(df_vendas["Tipo"].dropna().unique())
+    tipos_disponiveis.insert(0, "Todos")
+    tipo_selecionado = st.selectbox("🏪 Tipo:", options=tipos_disponiveis, index=0)
+
+with col2:
+    df_vendas["Mes/Ano"] = df_vendas["Data"].dt.strftime("%m/%Y")
+    meses_disponiveis = sorted(
+        df_vendas["Mes/Ano"].unique(),
+        key=lambda x: datetime.strptime("01/" + x, "%d/%m/%Y")
+    )
+    meses_selecionados = st.multiselect(
+        "🗓️ Selecione os meses:",
+        options=meses_disponiveis,
+        default=[datetime.today().strftime("%m/%Y")]
+    )
+
+df_filtrado = df_vendas[df_vendas["Mes/Ano"].isin(meses_selecionados)]
+df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
+
+if tipo_selecionado != "Todos":
+    df_filtrado = df_filtrado[df_filtrado["Tipo"] == tipo_selecionado]
+
+# ==== Agrupamento por Tipo + Grupo ====
+chaves = ["Tipo", "Grupo"]
+df_agrupado = df_filtrado.groupby(chaves + ["Período"], as_index=False)["Fat.Total"].sum()
+
+# Agrupa direto sem criar coluna de mês/ano
+df_final = df_agrupado.groupby(["Tipo", "Grupo"], as_index=False)["Fat.Total"].sum()
+
+# Renomeia para "Total"
+df_final.rename(columns={"Fat.Total": "Total"}, inplace=True)
+
+# 🔹 Garante que a coluna Rateio comece zerada
+df_final["Rateio"] = 0.0
+
+
+# Calcula % Total
+total_geral = df_final["Total"].sum()
+df_final["% Total"] = df_final["Total"] / total_geral
+
+# ==== Ordenação ====
+
+subtotais_tipo = df_final.groupby("Tipo")["Total"].sum().reset_index()
+subtotais_tipo = subtotais_tipo.sort_values(by="Total", ascending=False)
+ordem_tipos = subtotais_tipo["Tipo"].tolist()
+
+df_final["ord_tipo"] = df_final["Tipo"].apply(lambda x: ordem_tipos.index(x) if x in ordem_tipos else 999)
+df_final = df_final.sort_values(by=["ord_tipo", "Total"], ascending=[True, False]).drop(columns="ord_tipo")
+# ==== Monta subtotais por Tipo ====
+linhas_com_subtotal = []
+for tipo in ordem_tipos:
+    bloco_tipo = df_final[df_final["Tipo"] == tipo].copy()
+    linhas_com_subtotal.append(bloco_tipo)
+    subtotal = bloco_tipo.drop(columns=["Tipo", "Grupo"]).sum(numeric_only=True)
+    subtotal["Tipo"] = tipo
+    subtotal["Grupo"] = f"Subtotal {tipo}"
+    linhas_com_subtotal.append(pd.DataFrame([subtotal]))
+df_final = pd.concat(linhas_com_subtotal, ignore_index=True)
+
+# ==== Linha TOTAL no topo ====
+apenas_grupos = df_final[~df_final["Grupo"].str.startswith("Subtotal", na=False)]
+linha_total = apenas_grupos.drop(columns=["Tipo", "Grupo"]).sum(numeric_only=True)
+linha_total["Tipo"] = ""
+linha_total["Grupo"] = "TOTAL"
+df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
+
+
+# ==== Percentual apenas para grupos ====
+total_geral = df_final.loc[~df_final["Grupo"].str.startswith("Subtotal", na=False) &
+                           (df_final["Grupo"] != "TOTAL"), "Total"].sum()
+
+
+df_final["% Total"] = df_final.apply(
+    lambda row: (row['Total']/total_geral) * 100 
+    if (not row["Grupo"].startswith("Subtotal") and row["Grupo"] != "TOTAL" and total_geral > 0) else np.nan,
+    axis=1
+)
+
+
+
+# ==== Inputs de Rateio por Tipo (lado a lado) ====
+# usa a ordem já calculada; se não existir, cria a partir do df_final
+tipos_base = ordem_tipos if 'ordem_tipos' in locals() else \
+    [t for t in df_final["Tipo"].dropna().unique() if str(t).strip() != ""]
+
+# evita itens vazios e mantém só Tipos válidos
+tipos_unicos = [t for t in tipos_base if str(t).strip() != ""]
+
+# quantos campos por linha (ajuste para 2, 3, 4...)
+COLS_POR_LINHA = 3
+
+# dicionário com os valores digitados (vamos usar na próxima etapa)
+valores_rateio_por_tipo = {}
+
+for i in range(0, len(tipos_unicos), COLS_POR_LINHA):
+    linha = tipos_unicos[i:i+COLS_POR_LINHA]
+    cols = st.columns(len(linha))
+    for c, tipo in zip(cols, linha):
+        with c:
+            valores_rateio_por_tipo[tipo] = st.number_input(
+                f"💰 Rateio — {tipo}",
+                min_value=0.0, step=1000.0, format="%.2f",
+                key=f"rateio_{tipo}"
+            )
+
+# ==== Preenche a coluna Rateio proporcional ao % Total (por Tipo) ====
+# ==== Rateio = valor digitado do Tipo × % Total da própria linha ====
+
+# ===== Calcula % Total e Rateio =====
+df_final["% Total"] = 0.0
+df_final["Rateio"] = 0.0  # começa zerado
+
+for tipo in df_final["Tipo"].unique():
+    # Máscara das linhas normais do tipo (exclui subtotal e TOTAL)
+    mask_tipo = (
+        (df_final["Tipo"] == tipo) &
+        (~df_final["Grupo"].str.startswith("Subtotal")) &
+        (df_final["Grupo"] != "TOTAL")
+    )
+    
+    # Pega subtotal do tipo
+    subtotal_tipo = df_final.loc[df_final["Grupo"] == f"Subtotal {tipo}", "Total"].sum()
+    
+    # Calcula % Total relativo ao subtotal do tipo
+    if subtotal_tipo > 0:
+       df_final.loc[mask_tipo, "% Total"] = (df_final.loc[mask_tipo, "Total"] / subtotal_tipo) * 100
+    
+    # Linha subtotal do tipo = 100%
+    df_final.loc[df_final["Grupo"] == f"Subtotal {tipo}", "% Total"] = 100
+    
+    # Calcula Rateio para as lojas do tipo
+    valor_rateio = valores_rateio_por_tipo.get(tipo, 0.0)
+    df_final.loc[mask_tipo, "Rateio"] = df_final.loc[mask_tipo, "% Total"] / 100 * valor_rateio
+    
+    # Subtotal do tipo no Rateio = soma das lojas
+    rateio_tipo = df_final.loc[mask_tipo, "Rateio"].sum()
+    df_final.loc[df_final["Grupo"] == f"Subtotal {tipo}", "Rateio"] = rateio_tipo
+
+# Linha TOTAL não precisa % nem Rateio calculado — opcional
+df_final.loc[df_final["Grupo"] == "TOTAL", "% Total"] = ""
+# Soma apenas as linhas de grupo (sem Subtotal e sem TOTAL)
+mask_linhas_normais = (
+    ~df_final["Grupo"].str.startswith("Subtotal", na=False) &
+    (df_final["Grupo"] != "TOTAL")
+)
+df_final.loc[df_final["Grupo"] == "TOTAL", "Rateio"] = df_final.loc[mask_linhas_normais, "Rateio"].sum()
+
+
+
+# ==== Reordenar colunas ====
+# ==== Reordenar colunas (Rateio no fim) ====
+colunas_finais = ["Tipo", "Grupo", "Total", "% Total", "Rateio"]
+df_final = df_final[colunas_finais]
+# ==== Função de formatação ====
+
+# ==== Cópia para exibição com formatação ====
+df_view = df_final.copy()
+
+def formatar(valor):
+    try:
+        return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except:
+        return valor
+
+# Formata todas as colunas numéricas (inclusive Rateio)
+for col in ["Total", "Rateio"]:
+    if col in df_view.columns:
+        df_view[col] = df_view[col].apply(
+            lambda x: formatar(x) if pd.notnull(x) and x != "" else x
+        )
+# Formata só para exibir (3 casas decimais)
+if "% Total" in df_view.columns:
+    df_view["% Total"] = pd.to_numeric(df_view["% Total"], errors="coerce").apply(
+    lambda x: f"{x:.2f}%" if pd.notnull(x) else ""
+)
+
+# ==== Estilo ====
+def aplicar_estilo(df):
+    def estilo_linha(row):
+        if row["Grupo"] == "TOTAL":
+            return ["background-color: #f4b084; font-weight: bold"] * len(row)
+        elif "Subtotal" in str(row["Grupo"]):
+            return ["background-color: #d9d9d9; font-weight: bold"] * len(row)
+        else:
+            return ["" for _ in row]
+    return df.style.apply(estilo_linha, axis=1)
+
+# Exibe a cópia formatada
+st.dataframe(aplicar_estilo(df_view), use_container_width=True, height=700)
+# ==== Exporta Excel ====
+
+
+if "% Total" in df_final.columns:
+    df_final["% Total"] = pd.to_numeric(df_final["% Total"], errors="coerce") / 100
+
+df_exportar = df_final.copy()
+output = BytesIO()
+with pd.ExcelWriter(output, engine="openpyxl") as writer:
+    df_exportar.to_excel(writer, index=False, sheet_name="Relatório")
+output.seek(0)
+
+wb = load_workbook(output)
+ws = wb["Relatório"]
+
+header_font = Font(bold=True, color="FFFFFF")
+header_fill = PatternFill("solid", fgColor="305496")
+center_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+border = Border(left=Side(style="thin"), right=Side(style="thin"), top=Side(style="thin"), bottom=Side(style="thin"))
+
+for cell in ws[1]:
+    cell.font = header_font
+    cell.fill = header_fill
+    cell.alignment = center_alignment
+    cell.border = border
+
+for row in ws.iter_rows(min_row=2, max_row=ws.max_row, max_col=ws.max_column):
+    grupo_valor = row[1].value
+    estilo_fundo = None
+    if isinstance(grupo_valor, str):
+        if grupo_valor.strip().upper() == "TOTAL":
+            estilo_fundo = PatternFill("solid", fgColor="F4B084")
+        elif "SUBTOTAL" in grupo_valor.strip().upper():
+            estilo_fundo = PatternFill("solid", fgColor="D9D9D9")
+    for cell in row:
+        cell.border = border
+        cell.alignment = center_alignment
+        if estilo_fundo:
+            cell.fill = estilo_fundo
+        col_name = ws.cell(row=1, column=cell.column).value
+        if isinstance(cell.value, (int, float)):
+            if col_name == "% Total":
+                if cell.value not in (None, ""):
+                    cell.number_format = '0.00%'  # Formato percentual com 2 casas
+                else:
+                    cell.number_format = '0.00%'
+            else:
+                cell.number_format = '"R$" #,##0.00'
+
+for i, col_cells in enumerate(ws.iter_cols(min_row=1, max_row=ws.max_row), start=1):
+    max_length = 0
+    for cell in col_cells:
+        if cell.value:
+            max_length = max(max_length, len(str(cell.value)))
+    ws.column_dimensions[get_column_letter(i)].width = max_length + 2
+
+for col_nome in ["Tipo", "Grupo"]:
+    if col_nome in df_exportar.columns:
+        col_idx = df_exportar.columns.get_loc(col_nome) + 1
+        for cell in ws.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx):
+            for c in cell:
+                c.alignment = Alignment(horizontal="left")
+
+output_final = BytesIO()
+wb.save(output_final)
+output_final.seek(0)
+
+st.download_button(
+    label="📥 Baixar Excel",
+    data=output_final,
+    file_name="Resumo_Grupos_Mensal.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -6,77 +410,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from datetime import datetime
 import pytz
 import io
-import pandas as pd
-import streamlit as st
 
-# ================== Helpers de mês/ano ==================
-MESES_PT = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"]
-MAPA_MES_NOME2NUM = {m.lower(): i+1 for i, m in enumerate(MESES_PT)}
-
-def mes_ano_label(ano: int, mes: int) -> str:
-    return f"{MESES_PT[mes-1]}/{ano}"
-
-def juntar_labels(labels: list[str]) -> str:
-    """Transforma lista em 'A, B e C'."""
-    if not labels:
-        return ""
-    if len(labels) == 1:
-        return labels[0]
-    if len(labels) == 2:
-        return f"{labels[0]} e {labels[1]}"
-    return f"{', '.join(labels[:-1])} e {labels[-1]}"
-
-def extrair_meses_disponiveis(df: pd.DataFrame):
-    """
-    Retorna:
-      - lista ordenada desc de (ano, mes) únicos
-      - lista de labels 'Mês/AAAA' correspondente
-    Aceita:
-      - coluna 'Data' (dd/mm/aaaa ou datetime)
-      - ou colunas 'Ano' e 'Mês'/'Mes' (número ou nome PT-BR)
-    """
-    df_cols = {c.strip().lower(): c for c in df.columns}
-    pares = set()
-
-    # 1) A partir de 'Data'
-    if "data" in df_cols:
-        datas = pd.to_datetime(df[df_cols["data"]], dayfirst=True, errors="coerce").dropna()
-        if not datas.empty:
-            for d in datas.dt.to_pydatetime():
-                pares.add((d.year, d.month))
-
-    # 2) A partir de 'Ano' e 'Mês/Mes' (se não trouxe pela 'Data')
-    if not pares and "ano" in df_cols and (("mês" in df_cols) or ("mes" in df_cols)):
-        col_ano = df_cols["ano"]
-        col_mes = df_cols.get("mês", df_cols.get("mes"))
-        tmp = df[[col_ano, col_mes]].dropna()
-
-        def mes_to_num(v):
-            s = str(v).strip().lower()
-            if s.isdigit():
-                n = int(float(s))
-                return n if 1 <= n <= 12 else None
-            return MAPA_MES_NOME2NUM.get(s)
-
-        tmp["_MesNum"] = tmp[col_mes].apply(mes_to_num)
-        tmp = tmp.dropna(subset=["_MesNum"])
-        for a, m in zip(tmp[col_ano], tmp["_MesNum"]):
-            try:
-                pares.add((int(a), int(m)))
-            except:
-                pass
-
-    # Fallback: mês/ano corrente
-    if not pares:
-        now = datetime.now(pytz.timezone("America/Sao_Paulo"))
-        pares.add((now.year, now.month))
-
-    # Ordena do mais recente para o mais antigo
-    ordenado = sorted(pares, key=lambda t: (t[0], t[1]), reverse=True)
-    labels = [mes_ano_label(a, m) for (a, m) in ordenado]
-    return ordenado, labels
-
-# ================== PDF ==================
 def gerar_pdf(df, mes_rateio, usuario):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -112,7 +446,7 @@ def gerar_pdf(df, mes_rateio, usuario):
     elementos.append(Paragraph(f"<b>Data de Geração:</b> {data_geracao}", estilo_normal))
     elementos.append(Spacer(1, 12))
 
-    # Converte DataFrame para lista (mantém a ordem das colunas do df)
+    # Converte DataFrame para lista
     dados_tabela = [df.columns.tolist()] + df.values.tolist()
 
     # Tabela
@@ -130,18 +464,18 @@ def gerar_pdf(df, mes_rateio, usuario):
         ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
     ]))
 
-    # Cores de linhas (subtotal/total na 2ª coluna; ajuste o índice se necessário)
+    # Aplica cor fixa nas linhas
+    # Aplica cor fixa nas linhas
     for i in range(1, len(dados_tabela)):
         linha_texto = str(dados_tabela[i][1]).strip().lower()
+
         if "subtotal" in linha_texto or "total" == linha_texto:
-            tabela.setStyle(TableStyle([
-                ("BACKGROUND", (0, i), (-1, i), colors.HexColor("#BFBFBF")),
-                ("FONTNAME", (0, i), (-1, i), "Helvetica-Bold")
-            ]))
+            # Cinza mais escuro para subtotal e total
+            tabela.setStyle(TableStyle([("BACKGROUND", (0, i), (-1, i), colors.HexColor("#BFBFBF"))]))
+            tabela.setStyle(TableStyle([("FONTNAME", (0, i), (-1, i), "Helvetica-Bold")]))
         else:
-            tabela.setStyle(TableStyle([
-                ("BACKGROUND", (0, i), (-1, i), colors.HexColor("#F2F2F2"))
-            ]))
+            # Cinza claro para linhas normais
+            tabela.setStyle(TableStyle([("BACKGROUND", (0, i), (-1, i), colors.HexColor("#F2F2F2"))]))
 
     elementos.append(tabela)
 
@@ -150,74 +484,11 @@ def gerar_pdf(df, mes_rateio, usuario):
     buffer.close()
     return pdf_value
 
-# ================== UI (mês fechado, múltiplos) ==================
-# Observação: espera-se que 'df_view' já exista no seu app antes deste arquivo/trecho.
+
+# ====== Chamada no seu Streamlit ======
 usuario_logado = st.session_state.get("usuario_logado", "Usuário Desconhecido")
+pdf_bytes = gerar_pdf(df_view, mes_rateio="Agosto/2025", usuario=usuario_logado)
 
-# Extrai meses disponíveis do df_view e cria opções
-_, labels_opcoes = extrair_meses_disponiveis(df_view)
-
-# Multiselect (padrão: mês mais recente)
-meses_escolhidos = st.multiselect(
-    "Selecione o(s) mês(es)",
-    options=labels_opcoes,
-    default=labels_opcoes[:1] if labels_opcoes else []
-)
-
-# Se o usuário desmarcar tudo, força o mês mais recente (se existir)
-if not meses_escolhidos and labels_opcoes:
-    meses_escolhidos = labels_opcoes[:1]
-
-# Monta o título a partir da(s) escolha(s)
-mes_rateio = juntar_labels(meses_escolhidos)
-
-# (Opcional) Caso queira filtrar o df_view apenas para os meses escolhidos,
-# descomente e ajuste de acordo com as colunas do seu df:
-# ----------------------------------------------------------------
-# def filtrar_df_por_labels(df, labels):
-#     df_cols = {c.strip().lower(): c for c in df.columns}
-#     # Preferência por coluna 'Data'
-#     if "data" in df_cols:
-#         dt = pd.to_datetime(df[df_cols["data"]], dayfirst=True, errors="coerce")
-#         mask = pd.Series(False, index=df.index)
-#         for lb in labels:
-#             mes_nome, ano_str = lb.split("/")
-#             ano = int(ano_str)
-#             mes = MAPA_MES_NOME2NUM[mes_nome.lower()]
-#             mask = mask | ((dt.dt.year == ano) & (dt.dt.month == mes))
-#         return df.loc[mask].copy()
-#     # Alternativa: colunas 'Ano' e 'Mês/Mes'
-#     if "ano" in df_cols and (("mês" in df_cols) or ("mes" in df_cols)):
-#         col_ano = df_cols["ano"]
-#         col_mes = df_cols.get("mês", df_cols.get("mes"))
-#         tmp = df.copy()
-#         def mes_to_num(v):
-#             s = str(v).strip().lower()
-#             if s.isdigit():
-#                 n = int(float(s))
-#                 return n if 1 <= n <= 12 else None
-#             return MAPA_MES_NOME2NUM.get(s)
-#         tmp["_MesNum"] = tmp[col_mes].apply(mes_to_num)
-#         mask = pd.Series(False, index=tmp.index)
-#         for lb in labels:
-#             mes_nome, ano_str = lb.split("/")
-#             ano = int(ano_str)
-#             mes = MAPA_MES_NOME2NUM[mes_nome.lower()]
-#             mask = mask | ((tmp[col_ano].astype(int) == ano) & (tmp["_MesNum"] == mes))
-#         tmp = tmp.loc[mask].drop(columns=["_MesNum"])
-#         return tmp
-#     return df
-#
-# df_para_pdf = filtrar_df_por_labels(df_view, meses_escolhidos)
-# ----------------------------------------------------------------
-
-# Sem filtrar as linhas (mantém df_view como está)
-df_para_pdf = df_view
-
-# Gera o PDF com o título dinâmico
-pdf_bytes = gerar_pdf(df_para_pdf, mes_rateio=mes_rateio, usuario=usuario_logado)
-
-# Botão de download
 st.download_button(
     label="📄 Baixar PDF",
     data=pdf_bytes,
