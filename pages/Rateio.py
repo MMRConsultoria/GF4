@@ -486,8 +486,19 @@ def gerar_pdf(df, mes_rateio, usuario):
 
 
 # ====== Chamada no seu Streamlit ======
+# ====== Chamada no seu Streamlit ======
 usuario_logado = st.session_state.get("usuario_logado", "Usuário Desconhecido")
-pdf_bytes = gerar_pdf(df_view, mes_rateio="Agosto/2025", usuario=usuario_logado)
+
+# monta o título a partir do multiselect existente: `meses_selecionados` (ex.: "08/2025")
+sele = meses_selecionados if meses_selecionados else [datetime.today().strftime("%m/%Y")]
+if len(sele) == 1:
+    mes_rateio = sele[0]
+elif len(sele) == 2:
+    mes_rateio = f"{sele[0]} e {sele[1]}"
+else:
+    mes_rateio = f"{', '.join(sele[:-1])} e {sele[-1]}"
+
+pdf_bytes = gerar_pdf(df_view, mes_rateio=mes_rateio, usuario=usuario_logado)
 
 st.download_button(
     label="📄 Baixar PDF",
