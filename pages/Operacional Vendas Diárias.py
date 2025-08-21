@@ -298,36 +298,42 @@ with aba3:
     import numpy as np
 
 
-    # 🔧 Estilo unificado para botões (cinza claro, texto preto, menores)
+  
+    # 🔧 Botões minimalistas (bem pequenos, cinza claro, texto preto)
+    # 🔧 Botões minimalistas (bem pequenos, cinza claro, texto preto)
     def _inject_button_css():
         st.markdown("""
         <style>
-          /* Botões padrão e link_button com o mesmo visual */
-          .stButton > button, .stLinkButton > a {
-            background: #e0e0e0;   /* cinza claro */
-            color: #000 !important; /* texto preto */
-            border: none;
-            border-radius: 6px;
-            padding: 0.45em 0.7em;  /* mais compacto */
-            font-weight: 500;
-            font-size: 0.9em;       /* fonte menor */
-            width: 100%;
-            min-height: 34px;       /* altura menor */
-            box-shadow: 0 1px 3px rgba(0,0,0,.15);
-            transition: background .2s ease, transform .02s ease-in-out;
+          /* Vale para todos os botões do Streamlit */
+          div.stButton > button, div.stLinkButton > a {
+            background-color: #e0e0e0 !important;  /* cinza claro */
+            color: #000000 !important;             /* texto preto */
+            border: 1px solid #b3b3b3 !important;
+            border-radius: 4px !important;
+            padding: 0.2em 0.4em !important;       /* bem compacto */
+            font-size: 0.75em !important;          /* fonte menor */
+            font-weight: 400 !important;
+            min-height: 26px !important;           /* altura mínima */
+            height: 26px !important;
+            width: 100% !important;
+            box-shadow: none !important;           /* remove sombra */
           }
-          .stButton > button:hover, .stLinkButton > a:hover { 
-            background: #d6d6d6;   /* hover mais escuro */
+    
+          /* Hover mais escuro */
+          div.stButton > button:hover, div.stLinkButton > a:hover {
+            background-color: #d6d6d6 !important;
           }
-          .stButton > button:active, .stLinkButton > a:active { 
-            transform: translateY(1px); 
+    
+          /* Active (clicado) */
+          div.stButton > button:active, div.stLinkButton > a:active {
+            background-color: #c2c2c2 !important;
           }
     
           /* Desabilitado */
-          .stButton > button:disabled {
-            opacity: .45 !important;
+          div.stButton > button:disabled {
+            background-color: #f0f0f0 !important;
+            color: #666 !important;
             cursor: not-allowed !important;
-            box-shadow: none !important;
           }
         </style>
         """, unsafe_allow_html=True)
@@ -335,6 +341,7 @@ with aba3:
     if "css_buttons_applied" not in st.session_state:
         _inject_button_css()
         st.session_state["css_buttons_applied"] = True
+
 
 
 
@@ -395,7 +402,6 @@ with aba3:
         enviar_auto = st.button(
             "Atualizar Sheets",
             use_container_width=True,
-            type="primary",
             disabled=not has_df,
             help=None if has_df else "Carregue os dados para habilitar",
             key="btn_enviar_auto_header",
