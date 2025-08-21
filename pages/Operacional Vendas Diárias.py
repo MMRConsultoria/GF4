@@ -318,7 +318,7 @@ with aba3:
         
         if "show_manual_editor" not in st.session_state:
             st.session_state.show_manual_editor = False
-       if "manual_df" not in st.session_state:
+        if "manual_df" not in st.session_state:
             st.session_state.manual_df = pd.DataFrame({
                 "Data": [pd.NaT]*10,  # datetime
                 "Loja": ["" for _ in range(10)],  # texto
