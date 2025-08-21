@@ -593,7 +593,7 @@ with aba3:
                         dados_para_enviar = novos_dados + suspeitos_n  # se houver N, envio já está bloqueado
 
                         if len(dados_para_enviar) == 0:
-                            st.info("ℹ️ registros duplicados, nenhum enviado.")
+                            st.info("ℹ️ registros duplicados.")
                         else:
                             inicio = len(aba_destino.col_values(1)) + 1
                             aba_destino.append_rows(dados_para_enviar, value_input_option='USER_ENTERED')
