@@ -305,7 +305,27 @@ with aba3:
     from oauth2client.service_account import ServiceAccountCredentials
     import gspread
     from gspread_dataframe import get_as_dataframe
-
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
+    import requests
+    
+    def fetch_with_retry(url, connect_timeout=10, read_timeout=180, retries=3, backoff=1.5):
+        """GET com retries e timeouts separados (conexão/leitura)."""
+        s = requests.Session()
+        retry = Retry(
+            total=retries,
+            connect=retries,
+            read=retries,
+            backoff_factor=backoff,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["GET"],
+            raise_on_status=False,
+        )
+        s.mount("https://", HTTPAdapter(max_retries=retry))
+        try:
+            return s.get(url, timeout=(connect_timeout, read_timeout), headers={"Accept": "text/plain"})
+        finally:
+            s.close()
     # ---------- Estilo de botões (pequenos, cinza) ----------
     def _inject_button_css():
         st.markdown("""
@@ -410,7 +430,8 @@ with aba3:
 
     with c4:
         def pode_executar_agora():
-            return datetime.now().hour >= 10
+            return datetime.now().hour >= 10  # ajuste o horário se quiser
+    
         pode_dre = pode_executar_agora()
         atualizar_dre = st.button(
             "Atualizar DRE",
@@ -419,19 +440,31 @@ with aba3:
             help=None if pode_dre else "Disponível após as 10h",
             key="btn_atualizar_dre",
         )
-
-    if 'atualizar_dre' in locals() and atualizar_dre:
+    
+    if atualizar_dre:
+        SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-gK_KYcSyqyfimHTuXFLEDxKvWdW4k0o_kOPE-r-SWxL-SpogE2U9wiZt7qCZoH-gqQ/exec"
         try:
-            SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-gK_KYcSyqyfimHTuXFLEDxKvWdW4k0o_kOPE-r-SWxL-SpogE2U9wiZt7qCZoH-gqQ/exec"
             with st.spinner("Atualizando DRE..."):
-                resp = requests.get(SCRIPT_URL, timeout=30)
-            if resp.status_code == 200:
+                # ↑ 10s para conectar, até 180s para ler a resposta; 3 tentativas com backoff
+                resp = fetch_with_retry(SCRIPT_URL, connect_timeout=10, read_timeout=180, retries=3, backoff=1.5)
+    
+            if resp is None:
+                st.error("❌ Falha inesperada: sem resposta do servidor.")
+            elif resp.status_code == 200:
                 st.success("✅ DRE atualizada com sucesso!")
-                st.info(resp.text)
+                st.caption(resp.text[:800] if resp.text else "OK")
             else:
-                st.error(f"❌ Erro ao executar o script: {resp.status_code}")
+                st.error(f"❌ Erro HTTP {resp.status_code} ao executar o script.")
+                if resp.text:
+                    st.caption(resp.text[:800])
+    
+        except requests.exceptions.ReadTimeout:
+            st.error("❌ Tempo limite de leitura atingido (o Apps Script demorou demais). Tente novamente.")
+        except requests.exceptions.ConnectTimeout:
+            st.error("❌ Tempo limite de conexão atingido. Verifique sua rede e tente novamente.")
         except Exception as e:
             st.error(f"❌ Falha ao conectar: {e}")
+
 
     # ---------- Editor de lançamentos manuais ----------
     if st.session_state.get("show_manual_editor", False):
