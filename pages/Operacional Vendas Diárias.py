@@ -301,46 +301,61 @@ with aba3:
   
     # 🔧 Botões minimalistas (bem pequenos, cinza claro, texto preto)
     # 🔧 Botões minimalistas (bem pequenos, cinza claro, texto preto)
-    def _inject_button_css():
+    def _inject_button_css_small():
         st.markdown("""
         <style>
-          /* Vale para todos os botões do Streamlit */
-          div.stButton > button, div.stLinkButton > a {
-            background-color: #e0e0e0 !important;  /* cinza claro */
-            color: #000000 !important;             /* texto preto */
-            border: 1px solid #b3b3b3 !important;
+          /* Botões do Streamlit (várias versões) */
+          div.stButton > button,
+          div.stLinkButton > a,
+          div[data-testid="baseButton-primary"] > button,
+          div[data-testid="baseButton-secondary"] > button,
+          div[data-testid^="baseButton"] > button,
+          button[kind] {
+            background-color: #d9d9d9 !important;   /* cinza */
+            color: #000 !important;                 /* texto preto */
+            border: 1px solid #bfbfbf !important;
             border-radius: 4px !important;
-            padding: 0.2em 0.4em !important;       /* bem compacto */
-            font-size: 0.4em !important;          /* fonte menor */
+            padding: 2px 6px !important;            /* compacto */
+            font-size: 12px !important;             /* texto menor */
             font-weight: 400 !important;
-            min-height: 16px !important;           /* altura mínima */
-            height: 16px !important;
+            min-height: 24px !important;            /* altura reduzida */
+            height: 24px !important;
+            line-height: 1.1 !important;
+            box-shadow: none !important;
             width: 100% !important;
-            box-shadow: none !important;           /* remove sombra */
           }
-    
-          /* Hover mais escuro */
-          div.stButton > button:hover, div.stLinkButton > a:hover {
-            background-color: #d6d6d6 !important;
+          /* Hover/active discretos */
+          div.stButton > button:hover,
+          div.stLinkButton > a:hover,
+          div[data-testid^="baseButton"] > button:hover,
+          button[kind]:hover {
+            background-color: #cfcfcf !important;
           }
-    
-          /* Active (clicado) */
-          div.stButton > button:active, div.stLinkButton > a:active {
-            background-color: #c2c2c2 !important;
+          div.stButton > button:active,
+          div.stLinkButton > a:active,
+          div[data-testid^="baseButton"] > button:active,
+          button[kind]:active {
+            background-color: #c4c4c4 !important;
           }
-    
+          /* Link button (ancora) com mesmo tamanho */
+          div.stLinkButton > a {
+            display: block !important;
+            text-align: center !important;
+          }
           /* Desabilitado */
-          div.stButton > button:disabled {
-            background-color: #f0f0f0 !important;
+          div.stButton > button:disabled,
+          div[data-testid^="baseButton"] > button:disabled {
+            background-color: #ececec !important;
             color: #666 !important;
             cursor: not-allowed !important;
           }
         </style>
         """, unsafe_allow_html=True)
     
-    if "css_buttons_applied" not in st.session_state:
-        _inject_button_css()
-        st.session_state["css_buttons_applied"] = True
+    if "css_buttons_applied_small" not in st.session_state:
+        _inject_button_css_small()
+        st.session_state["css_buttons_applied_small"] = True
+
 
 
 
@@ -396,20 +411,13 @@ with aba3:
     # =================== HEADER (com DRE no fim) ===================
     #st.markdown("## 📤 Atualizar Google Sheets")
     
-    c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
-    
+    c1, c2, c3, c4 = st.columns([1,1,1,1], gap="small")
+
     with c1:
-        enviar_auto = st.button(
-            "Atualizar Sheets",
-            use_container_width=True,
-            disabled=not has_df,
-            help=None if has_df else "Carregue os dados para habilitar",
-            key="btn_enviar_auto_header",
-        )
+        enviar_auto = st.button("Atualizar Sheets", use_container_width=True)
     
     with c2:
-        label_toggle = "❌ Fechar lançamentos" if st.session_state.get("show_manual_editor", False) \
-                       else "Lançamentos manuais"
+        label_toggle = "Fechar lanç." if st.session_state.get("show_manual_editor", False) else "Lanç. manuais"
         if st.button(label_toggle, key="btn_toggle_manual", use_container_width=True):
             st.session_state["show_manual_editor"] = not st.session_state.get("show_manual_editor", False)
             if st.session_state["show_manual_editor"] and st.session_state.manual_df.empty:
@@ -417,34 +425,11 @@ with aba3:
             st.rerun()
     
     with c3:
-        try:
-            st.link_button("Abrir Google Sheets", LINK_SHEET, use_container_width=True)
-        except Exception:
-            st.markdown(
-                f"""
-                <a href="{LINK_SHEET}" target="_blank">
-                    <button style="width:100%;background:#1a73e8;color:#fff;border:none;
-                    padding:0.6em;border-radius:0.5em;font-weight:600;cursor:pointer;">
-                    📊 Abrir Google Sheets
-                    </button>
-                </a>
-                """,
-                unsafe_allow_html=True
-            )
+        st.link_button("Abrir Sheets", LINK_SHEET, use_container_width=True)
     
     with c4:
-        # habilita só após 10h
-        def pode_executar_agora():
-            return datetime.now().hour >= 10  # ajuste se quiser outro horário
-    
-        pode_dre = pode_executar_agora()
-        atualizar_dre = st.button(
-            "Atualizar DRE",
-            use_container_width=True,
-            disabled=not pode_dre,
-            help=None if pode_dre else "Disponível após as 10h",
-            key="btn_atualizar_dre",
-        )
+        atualizar_dre = st.button("Atualizar DRE", use_container_width=True, disabled=not pode_executar_agora())
+
     
     # handler do botão DRE (fica logo após o header)
     if 'atualizar_dre' in locals() and atualizar_dre:
