@@ -298,34 +298,38 @@ with aba3:
     import numpy as np
 
 
-    # 🔧 Estilo unificado para botões (cinza claro, texto preto, menores)
+    # 🔧 Estilo unificado para botões (menores, cinza claro, texto preto)
     def _inject_button_css():
         st.markdown("""
         <style>
-          /* Botões padrão e link_button com o mesmo visual */
+          /* Botões padrão e link_button */
           .stButton > button, .stLinkButton > a {
-            background: #e0e0e0;   /* cinza claro */
-            color: #000 !important; /* texto preto */
+            background: #e6e6e6;     /* cinza claro */
+            color: #111 !important;  /* texto preto suave */
             border: none;
-            border-radius: 6px;
-            padding: 0.45em 0.7em;  /* mais compacto */
-            font-weight: 500;
-            font-size: 0.9em;       /* fonte menor */
+            border-radius: 5px;
+            padding: 0.3em 0.6em;    /* menor espaço interno */
+            font-weight: 400;        /* mais leve */
+            font-size: 0.8em;        /* texto menor */
             width: 100%;
-            min-height: 34px;       /* altura menor */
-            box-shadow: 0 1px 3px rgba(0,0,0,.15);
+            min-height: 28px;        /* altura menor */
+            box-shadow: 0 1px 2px rgba(0,0,0,.1);
             transition: background .2s ease, transform .02s ease-in-out;
           }
+    
+          /* Hover */
           .stButton > button:hover, .stLinkButton > a:hover { 
-            background: #d6d6d6;   /* hover mais escuro */
+            background: #d9d9d9;
           }
+    
+          /* Active */
           .stButton > button:active, .stLinkButton > a:active { 
             transform: translateY(1px); 
           }
     
           /* Desabilitado */
           .stButton > button:disabled {
-            opacity: .45 !important;
+            opacity: .4 !important;
             cursor: not-allowed !important;
             box-shadow: none !important;
           }
@@ -335,6 +339,7 @@ with aba3:
     if "css_buttons_applied" not in st.session_state:
         _inject_button_css()
         st.session_state["css_buttons_applied"] = True
+
 
 
 
@@ -390,7 +395,7 @@ with aba3:
     
     with c1:
         enviar_auto = st.button(
-            "📥 Atualizar Sheets",
+            "Atualizar Sheets",
             use_container_width=True,
             type="primary",
             disabled=not has_df,
@@ -400,7 +405,7 @@ with aba3:
     
     with c2:
         label_toggle = "❌ Fechar lançamentos" if st.session_state.get("show_manual_editor", False) \
-                       else "✍️ Lançamentos manuais"
+                       else "Lançamentos manuais"
         if st.button(label_toggle, key="btn_toggle_manual", use_container_width=True):
             st.session_state["show_manual_editor"] = not st.session_state.get("show_manual_editor", False)
             if st.session_state["show_manual_editor"] and st.session_state.manual_df.empty:
@@ -409,7 +414,7 @@ with aba3:
     
     with c3:
         try:
-            st.link_button("📊 Abrir Google Sheets", LINK_SHEET, use_container_width=True)
+            st.link_button("Abrir Google Sheets", LINK_SHEET, use_container_width=True)
         except Exception:
             st.markdown(
                 f"""
@@ -430,7 +435,7 @@ with aba3:
     
         pode_dre = pode_executar_agora()
         atualizar_dre = st.button(
-            "🧾 Atualizar DRE",
+            "Atualizar DRE",
             use_container_width=True,
             disabled=not pode_dre,
             help=None if pode_dre else "Disponível após as 10h",
