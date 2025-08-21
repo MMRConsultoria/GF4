@@ -307,41 +307,50 @@ with aba3:
         df_final = st.session_state.df_final.copy()
 
 
-        # Mostra botão SEMPRE que houver dados na aba upload
-    #    if st.button("📥 Enviar dados para o Google Sheets"):
+           # === Linha superior: Link + botões lado a lado ===
         import pandas as pd
-        import streamlit as st
-        
-        # ---- colunas usadas no seu pipeline (ajuste se precisar) ----
+    
         COLS_OBRIG = [
-            "Data", "Loja",
-            "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket",
+            "Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket",
             "Código Everest", "Código Grupo Everest"
         ]
-        
-        # ---- estado ----
+    
         if "show_manual_editor" not in st.session_state:
             st.session_state.show_manual_editor = False
         if "manual_df" not in st.session_state:
             st.session_state.manual_df = pd.DataFrame(columns=COLS_OBRIG)
-        
-        # ---- botões lado a lado ----
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            enviar = st.button("📥 Enviar dados para o Google Sheets", key="btn_enviar")
-        with col2:
-            abrir_editor = st.button("✍️ Lançar manualmente", key="btn_abrir_editor")
-        
-        # Ao clicar para abrir o editor, pré-carrega 10 linhas vazias (apenas 1ª vez)
+    
+        col_link, col_enviar, col_manual = st.columns([3, 1.2, 1.2])
+        with col_link:
+            st.markdown(
+                "🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing)",
+                unsafe_allow_html=True
+            )
+    
+        has_df = ('df_final' in st.session_state and
+                  isinstance(st.session_state.df_final, pd.DataFrame) and
+                  not st.session_state.df_final.empty)
+    
+        with col_enviar:
+            enviar = st.button("📥 Enviar p/ Sheets", key="btn_enviar",
+                               use_container_width=True, disabled=not has_df,
+                               help=None if has_df else "Carregue os dados para habilitar")
+    
+        with col_manual:
+            abrir_editor = st.button("✍️ Lançar manualmente", key="btn_abrir_editor",
+                                     use_container_width=True)
+    
+        # Ao abrir o editor: pré-carrega 10 linhas vazias (só na 1ª vez ou se estiver vazio)
         if abrir_editor:
             st.session_state.show_manual_editor = True
             if st.session_state.manual_df.empty:
                 st.session_state.manual_df = pd.DataFrame([{c: "" for c in COLS_OBRIG} for _ in range(10)])
-        
-        # Editor de lançamentos manuais
+    
+        # Helper p/ limpar linhas totalmente vazias
         def drop_empty_rows(df: pd.DataFrame) -> pd.DataFrame:
             return df.replace("", pd.NA).dropna(how="all").fillna("")
-        
+    
+        # Editor + botões Salvar/Fechar
         if st.session_state.show_manual_editor:
             st.subheader("✍️ Lançamentos manuais")
             edited_df = st.data_editor(
@@ -359,55 +368,32 @@ with aba3:
                 },
                 key="editor_manual",
             )
-        
-            c1, c2, c3 = st.columns([1, 1, 3])
+    
+            c1, c2, _ = st.columns([1, 1, 3])
             with c1:
                 salvar = st.button("💾 Salvar lançamentos", key="btn_salvar_manual")
             with c2:
                 fechar = st.button("❌ Fechar", key="btn_fechar_manual")
-        
+    
             if salvar:
                 st.session_state.manual_df = drop_empty_rows(edited_df)
                 st.success(f"✅ {len(st.session_state.manual_df)} linha(s) manual(is) salva(s).")
             if fechar:
                 st.session_state.show_manual_editor = False
-        
-        # Badge informativa
+    
+        # Info: quantos lançamentos manuais salvos (mostra sempre)
         if not st.session_state.manual_df.empty:
             st.info(f"🔹 {len(st.session_state.manual_df)} lançamento(s) manual(is) salvos. Eles serão enviados junto com os importados.")
-        
-        # ===================== ENVIAR (substitui seu if st.button(...)) =====================
-        if enviar:
-            # 1) pegue o df_final atual
-            if 'df_final' in st.session_state:
-                df_final = st.session_state.df_final.copy()
-            else:
-                st.error("Não há dados carregados na aba de upload.")
-                st.stop()
-        
-            # 2) junte os manuais ANTES do seu pipeline de normalização/deduplicação
-            if not st.session_state.manual_df.empty:
-                # concatena colunas conhecidas; o restante do seu pipeline (conversões, M/N etc.) permanece igual
-                df_final = pd.concat([df_final, st.session_state.manual_df], ignore_index=True)
-        
-            # 3) daqui para baixo, continue com o SEU código atual do envio:
-            #    - spinner
-            #    - checagem 'lojas_nao_cadastradas'
-            #    - criação/conversão de colunas (Data, números, Ano etc.)
-            #    - montagem de M e N
-            #    - leitura do Sheets e dedupe
-            #    - envio com append_rows + formatação (como ajustamos)
-            #
-            # EXEMPLO de chamada que você já tem (não repito tudo aqui):
-            # with st.spinner("🔄 Processando dados e verificando duplicidades..."):
-            #     <SEU CÓDIGO ATUAL> 
-            #     inicio = len(aba_destino.col_values(1)) + 1
-            #     aba_destino.append_rows(dados_para_enviar, value_input_option='USER_ENTERED')
-            #     fim = inicio + len(dados_para_enviar) - 1
-            #     ... format_cell_range(...)
-
     
-
+        # ===== Disparo do envio =====
+        if enviar:
+            # pegue o df_final atual
+            df_final = st.session_state.df_final.copy()
+    
+            # junte os manuais ANTES do seu pipeline (normalização/dedupe M/N)
+            if not st.session_state.manual_df.empty:
+                df_final = pd.concat([df_final, st.session_state.manual_df], ignore_index=True)
+    
             with st.spinner("🔄 Processando dados e verificando duplicidades..."):
 
             # Verifica se há lojas sem código Everest
