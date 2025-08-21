@@ -294,18 +294,20 @@ with aba1:
 # =======================================
 
 with aba3:
-        
     # 🔗 Link sempre visível
     st.markdown("""
       🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing)
     """, unsafe_allow_html=True)
-       
- 
-    #st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
 
-    if 'df_final' in st.session_state:
+    # >>> Fechar o editor manual sempre que entrar nesta aba
+    if st.session_state.get("_last_tab") != "atualizar_google_sheets":
+        st.session_state["show_manual_editor"] = False
+    st.session_state["_last_tab"] = "atualizar_google_sheets"
+
+    # st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
+
+    if "df_final" in st.session_state:
         df_final = st.session_state.df_final.copy()
-
 
         # ========= Cabeçalho + controles =========
         import pandas as pd
