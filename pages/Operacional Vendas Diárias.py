@@ -309,78 +309,80 @@ with aba3:
 
         import pandas as pd
         import numpy as np
-        
+    
+        # --- colunas e estados ---
         COLS_OBRIG = [
             "Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket",
             "Código Everest", "Código Grupo Everest"
         ]
-        
-        # --- estado: cria com dtypes corretos ---
+    
         if "show_manual_editor" not in st.session_state:
             st.session_state.show_manual_editor = False
-        
+    
+        # DataFrame manual começa VAZIO (com dtypes corretos) -> nada aparece até clicar
         if "manual_df" not in st.session_state:
             st.session_state.manual_df = pd.DataFrame({
-                "Data": pd.Series([pd.NaT]*10, dtype="datetime64[ns]"),
-                "Loja": pd.Series([""]*10, dtype="object"),
-                "Fat.Total": pd.Series([np.nan]*10, dtype="float"),
-                "Serv/Tx": pd.Series([np.nan]*10, dtype="float"),
-                "Fat.Real": pd.Series([np.nan]*10, dtype="float"),
-                "Ticket": pd.Series([np.nan]*10, dtype="float"),
-                "Código Everest": pd.Series([np.nan]*10, dtype="float"),
-                "Código Grupo Everest": pd.Series([np.nan]*10, dtype="float"),
+                "Data": pd.Series(dtype="datetime64[ns]"),
+                "Loja": pd.Series(dtype="object"),
+                "Fat.Total": pd.Series(dtype="float"),
+                "Serv/Tx": pd.Series(dtype="float"),
+                "Fat.Real": pd.Series(dtype="float"),
+                "Ticket": pd.Series(dtype="float"),
+                "Código Everest": pd.Series(dtype="float"),
+                "Código Grupo Everest": pd.Series(dtype="float"),
             })
-        
-        # --- botões ---
-        col_link, col_enviar, col_manual = st.columns([3, 1.2, 1.2])
+    
+        # helper: gera template com 10 linhas e dtypes corretos (usado só quando abrir)
+        def template_manuais(n: int = 10) -> pd.DataFrame:
+            return pd.DataFrame({
+                "Data": pd.Series([pd.NaT]*n, dtype="datetime64[ns]"),
+                "Loja": pd.Series([""]*n, dtype="object"),
+                "Fat.Total": pd.Series([np.nan]*n, dtype="float"),
+                "Serv/Tx": pd.Series([np.nan]*n, dtype="float"),
+                "Fat.Real": pd.Series([np.nan]*n, dtype="float"),
+                "Ticket": pd.Series([np.nan]*n, dtype="float"),
+                "Código Everest": pd.Series([np.nan]*n, dtype="float"),
+                "Código Grupo Everest": pd.Series([np.nan]*n, dtype="float"),
+            })
+    
+        # --- cabeçalho com link + botões lado a lado ---
+        col_link, col_enviar, col_manual = st.columns([3, 1.2, 1.6])
         with col_link:
             st.markdown(
                 "🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing)",
                 unsafe_allow_html=True
             )
-        
+    
         has_df = ('df_final' in st.session_state and
                   isinstance(st.session_state.df_final, pd.DataFrame) and
                   not st.session_state.df_final.empty)
-        
+    
         with col_enviar:
             enviar = st.button("📥 Enviar p/ Sheets", key="btn_enviar",
                                use_container_width=True, disabled=not has_df,
                                help=None if has_df else "Carregue os dados para habilitar")
-        
+    
         with col_manual:
-            abrir_editor = st.button("✍️ Lançar manualmente", key="btn_abrir_editor",
-                                     use_container_width=True)
-        
-        # --- ao abrir, pré-carrega 10 linhas com dtypes corretos ---
-        if abrir_editor:
-            st.session_state.show_manual_editor = True
-            if st.session_state.manual_df.empty:
-                st.session_state.manual_df = pd.DataFrame({
-                    "Data": pd.Series([pd.NaT]*10, dtype="datetime64[ns]"),
-                    "Loja": pd.Series([""]*10, dtype="object"),
-                    "Fat.Total": pd.Series([np.nan]*10, dtype="float"),
-                    "Serv/Tx": pd.Series([np.nan]*10, dtype="float"),
-                    "Fat.Real": pd.Series([np.nan]*10, dtype="float"),
-                    "Ticket": pd.Series([np.nan]*10, dtype="float"),
-                    "Código Everest": pd.Series([np.nan]*10, dtype="float"),
-                    "Código Grupo Everest": pd.Series([np.nan]*10, dtype="float"),
-                })
-        
-        # --- helper p/ limpar linhas totalmente vazias ---
+            if st.button("✍️ Lançar manualmente", key="btn_abrir_editor", use_container_width=True):
+                st.session_state.show_manual_editor = True
+                # só agora preenche 10 linhas, se ainda estiver vazio
+                if st.session_state.manual_df.empty:
+                    st.session_state.manual_df = template_manuais(10)
+    
+        # helper para limpar linhas totalmente vazias
         def drop_empty_rows(df: pd.DataFrame) -> pd.DataFrame:
             return df.replace("", pd.NA).dropna(how="all").fillna("")
-        
-        # --- EDITOR ---
+    
+        # --- EDITOR SÓ APARECE SE CLICAR NO BOTÃO ---
         if st.session_state.show_manual_editor:
             st.subheader("✍️ Lançamentos manuais")
-        
-            # Garante dtypes ANTES de passar ao editor (proteção extra)
+    
+            # garante dtypes antes do editor (proteção extra)
             df_disp = st.session_state.manual_df.copy()
             df_disp["Data"] = pd.to_datetime(df_disp["Data"], errors="coerce")
             for cnum in ["Fat.Total", "Serv/Tx", "Fat.Real", "Ticket", "Código Everest", "Código Grupo Everest"]:
                 df_disp[cnum] = pd.to_numeric(df_disp[cnum], errors="coerce")
-        
+    
             edited_df = st.data_editor(
                 df_disp,
                 num_rows="dynamic",
@@ -396,32 +398,30 @@ with aba3:
                 },
                 key="editor_manual",
             )
-        
+    
             c1, c2, _ = st.columns([1, 1, 3])
             with c1:
                 salvar = st.button("💾 Salvar lançamentos", key="btn_salvar_manual")
             with c2:
                 fechar = st.button("❌ Fechar", key="btn_fechar_manual")
-        
+    
             if salvar:
                 st.session_state.manual_df = drop_empty_rows(edited_df)
                 st.success(f"✅ {len(st.session_state.manual_df)} linha(s) manual(is) salva(s).")
             if fechar:
                 st.session_state.show_manual_editor = False
-
     
-        # Info: quantos lançamentos manuais salvos (mostra sempre)
+        # badge informativa (mostra só se houver algo salvo)
         if not st.session_state.manual_df.empty:
             st.info(f"🔹 {len(st.session_state.manual_df)} lançamento(s) manual(is) salvos. Eles serão enviados junto com os importados.")
     
-        # ===== Disparo do envio =====
+        # --- disparo do envio (seu pipeline continua depois daqui) ---
         if enviar:
-            # pegue o df_final atual
             df_final = st.session_state.df_final.copy()
-    
-            # junte os manuais ANTES do seu pipeline (normalização/dedupe M/N)
             if not st.session_state.manual_df.empty:
                 df_final = pd.concat([df_final, st.session_state.manual_df], ignore_index=True)
+            # segue com seu with st.spinner(...), dedupe M/N, append_rows etc.
+
     
             with st.spinner("🔄 Processando dados e verificando duplicidades..."):
 
