@@ -309,16 +309,28 @@ with aba3:
 
            # === Linha superior: Link + botões lado a lado ===
         import pandas as pd
-    
+        import numpy as np
+        
         COLS_OBRIG = [
             "Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket",
             "Código Everest", "Código Grupo Everest"
         ]
-    
+        
         if "show_manual_editor" not in st.session_state:
             st.session_state.show_manual_editor = False
         if "manual_df" not in st.session_state:
-            st.session_state.manual_df = pd.DataFrame(columns=COLS_OBRIG)
+            # inicializa com tipos corretos
+            st.session_state.manual_df = pd.DataFrame({
+                "Data": [pd.NaT]*10,
+                "Loja": ["" for _ in range(10)],
+                "Fat.Total": [np.nan]*10,
+                "Serv/Tx": [np.nan]*10,
+                "Fat.Real": [np.nan]*10,
+                "Ticket": [np.nan]*10,
+                "Código Everest": [np.nan]*10,
+                "Código Grupo Everest": [np.nan]*10,
+            })
+
     
         col_link, col_enviar, col_manual = st.columns([3, 1.2, 1.2])
         with col_link:
