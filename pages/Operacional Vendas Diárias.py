@@ -673,108 +673,61 @@ with aba3:
                     else:
                         duplicados.append(linha)  # ❌ Duplicado pela M
 
-                # ==================================================
-                # ✅ Mostra alerta para duplicidade pela coluna N
-                # ==================================================
-                pode_enviar = True  # Variável de controle
-
-               
-                # ================================
-                # 🚨 Verifica duplicidade pela coluna N
-                # ================================
-                if suspeitos_n:
-                    st.warning("❌ Existem registros possivelmente duplicados. Corrija antes de continuar.")
-                    
-                    df_exibir = pd.DataFrame(suspeitos_n, columns=colunas_df).copy()
-                
-                    # 🗓️ Converte o número serial para data legível (sem alterar o original)
-                    df_exibir["Data"] = pd.to_datetime(df_exibir["Data"], origin="1899-12-30", unit="D").dt.strftime("%d/%m/%Y")
-                
-                    # 📊 Exibe a tabela com a data formatada
-                    st.dataframe(df_exibir, use_container_width=True)
-                
-                    pode_enviar = False
-                else:
-                    pode_enviar = True
-
-                    
-
-
-                # ======= RESUMO E ALERTAS (igual ao antigo, mas com contadores) =======
-                total_novos = len(novos_dados)
-                total_dup_m = len(duplicados)
+               # ===================== Mostra alerta / Resumo / Envio =====================
+                total_novos       = len(novos_dados)
+                total_dup_m       = len(duplicados)
                 total_suspeitos_n = len(suspeitos_n)
                 
-                st.info(
-                    #f"📊 Resumo — **Enviar**: {total_novos} · "
-                    f"**Duplicados**: {total_dup_m} · "
-                    f"**Possíveis**: {total_suspeitos_n}"
-                )
+                # Resumo
+                st.info(f"📊 Resumo — Enviar: {total_novos} · Duplicados (M): {total_dup_m} · Possíveis (N): {total_suspeitos_n}")
                 
+                # Duplicados por M (somente contagem)
                 if total_dup_m > 0:
-                    st.warning(f"❌ {total_dup_m} registro(s) já existem duplicados por e não serão enviados**.")
+                    st.warning(f"❌ {total_dup_m} registro(s) já existem (duplicados por M) e não serão enviados.")
                 
-                # Mantém a regra antiga: se houver suspeitos por N, bloqueia envio e mostra a tabela
-                pode_enviar = True
+                # Possíveis duplicados por N (lista apenas uma vez)
                 if total_suspeitos_n > 0:
-                    st.warning("⚠️ Existem registros possivelmente duplicados (chave **N**). Revise antes de enviar.")
+                    st.warning("⚠️ Existem registros possivelmente duplicados (chave N). Revise antes de enviar.")
                     df_exibir = pd.DataFrame(suspeitos_n, columns=colunas_df).copy()
                     if "Data" in df_exibir.columns:
                         df_exibir["Data"] = pd.to_datetime(
                             df_exibir["Data"], origin="1899-12-30", unit="D", errors="coerce"
                         ).dt.strftime("%d/%m/%Y")
                     st.dataframe(df_exibir, use_container_width=True)
-                    pode_enviar = False
                 
-                # ======= ENVIO (igual ao antigo, mas protegido) =======
-                # Na prática, só os 'novos_dados' serão enviados (suspeitos N bloqueiam envio)
-                dados_para_enviar = novos_dados  # mantém a mesma ideia do antigo, mas sem riscos
+                # Regras para enviar (iguais ao comportamento antigo)
+                pode_enviar = (total_suspeitos_n == 0) and todas_lojas_ok and (total_novos > 0)
                 
-                if todas_lojas_ok and pode_enviar and len(dados_para_enviar) > 0:
+                # Só os NOVOS vão para o Sheets
+                dados_para_enviar = novos_dados
+                
+                if pode_enviar:
                     try:
-                        # primeira linha livre
                         inicio = len(aba_destino.col_values(1)) + 1
-                        aba_destino.append_rows(dados_para_enviar, value_input_option='USER_ENTERED')
+                        aba_destino.append_rows(dados_para_enviar, value_input_option="USER_ENTERED")
                         fim = inicio + len(dados_para_enviar) - 1
                 
-                        # formatação apenas se intervalo válido
+                        # Formatação, se houver linhas
                         if inicio <= fim:
                             from gspread_formatting import CellFormat, NumberFormat, format_cell_range
-                            data_format = CellFormat(numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy'))
-                            numero_format = CellFormat(numberFormat=NumberFormat(type='NUMBER', pattern='0'))
-                
+                            data_format  = CellFormat(numberFormat=NumberFormat(type="DATE",   pattern="dd/mm/yyyy"))
+                            numero_format= CellFormat(numberFormat=NumberFormat(type="NUMBER", pattern="0"))
                             format_cell_range(aba_destino, f"A{inicio}:A{fim}", data_format)
                             format_cell_range(aba_destino, f"L{inicio}:L{fim}", numero_format)
                             format_cell_range(aba_destino, f"D{inicio}:D{fim}", numero_format)
                             format_cell_range(aba_destino, f"F{inicio}:F{fim}", numero_format)
                 
-                        # ✅ Mensagem no formato que você quer
-                        st.success(
-                            f"✅ **{total_novos}** registro(s) enviados. "
-                            f"❌ **{total_dup_m}** registro(s) não enviados por duplicidade (M)."
-                        )
+                        # Mensagem no formato que você quer
+                        st.success(f"✅ {total_novos} enviado(s). ❌ {total_dup_m} não enviado(s) por duplicidade (M).")
                     except Exception as e:
                         st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
                 else:
-                    # Não enviou — mas mostra balanço do mesmo jeito que o antigo
                     if not todas_lojas_ok:
-                        st.error("🚫 Há lojas sem **Código Everest** cadastradas. Corrija e tente novamente.")
-                    elif total_suspeitos_n > 0:
-                        st.warning(
-                            f"⛔ Envio bloqueado por **{total_suspeitos_n}** possível(is) duplicidade(s) (N). "
-                            f"**0 enviados** · ❌ **{total_dup_m}** não enviados por duplicidade (M)."
-                        )
-                    elif len(dados_para_enviar) == 0:
-                        # caso clássico: só tinha duplicados M
-                        st.info(
-                            f"ℹ️ **0 enviados**. "
-                            f"❌ **{total_dup_m}** registro(s) não enviados por duplicidade (M)."
-                        )
-                    else:
-                        st.info("ℹ️ Nada a enviar no momento.")
-
-
-       
+                        st.error("🚫 Há lojas sem Código Everest cadastradas. Corrija e ten
+                
+                
+                
+                       
 
         
         
