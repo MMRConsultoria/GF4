@@ -309,6 +309,88 @@ with aba3:
 
         # Mostra botão SEMPRE que houver dados na aba upload
         if st.button("📥 Enviar dados para o Google Sheets"):
+        import pandas as pd
+        import streamlit as st
+        
+        # ---- colunas usadas no seu pipeline (ajuste se precisar) ----
+        COLS_OBRIG = [
+            "Data", "Loja",
+            "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket",
+            "Código Everest", "Código Grupo Everest"
+        ]
+        
+        # ---- estado ----
+        if "show_manual_editor" not in st.session_state:
+            st.session_state.show_manual_editor = False
+        if "manual_df" not in st.session_state:
+            st.session_state.manual_df = pd.DataFrame(columns=COLS_OBRIG)
+        
+        # ---- botões lado a lado ----
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            enviar = st.button("📥 Enviar dados para o Google Sheets", key="btn_enviar")
+        with col2:
+            abrir_editor = st.button("✍️ Lançar manualmente", key="btn_abrir_editor")
+        
+        # Ao clicar para abrir o editor, pré-carrega 10 linhas vazias (apenas 1ª vez)
+        if abrir_editor:
+            st.session_state.show_manual_editor = True
+            if st.session_state.manual_df.empty:
+                st.session_state.manual_df = pd.DataFrame([{c: "" for c in COLS_OBRIG} for _ in range(10)])
+        
+        # Editor de lançamentos manuais
+        def drop_empty_rows(df: pd.DataFrame) -> pd.DataFrame:
+            return df.replace("", pd.NA).dropna(how="all").fillna("")
+        
+        if st.session_state.show_manual_editor:
+            st.subheader("✍️ Lançamentos manuais")
+            edited_df = st.data_editor(
+                st.session_state.manual_df,
+                num_rows="dynamic",
+                use_container_width=True,
+                column_config={
+                    "Data": st.column_config.DateColumn(format="DD/MM/YYYY"),
+                    "Fat.Total": st.column_config.NumberColumn(step=0.01),
+                    "Serv/Tx": st.column_config.NumberColumn(step=0.01),
+                    "Fat.Real": st.column_config.NumberColumn(step=0.01),
+                    "Ticket": st.column_config.NumberColumn(step=0.01),
+                    "Código Everest": st.column_config.NumberColumn(step=1),
+                    "Código Grupo Everest": st.column_config.NumberColumn(step=1),
+                },
+                key="editor_manual",
+            )
+        
+            c1, c2, c3 = st.columns([1, 1, 3])
+            with c1:
+                salvar = st.button("💾 Salvar lançamentos", key="btn_salvar_manual")
+            with c2:
+                fechar = st.button("❌ Fechar", key="btn_fechar_manual")
+        
+            if salvar:
+                st.session_state.manual_df = drop_empty_rows(edited_df)
+                st.success(f"✅ {len(st.session_state.manual_df)} linha(s) manual(is) salva(s).")
+            if fechar:
+                st.session_state.show_manual_editor = False
+        
+        # Badge informativa
+        if not st.session_state.manual_df.empty:
+            st.info(f"🔹 {len(st.session_state.manual_df)} lançamento(s) manual(is) salvos. Eles serão enviados junto com os importados.")
+        
+        # ===================== ENVIAR (substitui seu if st.button(...)) =====================
+        if enviar:
+            # 1) pegue o df_final atual
+            if 'df_final' in st.session_state:
+                df_final = st.session_state.df_final.copy()
+            else:
+                st.error("Não há dados carregados na aba de upload.")
+                st.stop()
+        
+            # 2) junte os manuais ANTES do seu pipeline de normalização/deduplicação
+            if not st.session_state.manual_df.empty:
+                # concatena colunas conhecidas; o restante do seu pipeline (conversões, M/N etc.) permanece igual
+                df_final = pd.concat([df_final, st.session_state.manual_df], ignore_index=True)
+        
+           
 
             with st.spinner("🔄 Processando dados e verificando duplicidades..."):
 
