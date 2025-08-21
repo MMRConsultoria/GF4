@@ -428,13 +428,12 @@ with aba3:
 
     # =================== ENVIO AUTOMÁTICO ===================
     if enviar_auto:
-        df_final = st.session_state.df_final.copy()
-        # >>> cole aqui o SEU pipeline de envio (spinner, dedupe M/N, append_rows, formatação etc.)
+        # garanta que há dados
+        if 'df_final' not in st.session_state or st.session_state.df_final.empty:
+            st.error("Não há dados para enviar.")
+        else:
+            df_final = st.session_state.df_final.copy()
 
-
-
-
-    
             with st.spinner("🔄 Processando dados e verificando duplicidades..."):
 
             # Verifica se há lojas sem código Everest
