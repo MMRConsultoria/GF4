@@ -298,36 +298,44 @@ with aba3:
     import numpy as np
 
 
-    # 🔧 Estilo unificado para botões (aplique 1x no app)
-    st.markdown("""
-    <style>
-    /* Botões padrão e link_button com o mesmo visual */
-    .stButton > button, .stLinkButton > a {
-      background: #1a73e8;     /* cor única */
-      color: #fff !important;
-      border: none;
-      border-radius: 10px;
-      padding: 0.70em 0.9em;
-      font-weight: 700;
-      width: 100%;
-      box-shadow: 0 2px 10px rgba(26,115,232,.25);
-      transition: transform .02s ease-in-out, opacity .2s ease;
-    }
-    .stButton > button:hover, .stLinkButton > a:hover { opacity: .92; }
-    .stButton > button:active, .stLinkButton > a:active { transform: translateY(1px); }
+    # 🔧 Estilo unificado para botões (cinza claro, texto preto, menores)
+    def _inject_button_css():
+        st.markdown("""
+        <style>
+          /* Botões padrão e link_button com o mesmo visual */
+          .stButton > button, .stLinkButton > a {
+            background: #e0e0e0;   /* cinza claro */
+            color: #000 !important; /* texto preto */
+            border: none;
+            border-radius: 6px;
+            padding: 0.45em 0.7em;  /* mais compacto */
+            font-weight: 500;
+            font-size: 0.9em;       /* fonte menor */
+            width: 100%;
+            min-height: 34px;       /* altura menor */
+            box-shadow: 0 1px 3px rgba(0,0,0,.15);
+            transition: background .2s ease, transform .02s ease-in-out;
+          }
+          .stButton > button:hover, .stLinkButton > a:hover { 
+            background: #d6d6d6;   /* hover mais escuro */
+          }
+          .stButton > button:active, .stLinkButton > a:active { 
+            transform: translateY(1px); 
+          }
     
-    /* Desabilitado */
-    button[kind="secondary"] div:has(> button[disabled]) button,
-    .stButton > button:disabled {
-      opacity: .45 !important;
-      cursor: not-allowed !important;
-      box-shadow: none !important;
-    }
+          /* Desabilitado */
+          .stButton > button:disabled {
+            opacity: .45 !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+          }
+        </style>
+        """, unsafe_allow_html=True)
     
-    /* Deixa os botões alinhados na mesma altura */
-    .stButton > button, .stLinkButton > a { min-height: 44px; }
-    </style>
-    """, unsafe_allow_html=True)
+    if "css_buttons_applied" not in st.session_state:
+        _inject_button_css()
+        st.session_state["css_buttons_applied"] = True
+
 
 
     # --- reset do painel manual ao entrar nesta aba ---
