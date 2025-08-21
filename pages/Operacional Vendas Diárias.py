@@ -308,7 +308,7 @@ with aba3:
 
 
         # Mostra botão SEMPRE que houver dados na aba upload
-        if st.button("📥 Enviar dados para o Google Sheets"):
+       ' if st.button("📥 Enviar dados para o Google Sheets"):
         import pandas as pd
         import streamlit as st
         
