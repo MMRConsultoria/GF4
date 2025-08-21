@@ -343,13 +343,13 @@ with aba3:
     import requests
     
     # =================== HEADER (com DRE no fim) ===================
-    st.markdown("## 📤 Atualizar Google Sheets")
+    #st.markdown("## 📤 Atualizar Google Sheets")
     
     c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
     
     with c1:
         enviar_auto = st.button(
-            "📥 Enviar p/ Sheets",
+            "📥 Atualizar Sheets",
             use_container_width=True,
             type="primary",
             disabled=not has_df,
