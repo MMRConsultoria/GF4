@@ -339,10 +339,14 @@ with aba3:
               not st.session_state.df_final.empty)
 
     # =================== HEADER (único) ===================
+    from datetime import datetime
+    import requests
+    
+    # =================== HEADER (com DRE no fim) ===================
     st.markdown("## 📤 Atualizar Google Sheets")
-
-    c1, c2, c3 = st.columns([1, 1, 1])
-
+    
+    c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
+    
     with c1:
         enviar_auto = st.button(
             "📥 Enviar p/ Sheets",
@@ -352,7 +356,7 @@ with aba3:
             help=None if has_df else "Carregue os dados para habilitar",
             key="btn_enviar_auto_header",
         )
-
+    
     with c2:
         label_toggle = "❌ Fechar lançamentos" if st.session_state.get("show_manual_editor", False) \
                        else "✍️ Lançamentos manuais"
@@ -361,7 +365,7 @@ with aba3:
             if st.session_state["show_manual_editor"] and st.session_state.manual_df.empty:
                 st.session_state.manual_df = template_manuais(10)
             st.rerun()
-
+    
     with c3:
         try:
             st.link_button("📊 Abrir Google Sheets", LINK_SHEET, use_container_width=True)
@@ -377,6 +381,35 @@ with aba3:
                 """,
                 unsafe_allow_html=True
             )
+    
+    with c4:
+        # habilita só após 10h
+        def pode_executar_agora():
+            return datetime.now().hour >= 10  # ajuste se quiser outro horário
+    
+        pode_dre = pode_executar_agora()
+        atualizar_dre = st.button(
+            "🧾 Atualizar DRE",
+            use_container_width=True,
+            disabled=not pode_dre,
+            help=None if pode_dre else "Disponível após as 10h",
+            key="btn_atualizar_dre",
+        )
+    
+    # handler do botão DRE (fica logo após o header)
+    if 'atualizar_dre' in locals() and atualizar_dre:
+        try:
+            SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-gK_KYcSyqyfimHTuXFLEDxKvWdW4k0o_kOPE-r-SWxL-SpogE2U9wiZt7qCZoH-gqQ/exec"
+            with st.spinner("Atualizando DRE..."):
+                resp = requests.get(SCRIPT_URL, timeout=30)
+            if resp.status_code == 200:
+                st.success("✅ DRE atualizada com sucesso!")
+                st.info(resp.text)
+            else:
+                st.error(f"❌ Erro ao executar o script: {resp.status_code}")
+        except Exception as e:
+            st.error(f"❌ Falha ao conectar: {e}")
+
 
     # =============== EDITOR MANUAL (só se aberto) ===============
     if st.session_state.get("show_manual_editor", False):
