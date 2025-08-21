@@ -318,17 +318,16 @@ with aba3:
         
         if "show_manual_editor" not in st.session_state:
             st.session_state.show_manual_editor = False
-        if "manual_df" not in st.session_state:
-            # inicializa com tipos corretos
+       if "manual_df" not in st.session_state:
             st.session_state.manual_df = pd.DataFrame({
-                "Data": [pd.NaT]*10,
-                "Loja": ["" for _ in range(10)],
-                "Fat.Total": [np.nan]*10,
-                "Serv/Tx": [np.nan]*10,
-                "Fat.Real": [np.nan]*10,
-                "Ticket": [np.nan]*10,
-                "Código Everest": [np.nan]*10,
-                "Código Grupo Everest": [np.nan]*10,
+                "Data": [pd.NaT]*10,  # datetime
+                "Loja": ["" for _ in range(10)],  # texto
+                "Fat.Total": [np.nan]*10,  # float
+                "Serv/Tx": [np.nan]*10,    # float
+                "Fat.Real": [np.nan]*10,   # float
+                "Ticket": [np.nan]*10,     # float
+                "Código Everest": [np.nan]*10,  # float/int
+                "Código Grupo Everest": [np.nan]*10,  # float/int
             })
 
     
@@ -356,7 +355,16 @@ with aba3:
         if abrir_editor:
             st.session_state.show_manual_editor = True
             if st.session_state.manual_df.empty:
-                st.session_state.manual_df = pd.DataFrame([{c: "" for c in COLS_OBRIG} for _ in range(10)])
+                st.session_state.manual_df = pd.DataFrame({
+                    "Data": [pd.NaT]*10,
+                    "Loja": ["" for _ in range(10)],
+                    "Fat.Total": [np.nan]*10,
+                    "Serv/Tx": [np.nan]*10,
+                    "Fat.Real": [np.nan]*10,
+                    "Ticket": [np.nan]*10,
+                    "Código Everest": [np.nan]*10,
+                    "Código Grupo Everest": [np.nan]*10,
+                })
     
         # Helper p/ limpar linhas totalmente vazias
         def drop_empty_rows(df: pd.DataFrame) -> pd.DataFrame:
