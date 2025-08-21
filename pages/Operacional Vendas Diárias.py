@@ -298,34 +298,36 @@ with aba3:
     import numpy as np
 
 
-    # 🔧 Botões minimalistas (pequenos, cinza, texto preto)
+    # 🔧 Estilo unificado para botões (cinza claro, texto preto, menores)
     def _inject_button_css():
         st.markdown("""
         <style>
+          /* Botões padrão e link_button com o mesmo visual */
           .stButton > button, .stLinkButton > a {
-            background: #cccccc;     /* cinza médio */
-            color: #000000 !important; /* texto preto */
-            border: 1px solid #b3b3b3;
-            border-radius: 3px;
-            padding: 0.2em 0.4em;    /* bem compacto */
-            font-size: 0.75em;       /* menor ainda */
-            font-weight: 400;
+            background: #e0e0e0;   /* cinza claro */
+            color: #000 !important; /* texto preto */
+            border: none;
+            border-radius: 6px;
+            padding: 0.45em 0.7em;  /* mais compacto */
+            font-weight: 500;
+            font-size: 0.9em;       /* fonte menor */
             width: 100%;
-            min-height: 24px;        /* altura reduzida */
+            min-height: 34px;       /* altura menor */
+            box-shadow: 0 1px 3px rgba(0,0,0,.15);
+            transition: background .2s ease, transform .02s ease-in-out;
           }
-    
           .stButton > button:hover, .stLinkButton > a:hover { 
-            background: #bfbfbf;     /* hover só um pouco mais escuro */
+            background: #d6d6d6;   /* hover mais escuro */
           }
-    
           .stButton > button:active, .stLinkButton > a:active { 
-            background: #a6a6a6;     /* clique mais escuro */
+            transform: translateY(1px); 
           }
     
+          /* Desabilitado */
           .stButton > button:disabled {
-            background: #e6e6e6 !important;
-            color: #666 !important;
+            opacity: .45 !important;
             cursor: not-allowed !important;
+            box-shadow: none !important;
           }
         </style>
         """, unsafe_allow_html=True)
@@ -333,6 +335,7 @@ with aba3:
     if "css_buttons_applied" not in st.session_state:
         _inject_button_css()
         st.session_state["css_buttons_applied"] = True
+
 
 
 
