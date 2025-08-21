@@ -700,10 +700,35 @@ with aba3:
                     
 
 
-                # =============================================
-                # 🟢 Envio protegido
-                # =============================================
-                dados_para_enviar = novos_dados + suspeitos_n  # se houver suspeitos, pode_enviar deve estar False
+                # ======= RESUMO E ALERTAS (igual ao antigo, mas com contadores) =======
+                total_novos = len(novos_dados)
+                total_dup_m = len(duplicados)
+                total_suspeitos_n = len(suspeitos_n)
+                
+                st.info(
+                    f"📊 Resumo — **Enviar**: {total_novos} · "
+                    f"**Duplicados (M)**: {total_dup_m} · "
+                    f"**Possíveis (N)**: {total_suspeitos_n}"
+                )
+                
+                if total_dup_m > 0:
+                    st.warning(f"❌ {total_dup_m} registro(s) já existem (duplicados por **M**) e **não serão enviados**.")
+                
+                # Mantém a regra antiga: se houver suspeitos por N, bloqueia envio e mostra a tabela
+                pode_enviar = True
+                if total_suspeitos_n > 0:
+                    st.warning("⚠️ Existem registros possivelmente duplicados (chave **N**). Revise antes de enviar.")
+                    df_exibir = pd.DataFrame(suspeitos_n, columns=colunas_df).copy()
+                    if "Data" in df_exibir.columns:
+                        df_exibir["Data"] = pd.to_datetime(
+                            df_exibir["Data"], origin="1899-12-30", unit="D", errors="coerce"
+                        ).dt.strftime("%d/%m/%Y")
+                    st.dataframe(df_exibir, use_container_width=True)
+                    pode_enviar = False
+                
+                # ======= ENVIO (igual ao antigo, mas protegido) =======
+                # Na prática, só os 'novos_dados' serão enviados (suspeitos N bloqueiam envio)
+                dados_para_enviar = novos_dados  # mantém a mesma ideia do antigo, mas sem riscos
                 
                 if todas_lojas_ok and pode_enviar and len(dados_para_enviar) > 0:
                     try:
@@ -712,7 +737,7 @@ with aba3:
                         aba_destino.append_rows(dados_para_enviar, value_input_option='USER_ENTERED')
                         fim = inicio + len(dados_para_enviar) - 1
                 
-                        # formatação somente se intervalo válido
+                        # formatação apenas se intervalo válido
                         if inicio <= fim:
                             from gspread_formatting import CellFormat, NumberFormat, format_cell_range
                             data_format = CellFormat(numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy'))
@@ -723,20 +748,30 @@ with aba3:
                             format_cell_range(aba_destino, f"D{inicio}:D{fim}", numero_format)
                             format_cell_range(aba_destino, f"F{inicio}:F{fim}", numero_format)
                 
-                        st.success(f"✅ {len(dados_para_enviar)} registro(s) enviado(s) com sucesso!")
-                        if duplicados:
-                            st.warning(f"⚠️ {len(duplicados)} registro(s) duplicados já estavam na planilha e não foram enviados.")
+                        # ✅ Mensagem no formato que você quer
+                        st.success(
+                            f"✅ **{total_novos}** registro(s) enviados. "
+                            f"❌ **{total_dup_m}** registro(s) não enviados por duplicidade (M)."
+                        )
                     except Exception as e:
                         st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
                 else:
-                    # mensagens claras sobre o motivo de não enviar
+                    # Não enviou — mas mostra balanço do mesmo jeito que o antigo
                     if not todas_lojas_ok:
-                        st.error("Há lojas sem código Everest cadastradas. Corrija e tente novamente.")
-                    elif not pode_enviar:
-                        st.warning("Existem registros possivelmente duplicados (chave N). Revise antes de enviar.")
+                        st.error("🚫 Há lojas sem **Código Everest** cadastradas. Corrija e tente novamente.")
+                    elif total_suspeitos_n > 0:
+                        st.warning(
+                            f"⛔ Envio bloqueado por **{total_suspeitos_n}** possível(is) duplicidade(s) (N). "
+                            f"**0 enviados** · ❌ **{total_dup_m}** não enviados por duplicidade (M)."
+                        )
+                    elif len(dados_para_enviar) == 0:
+                        # caso clássico: só tinha duplicados M
+                        st.info(
+                            f"ℹ️ **0 enviados**. "
+                            f"❌ **{total_dup_m}** registro(s) não enviados por duplicidade (M)."
+                        )
                     else:
-                        st.info("ℹ️ Nenhum dado novo disponível para envio.")
-                
+                        st.info("ℹ️ Nada a enviar no momento.")
 
 
        
