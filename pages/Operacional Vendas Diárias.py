@@ -294,163 +294,143 @@ with aba1:
 # =======================================
 
 with aba3:
-    # 🔗 Fechar editor manual ao entrar na aba
+    import pandas as pd
+    import numpy as np
+
+    # --- reset do painel manual ao entrar nesta aba ---
     if st.session_state.get("_last_tab") != "atualizar_google_sheets":
         st.session_state["show_manual_editor"] = False
     st.session_state["_last_tab"] = "atualizar_google_sheets"
 
-    # ========= Cabeçalho + controles =========
-    st.markdown("### 📤 Atualizar Google Sheets")
+    # --- estados ---
+    if "show_manual_editor" not in st.session_state:
+        st.session_state.show_manual_editor = False
+    if "manual_df" not in st.session_state:
+        # começa vazio, com dtypes corretos
+        st.session_state.manual_df = pd.DataFrame({
+            "Data": pd.Series(dtype="datetime64[ns]"),
+            "Loja": pd.Series(dtype="object"),
+            "Fat.Total": pd.Series(dtype="float"),
+            "Serv/Tx": pd.Series(dtype="float"),
+            "Fat.Real": pd.Series(dtype="float"),
+            "Ticket": pd.Series(dtype="float"),
+            "Código Everest": pd.Series(dtype="float"),
+            "Código Grupo Everest": pd.Series(dtype="float"),
+        })
 
-    # Criar colunas lado a lado para os botões
-    c1, c2, c3, c4 = st.columns([1,1,1,1])
+    def template_manuais(n=10):
+        return pd.DataFrame({
+            "Data": pd.Series([pd.NaT]*n, dtype="datetime64[ns]"),
+            "Loja": pd.Series([""]*n, dtype="object"),
+            "Fat.Total": pd.Series([np.nan]*n, dtype="float"),
+            "Serv/Tx": pd.Series([np.nan]*n, dtype="float"),
+            "Fat.Real": pd.Series([np.nan]*n, dtype="float"),
+            "Ticket": pd.Series([np.nan]*n, dtype="float"),
+            "Código Everest": pd.Series([np.nan]*n, dtype="float"),
+            "Código Grupo Everest": pd.Series([np.nan]*n, dtype="float"),
+        })
+
+    def drop_empty_rows(df: pd.DataFrame) -> pd.DataFrame:
+        return df.replace("", pd.NA).dropna(how="all").fillna("")
+
+    LINK_SHEET = "https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing"
+    has_df = ('df_final' in st.session_state and
+              isinstance(st.session_state.df_final, pd.DataFrame) and
+              not st.session_state.df_final.empty)
+
+    # =================== HEADER (único) ===================
+    st.markdown("## 📤 Atualizar Google Sheets")
+
+    c1, c2, c3 = st.columns([1, 1, 1])
 
     with c1:
-        if st.button("📥 Enviar p/ Sheets", use_container_width=True):
-            # 👉 aqui entra a sua rotina de envio para o Google Sheets
-            st.success("Rotina de envio executada!")
-
-    with c2:
-        if st.button("✍️ Lançamentos manuais", use_container_width=True):
-            st.session_state["show_manual_editor"] = True
-
-    with c3:
-        # Botão estilizado como link para o Google Sheets
-        st.markdown(
-            """
-            <a href="https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing" target="_blank">
-                <button style="width:100%;background-color:#1a73e8;color:white;border:none;
-                padding:0.6em;border-radius:0.4em;cursor:pointer;font-weight:bold;">
-                📊 Abrir Google Sheets
-                </button>
-            </a>
-            """,
-            unsafe_allow_html=True,
+        enviar_auto = st.button(
+            "📥 Enviar p/ Sheets",
+            use_container_width=True,
+            type="primary",
+            disabled=not has_df,
+            help=None if has_df else "Carregue os dados para habilitar",
+            key="btn_enviar_auto_header",
         )
 
-    with c4:
-        if st.button("📈 Auditoria Everest", use_container_width=True):
-            # 👉 aqui entra a sua rotina de auditoria Everest
-            st.info("Rotina de auditoria executada!")
+    with c2:
+        label_toggle = "❌ Fechar lançamentos" if st.session_state.get("show_manual_editor", False) \
+                       else "✍️ Lançamentos manuais"
+        if st.button(label_toggle, key="btn_toggle_manual", use_container_width=True):
+            st.session_state["show_manual_editor"] = not st.session_state.get("show_manual_editor", False)
+            if st.session_state["show_manual_editor"] and st.session_state.manual_df.empty:
+                st.session_state.manual_df = template_manuais(10)
+            st.rerun()
 
-    # ========= Bloco principal da aba =========
-   
-    if "df_final" in st.session_state:
-        df_final = st.session_state.df_final.copy()
-
-        # ========= Cabeçalho + controles =========
-        import pandas as pd
-        import numpy as np
-    
-        LINK_SHEET = "https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing"
-    
-        # Estado
-        if "show_manual_editor" not in st.session_state:
-            st.session_state.show_manual_editor = False
-        # DF manual começa VAZIO (sem linhas) mas com dtypes corretos
-        if "manual_df" not in st.session_state:
-            st.session_state.manual_df = pd.DataFrame({
-                "Data": pd.Series(dtype="datetime64[ns]"),
-                "Loja": pd.Series(dtype="object"),
-                "Fat.Total": pd.Series(dtype="float"),
-                "Serv/Tx": pd.Series(dtype="float"),
-                "Fat.Real": pd.Series(dtype="float"),
-                "Ticket": pd.Series(dtype="float"),
-                "Código Everest": pd.Series(dtype="float"),
-                "Código Grupo Everest": pd.Series(dtype="float"),
-            })
-    
-        # Helpers
-        def template_manuais(n: int = 10) -> pd.DataFrame:
-            return pd.DataFrame({
-                "Data": pd.Series([pd.NaT]*n, dtype="datetime64[ns]"),
-                "Loja": pd.Series([""]*n, dtype="object"),
-                "Fat.Total": pd.Series([np.nan]*n, dtype="float"),
-                "Serv/Tx": pd.Series([np.nan]*n, dtype="float"),
-                "Fat.Real": pd.Series([np.nan]*n, dtype="float"),
-                "Ticket": pd.Series([np.nan]*n, dtype="float"),
-                "Código Everest": pd.Series([np.nan]*n, dtype="float"),
-                "Código Grupo Everest": pd.Series([np.nan]*n, dtype="float"),
-            })
-    
-        def drop_empty_rows(df: pd.DataFrame) -> pd.DataFrame:
-            return df.replace("", pd.NA).dropna(how="all").fillna("")
-    
-        # Linha superior: Link + botões
-        col_link, col_enviar_auto, col_abrir_manual = st.columns([3, 1.3, 1.6])
-        with col_link:
-            st.markdown(f"🔗 [Link **Faturamento Sistema Externo**]({LINK_SHEET})", unsafe_allow_html=True)
-    
-        has_df = ('df_final' in st.session_state and
-                  isinstance(st.session_state.df_final, pd.DataFrame) and
-                  not st.session_state.df_final.empty)
-    
-        with col_enviar_auto:
-            enviar_auto = st.button("📥 Enviar p/ Sheets", key="btn_enviar_auto",
-                                    use_container_width=True, disabled=not has_df,
-                                    help=None if has_df else "Carregue os dados para habilitar")
-    
-        with col_abrir_manual:
-            if st.button("✍️ Lançamentos manuais", key="btn_abrir_manual", use_container_width=True):
-                st.session_state.show_manual_editor = True
-                # só agora, ao abrir, pré-carrega 10 linhas se estiver vazio
-                if st.session_state.manual_df.empty:
-                    st.session_state.manual_df = template_manuais(10)
-    
-        # ========= Editor de lançamentos manuais (só aparece se clicar) =========
-        if st.session_state.get("show_manual_editor", False):
-            st.subheader("✍️ Lançamentos manuais")
-        
-            # garante dtypes antes do editor
-            df_disp = st.session_state.manual_df.copy()
-            df_disp["Data"] = pd.to_datetime(df_disp["Data"], errors="coerce")
-            for c in ["Fat.Total", "Serv/Tx", "Fat.Real", "Ticket", "Código Everest", "Código Grupo Everest"]:
-                df_disp[c] = pd.to_numeric(df_disp[c], errors="coerce")
-        
-            edited_df = st.data_editor(
-                df_disp,
-                num_rows="dynamic",
-                use_container_width=True,
-                column_config={
-                    "Data": st.column_config.DateColumn(format="DD/MM/YYYY"),
-                    "Fat.Total": st.column_config.NumberColumn(step=0.01),
-                    "Serv/Tx": st.column_config.NumberColumn(step=0.01),
-                    "Fat.Real": st.column_config.NumberColumn(step=0.01),
-                    "Ticket": st.column_config.NumberColumn(step=0.01),
-                    "Código Everest": st.column_config.NumberColumn(step=1),
-                    "Código Grupo Everest": st.column_config.NumberColumn(step=1),
-                },
-                key="editor_manual",
+    with c3:
+        try:
+            st.link_button("📊 Abrir Google Sheets", LINK_SHEET, use_container_width=True)
+        except Exception:
+            st.markdown(
+                f"""
+                <a href="{LINK_SHEET}" target="_blank">
+                    <button style="width:100%;background:#1a73e8;color:#fff;border:none;
+                    padding:0.6em;border-radius:0.5em;font-weight:600;cursor:pointer;">
+                    📊 Abrir Google Sheets
+                    </button>
+                </a>
+                """,
+                unsafe_allow_html=True
             )
-        
-            c1, c2, c3 = st.columns([1, 1, 2])
-            with c1:
-                salvar_manual = st.button("💾 Salvar lançamentos", key="btn_salvar_manual")
-            with c2:
-                fechar_manual = st.button("❌ Fechar", key="btn_fechar_manual")
-            with c3:
-                enviar_manuais = st.button("📤 Enviar lançamentos manuais", key="btn_enviar_manual")
-        
-            if salvar_manual:
-                st.session_state.manual_df = drop_empty_rows(edited_df)
-                st.success(f"✅ {len(st.session_state.manual_df)} linha(s) manual(is) salva(s).")
-        
-            # <- ESTE É O PONTO QUE FECHA DE VERDADE
-            if fechar_manual:
-                st.session_state["show_manual_editor"] = False
-                st.rerun()
-        
-            if enviar_manuais:
-                st.info("👉 Aqui você chama a rotina de envio SÓ dos manuais.")
 
-    
-        # Badge informativa (aparece só se houver algo salvo)
-        if not st.session_state.manual_df.empty:
-            st.caption(f"🔹 {len(st.session_state.manual_df)} lançamento(s) manual(is) salvos. (Rotina separada do automático)")
-    
-        # ========= Envio AUTOMÁTICO (separado) =========
-        if enviar_auto:
-            df_final = st.session_state.df_final.copy()
+    # =============== EDITOR MANUAL (só se aberto) ===============
+    if st.session_state.get("show_manual_editor", False):
+        st.subheader("✍️ Lançamentos manuais")
+
+        df_disp = st.session_state.manual_df.copy()
+        df_disp["Data"] = pd.to_datetime(df_disp["Data"], errors="coerce")
+        for c in ["Fat.Total", "Serv/Tx", "Fat.Real", "Ticket", "Código Everest", "Código Grupo Everest"]:
+            df_disp[c] = pd.to_numeric(df_disp[c], errors="coerce")
+
+        edited_df = st.data_editor(
+            df_disp,
+            num_rows="dynamic",
+            use_container_width=True,
+            column_config={
+                "Data": st.column_config.DateColumn(format="DD/MM/YYYY"),
+                "Fat.Total": st.column_config.NumberColumn(step=0.01),
+                "Serv/Tx": st.column_config.NumberColumn(step=0.01),
+                "Fat.Real": st.column_config.NumberColumn(step=0.01),
+                "Ticket": st.column_config.NumberColumn(step=0.01),
+                "Código Everest": st.column_config.NumberColumn(step=1),
+                "Código Grupo Everest": st.column_config.NumberColumn(step=1),
+            },
+            key="editor_manual",
+        )
+
+        b1, b2, b3 = st.columns([1, 1, 2])
+        with b1:
+            salvar_manual = st.button("💾 Salvar lançamentos", key="btn_salvar_manual")
+        with b2:
+            fechar_manual = st.button("❌ Fechar", key="btn_fechar_manual")
+        with b3:
+            enviar_manuais = st.button("📤 Enviar lançamentos manuais", key="btn_enviar_manual")
+
+        if salvar_manual:
+            st.session_state.manual_df = drop_empty_rows(edited_df)
+            st.success(f"✅ {len(st.session_state.manual_df)} linha(s) manual(is) salva(s).")
+
+        if fechar_manual:
+            st.session_state["show_manual_editor"] = False
+            st.rerun()
+
+        if enviar_manuais:
+            st.info("👉 Aqui você chama a rotina de envio SÓ dos manuais (dedupe/append_rows/formatos).")
+
+    # badge informativa
+    if not st.session_state.manual_df.empty:
+        st.caption(f"🔹 {len(st.session_state.manual_df)} lançamento(s) manual(is) salvos. (Rotina separada do automático)")
+
+    # =================== ENVIO AUTOMÁTICO ===================
+    if enviar_auto:
+        df_final = st.session_state.df_final.copy()
+        # >>> cole aqui o SEU pipeline de envio (spinner, dedupe M/N, append_rows, formatação etc.)
+
 
 
 
