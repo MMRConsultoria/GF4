@@ -311,10 +311,10 @@ with aba3:
             border: 1px solid #b3b3b3 !important;
             border-radius: 4px !important;
             padding: 0.2em 0.4em !important;       /* bem compacto */
-            font-size: 0.75em !important;          /* fonte menor */
+            font-size: 0.4em !important;          /* fonte menor */
             font-weight: 400 !important;
-            min-height: 26px !important;           /* altura mínima */
-            height: 26px !important;
+            min-height: 16px !important;           /* altura mínima */
+            height: 16px !important;
             width: 100% !important;
             box-shadow: none !important;           /* remove sombra */
           }
