@@ -308,304 +308,222 @@ with aba3:
 
 
         # Mostra botão SEMPRE que houver dados na aba upload
-       ' if st.button("📥 Enviar dados para o Google Sheets"):
-        import pandas as pd
-        import streamlit as st
-        
-        # ---- colunas usadas no seu pipeline (ajuste se precisar) ----
-        COLS_OBRIG = [
-            "Data", "Loja",
-            "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket",
-            "Código Everest", "Código Grupo Everest"
-        ]
-        
-        # ---- estado ----
-        if "show_manual_editor" not in st.session_state:
-            st.session_state.show_manual_editor = False
-        if "manual_df" not in st.session_state:
-            st.session_state.manual_df = pd.DataFrame(columns=COLS_OBRIG)
-        
-        # ---- botões lado a lado ----
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            enviar = st.button("📥 Enviar dados para o Google Sheets", key="btn_enviar")
-        with col2:
-            abrir_editor = st.button("✍️ Lançar manualmente", key="btn_abrir_editor")
-        
-        # Ao clicar para abrir o editor, pré-carrega 10 linhas vazias (apenas 1ª vez)
-        if abrir_editor:
-            st.session_state.show_manual_editor = True
-            if st.session_state.manual_df.empty:
-                st.session_state.manual_df = pd.DataFrame([{c: "" for c in COLS_OBRIG} for _ in range(10)])
-        
-        # Editor de lançamentos manuais
-        def drop_empty_rows(df: pd.DataFrame) -> pd.DataFrame:
-            return df.replace("", pd.NA).dropna(how="all").fillna("")
-        
-        if st.session_state.show_manual_editor:
-            st.subheader("✍️ Lançamentos manuais")
-            edited_df = st.data_editor(
-                st.session_state.manual_df,
-                num_rows="dynamic",
-                use_container_width=True,
-                column_config={
-                    "Data": st.column_config.DateColumn(format="DD/MM/YYYY"),
-                    "Fat.Total": st.column_config.NumberColumn(step=0.01),
-                    "Serv/Tx": st.column_config.NumberColumn(step=0.01),
-                    "Fat.Real": st.column_config.NumberColumn(step=0.01),
-                    "Ticket": st.column_config.NumberColumn(step=0.01),
-                    "Código Everest": st.column_config.NumberColumn(step=1),
-                    "Código Grupo Everest": st.column_config.NumberColumn(step=1),
-                },
-                key="editor_manual",
-            )
-        
-            c1, c2, c3 = st.columns([1, 1, 3])
-            with c1:
-                salvar = st.button("💾 Salvar lançamentos", key="btn_salvar_manual")
-            with c2:
-                fechar = st.button("❌ Fechar", key="btn_fechar_manual")
-        
-            if salvar:
-                st.session_state.manual_df = drop_empty_rows(edited_df)
-                st.success(f"✅ {len(st.session_state.manual_df)} linha(s) manual(is) salva(s).")
-            if fechar:
-                st.session_state.show_manual_editor = False
-        
-        # Badge informativa
-        if not st.session_state.manual_df.empty:
-            st.info(f"🔹 {len(st.session_state.manual_df)} lançamento(s) manual(is) salvos. Eles serão enviados junto com os importados.")
-        
-        # ===================== ENVIAR (substitui seu if st.button(...)) =====================
-        if enviar:
-            # 1) pegue o df_final atual
-            if 'df_final' in st.session_state:
-                df_final = st.session_state.df_final.copy()
-            else:
-                st.error("Não há dados carregados na aba de upload.")
-                st.stop()
-        
-            # 2) junte os manuais ANTES do seu pipeline de normalização/deduplicação
-            if not st.session_state.manual_df.empty:
-                # concatena colunas conhecidas; o restante do seu pipeline (conversões, M/N etc.) permanece igual
-                df_final = pd.concat([df_final, st.session_state.manual_df], ignore_index=True)
-        
-           
+        if st.button("📥 Enviar dados para o Google Sheets"):
 
-                with st.spinner("🔄 Processando dados e verificando duplicidades..."):
-    
-                # Verifica se há lojas sem código Everest
-                    lojas_nao_cadastradas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
-    
-                    # Só continua se todas estiverem cadastradas
-                    todas_lojas_ok = len(lojas_nao_cadastradas) == 0
-                    
-                    
-                    #🔗 Links úteis
-                    #st.markdown("""
-                    #  🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing)
-                    #""", unsafe_allow_html=True)
-    
-                    # Criar a coluna "M" com a concatenação de "Data", "Fat.Total" e "Loja" como string para verificação de duplicação
-                    df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
-                                    df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
-    
-                    #df_final['M'] = df_final['Data'] + df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
-    
-    
-                    # Não converter para string, apenas utilizar "M" para verificação de duplicação
-                    df_final['M'] = df_final['M'].apply(str)
-    
-                    # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
-                    df_final = df_final.applymap(str)
-                    
-    
+            with st.spinner("🔄 Processando dados e verificando duplicidades..."):
+
+            # Verifica se há lojas sem código Everest
+                lojas_nao_cadastradas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
+
+                # Só continua se todas estiverem cadastradas
+                todas_lojas_ok = len(lojas_nao_cadastradas) == 0
                 
-    
-                    #TIRAR ASPAS DOS VALORES, DATA E NUMEROS
-    
-                    
-                    
-                    # Formatando os valores monetários (não convertendo para string, mantendo como numérico)
-                    df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-                    df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-                    df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-                    df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
-    
-                    # Garantir datetime sem aspas
-                    df_final['Data'] = pd.to_datetime(df_final['Data'].astype(str).str.replace("'", "").str.strip(), dayfirst=True)
-    
-                    # Converter para número serial (dias desde 1899-12-30, padrão do Excel/Sheets)
-                    df_final['Data'] = (df_final['Data'] - pd.Timestamp("1899-12-30")).dt.days
                 
-                    # Corrigir coluna Ano: remover aspas, espaços e garantir que seja inteiro
-                    df_final['Ano'] = df_final['Ano'].apply(
-                    lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
-                    )
-    
-                    # ✅ Função segura para conversão para inteiro
-                    def to_int_safe(x):
-                        try:
-                            x_clean = str(x).replace("'", "").strip()
-                            return int(x_clean)
-                        except:
-                            return ""
-    
-                    # ✅ Aplica conversão segura nas colunas de códigos
-                    df_final['Código Everest'] = df_final['Código Everest'].apply(to_int_safe)
-                    df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(to_int_safe)
-                    
-                    
-                    # Conectar ao Google Sheets
-                    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-                    credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-                    credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-                    gc = gspread.authorize(credentials)
-    
-                    planilha_destino = gc.open("Vendas diarias")
-                    aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
-    
-                    # Obter dados já existentes na aba
-                    from gspread_dataframe import get_as_dataframe
-    
-                    valores_existentes_df = get_as_dataframe(
-                        aba_destino, evaluate_formulas=True, dtype=str
-                    ).fillna("")
-                    valores_existentes = valores_existentes_df.values.tolist()  # ✅ Correção necessária aqui
-                    colunas_df_existente = valores_existentes_df.columns.str.strip().tolist()
-                    
-                    # 🔍 Verificação da coluna N
-                    dados_n_existentes = set()
-                    if "N" in colunas_df_existente:
-                        dados_n_existentes = set(valores_existentes_df["N"].astype(str).str.strip())
-                    else:
-                        st.warning("⚠️ A coluna 'N' não foi encontrada na planilha. Nenhuma checagem de duplicidade será feita com base nela.")
-                    
-                    # 🔍 Verificação da coluna M
-                    dados_existentes = set()
-                    if "M" in colunas_df_existente:
-                        dados_existentes = set(valores_existentes_df["M"].astype(str).str.strip())
-                    else:
-                        st.warning("⚠️ A coluna 'M' não foi encontrada na planilha. Nenhuma checagem de duplicidade será feita com base nela.")
-                    
-                            
+                #🔗 Links úteis
+                #st.markdown("""
+                #  🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing)
+                #""", unsafe_allow_html=True)
+
+                # Criar a coluna "M" com a concatenação de "Data", "Fat.Total" e "Loja" como string para verificação de duplicação
+                df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') + \
+                                df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+
+                #df_final['M'] = df_final['Data'] + df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+
+
+                # Não converter para string, apenas utilizar "M" para verificação de duplicação
+                df_final['M'] = df_final['M'].apply(str)
+
+                # Converter o restante do DataFrame para string, mas mantendo as colunas numéricas com seu formato correto
+                df_final = df_final.applymap(str)
                 
-                    #novos_dados = []
+
+            
+
+                #TIRAR ASPAS DOS VALORES, DATA E NUMEROS
+
                 
-                    # ✅ Cria a coluna N diretamente, sem deixar a Data_Formatada como coluna a ser exportada
-                    df_final['Código Everest'] = df_final['Código Everest'].apply(to_int_safe)
-    
-                    df_final['Data_Formatada'] = pd.to_datetime(
-                        df_final['Data'], origin="1899-12-30", unit='D'
-                    ).dt.strftime('%Y-%m-%d')
-                    df_final['N'] = df_final['Data_Formatada'] + df_final['Código Everest'].astype(str)
-                    df_final['N'] = df_final['N'].astype(str).str.strip()
-                    df_final = df_final[df_final['Código Everest'].notna() & (df_final['Código Everest'] != 0)]
-                    
-                    # ✅ Remove a coluna auxiliar antes de montar os dados
-                    if 'Data_Formatada' in df_final.columns:
-                        df_final = df_final.drop(columns=['Data_Formatada'])
-                    colunas_df = df_final.columns.tolist()
-                    # ✅ Garante que vai usar o índice exato da coluna N
-                    # Garante que vai usar o índice exato da coluna N
-                    idx_coluna_n_df = colunas_df.index("N")
-                    idx_coluna_m_df = colunas_df.index("M")
-    
-                    # Obter linhas do DataFrame como lista de listas
-                    rows = df_final.fillna("").values.tolist()
-    
-                    
                 
-                    duplicados = []  # Duplicados pela M
-                    suspeitos_n = []  # ⚠️ Possíveis duplicados pela N
-                    novos_dados = []
-    
-    
-    
-                    # Diagnóstico: Ver interseções entre as chaves novas e existentes
-                    chaves_novas = set(df_final["N"].tolist())
-                    intersecao_n = chaves_novas & dados_n_existentes
-                   
-                    # =========================================
-                    # ✅ Verifica duplicidade pela M e depois N
-                    # =========================================
-                    for linha in rows:
-                        linha_dict = dict(zip(colunas_df, linha))
-    
-                        chave_m = str(linha_dict["M"]).strip()
-                        chave_n = str(linha_dict["N"]).strip()
-    
-                        if chave_m not in dados_existentes:
-                            if chave_n in dados_n_existentes:
-                                suspeitos_n.append(linha)  # ⚠️ Duplicado pela N
-                            else:
-                                novos_dados.append(linha)  # ✅ Livre para envio
-                            dados_existentes.add(chave_m)
+                # Formatando os valores monetários (não convertendo para string, mantendo como numérico)
+                df_final['Fat.Total'] = df_final['Fat.Total'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+                df_final['Serv/Tx'] = df_final['Serv/Tx'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+                df_final['Fat.Real'] = df_final['Fat.Real'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+                df_final['Ticket'] = df_final['Ticket'].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+
+                # Garantir datetime sem aspas
+                df_final['Data'] = pd.to_datetime(df_final['Data'].astype(str).str.replace("'", "").str.strip(), dayfirst=True)
+
+                # Converter para número serial (dias desde 1899-12-30, padrão do Excel/Sheets)
+                df_final['Data'] = (df_final['Data'] - pd.Timestamp("1899-12-30")).dt.days
+            
+                # Corrigir coluna Ano: remover aspas, espaços e garantir que seja inteiro
+                df_final['Ano'] = df_final['Ano'].apply(
+                lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
+                )
+
+                # ✅ Função segura para conversão para inteiro
+                def to_int_safe(x):
+                    try:
+                        x_clean = str(x).replace("'", "").strip()
+                        return int(x_clean)
+                    except:
+                        return ""
+
+                # ✅ Aplica conversão segura nas colunas de códigos
+                df_final['Código Everest'] = df_final['Código Everest'].apply(to_int_safe)
+                df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(to_int_safe)
+                
+                
+                # Conectar ao Google Sheets
+                scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+                credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+                credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+                gc = gspread.authorize(credentials)
+
+                planilha_destino = gc.open("Vendas diarias")
+                aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
+
+                # Obter dados já existentes na aba
+                from gspread_dataframe import get_as_dataframe
+
+                valores_existentes_df = get_as_dataframe(
+                    aba_destino, evaluate_formulas=True, dtype=str
+                ).fillna("")
+                valores_existentes = valores_existentes_df.values.tolist()  # ✅ Correção necessária aqui
+                colunas_df_existente = valores_existentes_df.columns.str.strip().tolist()
+                
+                # 🔍 Verificação da coluna N
+                dados_n_existentes = set()
+                if "N" in colunas_df_existente:
+                    dados_n_existentes = set(valores_existentes_df["N"].astype(str).str.strip())
+                else:
+                    st.warning("⚠️ A coluna 'N' não foi encontrada na planilha. Nenhuma checagem de duplicidade será feita com base nela.")
+                
+                # 🔍 Verificação da coluna M
+                dados_existentes = set()
+                if "M" in colunas_df_existente:
+                    dados_existentes = set(valores_existentes_df["M"].astype(str).str.strip())
+                else:
+                    st.warning("⚠️ A coluna 'M' não foi encontrada na planilha. Nenhuma checagem de duplicidade será feita com base nela.")
+                
+                        
+            
+                #novos_dados = []
+            
+                # ✅ Cria a coluna N diretamente, sem deixar a Data_Formatada como coluna a ser exportada
+                df_final['Código Everest'] = df_final['Código Everest'].apply(to_int_safe)
+
+                df_final['Data_Formatada'] = pd.to_datetime(
+                    df_final['Data'], origin="1899-12-30", unit='D'
+                ).dt.strftime('%Y-%m-%d')
+                df_final['N'] = df_final['Data_Formatada'] + df_final['Código Everest'].astype(str)
+                df_final['N'] = df_final['N'].astype(str).str.strip()
+                df_final = df_final[df_final['Código Everest'].notna() & (df_final['Código Everest'] != 0)]
+                
+                # ✅ Remove a coluna auxiliar antes de montar os dados
+                if 'Data_Formatada' in df_final.columns:
+                    df_final = df_final.drop(columns=['Data_Formatada'])
+                colunas_df = df_final.columns.tolist()
+                # ✅ Garante que vai usar o índice exato da coluna N
+                # Garante que vai usar o índice exato da coluna N
+                idx_coluna_n_df = colunas_df.index("N")
+                idx_coluna_m_df = colunas_df.index("M")
+
+                # Obter linhas do DataFrame como lista de listas
+                rows = df_final.fillna("").values.tolist()
+
+                
+            
+                duplicados = []  # Duplicados pela M
+                suspeitos_n = []  # ⚠️ Possíveis duplicados pela N
+                novos_dados = []
+
+
+
+                # Diagnóstico: Ver interseções entre as chaves novas e existentes
+                chaves_novas = set(df_final["N"].tolist())
+                intersecao_n = chaves_novas & dados_n_existentes
+               
+                # =========================================
+                # ✅ Verifica duplicidade pela M e depois N
+                # =========================================
+                for linha in rows:
+                    linha_dict = dict(zip(colunas_df, linha))
+
+                    chave_m = str(linha_dict["M"]).strip()
+                    chave_n = str(linha_dict["N"]).strip()
+
+                    if chave_m not in dados_existentes:
+                        if chave_n in dados_n_existentes:
+                            suspeitos_n.append(linha)  # ⚠️ Duplicado pela N
                         else:
-                            duplicados.append(linha)  # ❌ Duplicado pela M
-    
-                    # ==================================================
-                    # ✅ Mostra alerta para duplicidade pela coluna N
-                    # ==================================================
-                    pode_enviar = True  # Variável de controle
-    
-                   
-                    # ================================
-                    # 🚨 Verifica duplicidade pela coluna N
-                    # ================================
-                    if suspeitos_n:
-                        st.warning("❌ Existem registros possivelmente duplicados. Corrija antes de continuar.")
-                        
-                        df_exibir = pd.DataFrame(suspeitos_n, columns=colunas_df).copy()
-                    
-                        # 🗓️ Converte o número serial para data legível (sem alterar o original)
-                        df_exibir["Data"] = pd.to_datetime(df_exibir["Data"], origin="1899-12-30", unit="D").dt.strftime("%d/%m/%Y")
-                    
-                        # 📊 Exibe a tabela com a data formatada
-                        st.dataframe(df_exibir, use_container_width=True)
-                    
-                        pode_enviar = False
+                            novos_dados.append(linha)  # ✅ Livre para envio
+                        dados_existentes.add(chave_m)
                     else:
-                        pode_enviar = True
-    
-                        
-    
-                    # =============================================
-                    # 🟢 Só mostra o botão se permitido pelo checkbox
-                    # =============================================
-                    if todas_lojas_ok and pode_enviar:
-                        try:
-                            dados_para_enviar = novos_dados + suspeitos_n
+                        duplicados.append(linha)  # ❌ Duplicado pela M
+
+                # ==================================================
+                # ✅ Mostra alerta para duplicidade pela coluna N
+                # ==================================================
+                pode_enviar = True  # Variável de controle
+
+               
+                # ================================
+                # 🚨 Verifica duplicidade pela coluna N
+                # ================================
+                if suspeitos_n:
+                    st.warning("❌ Existem registros possivelmente duplicados. Corrija antes de continuar.")
                     
-                            # Descobre a primeira linha livre
-                            inicio = len(aba_destino.col_values(1)) + 1
-                            aba_destino.append_rows(dados_para_enviar, value_input_option='USER_ENTERED')
-                            fim = inicio + len(dados_para_enviar) - 1
+                    df_exibir = pd.DataFrame(suspeitos_n, columns=colunas_df).copy()
+                
+                    # 🗓️ Converte o número serial para data legível (sem alterar o original)
+                    df_exibir["Data"] = pd.to_datetime(df_exibir["Data"], origin="1899-12-30", unit="D").dt.strftime("%d/%m/%Y")
+                
+                    # 📊 Exibe a tabela com a data formatada
+                    st.dataframe(df_exibir, use_container_width=True)
+                
+                    pode_enviar = False
+                else:
+                    pode_enviar = True
+
                     
-                            # 🔹 Declara os formatos
-                            from gspread_formatting import CellFormat, NumberFormat, format_cell_range
-                    
-                            data_format = CellFormat(
-                                numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy')
-                            )
-                    
-                            numero_format = CellFormat(
-                                numberFormat=NumberFormat(type='NUMBER', pattern='0')
-                            )
-                    
-                            # 🔹 Aplica os formatos
-                            format_cell_range(aba_destino, f"A{inicio}:A{fim}", data_format)
-                            format_cell_range(aba_destino, f"L{inicio}:L{fim}", numero_format)
-                            format_cell_range(aba_destino, f"D{inicio}:D{fim}", numero_format)
-                            format_cell_range(aba_destino, f"F{inicio}:F{fim}", numero_format)
-                    
-                            st.success(f"✅ {len(dados_para_enviar)} registro(s) enviado(s) com sucesso para o Google Sheets!")
-                    
-                            if duplicados:
-                                st.warning(f"⚠️ {len(duplicados)} registro(s) duplicados na google sheets, não foram enviados.")
-                        except Exception as e:
-                            st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
-    
+
+                # =============================================
+                # 🟢 Só mostra o botão se permitido pelo checkbox
+                # =============================================
+                if todas_lojas_ok and pode_enviar:
+                    try:
+                        dados_para_enviar = novos_dados + suspeitos_n
+                
+                        # Descobre a primeira linha livre
+                        inicio = len(aba_destino.col_values(1)) + 1
+                        aba_destino.append_rows(dados_para_enviar, value_input_option='USER_ENTERED')
+                        fim = inicio + len(dados_para_enviar) - 1
+                
+                        # 🔹 Declara os formatos
+                        from gspread_formatting import CellFormat, NumberFormat, format_cell_range
+                
+                        data_format = CellFormat(
+                            numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy')
+                        )
+                
+                        numero_format = CellFormat(
+                            numberFormat=NumberFormat(type='NUMBER', pattern='0')
+                        )
+                
+                        # 🔹 Aplica os formatos
+                        format_cell_range(aba_destino, f"A{inicio}:A{fim}", data_format)
+                        format_cell_range(aba_destino, f"L{inicio}:L{fim}", numero_format)
+                        format_cell_range(aba_destino, f"D{inicio}:D{fim}", numero_format)
+                        format_cell_range(aba_destino, f"F{inicio}:F{fim}", numero_format)
+                
+                        st.success(f"✅ {len(dados_para_enviar)} registro(s) enviado(s) com sucesso para o Google Sheets!")
+                
+                        if duplicados:
+                            st.warning(f"⚠️ {len(duplicados)} registro(s) duplicados na google sheets, não foram enviados.")
+                    except Exception as e:
+                        st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
+
 
 
        
