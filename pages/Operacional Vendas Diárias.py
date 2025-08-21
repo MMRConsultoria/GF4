@@ -297,6 +297,39 @@ with aba3:
     import pandas as pd
     import numpy as np
 
+
+    # 🔧 Estilo unificado para botões (aplique 1x no app)
+    st.markdown("""
+    <style>
+    /* Botões padrão e link_button com o mesmo visual */
+    .stButton > button, .stLinkButton > a {
+      background: #1a73e8;     /* cor única */
+      color: #fff !important;
+      border: none;
+      border-radius: 10px;
+      padding: 0.70em 0.9em;
+      font-weight: 700;
+      width: 100%;
+      box-shadow: 0 2px 10px rgba(26,115,232,.25);
+      transition: transform .02s ease-in-out, opacity .2s ease;
+    }
+    .stButton > button:hover, .stLinkButton > a:hover { opacity: .92; }
+    .stButton > button:active, .stLinkButton > a:active { transform: translateY(1px); }
+    
+    /* Desabilitado */
+    button[kind="secondary"] div:has(> button[disabled]) button,
+    .stButton > button:disabled {
+      opacity: .45 !important;
+      cursor: not-allowed !important;
+      box-shadow: none !important;
+    }
+    
+    /* Deixa os botões alinhados na mesma altura */
+    .stButton > button, .stLinkButton > a { min-height: 44px; }
+    </style>
+    """, unsafe_allow_html=True)
+
+
     # --- reset do painel manual ao entrar nesta aba ---
     if st.session_state.get("_last_tab") != "atualizar_google_sheets":
         st.session_state["show_manual_editor"] = False
