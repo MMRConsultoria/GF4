@@ -293,233 +293,22 @@ with aba1:
 # Atualizar Google Sheets (Evitar duplicação)
 # =======================================
 
-# =======================================
-# Atualizar Google Sheets (Evitar duplicação)
-# =======================================
-
 with aba3:
-    import pandas as pd
-    import numpy as np
+        
+    # 🔗 Link sempre visível
+    st.markdown("""
+      🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing)
+    """, unsafe_allow_html=True)
+       
+ 
+    #st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
+
+    if 'df_final' in st.session_state:
+        df_final = st.session_state.df_final.copy()
 
 
-  
-    # 🔧 Botões minimalistas (bem pequenos, cinza claro, texto preto)
-    # 🔧 Botões minimalistas (bem pequenos, cinza claro, texto preto)
-    def _inject_button_css():
-        st.markdown("""
-        <style>
-          /* Vale para todos os botões do Streamlit */
-          div.stButton > button, div.stLinkButton > a {
-            background-color: #e0e0e0 !important;  /* cinza claro */
-            color: #000000 !important;             /* texto preto */
-            border: 1px solid #b3b3b3 !important;
-            border-radius: 4px !important;
-            padding: 0.2em 0.4em !important;       /* bem compacto */
-            font-size: 0.4em !important;          /* fonte menor */
-            font-weight: 400 !important;
-            min-height: 16px !important;           /* altura mínima */
-            height: 16px !important;
-            width: 100% !important;
-            box-shadow: none !important;           /* remove sombra */
-          }
-    
-          /* Hover mais escuro */
-          div.stButton > button:hover, div.stLinkButton > a:hover {
-            background-color: #d6d6d6 !important;
-          }
-    
-          /* Active (clicado) */
-          div.stButton > button:active, div.stLinkButton > a:active {
-            background-color: #c2c2c2 !important;
-          }
-    
-          /* Desabilitado */
-          div.stButton > button:disabled {
-            background-color: #f0f0f0 !important;
-            color: #666 !important;
-            cursor: not-allowed !important;
-          }
-        </style>
-        """, unsafe_allow_html=True)
-    
-    if "css_buttons_applied" not in st.session_state:
-        _inject_button_css()
-        st.session_state["css_buttons_applied"] = True
-
-
-
-
-
-
-
-    # --- reset do painel manual ao entrar nesta aba ---
-    if st.session_state.get("_last_tab") != "atualizar_google_sheets":
-        st.session_state["show_manual_editor"] = False
-    st.session_state["_last_tab"] = "atualizar_google_sheets"
-
-    # --- estados ---
-    if "show_manual_editor" not in st.session_state:
-        st.session_state.show_manual_editor = False
-    if "manual_df" not in st.session_state:
-        # começa vazio, com dtypes corretos
-        st.session_state.manual_df = pd.DataFrame({
-            "Data": pd.Series(dtype="datetime64[ns]"),
-            "Loja": pd.Series(dtype="object"),
-            "Fat.Total": pd.Series(dtype="float"),
-            "Serv/Tx": pd.Series(dtype="float"),
-            "Fat.Real": pd.Series(dtype="float"),
-            "Ticket": pd.Series(dtype="float"),
-            "Código Everest": pd.Series(dtype="float"),
-            "Código Grupo Everest": pd.Series(dtype="float"),
-        })
-
-    def template_manuais(n=10):
-        return pd.DataFrame({
-            "Data": pd.Series([pd.NaT]*n, dtype="datetime64[ns]"),
-            "Loja": pd.Series([""]*n, dtype="object"),
-            "Fat.Total": pd.Series([np.nan]*n, dtype="float"),
-            "Serv/Tx": pd.Series([np.nan]*n, dtype="float"),
-            "Fat.Real": pd.Series([np.nan]*n, dtype="float"),
-            "Ticket": pd.Series([np.nan]*n, dtype="float"),
-            "Código Everest": pd.Series([np.nan]*n, dtype="float"),
-            "Código Grupo Everest": pd.Series([np.nan]*n, dtype="float"),
-        })
-
-    def drop_empty_rows(df: pd.DataFrame) -> pd.DataFrame:
-        return df.replace("", pd.NA).dropna(how="all").fillna("")
-
-    LINK_SHEET = "https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing"
-    has_df = ('df_final' in st.session_state and
-              isinstance(st.session_state.df_final, pd.DataFrame) and
-              not st.session_state.df_final.empty)
-
-    # =================== HEADER (único) ===================
-    from datetime import datetime
-    import requests
-    
-    # =================== HEADER (com DRE no fim) ===================
-    #st.markdown("## 📤 Atualizar Google Sheets")
-    
-    c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
-    
-    with c1:
-        enviar_auto = st.button(
-            "Atualizar Sheets",
-            use_container_width=True,
-            disabled=not has_df,
-            help=None if has_df else "Carregue os dados para habilitar",
-            key="btn_enviar_auto_header",
-        )
-    
-    with c2:
-        label_toggle = "❌ Fechar lançamentos" if st.session_state.get("show_manual_editor", False) \
-                       else "Lançamentos manuais"
-        if st.button(label_toggle, key="btn_toggle_manual", use_container_width=True):
-            st.session_state["show_manual_editor"] = not st.session_state.get("show_manual_editor", False)
-            if st.session_state["show_manual_editor"] and st.session_state.manual_df.empty:
-                st.session_state.manual_df = template_manuais(10)
-            st.rerun()
-    
-    with c3:
-        try:
-            st.link_button("Abrir Google Sheets", LINK_SHEET, use_container_width=True)
-        except Exception:
-            st.markdown(
-                f"""
-                <a href="{LINK_SHEET}" target="_blank">
-                    <button style="width:100%;background:#1a73e8;color:#fff;border:none;
-                    padding:0.6em;border-radius:0.5em;font-weight:600;cursor:pointer;">
-                    📊 Abrir Google Sheets
-                    </button>
-                </a>
-                """,
-                unsafe_allow_html=True
-            )
-    
-    with c4:
-        # habilita só após 10h
-        def pode_executar_agora():
-            return datetime.now().hour >= 10  # ajuste se quiser outro horário
-    
-        pode_dre = pode_executar_agora()
-        atualizar_dre = st.button(
-            "Atualizar DRE",
-            use_container_width=True,
-            disabled=not pode_dre,
-            help=None if pode_dre else "Disponível após as 10h",
-            key="btn_atualizar_dre",
-        )
-    
-    # handler do botão DRE (fica logo após o header)
-    if 'atualizar_dre' in locals() and atualizar_dre:
-        try:
-            SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-gK_KYcSyqyfimHTuXFLEDxKvWdW4k0o_kOPE-r-SWxL-SpogE2U9wiZt7qCZoH-gqQ/exec"
-            with st.spinner("Atualizando DRE..."):
-                resp = requests.get(SCRIPT_URL, timeout=30)
-            if resp.status_code == 200:
-                st.success("✅ DRE atualizada com sucesso!")
-                st.info(resp.text)
-            else:
-                st.error(f"❌ Erro ao executar o script: {resp.status_code}")
-        except Exception as e:
-            st.error(f"❌ Falha ao conectar: {e}")
-
-
-    # =============== EDITOR MANUAL (só se aberto) ===============
-    if st.session_state.get("show_manual_editor", False):
-        st.subheader("✍️ Lançamentos manuais")
-
-        df_disp = st.session_state.manual_df.copy()
-        df_disp["Data"] = pd.to_datetime(df_disp["Data"], errors="coerce")
-        for c in ["Fat.Total", "Serv/Tx", "Fat.Real", "Ticket", "Código Everest", "Código Grupo Everest"]:
-            df_disp[c] = pd.to_numeric(df_disp[c], errors="coerce")
-
-        edited_df = st.data_editor(
-            df_disp,
-            num_rows="dynamic",
-            use_container_width=True,
-            column_config={
-                "Data": st.column_config.DateColumn(format="DD/MM/YYYY"),
-                "Fat.Total": st.column_config.NumberColumn(step=0.01),
-                "Serv/Tx": st.column_config.NumberColumn(step=0.01),
-                "Fat.Real": st.column_config.NumberColumn(step=0.01),
-                "Ticket": st.column_config.NumberColumn(step=0.01),
-                "Código Everest": st.column_config.NumberColumn(step=1),
-                "Código Grupo Everest": st.column_config.NumberColumn(step=1),
-            },
-            key="editor_manual",
-        )
-
-        b1, b2, b3 = st.columns([1, 1, 2])
-        with b1:
-            salvar_manual = st.button("💾 Salvar lançamentos", key="btn_salvar_manual")
-        with b2:
-            fechar_manual = st.button("❌ Fechar", key="btn_fechar_manual")
-        with b3:
-            enviar_manuais = st.button("📤 Enviar lançamentos manuais", key="btn_enviar_manual")
-
-        if salvar_manual:
-            st.session_state.manual_df = drop_empty_rows(edited_df)
-            st.success(f"✅ {len(st.session_state.manual_df)} linha(s) manual(is) salva(s).")
-
-        if fechar_manual:
-            st.session_state["show_manual_editor"] = False
-            st.rerun()
-
-        if enviar_manuais:
-            st.info("👉 Aqui você chama a rotina de envio SÓ dos manuais (dedupe/append_rows/formatos).")
-
-    # badge informativa
-    #if not st.session_state.manual_df.empty:
-        #st.caption(f"🔹 {len(st.session_state.manual_df)} lançamento(s) manual(is) salvos. (Rotina separada do automático)")
-
-    # =================== ENVIO AUTOMÁTICO ===================
-    if enviar_auto:
-        # garanta que há dados
-        if 'df_final' not in st.session_state or st.session_state.df_final.empty:
-            st.error("Não há dados para enviar.")
-        else:
-            df_final = st.session_state.df_final.copy()
+        # Mostra botão SEMPRE que houver dados na aba upload
+        if st.button("📥 Enviar dados para o Google Sheets"):
 
             with st.spinner("🔄 Processando dados e verificando duplicidades..."):
 
@@ -673,61 +462,71 @@ with aba3:
                     else:
                         duplicados.append(linha)  # ❌ Duplicado pela M
 
-               # ===================== Mostra alerta / Resumo / Envio =====================
-                total_novos       = len(novos_dados)
-                total_dup_m       = len(duplicados)
-                total_suspeitos_n = len(suspeitos_n)
-                
-                # Resumo
-                st.info(f"📊 Resumo — Enviar: {total_novos} · Duplicados (M): {total_dup_m} · Possíveis (N): {total_suspeitos_n}")
-                
-                # Duplicados por M (somente contagem)
-                if total_dup_m > 0:
-                    st.warning(f"❌ {total_dup_m} registro(s) já existem (duplicados por M) e não serão enviados.")
-                
-                # Possíveis duplicados por N (lista apenas uma vez)
-                if total_suspeitos_n > 0:
-                    st.warning("⚠️ Existem registros possivelmente duplicados (chave N). Revise antes de enviar.")
+                # ==================================================
+                # ✅ Mostra alerta para duplicidade pela coluna N
+                # ==================================================
+                pode_enviar = True  # Variável de controle
+
+               
+                # ================================
+                # 🚨 Verifica duplicidade pela coluna N
+                # ================================
+                if suspeitos_n:
+                    st.warning("❌ Existem registros possivelmente duplicados. Corrija antes de continuar.")
+                    
                     df_exibir = pd.DataFrame(suspeitos_n, columns=colunas_df).copy()
-                    if "Data" in df_exibir.columns:
-                        df_exibir["Data"] = pd.to_datetime(
-                            df_exibir["Data"], origin="1899-12-30", unit="D", errors="coerce"
-                        ).dt.strftime("%d/%m/%Y")
+                
+                    # 🗓️ Converte o número serial para data legível (sem alterar o original)
+                    df_exibir["Data"] = pd.to_datetime(df_exibir["Data"], origin="1899-12-30", unit="D").dt.strftime("%d/%m/%Y")
+                
+                    # 📊 Exibe a tabela com a data formatada
                     st.dataframe(df_exibir, use_container_width=True)
                 
-                # Regras para enviar (iguais ao comportamento antigo)
-                pode_enviar = (total_suspeitos_n == 0) and todas_lojas_ok and (total_novos > 0)
-                
-                # Só os NOVOS vão para o Sheets
-                dados_para_enviar = novos_dados
-                
-                if pode_enviar:
+                    pode_enviar = False
+                else:
+                    pode_enviar = True
+
+                    
+
+                # =============================================
+                # 🟢 Só mostra o botão se permitido pelo checkbox
+                # =============================================
+                if todas_lojas_ok and pode_enviar:
                     try:
+                        dados_para_enviar = novos_dados + suspeitos_n
+                
+                        # Descobre a primeira linha livre
                         inicio = len(aba_destino.col_values(1)) + 1
-                        aba_destino.append_rows(dados_para_enviar, value_input_option="USER_ENTERED")
+                        aba_destino.append_rows(dados_para_enviar, value_input_option='USER_ENTERED')
                         fim = inicio + len(dados_para_enviar) - 1
                 
-                        # Formatação, se houver linhas
-                        if inicio <= fim:
-                            from gspread_formatting import CellFormat, NumberFormat, format_cell_range
-                            data_format  = CellFormat(numberFormat=NumberFormat(type="DATE",   pattern="dd/mm/yyyy"))
-                            numero_format= CellFormat(numberFormat=NumberFormat(type="NUMBER", pattern="0"))
-                            format_cell_range(aba_destino, f"A{inicio}:A{fim}", data_format)
-                            format_cell_range(aba_destino, f"L{inicio}:L{fim}", numero_format)
-                            format_cell_range(aba_destino, f"D{inicio}:D{fim}", numero_format)
-                            format_cell_range(aba_destino, f"F{inicio}:F{fim}", numero_format)
+                        # 🔹 Declara os formatos
+                        from gspread_formatting import CellFormat, NumberFormat, format_cell_range
                 
-                        # Mensagem no formato que você quer
-                        st.success(f"✅ {total_novos} enviado(s). ❌ {total_dup_m} não enviado(s) por duplicidade (M).")
+                        data_format = CellFormat(
+                            numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy')
+                        )
+                
+                        numero_format = CellFormat(
+                            numberFormat=NumberFormat(type='NUMBER', pattern='0')
+                        )
+                
+                        # 🔹 Aplica os formatos
+                        format_cell_range(aba_destino, f"A{inicio}:A{fim}", data_format)
+                        format_cell_range(aba_destino, f"L{inicio}:L{fim}", numero_format)
+                        format_cell_range(aba_destino, f"D{inicio}:D{fim}", numero_format)
+                        format_cell_range(aba_destino, f"F{inicio}:F{fim}", numero_format)
+                
+                        st.success(f"✅ {len(dados_para_enviar)} registro(s) enviado(s) com sucesso para o Google Sheets!")
+                
+                        if duplicados:
+                            st.warning(f"⚠️ {len(duplicados)} registro(s) duplicados na google sheets, não foram enviados.")
                     except Exception as e:
                         st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
-                else:
-                    if not todas_lojas_ok:
-                        st.error("🚫 Há lojas sem Código Everest cadastradas. Corrija e ten
-                
-                
-                
-                       
+
+
+
+       
 
         
         
