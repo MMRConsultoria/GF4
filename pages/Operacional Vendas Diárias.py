@@ -706,13 +706,13 @@ with aba3:
                 total_suspeitos_n = len(suspeitos_n)
                 
                 st.info(
-                    f"📊 Resumo — **Enviar**: {total_novos} · "
-                    f"**Duplicados (M)**: {total_dup_m} · "
-                    f"**Possíveis (N)**: {total_suspeitos_n}"
+                    #f"📊 Resumo — **Enviar**: {total_novos} · "
+                    f"**Duplicados**: {total_dup_m} · "
+                    f"**Possíveis**: {total_suspeitos_n}"
                 )
                 
                 if total_dup_m > 0:
-                    st.warning(f"❌ {total_dup_m} registro(s) já existem (duplicados por **M**) e **não serão enviados**.")
+                    st.warning(f"❌ {total_dup_m} registro(s) já existem duplicados por e não serão enviados**.")
                 
                 # Mantém a regra antiga: se houver suspeitos por N, bloqueia envio e mostra a tabela
                 pode_enviar = True
