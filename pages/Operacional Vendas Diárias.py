@@ -369,51 +369,51 @@ with aba3:
                     st.session_state.manual_df = template_manuais(10)
     
         # ========= Editor de lançamentos manuais (só aparece se clicar) =========
-        if st.session_state.show_manual_editor:
-            st.subheader("✍️ Lançamentos manuais")
+        if st.session_state.get("show_manual_editor", False):
+        st.subheader("✍️ Lançamentos manuais")
     
-            # Proteção extra de dtype antes do editor
-            df_disp = st.session_state.manual_df.copy()
-            df_disp["Data"] = pd.to_datetime(df_disp["Data"], errors="coerce")
-            for c in ["Fat.Total", "Serv/Tx", "Fat.Real", "Ticket", "Código Everest", "Código Grupo Everest"]:
-                df_disp[c] = pd.to_numeric(df_disp[c], errors="coerce")
+        # garante dtypes antes do editor
+        df_disp = st.session_state.manual_df.copy()
+        df_disp["Data"] = pd.to_datetime(df_disp["Data"], errors="coerce")
+        for c in ["Fat.Total", "Serv/Tx", "Fat.Real", "Ticket", "Código Everest", "Código Grupo Everest"]:
+            df_disp[c] = pd.to_numeric(df_disp[c], errors="coerce")
     
-            edited_df = st.data_editor(
-                df_disp,
-                num_rows="dynamic",
-                use_container_width=True,
-                column_config={
-                    "Data": st.column_config.DateColumn(format="DD/MM/YYYY"),
-                    "Fat.Total": st.column_config.NumberColumn(step=0.01),
-                    "Serv/Tx": st.column_config.NumberColumn(step=0.01),
-                    "Fat.Real": st.column_config.NumberColumn(step=0.01),
-                    "Ticket": st.column_config.NumberColumn(step=0.01),
-                    "Código Everest": st.column_config.NumberColumn(step=1),
-                    "Código Grupo Everest": st.column_config.NumberColumn(step=1),
-                },
-                key="editor_manual",
-            )
+        edited_df = st.data_editor(
+            df_disp,
+            num_rows="dynamic",
+            use_container_width=True,
+            column_config={
+                "Data": st.column_config.DateColumn(format="DD/MM/YYYY"),
+                "Fat.Total": st.column_config.NumberColumn(step=0.01),
+                "Serv/Tx": st.column_config.NumberColumn(step=0.01),
+                "Fat.Real": st.column_config.NumberColumn(step=0.01),
+                "Ticket": st.column_config.NumberColumn(step=0.01),
+                "Código Everest": st.column_config.NumberColumn(step=1),
+                "Código Grupo Everest": st.column_config.NumberColumn(step=1),
+            },
+            key="editor_manual",
+        )
     
-            c1, c2, c3 = st.columns([1, 1, 2])
-            with c1:
-                salvar_manual = st.button("💾 Salvar lançamentos", key="btn_salvar_manual")
-            with c2:
-                fechar_manual = st.button("❌ Fechar", key="btn_fechar_manual")
-            with c3:
-                enviar_manuais = st.button("📤 Enviar lançamentos manuais", key="btn_enviar_manual")
+        c1, c2, c3 = st.columns([1, 1, 2])
+        with c1:
+            salvar_manual = st.button("💾 Salvar lançamentos", key="btn_salvar_manual")
+        with c2:
+            fechar_manual = st.button("❌ Fechar", key="btn_fechar_manual")
+        with c3:
+            enviar_manuais = st.button("📤 Enviar lançamentos manuais", key="btn_enviar_manual")
     
-            if salvar_manual:
-                st.session_state.manual_df = drop_empty_rows(edited_df)
-                st.success(f"✅ {len(st.session_state.manual_df)} linha(s) manual(is) salva(s).")
+        if salvar_manual:
+            st.session_state.manual_df = drop_empty_rows(edited_df)
+            st.success(f"✅ {len(st.session_state.manual_df)} linha(s) manual(is) salva(s).")
     
-            if fechar_manual:
-                st.session_state.show_manual_editor = False
+        # <- ESTE É O PONTO QUE FECHA DE VERDADE
+        if fechar_manual:
+            st.session_state["show_manual_editor"] = False
+            st.rerun()
     
-            if enviar_manuais:
-                # Aqui você chama SUA rotina de envio SÓ dos manuais (independente do automático).
-                # Exemplo: normalizar/validar e fazer append_rows.
-                st.session_state.manual_df = drop_empty_rows(edited_df)
-                st.info("👉 Envio de manuais disparado. Plugar aqui sua rotina de dedupe/append_rows/formatos da planilha.")
+        if enviar_manuais:
+            st.info("👉 Aqui você chama a rotina de envio SÓ dos manuais.")
+
     
         # Badge informativa (aparece só se houver algo salvo)
         if not st.session_state.manual_df.empty:
