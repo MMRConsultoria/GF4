@@ -294,18 +294,47 @@ with aba1:
 # =======================================
 
 with aba3:
-    # 🔗 Link sempre visível
-    st.markdown("""
-      🔗 [Link  **Faturamento Sistema Externo**](https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing)
-    """, unsafe_allow_html=True)
-
-    # >>> Fechar o editor manual sempre que entrar nesta aba
+    # 🔗 Fechar editor manual ao entrar na aba
     if st.session_state.get("_last_tab") != "atualizar_google_sheets":
         st.session_state["show_manual_editor"] = False
     st.session_state["_last_tab"] = "atualizar_google_sheets"
 
-    # st.header("📤 Atualizar Banco de Dados (Evitar duplicação usando coluna M)")
+    # ========= Cabeçalho + controles =========
+    st.markdown("### 📤 Atualizar Google Sheets")
 
+    # Criar colunas lado a lado para os botões
+    c1, c2, c3, c4 = st.columns([1,1,1,1])
+
+    with c1:
+        if st.button("📥 Enviar p/ Sheets", use_container_width=True):
+            # 👉 aqui entra a sua rotina de envio para o Google Sheets
+            st.success("Rotina de envio executada!")
+
+    with c2:
+        if st.button("✍️ Lançamentos manuais", use_container_width=True):
+            st.session_state["show_manual_editor"] = True
+
+    with c3:
+        # Botão estilizado como link para o Google Sheets
+        st.markdown(
+            """
+            <a href="https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing" target="_blank">
+                <button style="width:100%;background-color:#1a73e8;color:white;border:none;
+                padding:0.6em;border-radius:0.4em;cursor:pointer;font-weight:bold;">
+                📊 Abrir Google Sheets
+                </button>
+            </a>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with c4:
+        if st.button("📈 Auditoria Everest", use_container_width=True):
+            # 👉 aqui entra a sua rotina de auditoria Everest
+            st.info("Rotina de auditoria executada!")
+
+    # ========= Bloco principal da aba =========
+   
     if "df_final" in st.session_state:
         df_final = st.session_state.df_final.copy()
 
