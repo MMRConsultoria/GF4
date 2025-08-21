@@ -456,8 +456,8 @@ with aba3:
             st.info("👉 Aqui você chama a rotina de envio SÓ dos manuais (dedupe/append_rows/formatos).")
 
     # badge informativa
-    'if not st.session_state.manual_df.empty:
-       ' st.caption(f"🔹 {len(st.session_state.manual_df)} lançamento(s) manual(is) salvos. (Rotina separada do automático)")
+    #if not st.session_state.manual_df.empty:
+        #st.caption(f"🔹 {len(st.session_state.manual_df)} lançamento(s) manual(is) salvos. (Rotina separada do automático)")
 
     # =================== ENVIO AUTOMÁTICO ===================
     if enviar_auto:
