@@ -647,7 +647,7 @@ with aba3:
 
     # ------------------------ EDITOR MANUAL ------------------------
     if st.session_state.get("show_manual_editor", False):
-        st.subheader("✍️ Lançamentos manuais")
+        st.subheader("Lançamentos manuais")
 
         gc_ = get_gc()
         catalogo = carregar_catalogo_codigos(gc_, nome_planilha="Vendas diarias", aba_catalogo="Tabela Empresa")
