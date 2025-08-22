@@ -675,9 +675,9 @@ with aba3:
         )
 
         # único botão (centralizado)
-        _, col_send, _ = st.columns([3,2,3])
-        with col_send:
-            enviar_manuais = st.button("📤 Enviar lançamentos manuais",
+        col_esq, _ = st.columns([2, 8])  # primeira para o botão, segunda como espaçador
+        with col_esq:
+            enviar_manuais = st.button("Salvar Lançamentos",
                                        key="btn_enviar_manual",
                                        use_container_width=True)
 
