@@ -466,47 +466,128 @@ with aba3:
         except Exception as e:
             st.error(f"❌ Falha ao conectar: {e}")
 
+    # --- helpers de catálogo e preenchimento ---
+    from gspread_dataframe import get_as_dataframe
+    
+    def carregar_catalogo_codigos(gc, nome_planilha="Vendas diarias", aba_catalogo="Cadastro Lojas"):
+        """
+        Lê a worksheet com as colunas: Loja, Código Everest, Código Grupo Everest.
+        Ajuste 'aba_catalogo' para o nome real (ex.: 'Mapa Lojas', 'Códigos', etc.)
+        """
+        try:
+            ws = gc.open(nome_planilha).worksheet(aba_catalogo)
+            df = get_as_dataframe(ws, evaluate_formulas=True, dtype=str).fillna("")
+            df.columns = df.columns.str.strip()
+            # mantém só o necessário
+            cols = [c for c in ["Loja", "Código Everest", "Código Grupo Everest"] if c in df.columns]
+            df = df[cols].copy()
+            # normaliza tipos
+            for c in ["Código Everest", "Código Grupo Everest"]:
+                if c in df.columns:
+                    df[c] = pd.to_numeric(df[c], errors="coerce")
+            df["Loja"] = df["Loja"].astype(str).str.strip().str.lower()
+            return df
+        except Exception as e:
+            st.error(f"❌ Não foi possível carregar o catálogo de códigos: {e}")
+            return pd.DataFrame(columns=["Loja", "Código Everest", "Código Grupo Everest"])
+    
+    def preencher_codigos_por_loja(df_manuais: pd.DataFrame, catalogo: pd.DataFrame) -> pd.DataFrame:
+        """
+        Retorna um novo DF com 'Código Everest' e 'Código Grupo Everest' preenchidos via Loja.
+        """
+        df = df_manuais.copy()
+        if df.empty or catalogo.empty or "Loja" not in df.columns:
+            # garante colunas vazias se necessário
+            if "Código Everest" not in df.columns: df["Código Everest"] = pd.NA
+            if "Código Grupo Everest" not in df.columns: df["Código Grupo Everest"] = pd.NA
+            return df
+    
+        look = catalogo.set_index("Loja")
+        # chave normalizada
+        lojakey = df["Loja"].astype(str).str.strip().str.lower()
+    
+        df["Código Everest"] = lojakey.map(look["Código Everest"]) if "Código Everest" in look.columns else pd.NA
+        df["Código Grupo Everest"] = lojakey.map(look["Código Grupo Everest"]) if "Código Grupo Everest" in look.columns else pd.NA
+        return df
 
 
    
     # =============== EDITOR MANUAL (só se aberto) ===============
+    # =============== EDITOR MANUAL (só se aberto) ===============
     if st.session_state.get("show_manual_editor", False):
         st.subheader("✍️ Lançamentos manuais")
     
+        # ---------- cópia + dtypes seguros ----------
         df_disp = st.session_state.manual_df.copy()
-        df_disp["Data"] = pd.to_datetime(df_disp["Data"], errors="coerce")
-        for c in ["Fat.Total", "Serv/Tx", "Fat.Real", "Ticket", "Código Everest", "Código Grupo Everest"]:
-            df_disp[c] = pd.to_numeric(df_disp[c], errors="coerce")
+        if "Data" in df_disp.columns:
+            df_disp["Data"] = pd.to_datetime(df_disp["Data"], errors="coerce")
+        for c in ["Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]:
+            if c in df_disp.columns:
+                df_disp[c] = pd.to_numeric(df_disp[c], errors="coerce")
+    
+        # ---------- 1. carrega catálogo e preenche códigos ----------
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+        credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+        gc_tmp = gspread.authorize(credentials)
+    
+        catalogo = carregar_catalogo_codigos(gc_tmp,            # <- usa helper
+                                             nome_planilha="Vendas diarias",
+                                             aba_catalogo="Cadastro Lojas")   # ajuste se necessário
+        df_preview = preencher_codigos_por_loja(df_disp, catalogo)            # <- usa helper
+    
+        # ---------- 2. checa se faltou código ----------
+        lojas_sem_codigo = []
+        if "Loja" in df_preview.columns and "Código Everest" in df_preview.columns:
+            lojas_sem_codigo = (
+                df_preview[df_preview["Loja"].astype(str).str.strip() != ""]
+                [df_preview["Código Everest"].isna()]["Loja"]
+                .astype(str).str.strip().unique().tolist()
+            )
+    
+        # ---------- 3. monta column_config (códigos travados) ----------
+        cfg = {
+            "Data":       st.column_config.DateColumn(format="DD/MM/YYYY"),
+            "Loja":       st.column_config.TextColumn(help="Digite exatamente como no cadastro"),
+            "Grupo":      st.column_config.TextColumn(),
+            "Fat.Total":  st.column_config.NumberColumn(step=0.01),
+            "Serv/Tx":    st.column_config.NumberColumn(step=0.01),
+            "Fat.Real":   st.column_config.NumberColumn(step=0.01),
+            "Ticket":     st.column_config.NumberColumn(step=0.01),
+            # códigos – somente leitura
+            "Código Everest":         st.column_config.NumberColumn(disabled=True, help="Preenchido automaticamente"),
+            "Código Grupo Everest":   st.column_config.NumberColumn(disabled=True, help="Preenchido automaticamente"),
+        }
     
         edited_df = st.data_editor(
-            df_disp,
+            df_preview,                      # << mostramos já com códigos preenchidos
             num_rows="dynamic",
             use_container_width=True,
-            column_config={
-                "Data": st.column_config.DateColumn(format="DD/MM/YYYY"),
-                "Loja": st.column_config.TextColumn(),
-                "Grupo": st.column_config.TextColumn(),   # 👈 nova coluna
-                "Fat.Total": st.column_config.NumberColumn(step=0.01),
-                "Serv/Tx": st.column_config.NumberColumn(step=0.01),
-                "Fat.Real": st.column_config.NumberColumn(step=0.01),
-                "Ticket": st.column_config.NumberColumn(step=0.01),
-            },
+            column_config=cfg,
             key="editor_manual",
         )
-
     
-        # 👉 único botão (centralizado)
+        # ---------- 4. único botão ----------
         _, col_send, _ = st.columns([3, 2, 3])
         with col_send:
             enviar_manuais = st.button("📤 Enviar lançamentos manuais",
                                        key="btn_enviar_manual",
                                        use_container_width=True)
     
+        # alerta se faltou código
+        if lojas_sem_codigo:
+            st.warning(f"⚠️ {len(lojas_sem_codigo)} loja(s) sem código no cadastro: "
+                       + ", ".join(sorted(lojas_sem_codigo)))
+    
+        # ---------- 5. ação do botão ----------
         if enviar_manuais:
-            # Atualiza o state com o que está na grade (sem linhas totalmente vazias)
-            st.session_state.manual_df = drop_empty_rows(edited_df)
-            # TODO: aqui você chama sua rotina de envio dos manuais, se quiser
-            st.success(f"✅ {len(st.session_state.manual_df)} lançamento(s) pronto(s) para envio.")
+            st.session_state.manual_df = edited_df.replace("", pd.NA).dropna(how="all").fillna("")
+            if lojas_sem_codigo:
+                st.error("⛔ Há lojas sem código cadastrado. Complete o cadastro antes de enviar.")
+            else:
+                st.success(f"✅ {len(st.session_state.manual_df)} lançamento(s) prontos para envio.")
+                # aqui você chama sua rotina de envio dos manuais, se quiser
+
 
 
     # ---------- ENVIO AUTOMÁTICO (lógica antiga preservada) ----------
