@@ -646,26 +646,43 @@ with aba3:
             st.error(f"❌ Falha ao conectar: {e}")
 
     # ------------------------ EDITOR MANUAL ------------------------
+    # ------------------------ EDITOR MANUAL ------------------------
     if st.session_state.get("show_manual_editor", False):
         st.subheader("Lançamentos manuais")
-
+    
+        # 1) Carrega catálogo e monta opções de lojas
         gc_ = get_gc()
         catalogo = carregar_catalogo_codigos(gc_, nome_planilha="Vendas diarias", aba_catalogo="Tabela Empresa")
-        lojas_options = sorted(catalogo["Loja"].dropna().unique().tolist()) if not catalogo.empty else []
-
+        lojas_options = sorted(catalogo["Loja"].dropna().astype(str).str.strip().unique().tolist()) if not catalogo.empty else []
+    
+        # placeholder para a célula select
+        PLACEHOLDER_LOJA = "— selecione a loja —"
+        lojas_options_ui = [PLACEHOLDER_LOJA] + lojas_options
+    
+        # 2) DataFrame exibido no editor (sem None)
         df_disp = st.session_state.manual_df.copy()
+        df_disp["Loja"] = df_disp["Loja"].fillna("").astype(str).str.strip()
         df_disp["Data"] = pd.to_datetime(df_disp["Data"], errors="coerce")
+    
         for c in ["Fat.Total","Serv/Tx","Fat.Real","Ticket"]:
             df_disp[c] = pd.to_numeric(df_disp[c], errors="coerce")
+    
+        # se estiver vazio, mostra o placeholder na UI (só visual)
+        df_disp.loc[df_disp["Loja"] == "", "Loja"] = PLACEHOLDER_LOJA
+    
         df_disp = df_disp[["Data","Loja","Fat.Total","Serv/Tx","Fat.Real","Ticket"]]
-
+    
         edited_df = st.data_editor(
             df_disp,
             num_rows="dynamic",
             use_container_width=True,
             column_config={
                 "Data":      st.column_config.DateColumn(format="DD/MM/YYYY"),
-                "Loja":      st.column_config.SelectboxColumn(options=lojas_options) if lojas_options else st.column_config.TextColumn(),
+                "Loja":      st.column_config.SelectboxColumn(
+                                options=lojas_options_ui,
+                                default=PLACEHOLDER_LOJA,
+                                help="Clique e escolha a loja (digite para filtrar)"
+                            ),
                 "Fat.Total": st.column_config.NumberColumn(step=0.01),
                 "Serv/Tx":   st.column_config.NumberColumn(step=0.01),
                 "Fat.Real":  st.column_config.NumberColumn(step=0.01),
@@ -673,19 +690,24 @@ with aba3:
             },
             key="editor_manual",
         )
-
-        # único botão (centralizado)
-        col_esq, _ = st.columns([2, 8])  # primeira para o botão, segunda como espaçador
+    
+        # 3) Botão alinhado à esquerda
+        col_esq, _ = st.columns([2, 8])
         with col_esq:
             enviar_manuais = st.button("Salvar Lançamentos",
                                        key="btn_enviar_manual",
                                        use_container_width=True)
-
+    
         if enviar_manuais:
-            # salva grade e remove linhas 100% vazias
+            # troca placeholder por vazio antes de salvar
+            edited_df["Loja"] = edited_df["Loja"].replace({PLACEHOLDER_LOJA: ""}).astype(str).str.strip()
+    
+            # remove linhas 100% vazias
             st.session_state.manual_df = drop_empty_rows(edited_df)
-            # preenche códigos via catálogo (se existirem)
+    
+            # preenche códigos conforme catálogo
             df_send = preencher_codigos_por_loja(st.session_state.manual_df, catalogo)
+    
             ok = enviar_para_sheets(df_send, titulo_origem="manuais")
             if ok:
                 st.session_state.manual_df = template_manuais(10)
