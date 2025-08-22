@@ -484,15 +484,16 @@ with aba3:
             use_container_width=True,
             column_config={
                 "Data": st.column_config.DateColumn(format="DD/MM/YYYY"),
+                "Loja": st.column_config.TextColumn(),
+                "Grupo": st.column_config.TextColumn(),   # 👈 nova coluna
                 "Fat.Total": st.column_config.NumberColumn(step=0.01),
                 "Serv/Tx": st.column_config.NumberColumn(step=0.01),
                 "Fat.Real": st.column_config.NumberColumn(step=0.01),
                 "Ticket": st.column_config.NumberColumn(step=0.01),
-                "Código Everest": st.column_config.NumberColumn(step=1),
-                "Código Grupo Everest": st.column_config.NumberColumn(step=1),
             },
             key="editor_manual",
         )
+
     
         # 👉 único botão (centralizado)
         _, col_send, _ = st.columns([3, 2, 3])
