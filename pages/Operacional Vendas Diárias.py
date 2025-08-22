@@ -591,11 +591,28 @@ with aba3:
 
 
     # ---------- ENVIO AUTOMÁTICO (lógica antiga preservada) ----------
+    # =================== ENVIO AUTOMÁTICO ===================
     if enviar_auto:
         if 'df_final' not in st.session_state or st.session_state.df_final.empty:
             st.error("Não há dados para enviar.")
         else:
             df_final = st.session_state.df_final.copy()
+    
+            # 👇 INCLUIR MANUAIS ANTES DO PIPELINE
+            if not st.session_state.manual_df.empty:
+                df_man = preencher_codigos_por_loja(st.session_state.manual_df, catalogo)
+                faltando = (
+                    df_man[df_man["Código Everest"].isna()]["Loja"].astype(str).str.strip().unique().tolist()
+                    if "Código Everest" in df_man.columns else []
+                )
+                if faltando:
+                    st.error("⛔ Não foi possível enviar: lojas sem código cadastrado: " + ", ".join(sorted(faltando)))
+                    st.stop()
+                # concatena manuais + automáticos
+                df_final = pd.concat([df_final, df_man], ignore_index=True)
+    
+           
+
 
             with st.spinner("🔄 Processando dados e verificando duplicidades..."):
 
