@@ -590,7 +590,8 @@ with aba3:
                         dados_para_enviar = novos_dados + suspeitos_n  # se houver N, envio já está bloqueado
 
                         if len(dados_para_enviar) == 0:
-                            st.info("ℹ️ Nenhum dado novo disponível para envio.")
+                            total_dup_m = len(duplicados)  # já montado acima
+                            st.info(f"ℹ️ {total_dup_m} registro(s) duplicado(s) (M). Nada a enviar.")
                         else:
                             inicio = len(aba_destino.col_values(1)) + 1
                             aba_destino.append_rows(dados_para_enviar, value_input_option='USER_ENTERED')
