@@ -854,21 +854,7 @@ with aba3:
 
     #st.subheader("🚀 Atualização DRE")
 
-    if pode_executar_agora():
-        if st.button("📤 Atualizar DRE Após as 10h"):
-            try:
-                url_script = "https://script.google.com/macros/s/AKfycbw-gK_KYcSyqyfimHTuXFLEDxKvWdW4k0o_kOPE-r-SWxL-SpogE2U9wiZt7qCZoH-gqQ/exec"  # Substituir pelo seu link
-                resposta = requests.get(url_script)
-
-                if resposta.status_code == 200:
-                    st.success("✅ Atualização realizada com sucesso!")
-                    st.info(resposta.text)
-                else:
-                    st.error(f"❌ Erro ao executar o script: {resposta.status_code}")
-            except Exception as e:
-                st.error(f"❌ Falha ao conectar: {e}")
-    else:
-        st.warning("⏰ A atualização externa só está disponível após às 9h (horário de Brasília).")
+    
 
 
 
