@@ -612,7 +612,7 @@ with aba3:
 
                 if len(dados_para_enviar) == 0:
                     total_dup_m = len(duplicados)
-                    st.info(f"ℹ️ **0 enviados**. ❌ **{total_dup_m}** registro(s) não enviados por duplicidade (M).")
+                    st.info(f"ℹ️ **0 enviados**. ")
                     return True
 
                 inicio = len(aba_destino.col_values(1)) + 1
