@@ -400,12 +400,24 @@ with aba3:
             key="btn_enviar_auto_header",
         )
 
+ 
     with c2:
-        label_toggle = "❌ Fechar lançamentos" if st.session_state.get("show_manual_editor", False) else "Lançamentos manuais"
+        # alterna e ZERA os lançamentos ao fechar
+        aberto = st.session_state.get("show_manual_editor", False)
+        label_toggle = "❌ Fechar lançamentos" if aberto else "Lançamentos manuais"
+    
         if st.button(label_toggle, key="btn_toggle_manual", use_container_width=True):
-            st.session_state["show_manual_editor"] = not st.session_state.get("show_manual_editor", False)
-            if st.session_state["show_manual_editor"] and st.session_state.manual_df.empty:
+            novo_estado = not aberto
+            st.session_state["show_manual_editor"] = novo_estado
+    
+            if novo_estado:
+                # abrindo: se estiver vazio, pré-carrega 10 linhas em branco
+                if st.session_state.manual_df.empty:
+                    st.session_state.manual_df = template_manuais(10)
+            else:
+                # fechando: limpa tudo e volta em branco
                 st.session_state.manual_df = template_manuais(10)
+    
             st.rerun()
 
     with c3:
@@ -456,15 +468,16 @@ with aba3:
 
 
 
-    # ---------- Editor de lançamentos manuais ----------
+   
+    # =============== EDITOR MANUAL (só se aberto) ===============
     if st.session_state.get("show_manual_editor", False):
         st.subheader("✍️ Lançamentos manuais")
-
+    
         df_disp = st.session_state.manual_df.copy()
         df_disp["Data"] = pd.to_datetime(df_disp["Data"], errors="coerce")
         for c in ["Fat.Total", "Serv/Tx", "Fat.Real", "Ticket", "Código Everest", "Código Grupo Everest"]:
             df_disp[c] = pd.to_numeric(df_disp[c], errors="coerce")
-
+    
         edited_df = st.data_editor(
             df_disp,
             num_rows="dynamic",
@@ -480,25 +493,20 @@ with aba3:
             },
             key="editor_manual",
         )
-
-        b1, b2, b3 = st.columns([1, 1, 2])
-        with b1:
-            salvar_manual = st.button("💾 Salvar lançamentos", key="btn_salvar_manual")
-        with b2:
-            fechar_manual = st.button("❌ Fechar", key="btn_fechar_manual")
-        with b3:
-            enviar_manuais = st.button("📤 Enviar lançamentos manuais", key="btn_enviar_manual")
-
-        if salvar_manual:
-            st.session_state.manual_df = drop_empty_rows(edited_df)
-            st.success(f"✅ {len(st.session_state.manual_df)} linha(s) manual(is) salva(s).")
-
-        if fechar_manual:
-            st.session_state["show_manual_editor"] = False
-            st.rerun()
-
+    
+        # 👉 único botão (centralizado)
+        _, col_send, _ = st.columns([3, 2, 3])
+        with col_send:
+            enviar_manuais = st.button("📤 Enviar lançamentos manuais",
+                                       key="btn_enviar_manual",
+                                       use_container_width=True)
+    
         if enviar_manuais:
-            st.info("👉 Aqui você chama a rotina de envio SÓ dos manuais (dedupe/append_rows/formatos).")
+            # Atualiza o state com o que está na grade (sem linhas totalmente vazias)
+            st.session_state.manual_df = drop_empty_rows(edited_df)
+            # TODO: aqui você chama sua rotina de envio dos manuais, se quiser
+            st.success(f"✅ {len(st.session_state.manual_df)} lançamento(s) pronto(s) para envio.")
+
 
     # ---------- ENVIO AUTOMÁTICO (lógica antiga preservada) ----------
     if enviar_auto:
