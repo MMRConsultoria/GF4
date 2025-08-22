@@ -289,9 +289,7 @@ with aba1:
 
 
 
-# =======================================
-# Atualizar Google Sheets (Evitar duplicação)
-# =======================================
+
 # =======================================
 # Atualizar Google Sheets (Evitar duplicação)
 # =======================================
@@ -469,7 +467,7 @@ with aba3:
     # --- helpers de catálogo e preenchimento ---
     from gspread_dataframe import get_as_dataframe
     
-    def carregar_catalogo_codigos(gc, nome_planilha="Vendas diarias", aba_catalogo="Cadastro Lojas"):
+    def carregar_catalogo_codigos(gc, nome_planilha="Vendas diarias", aba_catalogo="Tabela Empresa"):
         """
         Lê a worksheet com as colunas: Loja, Código Everest, Código Grupo Everest.
         Ajuste 'aba_catalogo' para o nome real (ex.: 'Mapa Lojas', 'Códigos', etc.)
@@ -522,7 +520,7 @@ with aba3:
             credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
             _gc_catalog = gspread.authorize(credentials)
             st.session_state["catalogo_lojas"] = carregar_catalogo_codigos(
-                _gc_catalog, nome_planilha="Vendas diarias", aba_catalogo="Cadastro Lojas"
+                _gc_catalog, nome_planilha="Vendas diarias", aba_catalogo="Tabela Empresa"
             )
         except Exception as e:
             st.session_state["catalogo_lojas"] = pd.DataFrame()
@@ -581,7 +579,7 @@ with aba3:
                 else:
                     st.info("Selecione ao menos uma loja para adicionar.")
     else:
-        st.info("Carregue/ajuste a aba **Cadastro Lojas** para habilitar sugestões de Grupo/Loja.")
+        st.info("Carregue/ajuste a aba **Tabela Empresa** para habilitar sugestões de Grupo/Loja.")
 
    
     # =============== EDITOR MANUAL (só se aberto) ===============
@@ -605,7 +603,7 @@ with aba3:
     
         catalogo = carregar_catalogo_codigos(gc_tmp,            # <- usa helper
                                              nome_planilha="Vendas diarias",
-                                             aba_catalogo="Cadastro Lojas")   # ajuste se necessário
+                                             aba_catalogo="Tabela Empresa")   # ajuste se necessário
         df_preview = preencher_codigos_por_loja(df_disp, catalogo)            # <- usa helper
     
         # ---------- 2. checa se faltou código ----------
