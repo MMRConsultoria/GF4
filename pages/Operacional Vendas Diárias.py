@@ -629,7 +629,7 @@ with aba3:
 
                 st.success(
                     f"✅ **{len(dados_para_enviar)}** registro(s) enviado(s) com sucesso. "
-                    f"❌ **{len(duplicados)}"
+                    f""
                 )
                 return True
             except Exception as e:
