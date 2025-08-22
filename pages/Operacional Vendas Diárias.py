@@ -297,6 +297,10 @@ with aba1:
 # Atualizar Google Sheets (Evitar duplicação)
 # =======================================
 
+# =======================================
+# Atualizar Google Sheets (Evitar duplicação)
+# =======================================
+
 with aba3:
     # ------------------------ IMPORTS ------------------------
     import pandas as pd
@@ -393,6 +397,245 @@ with aba3:
               and isinstance(st.session_state.df_final, pd.DataFrame)
               and not st.session_state.df_final.empty)
 
+    # ------------------------ GC AUTH (usado por catálogo e envios) ------------------------
+    def get_gc():
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+        credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+        return gspread.authorize(credentials)
+
+    # ------------------------ Catálogo (flex) + preenchimento de códigos ------------------------
+    def _norm(s: str) -> str:
+        s = str(s or "").strip()
+        s = unicodedata.normalize("NFD", s)
+        s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+        s = s.lower()
+        s = re.sub(r"[^a-z0-9]+", " ", s).strip()
+        return s
+
+    _ALIASES = {
+        "loja": {"loja", "lojas", "nome loja", "nome da loja"},
+        "codigo_everest": {"codigo everest", "cod everest", "codigoeverest", "cod ever"},
+        "codigo_grupo_everest": {"codigo grupo everest", "grupo everest", "cod grupo", "codigo grupo"},
+        "grupo": {"grupo", "nome grupo", "grupos"},
+    }
+
+    def _auto_rename(df_cols):
+        norm_cols = {c: _norm(c) for c in df_cols}
+        rename = {}
+        used = set()
+        for canon, opts in _ALIASES.items():
+            for orig, n in norm_cols.items():
+                if orig in used:
+                    continue
+                if n in opts:
+                    rename[orig] = canon
+                    used.add(orig)
+                    break
+        return rename
+
+    def carregar_catalogo_codigos(gc, nome_planilha="Vendas diarias", aba_catalogo="Cadastro Lojas"):
+        try:
+            sh = gc.open(nome_planilha)
+            ws = sh.worksheet(aba_catalogo)
+            df = get_as_dataframe(ws, evaluate_formulas=True, dtype=str).fillna("")
+            if df.empty:
+                return pd.DataFrame(columns=["Loja","Código Everest","Código Grupo Everest","Grupo","Loja_norm"])
+            df.columns = df.columns.str.strip()
+
+            rename = _auto_rename(df.columns)
+            dfr = df.rename(columns=rename)
+
+            ok = ("loja" in dfr.columns) and (
+                "codigo_everest" in dfr.columns or
+                "codigo_grupo_everest" in dfr.columns or
+                "grupo" in dfr.columns
+            )
+            if not ok:
+                return pd.DataFrame(columns=["Loja","Código Everest","Código Grupo Everest","Grupo","Loja_norm"])
+
+            out = pd.DataFrame()
+            out["Loja"] = dfr["loja"].astype(str).str.strip()
+
+            if "codigo_everest" in dfr.columns:
+                out["Código Everest"] = pd.to_numeric(dfr["codigo_everest"], errors="coerce")
+            else:
+                out["Código Everest"] = pd.NA
+
+            if "codigo_grupo_everest" in dfr.columns:
+                out["Código Grupo Everest"] = pd.to_numeric(dfr["codigo_grupo_everest"], errors="coerce")
+            else:
+                out["Código Grupo Everest"] = pd.NA
+
+            if "grupo" in dfr.columns:
+                out["Grupo"] = dfr["grupo"].astype(str).str.strip()
+            else:
+                out["Grupo"] = out["Código Grupo Everest"].astype("Int64").astype(str)
+
+            out["Loja_norm"] = out["Loja"].str.lower()
+            return out
+        except Exception as e:
+            st.error(f"❌ Não foi possível carregar o catálogo de códigos: {e}")
+            return pd.DataFrame(columns=["Loja","Código Everest","Código Grupo Everest","Grupo","Loja_norm"])
+
+    def preencher_codigos_por_loja(df_manuais: pd.DataFrame, catalogo: pd.DataFrame) -> pd.DataFrame:
+        df = df_manuais.copy()
+        if df.empty or catalogo.empty or "Loja" not in df.columns:
+            if "Código Everest" not in df.columns: df["Código Everest"] = pd.NA
+            if "Código Grupo Everest" not in df.columns: df["Código Grupo Everest"] = pd.NA
+            return df
+        look = catalogo.set_index("Loja_norm")
+        lojakey = df["Loja"].astype(str).str.strip().str.lower()
+        df["Código Everest"] = lojakey.map(look["Código Everest"]) if "Código Everest" in look.columns else pd.NA
+        df["Código Grupo Everest"] = lojakey.map(look["Código Grupo Everest"]) if "Código Grupo Everest" in look.columns else pd.NA
+        return df
+
+    # ------------------------ FUNÇÃO DE ENVIO (lógica do antigo) ------------------------
+    def enviar_para_sheets(df_input: pd.DataFrame, titulo_origem: str = "dados") -> bool:
+        """
+        Aplica a mesma lógica do seu código antigo: cria M, normaliza, cria N, checa duplicidades,
+        bloqueia por N, envia novos via append_rows, formata e mostra contagens (enviados vs duplicados).
+        Retorna True se conseguiu enviar (ou se não havia nada a enviar e avisou), False se bloqueou por N.
+        """
+        if df_input.empty:
+            st.info("ℹ️ Nada a enviar.")
+            return True
+
+        with st.spinner(f"🔄 Processando {titulo_origem} e verificando duplicidades..."):
+            df_final = df_input.copy()
+
+            # 1) Chave M (como no antigo)
+            try:
+                df_final['M'] = pd.to_datetime(df_final['Data'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d') \
+                                + df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+            except Exception:
+                _dt = pd.to_datetime(df_final['Data'], origin="1899-12-30", unit='D', errors="coerce")
+                df_final['M'] = _dt.dt.strftime('%Y-%m-%d') + df_final['Fat.Total'].astype(str) + df_final['Loja'].astype(str)
+            df_final['M'] = df_final['M'].astype(str)
+
+            # 2) Normalizações (como no antigo)
+            df_final = df_final.applymap(str)
+
+            for coln in ['Fat.Total','Serv/Tx','Fat.Real','Ticket']:
+                if coln in df_final.columns:
+                    df_final[coln] = df_final[coln].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+
+            dt_parsed = pd.to_datetime(df_final['Data'].astype(str).replace("'", "", regex=True).str.strip(), dayfirst=True, errors="coerce")
+            if dt_parsed.notna().any():
+                df_final['Data'] = (dt_parsed - pd.Timestamp("1899-12-30")).dt.days
+
+            if 'Ano' in df_final.columns:
+                df_final['Ano'] = df_final['Ano'].apply(
+                    lambda x: int(str(x).replace("'", "").strip()) if pd.notnull(x) and str(x).strip() != "" else ""
+                )
+
+            def to_int_safe(x):
+                try:
+                    x_clean = str(x).replace("'", "").strip()
+                    return int(x_clean)
+                except:
+                    return ""
+
+            if 'Código Everest' in df_final.columns:
+                df_final['Código Everest'] = df_final['Código Everest'].apply(to_int_safe)
+            if 'Código Grupo Everest' in df_final.columns:
+                df_final['Código Grupo Everest'] = df_final['Código Grupo Everest'].apply(to_int_safe)
+
+            # 3) Conecta Sheets
+            gc = get_gc()
+            planilha_destino = gc.open("Vendas diarias")
+            aba_destino = planilha_destino.worksheet("Fat Sistema Externo")
+
+            # 4) Lê existentes
+            valores_existentes_df = get_as_dataframe(aba_destino, evaluate_formulas=True, dtype=str).fillna("")
+            colunas_df_existente = valores_existentes_df.columns.str.strip().tolist()
+
+            dados_existentes   = set(valores_existentes_df["M"].astype(str).str.strip()) if "M" in colunas_df_existente else set()
+            dados_n_existentes = set(valores_existentes_df["N"].astype(str).str.strip()) if "N" in colunas_df_existente else set()
+
+            if "M" not in colunas_df_existente:
+                st.warning("⚠️ A coluna 'M' não foi encontrada na planilha. Checagem de duplicidade (M) ficará inativa.")
+            if "N" not in colunas_df_existente:
+                st.warning("⚠️ A coluna 'N' não foi encontrada na planilha. Checagem de duplicidade (N) ficará inativa.")
+
+            # 5) Chave N (como no antigo)
+            df_final['Data_Formatada'] = pd.to_datetime(
+                df_final['Data'], origin="1899-12-30", unit='D', errors="coerce"
+            ).dt.strftime('%Y-%m-%d')
+            if 'Código Everest' not in df_final.columns:
+                df_final['Código Everest'] = ""
+
+            df_final['N'] = (df_final['Data_Formatada'] + df_final['Código Everest'].astype(str)).astype(str).str.strip()
+
+            if 'Código Everest' in df_final.columns:
+                df_final = df_final[(df_final['Código Everest'] != 0) & (df_final['Código Everest'] != "")]
+
+            if 'Data_Formatada' in df_final.columns:
+                df_final = df_final.drop(columns=['Data_Formatada'])
+
+            colunas_df = df_final.columns.tolist()
+            rows = df_final.fillna("").values.tolist()
+
+            # 6) Classificação: novos / duplicados (M) / suspeitos (N)
+            duplicados   = []
+            suspeitos_n  = []
+            novos_dados  = []
+
+            for linha in rows:
+                linha_dict = dict(zip(colunas_df, linha))
+                chave_m = str(linha_dict.get("M", "")).strip()
+                chave_n = str(linha_dict.get("N", "")).strip()
+
+                if chave_m not in dados_existentes:
+                    if chave_n in dados_n_existentes:
+                        suspeitos_n.append(linha)
+                    else:
+                        novos_dados.append(linha)
+                    dados_existentes.add(chave_m)
+                else:
+                    duplicados.append(linha)
+
+            # 7) Alerta / bloqueio por N
+            if suspeitos_n:
+                st.warning("❌ Existem registros possivelmente duplicados (chave N). Corrija antes de continuar.")
+                df_exibir = pd.DataFrame(suspeitos_n, columns=colunas_df).copy()
+                if "Data" in df_exibir.columns:
+                    df_exibir["Data"] = pd.to_datetime(
+                        df_exibir["Data"], origin="1899-12-30", unit="D", errors="coerce"
+                    ).dt.strftime("%d/%m/%Y")
+                st.dataframe(df_exibir, use_container_width=True)
+                return False  # bloqueia envio
+
+            # 8) Envio protegido + formatação
+            try:
+                dados_para_enviar = novos_dados
+
+                if len(dados_para_enviar) == 0:
+                    total_dup_m = len(duplicados)
+                    st.info(f"ℹ️ **0 enviados**. ❌ **{total_dup_m}** registro(s) não enviados por duplicidade (M).")
+                    return True
+
+                inicio = len(aba_destino.col_values(1)) + 1
+                aba_destino.append_rows(dados_para_enviar, value_input_option='USER_ENTERED')
+                fim = inicio + len(dados_para_enviar) - 1
+
+                if inicio <= fim:
+                    data_format   = CellFormat(numberFormat=NumberFormat(type='DATE',   pattern='dd/mm/yyyy'))
+                    numero_format = CellFormat(numberFormat=NumberFormat(type='NUMBER', pattern='0'))
+                    format_cell_range(aba_destino, f"A{inicio}:A{fim}", data_format)
+                    format_cell_range(aba_destino, f"D{inicio}:D{fim}", numero_format)
+                    format_cell_range(aba_destino, f"F{inicio}:F{fim}", numero_format)
+                    format_cell_range(aba_destino, f"L{inicio}:L{fim}", numero_format)
+
+                st.success(
+                    f"✅ **{len(dados_para_enviar)}** registro(s) enviado(s) com sucesso. "
+                    f"❌ **{len(duplicados)}** registro(s) não enviados por duplicidade (M)."
+                )
+                return True
+            except Exception as e:
+                st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
+                return False
+
     # ------------------------ HEADER (botões) ------------------------
     c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
 
@@ -465,111 +708,14 @@ with aba3:
         except Exception as e:
             st.error(f"❌ Falha ao conectar: {e}")
 
-    # ------------------------ GC AUTH (usado por catálogo e envios) ------------------------
-    def get_gc():
-        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-        credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-        return gspread.authorize(credentials)
-
-    # ------------------------ Catálogo (flex) + preenchimento de códigos ------------------------
-    def _norm(s: str) -> str:
-        s = str(s or "").strip()
-        s = unicodedata.normalize("NFD", s)
-        s = "".join(c for c in s if unicodedata.category(c) != "Mn")
-        s = s.lower()
-        s = re.sub(r"[^a-z0-9]+", " ", s).strip()
-        return s
-
-    _ALIASES = {
-        "loja": {"loja", "lojas", "nome loja", "nome da loja"},
-        "codigo_everest": {"codigo everest", "cod everest", "codigoeverest", "cod ever"},
-        "codigo_grupo_everest": {"codigo grupo everest", "grupo everest", "cod grupo", "codigo grupo"},
-        "grupo": {"grupo", "nome grupo", "grupos"},
-    }
-
-    def _auto_rename(df_cols):
-        norm_cols = {c: _norm(c) for c in df_cols}
-        rename = {}
-        used = set()
-        for canon, opts in _ALIASES.items():
-            for orig, n in norm_cols.items():
-                if orig in used: 
-                    continue
-                if n in opts:
-                    rename[orig] = canon
-                    used.add(orig)
-                    break
-        return rename
-
-    def carregar_catalogo_codigos(gc, nome_planilha="Vendas diarias", aba_catalogo="Cadastro Lojas"):
-        try:
-            sh = gc.open(nome_planilha)
-            ws = sh.worksheet(aba_catalogo)  # ajuste o nome da aba aqui, se necessário
-            df = get_as_dataframe(ws, evaluate_formulas=True, dtype=str).fillna("")
-            if df.empty:
-                return pd.DataFrame(columns=["Loja","Código Everest","Código Grupo Everest","Grupo","Loja_norm"])
-            df.columns = df.columns.str.strip()
-
-            # renomeia por alias
-            rename = _auto_rename(df.columns)
-            dfr = df.rename(columns=rename)
-
-            # precisa ter Loja e (Código ou Grupo)
-            ok = ("loja" in dfr.columns) and (
-                "codigo_everest" in dfr.columns or
-                "codigo_grupo_everest" in dfr.columns or
-                "grupo" in dfr.columns
-            )
-            if not ok:
-                return pd.DataFrame(columns=["Loja","Código Everest","Código Grupo Everest","Grupo","Loja_norm"])
-
-            out = pd.DataFrame()
-            out["Loja"] = dfr["loja"].astype(str).str.strip()
-
-            if "codigo_everest" in dfr.columns:
-                out["Código Everest"] = pd.to_numeric(dfr["codigo_everest"], errors="coerce")
-            else:
-                out["Código Everest"] = pd.NA
-
-            if "codigo_grupo_everest" in dfr.columns:
-                out["Código Grupo Everest"] = pd.to_numeric(dfr["codigo_grupo_everest"], errors="coerce")
-            else:
-                out["Código Grupo Everest"] = pd.NA
-
-            if "grupo" in dfr.columns:
-                out["Grupo"] = dfr["grupo"].astype(str).str.strip()
-            else:
-                # fallback textual
-                out["Grupo"] = out["Código Grupo Everest"].astype("Int64").astype(str)
-
-            out["Loja_norm"] = out["Loja"].str.lower()
-            return out
-        except Exception as e:
-            st.error(f"❌ Não foi possível carregar o catálogo de códigos: {e}")
-            return pd.DataFrame(columns=["Loja","Código Everest","Código Grupo Everest","Grupo","Loja_norm"])
-
-    def preencher_codigos_por_loja(df_manuais: pd.DataFrame, catalogo: pd.DataFrame) -> pd.DataFrame:
-        df = df_manuais.copy()
-        if df.empty or catalogo.empty or "Loja" not in df.columns:
-            if "Código Everest" not in df.columns: df["Código Everest"] = pd.NA
-            if "Código Grupo Everest" not in df.columns: df["Código Grupo Everest"] = pd.NA
-            return df
-        look = catalogo.set_index("Loja_norm")
-        lojakey = df["Loja"].astype(str).str.strip().str.lower()
-        df["Código Everest"] = lojakey.map(look["Código Everest"]) if "Código Everest" in look.columns else pd.NA
-        df["Código Grupo Everest"] = lojakey.map(look["Código Grupo Everest"]) if "Código Grupo Everest" in look.columns else pd.NA
-        return df
-
     # ------------------------ EDITOR MANUAL ------------------------
     if st.session_state.get("show_manual_editor", False):
         st.subheader("✍️ Lançamentos manuais")
 
-        # carrega catálogo (para sugestões)
+        # carrega catálogo (para sugestões no editor)
         _gc = get_gc()
         catalogo = carregar_catalogo_codigos(_gc, nome_planilha="Vendas diarias", aba_catalogo="Cadastro Lojas")
 
-        # sugestões (não-dependentes por linha; limitado pelo data_editor)
         lojas_options = sorted(catalogo["Loja"].dropna().unique().tolist()) if not catalogo.empty else []
         grupos_options = sorted(catalogo["Grupo"].dropna().unique().tolist()) if not catalogo.empty and "Grupo" in catalogo.columns else []
 
@@ -602,22 +748,22 @@ with aba3:
                                        use_container_width=True)
 
         if enviar_manuais:
-            # atualiza state com o que está na grade e limpa linhas 100% vazias
+            # atualiza state e remove linhas totalmente vazias
             st.session_state.manual_df = drop_empty_rows(edited_df)
+
             # preenche códigos via catálogo
             df_man = preencher_codigos_por_loja(st.session_state.manual_df, catalogo)
 
-            # valida códigos
+            # valida códigos obrigatórios
             faltando = []
             if "Código Everest" in df_man.columns:
                 faltando = df_man[df_man["Código Everest"].isna()]["Loja"].astype(str).str.strip().unique().tolist()
             if faltando:
                 st.error("⛔ Lojas sem código cadastrado: " + ", ".join(sorted(faltando)))
             else:
-                # envia SÓ manuais usando a mesma pipeline de dedupe
+                # envia SÓ manuais usando a mesma rotina
                 _ok = enviar_para_sheets(df_man, titulo_origem="manuais")
                 if _ok:
-                    # se quiser limpar após envio:
                     st.session_state.manual_df = template_manuais(10)
 
     # ------------------------ ENVIO AUTOMÁTICO ------------------------
@@ -627,6 +773,7 @@ with aba3:
         else:
             df_auto = st.session_state.df_final.copy()
             _ = enviar_para_sheets(df_auto, titulo_origem="automático")
+
 
     # ------------------------ FUNÇÃO DE ENVIO (usa lógica do seu antigo) ------------------------
     def enviar_para_sheets(df_input: pd.DataFrame, titulo_origem: str = "dados") -> bool:
