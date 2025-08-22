@@ -310,16 +310,12 @@ with aba3:
     import requests
     
     def fetch_with_retry(url, connect_timeout=10, read_timeout=180, retries=3, backoff=1.5):
-        """GET com retries e timeouts separados (conexão/leitura)."""
         s = requests.Session()
         retry = Retry(
-            total=retries,
-            connect=retries,
-            read=retries,
+            total=retries, connect=retries, read=retries,
             backoff_factor=backoff,
             status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["GET"],
-            raise_on_status=False,
+            allowed_methods=["GET"], raise_on_status=False,
         )
         s.mount("https://", HTTPAdapter(max_retries=retry))
         try:
@@ -428,24 +424,19 @@ with aba3:
                 """, unsafe_allow_html=True
             )
 
+   
     with c4:
-        def pode_executar_agora():
-            return datetime.now().hour >= 10  # ajuste o horário se quiser
-    
-        pode_dre = pode_executar_agora()
         atualizar_dre = st.button(
             "Atualizar DRE",
             use_container_width=True,
-            disabled=not pode_dre,
-            help=None if pode_dre else "Disponível após as 10h",
             key="btn_atualizar_dre",
+            help="Dispara a atualização do DRE agora",
         )
     
     if atualizar_dre:
         SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-gK_KYcSyqyfimHTuXFLEDxKvWdW4k0o_kOPE-r-SWxL-SpogE2U9wiZt7qCZoH-gqQ/exec"
         try:
             with st.spinner("Atualizando DRE..."):
-                # ↑ 10s para conectar, até 180s para ler a resposta; 3 tentativas com backoff
                 resp = fetch_with_retry(SCRIPT_URL, connect_timeout=10, read_timeout=180, retries=3, backoff=1.5)
     
             if resp is None:
@@ -457,13 +448,13 @@ with aba3:
                 st.error(f"❌ Erro HTTP {resp.status_code} ao executar o script.")
                 if resp.text:
                     st.caption(resp.text[:800])
-    
         except requests.exceptions.ReadTimeout:
-            st.error("❌ Tempo limite de leitura atingido (o Apps Script demorou demais). Tente novamente.")
+            st.error("❌ Tempo limite de leitura atingido. Tente novamente.")
         except requests.exceptions.ConnectTimeout:
             st.error("❌ Tempo limite de conexão atingido. Verifique sua rede e tente novamente.")
         except Exception as e:
             st.error(f"❌ Falha ao conectar: {e}")
+
 
 
     # ---------- Editor de lançamentos manuais ----------
