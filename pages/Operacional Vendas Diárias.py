@@ -361,24 +361,23 @@ with aba3:
         st.session_state.manual_df = pd.DataFrame({
             "Data": pd.Series(dtype="datetime64[ns]"),
             "Loja": pd.Series(dtype="object"),
+            "Grupo": pd.Series(dtype="object"),
             "Fat.Total": pd.Series(dtype="float"),
             "Serv/Tx": pd.Series(dtype="float"),
             "Fat.Real": pd.Series(dtype="float"),
             "Ticket": pd.Series(dtype="float"),
-            "Código Everest": pd.Series(dtype="float"),
-            "Código Grupo Everest": pd.Series(dtype="float"),
         })
 
     def template_manuais(n=10):
         return pd.DataFrame({
             "Data": pd.Series([pd.NaT]*n, dtype="datetime64[ns]"),
             "Loja": pd.Series([""]*n, dtype="object"),
+            "Grupo": pd.Series([""]*n, dtype="object"),
             "Fat.Total": pd.Series([np.nan]*n, dtype="float"),
             "Serv/Tx": pd.Series([np.nan]*n, dtype="float"),
             "Fat.Real": pd.Series([np.nan]*n, dtype="float"),
             "Ticket": pd.Series([np.nan]*n, dtype="float"),
-            "Código Everest": pd.Series([np.nan]*n, dtype="float"),
-            "Código Grupo Everest": pd.Series([np.nan]*n, dtype="float"),
+            
         })
 
     def drop_empty_rows(df: pd.DataFrame) -> pd.DataFrame:
