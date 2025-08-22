@@ -468,26 +468,84 @@ with aba3:
     from gspread_dataframe import get_as_dataframe
     
     def carregar_catalogo_codigos(gc, nome_planilha="Vendas diarias", aba_catalogo="Tabela Empresa"):
-        """
-        Lê a worksheet com as colunas: Loja, Código Everest, Código Grupo Everest.
-        Ajuste 'aba_catalogo' para o nome real (ex.: 'Mapa Lojas', 'Códigos', etc.)
-        """
-        try:
-            ws = gc.open(nome_planilha).worksheet(aba_catalogo)
-            df = get_as_dataframe(ws, evaluate_formulas=True, dtype=str).fillna("")
-            df.columns = df.columns.str.strip()
-            # mantém só o necessário
-            cols = [c for c in ["Loja", "Código Everest", "Código Grupo Everest"] if c in df.columns]
-            df = df[cols].copy()
-            # normaliza tipos
-            for c in ["Código Everest", "Código Grupo Everest"]:
-                if c in df.columns:
-                    df[c] = pd.to_numeric(df[c], errors="coerce")
+    """
+    Lê a worksheet 'Tabela Empresa' aceitando variações de nomes de coluna.
+    Mantém: Loja, Grupo (se existir), Código Everest, Código Grupo Everest.
+    Exibe um diagnóstico das colunas lidas para conferir rapidamente.
+    """
+    import re
+    from gspread_dataframe import get_as_dataframe
+
+    def _map_col(name: str) -> str:
+        n = re.sub(r"\s+", " ", str(name).strip()).lower()
+        mapa = {
+            "loja": ["loja", "nome da loja", "nome loja"],
+            "grupo": ["grupo", "operacao", "operação", "grupo/operação", "grupo/operacao"],
+            "código everest": ["código everest", "codigo everest", "cód everest", "cod everest", "cód. everest", "cod. everest",
+                               "codigo_everest", "codigoeverest", "código_everest", "codigo  everest"],
+            "código grupo everest": ["código grupo everest", "codigo grupo everest", "cód grupo everest", "cod grupo everest",
+                                     "cód. grupo everest", "cod. grupo everest", "codigo_grupo_everest", "codigogrupoeverest",
+                                     "cod grupo empresas", "cód grupo empresas", "codigo grupo", "código grupo", "cod grupo"],
+        }
+        for canon, candidates in mapa.items():
+            for c in candidates:
+                if n == c:
+                    return canon
+        return name  # sem mapeamento → mantém original
+
+    try:
+        ws = gc.open(nome_planilha).worksheet(aba_catalogo)
+        df = get_as_dataframe(ws, evaluate_formulas=True, dtype=str).fillna("")
+        # remove colunas totalmente vazias e normaliza cabeçalhos
+        df = df.loc[:, (df != "").any(axis=0)]
+        df.columns = [str(c).strip() for c in df.columns]
+
+        # renomeia tolerante
+        ren = {}
+        for c in df.columns:
+            canon = _map_col(c)
+            if canon in ["loja", "grupo", "código everest", "código grupo everest"]:
+                ren[c] = {
+                    "loja": "Loja",
+                    "grupo": "Grupo",
+                    "código everest": "Código Everest",
+                    "código grupo everest": "Código Grupo Everest",
+                }[canon]
+        df = df.rename(columns=ren)
+
+        # mantém o que existir
+        keep = [c for c in ["Loja", "Grupo", "Código Everest", "Código Grupo Everest"] if c in df.columns]
+        if not keep:
+            st.error("❌ A aba abriu, mas não encontrei colunas reconhecíveis como Loja/Grupo/Códigos na linha 1.")
+            return pd.DataFrame()
+
+        df = df[keep].copy()
+
+        # normalizações
+        if "Loja" in df.columns:
             df["Loja"] = df["Loja"].astype(str).str.strip().str.lower()
-            return df
-        except Exception as e:
-            st.error(f"❌ Não foi possível carregar o catálogo de códigos: {e}")
-            return pd.DataFrame(columns=["Loja", "Código Everest", "Código Grupo Everest"])
+        if "Grupo" in df.columns:
+            df["Grupo"] = df["Grupo"].astype(str).str.strip()
+        for c in ["Código Everest", "Código Grupo Everest"]:
+            if c in df.columns:
+                df[c] = pd.to_numeric(df[c].astype(str).str.replace(r"[^\d-]", "", regex=True), errors="coerce")
+
+        # se faltar Grupo, cria a partir do código de grupo (texto)
+        if "Grupo" not in df.columns and "Código Grupo Everest" in df.columns:
+            df["Grupo"] = df["Código Grupo Everest"].astype("Int64").astype(str)
+
+        # diagnóstico
+        with st.expander("🔎 Diagnóstico do catálogo (Tabela Empresa)", expanded=False):
+            st.write("**Colunas detectadas:**", list(df.columns))
+            st.write("**Linhas:**", len(df))
+            st.dataframe(df.head(10), use_container_width=True)
+
+        return df
+
+    except Exception as e:
+        st.error(f"❌ Não foi possível carregar a aba '{aba_catalogo}' da planilha '{nome_planilha}': {e}")
+        return pd.DataFrame(columns=["Loja", "Grupo", "Código Everest", "Código Grupo Everest"])
+
     
     def preencher_codigos_por_loja(df_manuais: pd.DataFrame, catalogo: pd.DataFrame) -> pd.DataFrame:
         """
@@ -670,7 +728,8 @@ with aba3:
     
             # 👇 INCLUIR MANUAIS ANTES DO PIPELINE
             if not st.session_state.manual_df.empty:
-                df_man = preencher_codigos_por_loja(st.session_state.manual_df, catalogo)
+                catalogo_global = st.session_state.get("catalogo_lojas", pd.DataFrame())
+                df_man = preencher_codigos_por_loja(st.session_state.manual_df, catalogo_global)
                 faltando = (
                     df_man[df_man["Código Everest"].isna()]["Loja"].astype(str).str.strip().unique().tolist()
                     if "Código Everest" in df_man.columns else []
