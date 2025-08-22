@@ -493,37 +493,35 @@ with aba3:
                 # =============================================
                 if todas_lojas_ok and pode_enviar:
                     try:
+                            
                         dados_para_enviar = novos_dados + suspeitos_n
-                
-                        # Descobre a primeira linha livre
-                        inicio = len(aba_destino.col_values(1)) + 1
-                        aba_destino.append_rows(dados_para_enviar, value_input_option='USER_ENTERED')
-                        fim = inicio + len(dados_para_enviar) - 1
-                
-                        # 🔹 Declara os formatos
+
+                        primeira_linha_vazia = len(valores_existentes) + 1
+                        aba_destino.update(f"A{primeira_linha_vazia}", dados_para_enviar)
+
+                        # (Sua formatação original continua igual...)
+
                         from gspread_formatting import CellFormat, NumberFormat, format_cell_range
-                
+
                         data_format = CellFormat(
                             numberFormat=NumberFormat(type='DATE', pattern='dd/mm/yyyy')
                         )
-                
+
                         numero_format = CellFormat(
                             numberFormat=NumberFormat(type='NUMBER', pattern='0')
                         )
-                
-                        # 🔹 Aplica os formatos
-                        format_cell_range(aba_destino, f"A{inicio}:A{fim}", data_format)
-                        format_cell_range(aba_destino, f"L{inicio}:L{fim}", numero_format)
-                        format_cell_range(aba_destino, f"D{inicio}:D{fim}", numero_format)
-                        format_cell_range(aba_destino, f"F{inicio}:F{fim}", numero_format)
-                
+
+                        format_cell_range(aba_destino, f"A2:A{primeira_linha_vazia + len(dados_para_enviar)}", data_format)
+                        format_cell_range(aba_destino, f"L2:L{primeira_linha_vazia + len(dados_para_enviar)}", numero_format)  
+                        format_cell_range(aba_destino, f"D2:D{primeira_linha_vazia + len(dados_para_enviar)}", numero_format)
+                        format_cell_range(aba_destino, f"F2:F{primeira_linha_vazia + len(dados_para_enviar)}", numero_format)
+
                         st.success(f"✅ {len(dados_para_enviar)} registro(s) enviado(s) com sucesso para o Google Sheets!")
-                
+
                         if duplicados:
                             st.warning(f"⚠️ {len(duplicados)} registro(s) duplicados na google sheets, não foram enviados.")
                     except Exception as e:
                         st.error(f"❌ Erro ao atualizar o Google Sheets: {e}")
-
 
 
        
