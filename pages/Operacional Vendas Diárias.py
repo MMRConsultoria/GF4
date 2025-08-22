@@ -591,7 +591,7 @@ with aba3:
 
                         if len(dados_para_enviar) == 0:
                             total_dup_m = len(duplicados)  # já montado acima
-                            st.info(f"ℹ️ {total_dup_m} ")
+                            st.info(f"ℹ️ {total_dup_m} registros duplicados. Nada a enviar.")
                         else:
                             inicio = len(aba_destino.col_values(1)) + 1
                             aba_destino.append_rows(dados_para_enviar, value_input_option='USER_ENTERED')
