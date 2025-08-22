@@ -510,6 +510,78 @@ with aba3:
         df["Código Grupo Everest"] = lojakey.map(look["Código Grupo Everest"]) if "Código Grupo Everest" in look.columns else pd.NA
         return df
 
+    # ====== 1) carregar catálogo 1x (usa sua função carregar_catalogo_codigos) ======
+    import gspread
+    from oauth2client.service_account import ServiceAccountCredentials
+    from gspread_dataframe import get_as_dataframe
+    
+    if "catalogo_lojas" not in st.session_state:
+        try:
+            scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+            credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+            credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+            _gc_catalog = gspread.authorize(credentials)
+            st.session_state["catalogo_lojas"] = carregar_catalogo_codigos(
+                _gc_catalog, nome_planilha="Vendas diarias", aba_catalogo="Cadastro Lojas"
+            )
+        except Exception as e:
+            st.session_state["catalogo_lojas"] = pd.DataFrame()
+            st.warning(f"⚠️ Não foi possível carregar o catálogo de lojas/grupos: {e}")
+    
+    # ====== 2) “Adicionar por grupo” (antes do editor) ======
+    cat = st.session_state.get("catalogo_lojas", pd.DataFrame())
+    
+    if not cat.empty:
+        # garante as colunas-chave
+        cols_necessarias = {"Loja"}
+        if "Grupo" not in cat.columns:
+            # se a aba não tem "Grupo", usa o código do grupo como rótulo
+            cat["Grupo"] = cat.get("Código Grupo Everest", pd.Series(dtype="float")).astype("Int64").astype(str)
+        # normaliza
+        cat["Loja"] = cat["Loja"].astype(str).str.strip()
+        cat["Grupo"] = cat["Grupo"].astype(str).str.strip()
+    
+        grupos = sorted([g for g in cat["Grupo"].dropna().unique() if str(g).strip() != ""])
+        g1, g2, g3 = st.columns([1.2, 2.0, 0.8])
+    
+        with g1:
+            grupo_sel = st.selectbox("Grupo", groups := grupos, index=0 if grupos else None, key="sel_grupo_manuais")
+    
+        # opções de loja dependentes do grupo selecionado
+        lojas_opcoes = []
+        if grupos:
+            lojas_opcoes = sorted(cat.loc[cat["Grupo"] == grupo_sel, "Loja"].dropna().unique())
+    
+        with g2:
+            lojas_sel = st.multiselect("Lojas do grupo", lojas_opcoes, key="sel_lojas_manuais")
+    
+        with g3:
+            if st.button("➕ Adicionar", use_container_width=True, key="btn_add_por_grupo"):
+                if lojas_sel:
+                    df_add = cat[cat["Loja"].isin(lojas_sel)].copy()
+    
+                    # monta linhas novas no formato do seu manual_df (sem códigos aqui)
+                    n = len(df_add)
+                    df_novo = pd.DataFrame({
+                        "Data":       pd.Series([pd.NaT]*n, dtype="datetime64[ns]"),
+                        "Loja":       df_add["Loja"].astype(str).tolist(),
+                        "Grupo":      df_add["Grupo"].astype(str).tolist(),
+                        "Fat.Total":  pd.Series([np.nan]*n, dtype="float"),
+                        "Serv/Tx":    pd.Series([np.nan]*n, dtype="float"),
+                        "Fat.Real":   pd.Series([np.nan]*n, dtype="float"),
+                        "Ticket":     pd.Series([np.nan]*n, dtype="float"),
+                    })
+    
+                    # concatena no state e rerun
+                    st.session_state.manual_df = pd.concat(
+                        [st.session_state.manual_df, df_novo], ignore_index=True
+                    )
+                    st.success(f"✅ {n} linha(s) adicionada(s) para o grupo **{grupo_sel}**.")
+                    st.rerun()
+                else:
+                    st.info("Selecione ao menos uma loja para adicionar.")
+    else:
+        st.info("Carregue/ajuste a aba **Cadastro Lojas** para habilitar sugestões de Grupo/Loja.")
 
    
     # =============== EDITOR MANUAL (só se aberto) ===============
