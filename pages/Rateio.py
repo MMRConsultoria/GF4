@@ -2,7 +2,6 @@
 import streamlit as st
 st.set_page_config(page_title="Vendas Diarias", layout="wide")  # ✅ Escolha um título só
 
-
 import streamlit as st
 import pandas as pd
 import numpy as np
