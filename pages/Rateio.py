@@ -233,17 +233,12 @@ df_final["% Total"] = df_final.apply(
 
 
 # ==== Inputs de Rateio por Tipo (lado a lado) ====
-# usa a ordem já calculada; se não existir, cria a partir do df_final
 tipos_base = ordem_tipos if 'ordem_tipos' in locals() else \
     [t for t in df_final["Tipo"].dropna().unique() if str(t).strip() != ""]
 
-# evita itens vazios e mantém só Tipos válidos
 tipos_unicos = [t for t in tipos_base if str(t).strip() != ""]
 
-# quantos campos por linha (ajuste para 2, 3, 4...)
 COLS_POR_LINHA = 3
-
-# dicionário com os valores digitados (vamos usar na próxima etapa)
 valores_rateio_por_tipo = {}
 
 for i in range(0, len(tipos_unicos), COLS_POR_LINHA):
@@ -251,11 +246,20 @@ for i in range(0, len(tipos_unicos), COLS_POR_LINHA):
     cols = st.columns(len(linha))
     for c, tipo in zip(cols, linha):
         with c:
-            valores_rateio_por_tipo[tipo] = st.number_input(
+            valor = st.number_input(
                 f"💰 Rateio — {tipo}",
-                min_value=0.0, step=1000.0, format="R$ %.2f",
+                min_value=0.0,
+                step=1000.0,
+                format="%.2f",
                 key=f"rateio_{tipo}"
             )
+            # Mostra o valor já formatado como moeda
+            st.markdown(
+                f"<div style='color:green; font-weight:bold;'>R$ {valor:,.2f}</div>",
+                unsafe_allow_html=True
+            )
+            valores_rateio_por_tipo[tipo] = valor
+
 
 # ==== Preenche a coluna Rateio proporcional ao % Total (por Tipo) ====
 # ==== Rateio = valor digitado do Tipo × % Total da própria linha ====
