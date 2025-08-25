@@ -253,7 +253,10 @@ if grupo_selecionado == "Todos":
         except:
             return 0.0
 
-    tipos_unicos = [t for t in df_final["Tipo"].dropna().unique() if str(t).strip() != ""]
+    tipos_unicos = [
+        t for t in df_final["Tipo"].dropna().unique()
+        if str(t).strip() not in ["", "TOTAL"] and not str(t).startswith("Subtotal")
+    ]
     valores_rateio_por_tipo = {}
 
     COLS_POR_LINHA = 3
