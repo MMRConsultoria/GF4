@@ -138,7 +138,8 @@ df_vendas["Fat.Total"] = pd.to_numeric(df_vendas["Fat.Total"], errors="coerce")
 
 
 # ==== Filtros lado a lado ====
-col1, col2 = st.columns([1, 2])
+
+col1, col2, col3 = st.columns([1, 1, 2])
 
 with col1:
     tipos_disponiveis = sorted(df_vendas["Tipo"].dropna().unique())
@@ -146,6 +147,11 @@ with col1:
     tipo_selecionado = st.selectbox("🏪 Tipo:", options=tipos_disponiveis, index=0)
 
 with col2:
+    grupos_disponiveis = sorted(df_vendas["Grupo"].dropna().unique())
+    grupos_disponiveis.insert(0, "Todos")
+    grupo_selecionado = st.selectbox("👥 Grupo:", options=grupos_disponiveis, index=0)
+
+with col3:
     df_vendas["Mes/Ano"] = df_vendas["Data"].dt.strftime("%m/%Y")
     meses_disponiveis = sorted(
         df_vendas["Mes/Ano"].unique(),
@@ -157,11 +163,16 @@ with col2:
         default=[datetime.today().strftime("%m/%Y")]
     )
 
+# ==== Aplica filtros ====
 df_filtrado = df_vendas[df_vendas["Mes/Ano"].isin(meses_selecionados)]
 df_filtrado["Período"] = df_filtrado["Data"].dt.strftime("%m/%Y")
 
 if tipo_selecionado != "Todos":
     df_filtrado = df_filtrado[df_filtrado["Tipo"] == tipo_selecionado]
+
+if grupo_selecionado != "Todos":
+    df_filtrado = df_filtrado[df_filtrado["Grupo"] == grupo_selecionado]
+
 
 # ==== Agrupamento por Tipo + Grupo ====
 chaves = ["Tipo", "Grupo"]
@@ -242,7 +253,7 @@ for i in range(0, len(tipos_unicos), COLS_POR_LINHA):
         with c:
             valores_rateio_por_tipo[tipo] = st.number_input(
                 f"💰 Rateio — {tipo}",
-                min_value=0.0, step=1000.0, format="%.2f",
+                min_value=0.0, step=1000.0, format="R$ %.2f",
                 key=f"rateio_{tipo}"
             )
 
