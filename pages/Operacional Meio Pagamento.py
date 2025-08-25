@@ -47,7 +47,7 @@ credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
 credentials = Credentials.from_service_account_info(credentials_dict, scopes=scope)
 gc = gspread.authorize(credentials)
 
-planilha_empresa = gc.open_by_key("1SZ5R6hcBE6o_qWs0_wx6IGKfIGltxpb9RWiGyF4L5uE")
+planilha_empresa = gc.open_by_key("1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU")
 
 
 
