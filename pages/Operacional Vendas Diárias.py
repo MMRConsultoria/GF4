@@ -42,7 +42,7 @@ credentials = Credentials.from_service_account_info(credentials_dict, scopes=sco
 gc = gspread.authorize(credentials)
 
 # Sempre use open_by_key (mais seguro que open pelo nome)
-planilha_empresa = gc.open_by_key("1SZ5R6hcBE6o_qWs0_wx6IGKfIGltxpb9RWiGyF4L5uE")
+planilha_empresa = gc.open_by_key("1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU")
 
 
 
