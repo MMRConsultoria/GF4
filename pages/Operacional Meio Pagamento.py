@@ -36,18 +36,18 @@ if not st.session_state.get("acesso_liberado"):
 # ========================
 # 🔐 Autenticação Google Sheets
 # ========================
-scope = ["https://www.googleapis.com/auth/spreadsheets",
-         "https://www.googleapis.com/auth/drive"]
+from google.oauth2.service_account import Credentials
+import gspread
 
-# Carrega credencial do secrets
-credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+
+# Agora st.secrets já retorna um dict
+credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
+
 credentials = Credentials.from_service_account_info(credentials_dict, scopes=scope)
-
-# Autoriza no gspread
 gc = gspread.authorize(credentials)
 
-# Sempre abra pelo ID da planilha (mais seguro do que pelo nome)
-planilha = gc.open_by_key("1SZ5R6hcBE6o_qWs0_wx6IGKfIGltxpb9RWiGyF4L5uE")
+planilha_empresa = gc.open_by_key("1SZ5R6hcBE6o_qWs0_wx6IGKfIGltxpb9RWiGyF4L5uE")
 
 
 
