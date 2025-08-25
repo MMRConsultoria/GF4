@@ -5,9 +5,15 @@ import streamlit as st
 st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
 
 # ✅ Verificação de login ANTES de exibir o conteúdo
+#if not st.session_state.get("acesso_liberado"):
+#    st.switch_page("pages/Login.py")
+#    st.stop()
+
 if not st.session_state.get("acesso_liberado"):
-    st.switch_page("pages/Login.py")
+    st.warning("🔒 Você precisa fazer login para acessar o painel.")
+    st.page_link("Login.py", label="Ir para Login", icon="🔑")
     st.stop()
+
 
 # ✅ Código da empresa logada
 codigo_empresa = st.session_state.get("empresa")
