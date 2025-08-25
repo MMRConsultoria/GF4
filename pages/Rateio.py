@@ -173,6 +173,133 @@ if tipo_selecionado != "Todos":
 
 if grupo_selecionado != "Todos":
     df_filtrado = df_filtrado[df_filtrado["Grupo"] == grupo_selecionado]
+# =========================
+# RATEIO POR LOJAS DO GRUPO SELECIONADO (igualitário)
+# Mantém o filtro de Grupo que você já usa; não altera o restante
+# Fonte das lojas: Tabela Empresa (garante trazer TODAS as lojas do grupo)
+# =========================
+
+st.markdown("### 🏬 Rateio por Lojas do Grupo (igualitário)")
+
+if grupo_selecionado == "Todos":
+    st.info("Selecione um **Grupo** para ver o rateio por lojas.")
+else:
+    # Lojas do grupo na Tabela Empresa (todas, mesmo sem venda no mês)
+    lojas_do_grupo = (
+        df_empresa.loc[
+            df_empresa["Grupo"].astype(str).str.strip() == str(grupo_selecionado).strip(),
+            "Loja"
+        ]
+        .dropna().astype(str).str.strip().str.upper().unique().tolist()
+    )
+    lojas_do_grupo = sorted([l for l in lojas_do_grupo if l != ""])
+
+    if not lojas_do_grupo:
+        st.warning(f"⚠️ Não há lojas cadastradas para o grupo **{grupo_selecionado}** na Tabela Empresa.")
+    else:
+        colA, colB = st.columns([1, 2])
+        with colA:
+            total_rateio_grupo = st.number_input(
+                f"💰 Valor TOTAL do Rateio — {grupo_selecionado}",
+                min_value=0.0, step=100.0, format="%.2f",
+                key="total_rateio_grupo_por_loja"
+            )
+
+        # Divide igualmente entre as lojas do grupo
+        valor_por_loja = (total_rateio_grupo / len(lojas_do_grupo)) if total_rateio_grupo > 0 else 0.0
+
+        df_rateio_lojas = pd.DataFrame({
+            "Grupo": grupo_selecionado,
+            "Loja": lojas_do_grupo,
+            "Rateio por Loja": [valor_por_loja] * len(lojas_do_grupo)
+        })
+
+        # Formatação só para exibição
+        def _fmt_moeda(x):
+            try:
+                return f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            except:
+                return x
+
+        df_rateio_view = df_rateio_lojas.copy()
+        df_rateio_view["Rateio por Loja"] = df_rateio_view["Rateio por Loja"].apply(_fmt_moeda)
+
+        st.dataframe(df_rateio_view, use_container_width=True, height=350)
+
+        # (Opcional) Aplicar no seu df_vendas/df_final agora
+        aplicar = st.checkbox("Aplicar este rateio por loja no resultado principal (merge por Loja)", value=False)
+        if aplicar and st.button("✅ Aplicar agora", type="primary"):
+            # Exemplo de merge no df_vendas (para que o rateio desça às linhas por loja)
+            if "Rateio por Loja" in df_vendas.columns:
+                df_vendas.drop(columns=["Rateio por Loja"], inplace=True, errors="ignore")
+            df_vendas = df_vendas.merge(
+                df_rateio_lojas[["Loja", "Rateio por Loja"]],
+                on="Loja", how="left"
+            )
+            df_vendas["Rateio por Loja"] = df_vendas["Rateio por Loja"].fillna(0.0)
+            st.success("Rateio por loja aplicado via merge em `df_vendas` (coluna 'Rateio por Loja').")
+
+        # Download do rateio por loja em Excel (independente do resto)
+        from io import BytesIO
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+        from openpyxl.utils import get_column_letter
+
+        out = BytesIO()
+        # Escreve rápido com pandas
+        with pd.ExcelWriter(out, engine="openpyxl") as w:
+            df_rateio_lojas.to_excel(w, index=False, sheet_name="Rateio por Loja")
+        out.seek(0)
+
+        # Ajusta estilos
+        wb = load_workbook(out)
+        ws = wb["Rateio por Loja"]
+
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill("solid", fgColor="305496")
+        center = Alignment(horizontal="center", vertical="center")
+        left = Alignment(horizontal="left", vertical="center")
+        border = Border(left=Side(style="thin"), right=Side(style="thin"),
+                        top=Side(style="thin"), bottom=Side(style="thin"))
+
+        # Cabeçalho
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center
+            cell.border = border
+
+        # Corpo
+        max_row, max_col = ws.max_row, ws.max_column
+        # Formato moeda na 3ª coluna
+        for r in ws.iter_rows(min_row=2, max_row=max_row, min_col=1, max_col=max_col):
+            for c in r:
+                c.border = border
+                if c.column == 1:  # Grupo
+                    c.alignment = left
+                elif c.column == 2:  # Loja
+                    c.alignment = left
+                elif c.column == 3:  # Rateio por Loja
+                    if isinstance(c.value, (int, float)):
+                        c.number_format = '"R$" #,##0.00'
+                    c.alignment = center
+
+        # Larguras
+        for i in range(1, max_col + 1):
+            col_letter = get_column_letter(i)
+            max_len = max(len(str(ws.cell(row=r, column=i).value or "")) for r in range(1, max_row + 1))
+            ws.column_dimensions[col_letter].width = min(max_len + 2, 45)
+
+        out2 = BytesIO()
+        wb.save(out2)
+        out2.seek(0)
+
+        st.download_button(
+            "📥 Baixar Excel — Rateio por Lojas",
+            data=out2,
+            file_name=f"Rateio_por_Lojas_{grupo_selecionado}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
 
 # ==== Agrupamento por Tipo + Grupo ====
