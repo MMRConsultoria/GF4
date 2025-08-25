@@ -173,274 +173,150 @@ if tipo_selecionado != "Todos":
 
 if grupo_selecionado != "Todos":
     df_filtrado = df_filtrado[df_filtrado["Grupo"] == grupo_selecionado]
-# =========================
-# RATEIO POR LOJAS DO GRUPO SELECIONADO (igualitário)
-# Mantém o filtro de Grupo que você já usa; não altera o restante
-# Fonte das lojas: Tabela Empresa (garante trazer TODAS as lojas do grupo)
-# =========================
 
-st.markdown("### 🏬 Rateio por Lojas do Grupo (igualitário)")
 
+
+# ==== Agrupamento dinâmico ====
 if grupo_selecionado == "Todos":
-    st.info("Selecione um **Grupo** para ver o rateio por lojas.")
+    chaves = ["Tipo", "Grupo"]
 else:
-    # Lojas do grupo na Tabela Empresa (todas, mesmo sem venda no mês)
-    lojas_do_grupo = (
-        df_empresa.loc[
-            df_empresa["Grupo"].astype(str).str.strip() == str(grupo_selecionado).strip(),
-            "Loja"
-        ]
-        .dropna().astype(str).str.strip().str.upper().unique().tolist()
-    )
-    lojas_do_grupo = sorted([l for l in lojas_do_grupo if l != ""])
+    chaves = ["Grupo", "Loja"]
 
-    if not lojas_do_grupo:
-        st.warning(f"⚠️ Não há lojas cadastradas para o grupo **{grupo_selecionado}** na Tabela Empresa.")
-    else:
-        colA, colB = st.columns([1, 2])
-        with colA:
-            total_rateio_grupo = st.number_input(
-                f"💰 Valor TOTAL do Rateio — {grupo_selecionado}",
-                min_value=0.0, step=100.0, format="%.2f",
-                key="total_rateio_grupo_por_loja"
-            )
-
-        # Divide igualmente entre as lojas do grupo
-        valor_por_loja = (total_rateio_grupo / len(lojas_do_grupo)) if total_rateio_grupo > 0 else 0.0
-
-        df_rateio_lojas = pd.DataFrame({
-            "Grupo": grupo_selecionado,
-            "Loja": lojas_do_grupo,
-            "Rateio por Loja": [valor_por_loja] * len(lojas_do_grupo)
-        })
-
-        # Formatação só para exibição
-        def _fmt_moeda(x):
-            try:
-                return f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            except:
-                return x
-
-        df_rateio_view = df_rateio_lojas.copy()
-        df_rateio_view["Rateio por Loja"] = df_rateio_view["Rateio por Loja"].apply(_fmt_moeda)
-
-        st.dataframe(df_rateio_view, use_container_width=True, height=350)
-
-        # (Opcional) Aplicar no seu df_vendas/df_final agora
-        aplicar = st.checkbox("Aplicar este rateio por loja no resultado principal (merge por Loja)", value=False)
-        if aplicar and st.button("✅ Aplicar agora", type="primary"):
-            # Exemplo de merge no df_vendas (para que o rateio desça às linhas por loja)
-            if "Rateio por Loja" in df_vendas.columns:
-                df_vendas.drop(columns=["Rateio por Loja"], inplace=True, errors="ignore")
-            df_vendas = df_vendas.merge(
-                df_rateio_lojas[["Loja", "Rateio por Loja"]],
-                on="Loja", how="left"
-            )
-            df_vendas["Rateio por Loja"] = df_vendas["Rateio por Loja"].fillna(0.0)
-            st.success("Rateio por loja aplicado via merge em `df_vendas` (coluna 'Rateio por Loja').")
-
-        # Download do rateio por loja em Excel (independente do resto)
-        from io import BytesIO
-        from openpyxl import Workbook
-        from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-        from openpyxl.utils import get_column_letter
-
-        out = BytesIO()
-        # Escreve rápido com pandas
-        with pd.ExcelWriter(out, engine="openpyxl") as w:
-            df_rateio_lojas.to_excel(w, index=False, sheet_name="Rateio por Loja")
-        out.seek(0)
-
-        # Ajusta estilos
-        wb = load_workbook(out)
-        ws = wb["Rateio por Loja"]
-
-        header_font = Font(bold=True, color="FFFFFF")
-        header_fill = PatternFill("solid", fgColor="305496")
-        center = Alignment(horizontal="center", vertical="center")
-        left = Alignment(horizontal="left", vertical="center")
-        border = Border(left=Side(style="thin"), right=Side(style="thin"),
-                        top=Side(style="thin"), bottom=Side(style="thin"))
-
-        # Cabeçalho
-        for cell in ws[1]:
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = center
-            cell.border = border
-
-        # Corpo
-        max_row, max_col = ws.max_row, ws.max_column
-        # Formato moeda na 3ª coluna
-        for r in ws.iter_rows(min_row=2, max_row=max_row, min_col=1, max_col=max_col):
-            for c in r:
-                c.border = border
-                if c.column == 1:  # Grupo
-                    c.alignment = left
-                elif c.column == 2:  # Loja
-                    c.alignment = left
-                elif c.column == 3:  # Rateio por Loja
-                    if isinstance(c.value, (int, float)):
-                        c.number_format = '"R$" #,##0.00'
-                    c.alignment = center
-
-        # Larguras
-        for i in range(1, max_col + 1):
-            col_letter = get_column_letter(i)
-            max_len = max(len(str(ws.cell(row=r, column=i).value or "")) for r in range(1, max_row + 1))
-            ws.column_dimensions[col_letter].width = min(max_len + 2, 45)
-
-        out2 = BytesIO()
-        wb.save(out2)
-        out2.seek(0)
-
-        st.download_button(
-            "📥 Baixar Excel — Rateio por Lojas",
-            data=out2,
-            file_name=f"Rateio_por_Lojas_{grupo_selecionado}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-
-
-# ==== Agrupamento por Tipo + Grupo ====
-chaves = ["Tipo", "Grupo"]
 df_agrupado = df_filtrado.groupby(chaves + ["Período"], as_index=False)["Fat.Total"].sum()
-
-# Agrupa direto sem criar coluna de mês/ano
-df_final = df_agrupado.groupby(["Tipo", "Grupo"], as_index=False)["Fat.Total"].sum()
-
-# Renomeia para "Total"
+df_final = df_agrupado.groupby(chaves, as_index=False)["Fat.Total"].sum()
 df_final.rename(columns={"Fat.Total": "Total"}, inplace=True)
-
-# 🔹 Garante que a coluna Rateio comece zerada
 df_final["Rateio"] = 0.0
 
+# ==== Cálculo de % e Subtotais ====
+if grupo_selecionado == "Todos":
+    # Caso geral: Tipo + Grupo
+    total_geral = df_final["Total"].sum()
+    df_final["% Total"] = df_final["Total"] / total_geral
 
-# Calcula % Total
-total_geral = df_final["Total"].sum()
-df_final["% Total"] = df_final["Total"] / total_geral
+    # Ordena por subtotal do Tipo
+    subtotais_tipo = df_final.groupby("Tipo")["Total"].sum().reset_index()
+    subtotais_tipo = subtotais_tipo.sort_values(by="Total", ascending=False)
+    ordem_tipos = subtotais_tipo["Tipo"].tolist()
+    df_final["ord_tipo"] = df_final["Tipo"].apply(lambda x: ordem_tipos.index(x) if x in ordem_tipos else 999)
+    df_final = df_final.sort_values(by=["ord_tipo", "Total"], ascending=[True, False]).drop(columns="ord_tipo")
 
-# ==== Ordenação ====
+    # Monta subtotais por Tipo
+    linhas_com_subtotal = []
+    for tipo in ordem_tipos:
+        bloco_tipo = df_final[df_final["Tipo"] == tipo].copy()
+        linhas_com_subtotal.append(bloco_tipo)
+        subtotal = bloco_tipo.drop(columns=["Tipo", "Grupo"]).sum(numeric_only=True)
+        subtotal["Tipo"] = tipo
+        subtotal["Grupo"] = f"Subtotal {tipo}"
+        linhas_com_subtotal.append(pd.DataFrame([subtotal]))
+    df_final = pd.concat(linhas_com_subtotal, ignore_index=True)
 
-subtotais_tipo = df_final.groupby("Tipo")["Total"].sum().reset_index()
-subtotais_tipo = subtotais_tipo.sort_values(by="Total", ascending=False)
-ordem_tipos = subtotais_tipo["Tipo"].tolist()
+else:
+    # Caso específico: Grupo + Loja
+    total_geral = df_final["Total"].sum()
+    df_final["% Total"] = df_final["Total"] / total_geral
 
-df_final["ord_tipo"] = df_final["Tipo"].apply(lambda x: ordem_tipos.index(x) if x in ordem_tipos else 999)
-df_final = df_final.sort_values(by=["ord_tipo", "Total"], ascending=[True, False]).drop(columns="ord_tipo")
-# ==== Monta subtotais por Tipo ====
-linhas_com_subtotal = []
-for tipo in ordem_tipos:
-    bloco_tipo = df_final[df_final["Tipo"] == tipo].copy()
-    linhas_com_subtotal.append(bloco_tipo)
-    subtotal = bloco_tipo.drop(columns=["Tipo", "Grupo"]).sum(numeric_only=True)
-    subtotal["Tipo"] = tipo
-    subtotal["Grupo"] = f"Subtotal {tipo}"
-    linhas_com_subtotal.append(pd.DataFrame([subtotal]))
-df_final = pd.concat(linhas_com_subtotal, ignore_index=True)
+    # Ordena por Total dentro do Grupo
+    df_final = df_final.sort_values(by=["Grupo", "Total"], ascending=[True, False])
+
+    # Monta subtotais por Grupo
+    linhas_com_subtotal = []
+    for grupo in df_final["Grupo"].unique():
+        bloco_grupo = df_final[df_final["Grupo"] == grupo].copy()
+        linhas_com_subtotal.append(bloco_grupo)
+        subtotal = bloco_grupo.drop(columns=["Grupo", "Loja"]).sum(numeric_only=True)
+        subtotal["Grupo"] = grupo
+        subtotal["Loja"] = f"Subtotal {grupo}"
+        linhas_com_subtotal.append(pd.DataFrame([subtotal]))
+    df_final = pd.concat(linhas_com_subtotal, ignore_index=True)
 
 # ==== Linha TOTAL no topo ====
-apenas_grupos = df_final[~df_final["Grupo"].str.startswith("Subtotal", na=False)]
-linha_total = apenas_grupos.drop(columns=["Tipo", "Grupo"]).sum(numeric_only=True)
-linha_total["Tipo"] = ""
-linha_total["Grupo"] = "TOTAL"
+cols_drop = [c for c in ["Tipo","Grupo","Loja"] if c in df_final.columns]
+apenas = df_final.copy()
+for col in cols_drop:
+    apenas = apenas[~apenas[col].astype(str).str.startswith("Subtotal", na=False)]
+linha_total = apenas.drop(columns=cols_drop, errors="ignore").sum(numeric_only=True)
+for col in cols_drop:
+    linha_total[col] = ""  # limpa
+linha_total[cols_drop[0] if cols_drop else "Grupo"] = "TOTAL"  # garante nome TOTAL
 df_final = pd.concat([pd.DataFrame([linha_total]), df_final], ignore_index=True)
 
-
-# ==== Percentual apenas para grupos ====
-total_geral = df_final.loc[~df_final["Grupo"].str.startswith("Subtotal", na=False) &
-                           (df_final["Grupo"] != "TOTAL"), "Total"].sum()
-
-
-df_final["% Total"] = df_final.apply(
-    lambda row: (row['Total']/total_geral) * 100 
-    if (not row["Grupo"].startswith("Subtotal") and row["Grupo"] != "TOTAL" and total_geral > 0) else np.nan,
-    axis=1
-)
-
-
-
-# ==== Inputs de Rateio por Tipo (lado a lado) ====
-def moeda_para_float(valor_str: str) -> float:
-    """Converte string '1.234,56' em float 1234.56"""
-    try:
-        return float(valor_str.replace(".", "").replace(",", "."))
-    except:
-        return 0.0
-
-tipos_base = ordem_tipos if 'ordem_tipos' in locals() else \
-    [t for t in df_final["Tipo"].dropna().unique() if str(t).strip() != ""]
-
-tipos_unicos = [t for t in tipos_base if str(t).strip() != ""]
-
-COLS_POR_LINHA = 3
-valores_rateio_por_tipo = {}
-
-for i in range(0, len(tipos_unicos), COLS_POR_LINHA):
-    linha = tipos_unicos[i:i+COLS_POR_LINHA]
-    cols = st.columns(len(linha))
-    for c, tipo in zip(cols, linha):
-        with c:
-            valor_str = st.text_input(
-                f"💰 Rateio — {tipo}",
-                value="0,00",
-                key=f"rateio_{tipo}"
-            )
-            valores_rateio_por_tipo[tipo] = moeda_para_float(valor_str)
-
-
-
-# ==== Preenche a coluna Rateio proporcional ao % Total (por Tipo) ====
-# ==== Rateio = valor digitado do Tipo × % Total da própria linha ====
-
-# ===== Calcula % Total e Rateio =====
+# ==== RATEIO ====
 df_final["% Total"] = 0.0
-df_final["Rateio"] = 0.0  # começa zerado
+df_final["Rateio"] = 0.0
 
-for tipo in df_final["Tipo"].unique():
-    # Máscara das linhas normais do tipo (exclui subtotal e TOTAL)
-    mask_tipo = (
-        (df_final["Tipo"] == tipo) &
-        (~df_final["Grupo"].str.startswith("Subtotal")) &
-        (df_final["Grupo"] != "TOTAL")
+if grupo_selecionado == "Todos":
+    # === Caso geral: Rateio por Tipo ===
+    def moeda_para_float(valor_str: str) -> float:
+        try:
+            return float(valor_str.replace(".", "").replace(",", "."))
+        except:
+            return 0.0
+
+    tipos_unicos = [t for t in df_final["Tipo"].dropna().unique() if str(t).strip() != ""]
+    valores_rateio_por_tipo = {}
+
+    COLS_POR_LINHA = 3
+    for i in range(0, len(tipos_unicos), COLS_POR_LINHA):
+        linha = tipos_unicos[i:i+COLS_POR_LINHA]
+        cols = st.columns(len(linha))
+        for c, tipo in zip(cols, linha):
+            with c:
+                valor_str = st.text_input(
+                    f"💰 Rateio — {tipo}",
+                    value="0,00",
+                    key=f"rateio_{tipo}"
+                )
+                valores_rateio_por_tipo[tipo] = moeda_para_float(valor_str)
+
+    for tipo in df_final["Tipo"].unique():
+        mask_tipo = (
+            (df_final["Tipo"] == tipo) &
+            (~df_final["Grupo"].str.startswith("Subtotal")) &
+            (df_final["Grupo"] != "TOTAL")
+        )
+        subtotal_tipo = df_final.loc[df_final["Grupo"] == f"Subtotal {tipo}", "Total"].sum()
+
+        if subtotal_tipo > 0:
+            df_final.loc[mask_tipo, "% Total"] = (df_final.loc[mask_tipo, "Total"] / subtotal_tipo) * 100
+
+        df_final.loc[df_final["Grupo"] == f"Subtotal {tipo}", "% Total"] = 100
+
+        valor_rateio = valores_rateio_por_tipo.get(tipo, 0.0)
+        df_final.loc[mask_tipo, "Rateio"] = df_final.loc[mask_tipo, "% Total"] / 100 * valor_rateio
+
+        rateio_tipo = df_final.loc[mask_tipo, "Rateio"].sum()
+        df_final.loc[df_final["Grupo"] == f"Subtotal {tipo}", "Rateio"] = rateio_tipo
+
+else:
+    # === Caso específico: Rateio por Grupo (distribuído nas Lojas) ===
+    total_rateio = st.number_input(
+        f"💰 Rateio — {grupo_selecionado}",
+        min_value=0.0, step=100.0, format="%.2f",
+        key=f"rateio_{grupo_selecionado}"
     )
-    
-    # Pega subtotal do tipo
-    subtotal_tipo = df_final.loc[df_final["Grupo"] == f"Subtotal {tipo}", "Total"].sum()
-    
-    # Calcula % Total relativo ao subtotal do tipo
-    if subtotal_tipo > 0:
-       df_final.loc[mask_tipo, "% Total"] = (df_final.loc[mask_tipo, "Total"] / subtotal_tipo) * 100
-    
-    # Linha subtotal do tipo = 100%
-    df_final.loc[df_final["Grupo"] == f"Subtotal {tipo}", "% Total"] = 100
-    
-    # Calcula Rateio para as lojas do tipo
-    valor_rateio = valores_rateio_por_tipo.get(tipo, 0.0)
-    df_final.loc[mask_tipo, "Rateio"] = df_final.loc[mask_tipo, "% Total"] / 100 * valor_rateio
-    
-    # Subtotal do tipo no Rateio = soma das lojas
-    rateio_tipo = df_final.loc[mask_tipo, "Rateio"].sum()
-    df_final.loc[df_final["Grupo"] == f"Subtotal {tipo}", "Rateio"] = rateio_tipo
 
-# Linha TOTAL não precisa % nem Rateio calculado — opcional
-df_final.loc[df_final["Grupo"] == "TOTAL", "% Total"] = ""
-# Soma apenas as linhas de grupo (sem Subtotal e sem TOTAL)
-mask_linhas_normais = (
-    ~df_final["Grupo"].str.startswith("Subtotal", na=False) &
-    (df_final["Grupo"] != "TOTAL")
-)
-df_final.loc[df_final["Grupo"] == "TOTAL", "Rateio"] = df_final.loc[mask_linhas_normais, "Rateio"].sum()
+    mask_lojas = (
+        (df_final["Grupo"] == grupo_selecionado) &
+        (~df_final["Loja"].astype(str).str.startswith("Subtotal")) &
+        (df_final["Loja"] != "TOTAL")
+    )
 
+    subtotal_grupo = df_final.loc[df_final["Loja"] == f"Subtotal {grupo_selecionado}", "Total"].sum()
 
+    if subtotal_grupo > 0:
+        df_final.loc[mask_lojas, "% Total"] = (df_final.loc[mask_lojas, "Total"] / subtotal_grupo) * 100
+        df_final.loc[df_final["Loja"] == f"Subtotal {grupo_selecionado}", "% Total"] = 100
+
+        df_final.loc[mask_lojas, "Rateio"] = df_final.loc[mask_lojas, "% Total"] / 100 * total_rateio
+
+        df_final.loc[df_final["Loja"] == f"Subtotal {grupo_selecionado}", "Rateio"] = df_final.loc[mask_lojas, "Rateio"].sum()
 
 # ==== Reordenar colunas ====
-# ==== Reordenar colunas (Rateio no fim) ====
-colunas_finais = ["Tipo", "Grupo", "Total", "% Total", "Rateio"]
-df_final = df_final[colunas_finais]
-# ==== Função de formatação ====
+colunas_existentes = [c for c in ["Tipo","Grupo","Loja","Total","% Total","Rateio"] if c in df_final.columns]
+df_final = df_final[colunas_existentes]
 
-# ==== Cópia para exibição com formatação ====
+# ==== Formatação para exibição ====
 df_view = df_final.copy()
 
 def formatar(valor):
@@ -449,31 +325,29 @@ def formatar(valor):
     except:
         return valor
 
-# Formata todas as colunas numéricas (inclusive Rateio)
 for col in ["Total", "Rateio"]:
     if col in df_view.columns:
-        df_view[col] = df_view[col].apply(
-            lambda x: formatar(x) if pd.notnull(x) and x != "" else x
-        )
-# Formata só para exibir (3 casas decimais)
+        df_view[col] = df_view[col].apply(lambda x: formatar(x) if pd.notnull(x) and x != "" else x)
+
 if "% Total" in df_view.columns:
     df_view["% Total"] = pd.to_numeric(df_view["% Total"], errors="coerce").apply(
-    lambda x: f"{x:.2f}%" if pd.notnull(x) else ""
-)
+        lambda x: f"{x:.2f}%" if pd.notnull(x) else ""
+    )
 
-# ==== Estilo ====
 def aplicar_estilo(df):
     def estilo_linha(row):
-        if row["Grupo"] == "TOTAL":
+        if "Grupo" in df.columns and row["Grupo"] == "TOTAL":
             return ["background-color: #f4b084; font-weight: bold"] * len(row)
-        elif "Subtotal" in str(row["Grupo"]):
+        elif "Loja" in df.columns and row["Loja"].startswith("Subtotal"):
+            return ["background-color: #d9d9d9; font-weight: bold"] * len(row)
+        elif "Grupo" in df.columns and isinstance(row["Grupo"], str) and row["Grupo"].startswith("Subtotal"):
             return ["background-color: #d9d9d9; font-weight: bold"] * len(row)
         else:
             return ["" for _ in row]
     return df.style.apply(estilo_linha, axis=1)
 
-# Exibe a cópia formatada
 st.dataframe(aplicar_estilo(df_view), use_container_width=True, height=700)
+
 # ==== Exporta Excel ====
 
 
