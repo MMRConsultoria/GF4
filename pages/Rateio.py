@@ -233,6 +233,13 @@ df_final["% Total"] = df_final.apply(
 
 
 # ==== Inputs de Rateio por Tipo (lado a lado) ====
+def moeda_para_float(valor_str: str) -> float:
+    """Converte string '1.234,56' em float 1234.56"""
+    try:
+        return float(valor_str.replace(".", "").replace(",", "."))
+    except:
+        return 0.0
+
 tipos_base = ordem_tipos if 'ordem_tipos' in locals() else \
     [t for t in df_final["Tipo"].dropna().unique() if str(t).strip() != ""]
 
@@ -246,19 +253,13 @@ for i in range(0, len(tipos_unicos), COLS_POR_LINHA):
     cols = st.columns(len(linha))
     for c, tipo in zip(cols, linha):
         with c:
-            valor = st.number_input(
+            valor_str = st.text_input(
                 f"💰 Rateio — {tipo}",
-                min_value=0.0,
-                step=1000.0,
-                format="%.2f",
+                value="0,00",
                 key=f"rateio_{tipo}"
             )
-            # Mostra o valor já formatado como moeda
-            st.markdown(
-                f"<div style='color:green; font-weight:bold;'>R$ {valor:,.2f}</div>",
-                unsafe_allow_html=True
-            )
-            valores_rateio_por_tipo[tipo] = valor
+            valores_rateio_por_tipo[tipo] = moeda_para_float(valor_str)
+
 
 
 # ==== Preenche a coluna Rateio proporcional ao % Total (por Tipo) ====
