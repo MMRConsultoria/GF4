@@ -55,7 +55,8 @@ if not st.session_state.get("acesso_liberado"):
 
 # 🔌 Conexão com Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
+
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
 planilha = gc.open("Vendas diarias")
