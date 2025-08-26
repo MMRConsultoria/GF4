@@ -36,29 +36,29 @@ if not st.session_state.get("acesso_liberado"):
 # ========================
 # 🔐 Autenticação Google Sheets
 # ========================
-from google.oauth2.service_account import Credentials
-import gspread
+#from google.oauth2.service_account import Credentials
+#import gspread
 
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+#scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
 # Agora st.secrets já retorna um dict
-credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
+#credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
 
-credentials = Credentials.from_service_account_info(credentials_dict, scopes=scope)
-gc = gspread.authorize(credentials)
+#credentials = Credentials.from_service_account_info(credentials_dict, scopes=scope)
+#gc = gspread.authorize(credentials)
 
-planilha_empresa = gc.open_by_key("1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU")
+#planilha_empresa = gc.open_by_key("1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU")
 
 
 
 
 
 # 🔌 Conexão com Google Sheets
-#scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-#credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-#credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-#gc = gspread.authorize(credentials)
-#planilha = gc.open("Vendas diarias")
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+gc = gspread.authorize(credentials)
+planilha = gc.open("Vendas diarias")
 
 df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
 df_meio_pgto_google = pd.DataFrame(planilha.worksheet("Tabela Meio Pagamento").get_all_records())
