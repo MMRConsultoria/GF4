@@ -62,24 +62,34 @@ if not st.session_state.get("acesso_liberado"):
 #planilha = gc.open("Vendas diarias")
 # 🔐 Autenticação Google Sheets (100% compatível com seu secrets atual)
 import gspread
+import streamlit as st
 from google.oauth2.service_account import Credentials
+from google.auth.transport.requests import Request
 
+# Escopos suficientes para Sheets e leitura no Drive
 SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets",   # acesso ao Sheets
-    "https://www.googleapis.com/auth/drive.readonly"  # leitura no Drive (apenas se precisar)
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive.readonly",
 ]
 
-# st.secrets["GOOGLE_SERVICE_ACCOUNT"] já é um dict (porque você usa [GOOGLE_SERVICE_ACCOUNT] no secrets.toml)
-credentials_dict = dict(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+# 1) Pega o dict direto do secrets (sem json.loads)
+sa_info = dict(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 
-# Cria credenciais modernas (google-auth) com os escopos corretos
-credentials = Credentials.from_service_account_info(credentials_dict, scopes=SCOPES)
+# 2) Cria credenciais
+creds = Credentials.from_service_account_info(sa_info, scopes=SCOPES)
 
-# Cria o cliente gspread com essas credenciais
-gc = gspread.authorize(credentials)
+# 3) Força refresh do token já aqui (se der erro, sabemos que é o segredo)
+try:
+    creds.refresh(Request())
+    st.caption(f"✅ Service Account: {creds.service_account_email}")
+except Exception as e:
+    st.error("Falha ao gerar token com o Google (problema no segredo).")
+    st.stop()
 
-# ❗ Abra SEM buscar por nome (evita chamada de listagem no Drive). Use SEMPRE o ID:
-# ID correto da planilha (o que você me mandou)
+# 4) Autoriza gspread
+gc = gspread.authorize(creds)
+
+# 5) Abra SEM buscar por nome (evita listagem do Drive). Use o ID:
 SHEET_ID = "1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU"
 planilha = gc.open_by_key(SHEET_ID)
 
