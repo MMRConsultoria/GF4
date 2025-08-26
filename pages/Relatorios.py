@@ -28,27 +28,13 @@ if not st.session_state.get("acesso_liberado"):
 # ================================
 # 1. Conexão com Google Sheets
 # ================================
-#scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-#credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-#credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-#gc = gspread.authorize(credentials)
-#planilha_empresa = gc.open("Vendas diarias")
-
-# ========================
-# 🔐 Autenticação Google Sheets
-# ========================
-from google.oauth2.service_account import Credentials
-import gspread
-import streamlit as st
-
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-
-credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT"]  # já vem como dict
-credentials = Credentials.from_service_account_info(credentials_dict, scopes=scope)
+credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
+planilha_empresa = gc.open("Vendas diarias")
 
-# Sempre use open_by_key (mais seguro que open pelo nome)
-planilha_empresa = gc.open_by_key("1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU")
+
 
 df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
 
