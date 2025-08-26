@@ -54,12 +54,34 @@ if not st.session_state.get("acesso_liberado"):
 
 
 # 🔌 Conexão com Google Sheets
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
+#scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+#credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
 
-credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+#credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+#gc = gspread.authorize(credentials)
+#planilha = gc.open("Vendas diarias")
+# 🔐 Autenticação Google Sheets (100% compatível com seu secrets atual)
+import gspread
+from google.oauth2.service_account import Credentials
+
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",   # acesso ao Sheets
+    "https://www.googleapis.com/auth/drive.readonly"  # leitura no Drive (apenas se precisar)
+]
+
+# st.secrets["GOOGLE_SERVICE_ACCOUNT"] já é um dict (porque você usa [GOOGLE_SERVICE_ACCOUNT] no secrets.toml)
+credentials_dict = dict(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+
+# Cria credenciais modernas (google-auth) com os escopos corretos
+credentials = Credentials.from_service_account_info(credentials_dict, scopes=SCOPES)
+
+# Cria o cliente gspread com essas credenciais
 gc = gspread.authorize(credentials)
-planilha = gc.open("Vendas diarias")
+
+# ❗ Abra SEM buscar por nome (evita chamada de listagem no Drive). Use SEMPRE o ID:
+# ID correto da planilha (o que você me mandou)
+SHEET_ID = "1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU"
+planilha = gc.open_by_key(SHEET_ID)
 
 df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
 df_meio_pgto_google = pd.DataFrame(planilha.worksheet("Tabela Meio Pagamento").get_all_records())
