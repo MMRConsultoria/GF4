@@ -6,7 +6,6 @@ import json
 from io import BytesIO
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from google.oauth2.service_account import Credentials
 
 st.set_page_config(page_title="Meio de Pagamento", layout="wide")
 
@@ -33,18 +32,12 @@ st.markdown("""
 if not st.session_state.get("acesso_liberado"):
     st.stop()
 
-# ========================
-# 🔐 Autenticação Google Sheets
-# ========================
-
 # 🔌 Conexão com Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials_dict = st.secrets["GOOGLE_SERVICE_ACCOUNT"]
-
+credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 gc = gspread.authorize(credentials)
 planilha = gc.open("Vendas diarias")
-
 
 df_empresa = pd.DataFrame(planilha.worksheet("Tabela Empresa").get_all_records())
 df_meio_pgto_google = pd.DataFrame(planilha.worksheet("Tabela Meio Pagamento").get_all_records())
