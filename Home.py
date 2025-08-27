@@ -1,5 +1,19 @@
 # Home.py
 import streamlit as st
+import streamlit as st
+
+# =====================================
+# CSS para esconder barra de botões do canto superior direito
+# =====================================
+st.markdown("""
+    <style>
+        [data-testid="stToolbar"] {
+            visibility: hidden;
+            height: 0%;
+            position: fixed;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 # ✅ Configuração da página
 st.set_page_config(page_title="Portal de Relatórios | MMR Consultoria")
