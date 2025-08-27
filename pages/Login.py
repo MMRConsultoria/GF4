@@ -5,6 +5,18 @@ from oauth2client.service_account import ServiceAccountCredentials
 import json
 from datetime import datetime
 st.set_page_config(page_title="Login | MMR Consultoria")
+# =====================================
+# CSS para esconder barra de botões do canto superior direito
+# =====================================
+st.markdown("""
+    <style>
+        [data-testid="stToolbar"] {
+            visibility: hidden;
+            height: 0%;
+            position: fixed;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 # ✅ Captura segura dos parâmetros da URL
 params = st.query_params
