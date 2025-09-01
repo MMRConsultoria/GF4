@@ -4,7 +4,10 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 from datetime import datetime
+import streamlit as st
+
 st.set_page_config(page_title="Login | MMR Consultoria")
+
 # =====================================
 # CSS para esconder barra de botões do canto superior direito
 # =====================================
@@ -67,8 +70,8 @@ if not codigo_param or not empresa_param:
 #        #MainMenu, header, footer, .stSidebar { display: none; }
 #        </style>
 #        ## 🔐 IP não autorizado
-#        Seu IP detectado: `""" + ip_usuario + """`
-
+#        Seu IP detectado: """ + ip_usuario + """
+#
 #        Copie este IP e envie para a equipe da MMR Consultoria para liberar o acesso.
 #    """, unsafe_allow_html=True)
 #    st.stop()
@@ -76,10 +79,10 @@ if not codigo_param or not empresa_param:
 # ✅ Lista de usuários
 USUARIOS = [
     {"codigo": "1825", "email": "carlos.soveral@grupofit.com.br", "senha": "$%252M"},
-    {"codigo": "1825", "email": "maricelisrossi@gmail.com", "senha": "1825"},
+    {"codigo": "1825", "email": "maricelisrossi@gmail.com", "senha": "1825o"},
     {"codigo": "1825", "email": "vanessa.carvalho@grupofit.com.br", "senha": "%6790"},
     {"codigo": "1825", "email": "rosana.rocha@grupofit.com.br", "senha": "hjk&54lmhp"},
-    {"codigo": "1825", "email": "debora@grupofit.com.br", "senha": "klom52#@$65"}, 
+    {"codigo": "1825", "email": "debora@grupofit.com.br", "senha": "klom52#@$65"},
     {"codigo": "1825", "email": "renata.favacho@grupofit.com.br", "senha": "Huom63@#$52"},
     {"codigo": "1825", "email": "marcos.bogli@grupofit.com.br", "senha": "Ahlk52@#$81"},
     {"codigo": "1825", "email": "contabilidade@grupofit.com.br", "senha": "hYhIO18@#$21"},
@@ -113,8 +116,6 @@ def registrar_acesso(nome_usuario):
     except Exception as e:
         st.error(f"Erro ao registrar acesso: {e}")
 
-
-
 # ✅ Redireciona se já estiver logado
 if st.session_state.get("acesso_liberado"):
     st.switch_page("Home.py")
@@ -146,4 +147,3 @@ if st.button("Entrar"):
 
     else:
         st.error("❌ Código, e-mail ou senha incorretos.")
-
