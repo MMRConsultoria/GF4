@@ -653,7 +653,27 @@ with st.spinner("⏳ Processando..."):
         df_vendas["Data"] = pd.to_datetime(df_vendas["Data"], dayfirst=True, errors="coerce")
         df_vendas["Loja"] = df_vendas["Loja"].astype(str).str.strip().str.upper()
         df_vendas["Grupo"] = df_vendas["Grupo"].astype(str).str.strip()
-    
+        # (mantenha suas normalizações acima)
+        df_empresa.columns = [str(c).strip() for c in df_empresa.columns]
+        
+        # Detecta coluna de status (se existir) e filtra ATIVAS
+        possiveis_cols_status = ["Status", "Situação", "Situacao", "Ativa", "Ativo", "Loja Ativa", "Status Loja"]
+        col_status_encontrada = next((c for c in possiveis_cols_status if c in df_empresa.columns), None)
+        
+        def _to_bool_ativa(x):
+            s = str(x).strip().upper()
+            return s in {"ATIVA", "ATIVO", "SIM", "S", "YES", "Y", "1", "TRUE"}
+        
+        if col_status_encontrada:
+            mask_ativas = df_empresa[col_status_encontrada].apply(_to_bool_ativa)
+            df_empresa_ativas = df_empresa.loc[mask_ativas].copy()
+            # fallback: se nada marcado como ativo por inconsistência, não derruba tudo
+            if df_empresa_ativas.empty:
+                df_empresa_ativas = df_empresa.copy()
+        else:
+            # se não houver coluna de status, considera todas ativas
+            df_empresa_ativas = df_empresa.copy()
+
         # Merge com Tipo
         df_vendas = df_vendas.merge(
             df_empresa[["Loja", "Tipo"]],
@@ -1147,7 +1167,7 @@ with st.spinner("⏳ Processando..."):
         datas_periodo = pd.date_range(start=data_inicio_dt, end=data_fim_dt)
         
         # Base combinada com 0s
-        df_lojas_grupos = df_empresa[["Loja", "Grupo"]].drop_duplicates()
+        df_lojas_grupos = df_empresa_ativas[["Loja", "Grupo"]].drop_duplicates()
         df_base_completa = pd.MultiIndex.from_product(
             [df_lojas_grupos["Loja"], datas_periodo], names=["Loja", "Data"]
         ).to_frame(index=False)
@@ -1174,7 +1194,7 @@ with st.spinner("⏳ Processando..."):
         col_acumulado = f"Acumulado Mês (01/{data_fim_dt.strftime('%m')} até {data_fim_dt.strftime('%d/%m')})"
         df_acumulado = df_acumulado.rename(columns={"Fat.Total": col_acumulado})
         df_base = df_pivot.merge(df_acumulado, on=["Grupo", "Loja"], how="left")
-        df_base = df_base[df_base[col_acumulado] != 0]
+        
         
         # Adiciona coluna de Meta
         df_metas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
