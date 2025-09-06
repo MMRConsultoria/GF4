@@ -1179,7 +1179,7 @@ with st.spinner("⏳ Processando..."):
                         gc_tmp = get_gc()
                         total_sheet = obter_total_sheet_por_sistema_mes(gc_tmp, sistema_escolhido, int(ano_sel), int(mes_num))
                         # Não mostramos o total do Sheets; apenas conferimos
-                        if np.isfinite(total_user) and abs(total_user - total_sheet) <= 0.01:
+                        if np.isfinite(total_user) and round(total_user, 2) == round(total_sheet, 2):
                             # mantém o painel ABERTO para o usuário fechar manualmente
                             st.session_state.update({
                                 "conf_ok": True,
