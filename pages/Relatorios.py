@@ -1178,16 +1178,45 @@ with st.spinner("⏳ Processando..."):
         # Normaliza (garante consistência)
         df_lojas_mov["Loja"] = df_lojas_mov["Loja"].astype(str).str.strip().str.upper()
         df_lojas_mov["Grupo"] = df_lojas_mov["Grupo"].astype(str).str.strip()
+        # --- Lojas que têm META no mês selecionado (apenas para compor a grade) ---
+        df_metas_lojas = pd.DataFrame(planilha_empresa.worksheet("Metas").get_all_records())
+        
+        # Normaliza campos
+        df_metas_lojas["Loja"] = df_metas_lojas["Loja Vendas"].astype(str).str.strip().str.upper()
+        mapa_meses = {
+            "JAN": "01", "FEV": "02", "MAR": "03", "ABR": "04", "MAI": "05", "JUN": "06",
+            "JUL": "07", "AGO": "08", "SET": "09", "OUT": "10", "NOV": "11", "DEZ": "12"
+        }
+        df_metas_lojas["Mês"] = df_metas_lojas["Mês"].astype(str).str.strip().str.upper().map(mapa_meses)
+        df_metas_lojas["Ano"] = df_metas_lojas["Ano"].astype(str).str.strip()
+        
+        mes_filtro = data_fim_dt.strftime("%m")
+        ano_filtro = data_fim_dt.strftime("%Y")
+        df_metas_lojas = df_metas_lojas[
+            (df_metas_lojas["Mês"] == mes_filtro) & (df_metas_lojas["Ano"] == ano_filtro)
+        ].copy()
+        
+        # Lista de lojas com meta e seu Grupo (puxado da Tabela Empresa)
+        df_lojas_meta = (
+            df_metas_lojas[["Loja"]].drop_duplicates()
+            .merge(df_empresa[["Loja", "Grupo"]].drop_duplicates(), on="Loja", how="left")
+        )
 
         # Base combinada com 0s
         # União: TODAS as ativas + (inativas que tiveram movimento no período)
+        # União: ATIVAS + (INATIVAS COM MOVIMENTO) + (LOJAS COM META MESMO SEM MOVIMENTO)
         df_lojas_grupos_uniao = pd.concat(
             [
-                df_empresa_ativas[["Loja", "Grupo"]].drop_duplicates(),  # preferimos o Grupo da Tabela Empresa
-                df_lojas_mov.drop_duplicates(subset=["Loja", "Grupo"])   # complementa com inativas com venda
+                df_empresa_ativas[["Loja", "Grupo"]].drop_duplicates(),           # prioridade 1: Empresa (ativas)
+                df_lojas_mov.drop_duplicates(subset=["Loja", "Grupo"]),           # prioridade 2: movimento
+                df_lojas_meta.drop_duplicates(subset=["Loja", "Grupo"])           # prioridade 3: meta no mês
             ],
             ignore_index=True
-        ).drop_duplicates(subset=["Loja"], keep="first")  # se a mesma loja aparecer duas vezes, mantém a 1ª (Empresa)
+        ).drop_duplicates(subset=["Loja"], keep="first")  # mantém a 1ª ocorrência (Empresa > movimento > meta)
+        
+        df_lojas_grupos = df_lojas_grupos_uniao.copy()
+
+
         
         # Use esta base de lojas para montar a grade
         df_lojas_grupos = df_lojas_grupos_uniao.copy()
@@ -1843,14 +1872,46 @@ with st.spinner("⏳ Processando..."):
             df_relatorio["Meio de Pagamento"] = df_relatorio["Meio de Pagamento"].astype(str).str.strip().str.upper()
             df_meio_pagamento["Meio de Pagamento"] = df_meio_pagamento["Meio de Pagamento"].astype(str).str.strip().str.upper()
             df_meio_pagamento["Tipo de Pagamento"] = df_meio_pagamento["Tipo de Pagamento"].astype(str).str.strip().str.upper()
-    
-            # Merge para adicionar "Tipo de Pagamento"
-            df_relatorio = df_relatorio.merge(
-                df_meio_pagamento[["Meio de Pagamento", "Tipo de Pagamento"]],
+
+            # --- Antes deste bloco você já fez:
+            # df_relatorio["Meio de Pagamento"] = ...
+            # df_meio_pagamento["Meio de Pagamento"] = ...
+            # df_meio_pagamento["Tipo de Pagamento"] = ...
+            
+            # ⬇️ USE ESTE BLOCO NO LUGAR DO MERGE ANTIGO
+            # 1) Saber se o relatório já tem "Tipo de Pagamento"
+            tem_tipo_no_rel = "Tipo de Pagamento" in df_relatorio.columns
+            
+            # Se já existir no relatório, normaliza
+            if tem_tipo_no_rel:
+                df_relatorio["Tipo de Pagamento"] = (
+                    df_relatorio["Tipo de Pagamento"].astype(str).str.strip().str.upper()
+                )
+            
+            # 2) Faz o merge trazendo o tipo da Tabela como outra coluna (sem colidir nome)
+            df_tmp = df_relatorio.merge(
+                df_meio_pagamento[["Meio de Pagamento", "Tipo de Pagamento"]]
+                  .rename(columns={"Tipo de Pagamento": "Tipo de Pagamento_tab"}),
                 on="Meio de Pagamento",
-                how="left"
+                how="left",
             )
-    
+            
+            # 3) Cola (coalesce) o que já veio do relatório com o da tabela
+            import numpy as np
+            if tem_tipo_no_rel:
+                # trata vazios como NaN para o fillna funcionar
+                df_tmp["Tipo de Pagamento"] = df_tmp["Tipo de Pagamento"].replace(["", "NAN", "NONE"], np.nan)
+                df_tmp["Tipo de Pagamento"] = df_tmp["Tipo de Pagamento"].fillna(df_tmp["Tipo de Pagamento_tab"])
+            else:
+                df_tmp["Tipo de Pagamento"] = df_tmp["Tipo de Pagamento_tab"]
+            
+            # 4) Remove a coluna auxiliar
+            df_relatorio = df_tmp.drop(columns=["Tipo de Pagamento_tab"])
+
+            #st.write(list(df_relatorio.columns))
+
+            
+            
             # Corrige valores e datas
             df_relatorio["Valor (R$)"] = (
                 df_relatorio["Valor (R$)"].astype(str)
