@@ -346,7 +346,7 @@ with st.spinner("⏳ Processando..."):
                             for _, r in df_descricoes.iterrows():
                                 if str(r["Palavra-chave"]).lower() in desc_lower:
                                     return r["Descrição Agrupada"]
-                            return "Outros"
+                            return "Despesas Operacionais"
     
                         df["Descrição Agrupada"] = df["Descrição"].apply(mapear_descricao)
     
