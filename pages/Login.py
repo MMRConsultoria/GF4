@@ -86,7 +86,6 @@ USUARIOS = [
     {"codigo": "1825", "email": "renata.favacho@grupofit.com.br", "senha": "Huom63@#$52"},
     {"codigo": "1825", "email": "marcos.bogli@grupofit.com.br", "senha": "Ahlk52@#$81"},
     {"codigo": "1825", "email": "contabilidade@grupofit.com.br", "senha": "hYhIO18@#$21"},
-    {"codigo": "1825", "email": "larissa.esthefani@grupofit.com.br", "senha": "OjKlo252@#$%$21"},
     {"codigo": "1825", "email": "contasareceber_01@grupofit.com.br", "senha": "kird*$#@&Mklo*21"},
     {"codigo": "1825", "email": "erika.jesus@grupofit.com.br", "senha": "gres*$#@&Mklo*21"},
     {"codigo": "1825", "email": "paulo.fagundes@grupofit.com.br", "senha": "Fgh*$#@&Mjo*21"},
