@@ -24,10 +24,11 @@ if not st.session_state.get("acesso_liberado"):
     st.stop()
 
 # ===== CSS =====
+# ===== CSS =====
 st.markdown("""
 <style>
   [data-testid="stToolbar"] { visibility: hidden; height: 0%; position: fixed; }
-  .stSpinner { visibility: visible !important; }
+  /* REMOVIDO: .stSpinner { visibility: visible !important; } */
   .stApp { background-color: #f9f9f9; }
   div[data-baseweb="tab-list"] { margin-top: 20px; }
   button[data-baseweb="tab"] {
@@ -44,6 +45,10 @@ st.markdown("""
   .compact [data-testid="stVerticalBlock"] > div { margin-bottom:8px; }
 </style>
 """, unsafe_allow_html=True)
+
+
+
+
 
 # ===== Cabeçalho =====
 st.markdown("""
@@ -728,20 +733,7 @@ with aba_cr:
 
         #faltam = int(edited_full["🔴 Falta CNPJ?"].sum())
         #total  = int(len(edited_full))
-        def _parse_decimal_series_br(s: pd.Series) -> pd.Series:
-            """
-            Converte textos no formato BR para float:
-              - '1.234,56' -> 1234.56
-              - '14,33'    -> 14.33
-              - '14.33'    -> 14.33 (já OK)
-            Ignora símbolos e espaços.
-            """
-            s = s.astype(str).str.strip()
-            s = s.str.replace(r"\s", "", regex=True)
-            # remove '.' de milhar e troca ',' por '.' (decimal)
-            s = s.str.replace(".", "", regex=False).str.replace(",", ".", regex=False)
-            return pd.to_numeric(s, errors="coerce")
-
+        
         def _download_excel(df: pd.DataFrame, filename: str, label_btn: str, disabled=False):
             if df.empty:
                 st.button(label_btn, disabled=True, use_container_width=True)
@@ -753,71 +745,60 @@ with aba_cr:
             if "🔴 Falta CNPJ?" in df_export.columns:
                 df_export = df_export.drop(columns=["🔴 Falta CNPJ?"], errors="ignore")
         
-            # 2) Conserta tipos
+            # 2) Regras de tipos
             DEC_COLS = {"Valor Desconto", "Valor Multa", "Valor Juros Dia", "Valor Original"}
             INT_PREF = {"Portador", "Cód Conta Gerencial", "Cód Centro de Custo", "Nº Parcela"}
         
-            # 2.1) Decimais (garante que 14,33 vire 14.33 e NÚMERO)
-            for col in DEC_COLS:
-                if col in df_export.columns:
-                    df_export[col] = _parse_decimal_series_br(df_export[col]).fillna(0.0)
+            for col in df_export.columns:
+                # ===== CNPJ/Cliente =====
+                if col == "CNPJ/Cliente":
+                    s_raw = df_export[col].astype(str).str.strip()
+                    s_digits = s_raw.str.replace(r"\D", "", regex=True)
+                    mask_cnpj = s_digits.str.len() == 14
+                    mask_only_digits = s_raw.str.match(r"^\d+$")
         
-            # 2.2) CNPJ/Cliente — se 14 dígitos => texto; se não for CNPJ e só dígitos => número
-            if "CNPJ/Cliente" in df_export.columns:
-                s_raw = df_export["CNPJ/Cliente"].astype(str).str.strip()
-                s_digits = s_raw.str.replace(r"\D", "", regex=True)
-                mask_cnpj = s_digits.str.len() == 14
-                mask_only_digits = s_raw.str.match(r"^\d+$")
+                    # CNPJ (14 dígitos) => manter TEXTO exatamente como veio
+                    if mask_cnpj.any():
+                        df_export.loc[mask_cnpj, col] = s_raw[mask_cnpj]
         
-                # CNPJ (texto, preserva zeros à esquerda)
-                if mask_cnpj.any():
-                    df_export.loc[mask_cnpj, "CNPJ/Cliente"] = s_raw[mask_cnpj]
+                    # Não CNPJ mas só dígitos => NÚMERO
+                    to_num_mask = (~mask_cnpj) & mask_only_digits
+                    if to_num_mask.any():
+                        df_export.loc[to_num_mask, col] = pd.to_numeric(
+                            s_raw[to_num_mask], errors="coerce", downcast="integer"
+                        )
         
-                # Só dígitos e NÃO é CNPJ => número
-                to_num_mask = (~mask_cnpj) & mask_only_digits
-                if to_num_mask.any():
-                    df_export.loc[to_num_mask, "CNPJ/Cliente"] = pd.to_numeric(
-                        s_raw[to_num_mask], errors="coerce", downcast="integer"
-                    )
+                    # Demais casos (tem letra/símbolo e não é CNPJ): mantém texto como está
+                    continue
         
-                # demais casos: mantém texto
+                # ===== Decimais (R$ etc.) =====
+                if col in DEC_COLS:
+                    s = df_export[col].astype(str).str.strip()
+                    s_norm = s.str.replace(".", "", regex=False).str.replace(",", ".", regex=False)
+                    mask_num = s_norm.str.match(r"^\d+(\.\d+)?$")
+                    if mask_num.any():
+                        df_export.loc[mask_num, col] = pd.to_numeric(s_norm[mask_num], errors="coerce")
+                    continue
         
-            # 2.3) Inteiros preferenciais (somente quando forem estritamente numéricos)
-            for col in INT_PREF:
-                if col in df_export.columns:
+                # ===== Inteiros preferenciais =====
+                if col in INT_PREF:
                     s = df_export[col].astype(str).str.strip()
                     mask_int = s.str.match(r"^\d+$")
                     if mask_int.any():
-                        df_export.loc[mask_int, col] = pd.to_numeric(s[mask_int], errors="coerce", downcast="integer")
+                        df_export.loc[mask_int, col] = pd.to_numeric(
+                            s[mask_int], errors="coerce", downcast="integer"
+                        )
+                    # se não for só dígitos, mantém texto (não força)
+                    continue
         
-            # 3) Gerar Excel com formatação de números
+                # Demais colunas: não forçar tipo
+        
+            # 3) Gerar Excel
             bio = BytesIO()
             with pd.ExcelWriter(bio, engine="openpyxl") as writer:
                 df_export.to_excel(writer, index=False, sheet_name="Importador")
-                wb = writer.book
-                ws = writer.sheets["Importador"]
-        
-                # aplicar formato 0.00 nas colunas decimais
-                from openpyxl.styles import numbers
-                numfmt = "0.00"
-                header = list(df_export.columns)
-                for j, col in enumerate(header, start=1):
-                    if col in DEC_COLS:
-                        for i in range(2, len(df_export) + 2):  # pula o cabeçalho
-                            cell = ws.cell(row=i, column=j)
-                            # força tipo float (se vier como número já fica ok)
-                            try:
-                                if isinstance(cell.value, str):
-                                    # tenta converter strings residuais
-                                    v = cell.value.replace(".", "").replace(",", ".")
-                                    cell.value = float(v)
-                                # define formato
-                                cell.number_format = numfmt
-                            except Exception:
-                                # se não der, deixa como está
-                                pass
-        
             bio.seek(0)
+        
             st.download_button(
                 label_btn,
                 data=bio,
