@@ -7,7 +7,7 @@ import pandas as pd
 from io import BytesIO
 # ================= BLOQUEIO DE ACESSO – RH =================
 USUARIOS_AUTORIZADOS_RH = {
-    "grupofitteste@grupofit.com.br",
+    "testerh@gmail.com",
     "maricelisrossi@gmail.com"
     
 }
