@@ -5,6 +5,25 @@ import pdfplumber
 import re
 import pandas as pd
 from io import BytesIO
+# ================= BLOQUEIO DE ACESSO – RH =================
+USUARIOS_AUTORIZADOS_RH = {
+    "grupofitteste@grupofit.com.br",
+    "maricelisrossi@gmail.com"
+    
+}
+
+# Usuário vindo do login
+usuario_logado = st.session_state.get("usuario_logado")
+
+# Bloqueio se não estiver logado
+if not usuario_logado:
+    st.stop()
+
+# Bloqueio se não for autorizado
+if usuario_logado not in USUARIOS_AUTORIZADOS_RH:
+    st.warning("⛔ Acesso restrito ao RH")
+    st.stop()
+# ===========================================================
 
 # ================= FUSÍVEL ANTI-HELP =================
 try:
