@@ -223,10 +223,95 @@ with st.spinner("⏳ Processando..."):
                     df_agrupado["Mês"] = df_agrupado["Data"].dt.strftime("%b").str.lower()
                     df_agrupado["Ano"] = df_agrupado["Data"].dt.year
                     df_final = df_agrupado
-    
+                
+                   
+                    
+                # =====================================================
+                # FORMATO 3 — PRIMEIRA ABA | ID LOJA DINÂMICO
+                # =====================================================
                 else:
-                    st.error("❌ O arquivo enviado não contém uma aba reconhecida. Esperado: 'FaturamentoDiarioPorLoja' ou 'Relatório 100113'.")
-                    st.stop()
+                    nome_aba = abas[0]
+                    df_bruto = pd.read_excel(xls, sheet_name=nome_aba, header=None)
+    
+                    # localizar linha do cabeçalho (ID LOJA na coluna A)
+                    linha_header = None
+                    for i in range(len(df_bruto)):
+                        if "ID LOJA" in str(df_bruto.iloc[i, 0]).upper():
+                            linha_header = i
+                            break
+    
+                    if linha_header is None:
+                        st.error("❌ Arquivo não reconhecido. Não encontrei 'ID LOJA' na coluna A.")
+                        st.stop()
+    
+                    # leitura dos dados (SEM cabeçalho)
+                    df = pd.read_excel(
+                        xls,
+                        sheet_name=nome_aba,
+                        skiprows=linha_header + 1,
+                        header=None
+                    )
+    
+                    # colunas fixas
+                    # A=0 ID LOJA | C=2 DATA | G=6 Ticket | H=7 Fat.Total | L=11 Serv/Tx | M=12 Fat.Real
+                    df = df.iloc[:, [0, 2, 6, 7, 11, 12]]
+                    df = df.dropna(how="all")
+    
+                    # normalizações
+                    df[0] = (
+                        df[0]
+                        .astype(str)
+                        .str.replace(r"\D", "", regex=True)
+                        .str.lstrip("0")
+                    )
+                    df = df[df[0] != "9999"]
+                    df[2] = pd.to_datetime(df[2], dayfirst=True, errors="coerce")
+                    df[7] = pd.to_numeric(df[7], errors="coerce")
+                    df[11] = pd.to_numeric(df[11], errors="coerce")
+                    df[12] = pd.to_numeric(df[12], errors="coerce")
+                    df[6] = pd.to_numeric(df[6], errors="coerce")
+                    df = df[~((df[7] == 0) & (df[12] == 0))]
+                    df = df.dropna(subset=[0, 2])
+    
+                    # merge com Tabela Empresa (Código Everest = coluna C)
+                    df_empresa["Código Everest"] = (
+                        df_empresa["Código Everest"]
+                        .astype(str)
+                        .str.replace(r"\D", "", regex=True)
+                        .str.lstrip("0")
+                    )
+    
+                    df = df.merge(
+                        df_empresa[["Código Everest", "Loja"]],
+                        left_on=0,
+                        right_on="Código Everest",
+                        how="left"
+                    )
+    
+                    df_final = (
+                        df.groupby([2, "Loja"], as_index=False)
+                        .agg({
+                            7: "sum",
+                            11: "sum",
+                            12: "sum",
+                            6: "mean"
+                        })
+                    )
+    
+                    df_final.columns = ["Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]
+                    df_final["Mês"] = df_final["Data"].dt.strftime("%b").str.lower()
+                    df_final["Ano"] = df_final["Data"].dt.year
+                    df_final["Sistema"] = "3SCheckout"
+                    #st.success("✅ Arquivo identificado como FORMATO 3 (ID LOJA dinâmico)")
+                    #st.write("Linhas processadas:", len(df_final))
+                    #st.dataframe(df_final.head(5))
+    
+            #except Exception as e:
+            #    st.error(f"❌ Erro ao processar o arquivo: {e}")
+
+                #else:
+                #    st.error("❌ O arquivo enviado não contém uma aba reconhecida. Esperado: 'FaturamentoDiarioPorLoja' ou 'Relatório 100113'.")
+                #    st.stop()
     
                 dias_traducao = {
                     "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
@@ -253,7 +338,7 @@ with st.spinner("⏳ Processando..."):
                 colunas_finais = [
                     "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo",
                     "Código Grupo Everest", "Fat.Total", "Serv/Tx", "Fat.Real",
-                    "Ticket", "Mês", "Ano"
+                    "Ticket", "Mês", "Ano","Sistema"
                 ]
                 df_final = df_final[colunas_finais]
                 
@@ -544,12 +629,24 @@ with st.spinner("⏳ Processando..."):
             return f"R$ {s}"
 
         def inferir_sistema_mes_ano(df: pd.DataFrame):
-            # Sistema
-            if "Sistema" in df.columns and df["Sistema"].astype(str).str.strip().ne("").any():
-                sistema = df["Sistema"].astype(str).str.strip().mode().iloc[0]
-            else:
-                grp = df.get("Grupo", pd.Series([], dtype="object")).astype(str).str.lower()
-                sistema = "CISS" if grp.str.contains(r"\bkopp\b", regex=True).any() else "Colibri"
+           
+            # 1️⃣ Se existir Sistema explícito, respeita
+            if "Sistema" in df.columns:
+                sistema_series = df["Sistema"].astype(str).str.strip()
+                sistema_series = sistema_series[sistema_series != ""]
+        
+                if not sistema_series.empty:
+                    return sistema_series.mode().iloc[0]
+        
+            # 2️⃣ Fallback por Grupo
+            grp = df.get("Grupo", pd.Series([], dtype="object")).astype(str).str.lower()
+        
+            if grp.str.contains(r"\bkopp\b", regex=True).any():
+                return "CISS"
+        
+            # 3️⃣ Fallback final
+            return "Colibri"
+
         
             # Mês/Ano
             dt = pd.to_datetime(df.get("Data", pd.Series([], dtype="object")).astype(str), dayfirst=True, errors="coerce")
@@ -653,13 +750,19 @@ with st.spinner("⏳ Processando..."):
         
                 df_final = df_input.copy()
             
-                # >>> SISTEMA (preencher sempre que ausente OU vazio)
-                if ("Sistema" not in df_final.columns) or df_final["Sistema"].astype(str).str.strip().eq("").all():
-                    if str(titulo_origem).lower() == "manuais":
-                        df_final["Sistema"] = "Lançamento manual"
-                    else:
-                        grp_norm = df_final.get("Grupo", "").astype(str).str.strip().str.lower()
-                        df_final["Sistema"] = np.where(grp_norm.str.contains(r"\bkopp\b", regex=True), "CISS", "Colibri")
+                # >>> SISTEMA (regra de precedência)
+                if str(titulo_origem).lower() == "manuais":
+                    # 🔒 Regra máxima: lançamento manual sempre vence
+                    df_final["Sistema"] = "Lançamento manual"
+                
+                elif "Sistema" not in df_final.columns:
+                    # 🔁 Fallback apenas se ninguém definiu
+                    grp_norm = df_final.get("Grupo", "").astype(str).str.strip().str.lower()
+                    df_final["Sistema"] = np.where(
+                        grp_norm.str.contains(r"\bkopp\b", regex=True),
+                        "CISS",
+                        "Colibri"
+                    )
                 # <<< fim SISTEMA
             
                 # ===== 1) Preparos =====
@@ -1444,11 +1547,19 @@ with st.spinner("⏳ Processando..."):
                         # --- Sistema ---
                         if col_sis:
                             sis_val = str(d.get("Sistema", "") or "").strip()
+                        
+                            # 🔒 protege sistemas explícitos (ex: 3SCheckout)
                             if not sis_val:
-                                # fallback: se vier vazio do df_conf, deduz a partir do Grupo
-                                grp = str(d.get("Grupo", "") or "")
-                                sis_val = "CISS" if re.search(r"kopp", grp, flags=re.I) else "Colibri"
+                                grp = str(d.get("Grupo", "") or "").strip().lower()
+                        
+                                if grp:
+                                    sis_val = "CISS" if re.search(r"\bkopp\b", grp, flags=re.I) else "Colibri"
+                                else:
+                                    # sem Grupo → não força Colibri
+                                    sis_val = ""
+                        
                             row_out[col_sis] = sis_val
+
                         # garante que a ordem é a do headers
                         rows_to_append.append([row_out[h] for h in headers])
                     
