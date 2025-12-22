@@ -80,7 +80,7 @@ if not codigo_param or not empresa_param:
 USUARIOS = [
     {"codigo": "1825", "email": "carlos.soveral@grupofit.com.br", "senha": "$%252M"},
     {"codigo": "1825", "email": "maricelisrossi@gmail.com", "senha": "1825o"},
-    {"codigo": "1825", "email": "rosana.rocha@grupofit.com.br", "senha": "hjk&54lmhp"},
+    {"codigo": "1825", "email": "rosana.rocha@grupofit.com.br", "senha": "lmp&54lmhp"},
     {"codigo": "1825", "email": "debora@grupofit.com.br", "senha": "klom52#@$65"},
     {"codigo": "1825", "email": "samantha.santos@grupofit.com.br", "senha": "GG523@#$61"},
     {"codigo": "1825", "email": "lorena.durans@grupofit.com.br", "senha": "Kl81&*%52+"},
@@ -90,6 +90,8 @@ USUARIOS = [
     {"codigo": "1825", "email": "contasareceber_01@grupofit.com.br", "senha": "kird*$#@&Mklo*21"},
     {"codigo": "1825", "email": "erika.jesus@grupofit.com.br", "senha": "gres*$#@&Mklo*21"},
     {"codigo": "1825", "email": "paulo.fagundes@grupofit.com.br", "senha": "Fgh*$#@&Mjo*21"},
+    {"codigo": "1825", "email": "alex.komatsu@grupofit.com.br", "senha": "Kolplmt5876"},
+    {"codigo": "1825", "email": "biateste@grupofit.com.br", "senha": "YUJA2510$%1"},
     {"codigo": "1825", "email": "micaelly@grupofit.com.br", "senha": "MICA3010$%1"},
     {"codigo": "1825", "email": "testerh@gmail.com", "senha": "teste1425"},
     {"codigo": "3377", "email": "maricelisrossi@gmail.com", "senha": "1825"}
