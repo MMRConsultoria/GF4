@@ -8,7 +8,9 @@ from io import BytesIO
 # ================= BLOQUEIO DE ACESSO – RH =================
 USUARIOS_AUTORIZADOS_RH = {
     "testerh@gmail.com",
-    "maricelisrossi@gmail.com"
+    "maricelisrossi@gmail.com",
+    "alex.komatsu@grupofit.com.br",
+    "biateste@grupofit.com.br"
     
 }
 
