@@ -369,35 +369,35 @@ with st.spinner("⏳ Processando..."):
     # ================================
     
     with aba1:
-    # ========== BOTÃO 3S CHECKOUT ==========
-    st.markdown("### 🔄 Atualização Automática 3S Checkout")
-
-    # wrapper flex para manter o botão à esquerda e o conteúdo à direita
-    st.markdown('<div style="display:flex; align-items:flex-start; gap:20px;">', unsafe_allow_html=True)
-
-    # container fixo para o botão — largura fixa definida pelo CSS global (.botao-vermelho)
-    st.markdown('<div class="botao-vermelho">', unsafe_allow_html=True)
-    if st.button("🔄 Atualizar 3S Checkout", key="btn_3s_vermelho"):
-        st.session_state.modo_3s = True
-        st.session_state.df_final = None  # limpa upload manual
-        limpar_estado_aba_google()
-
-        with st.spinner("Buscando dados do banco..."):
-            resumo_3s, erro_3s, total_registros = buscar_dados_3s_checkout()
-            if erro_3s:
-                st.error(f"❌ Erro ao buscar dados: {erro_3s}")
-            elif resumo_3s is not None and not resumo_3s.empty:
-                st.session_state.resumo_3s = resumo_3s
-                st.session_state.total_registros_3s = total_registros
-                st.rerun()
-            else:
-                st.warning("⚠️ Nenhum dado encontrado para o período.")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Conteúdo principal da aba (ocupando o resto do espaço)
-    st.markdown('<div style="flex:1 1 auto;">', unsafe_allow_html=True)
-    # -------------------- coloque aqui o resto do conteúdo da aba (tabelas, filtros etc.) --------------------
-    st.markdown('</div>', unsafe_allow_html=True)
+        # ========== BOTÃO 3S CHECKOUT ==========
+        st.markdown("### 🔄 Atualização Automática 3S Checkout")
+    
+        # wrapper flex para manter o botão à esquerda e o conteúdo à direita
+        st.markdown('<div style="display:flex; align-items:flex-start; gap:20px;">', unsafe_allow_html=True)
+    
+        # container fixo para o botão — largura fixa definida pelo CSS global (.botao-vermelho)
+        st.markdown('<div class="botao-vermelho">', unsafe_allow_html=True)
+        if st.button("🔄 Atualizar 3S Checkout", key="btn_3s_vermelho"):
+            st.session_state.modo_3s = True
+            st.session_state.df_final = None  # limpa upload manual
+            limpar_estado_aba_google()
+    
+            with st.spinner("Buscando dados do banco..."):
+                resumo_3s, erro_3s, total_registros = buscar_dados_3s_checkout()
+                if erro_3s:
+                    st.error(f"❌ Erro ao buscar dados: {erro_3s}")
+                elif resumo_3s is not None and not resumo_3s.empty:
+                    st.session_state.resumo_3s = resumo_3s
+                    st.session_state.total_registros_3s = total_registros
+                    st.rerun()
+                else:
+                    st.warning("⚠️ Nenhum dado encontrado para o período.")
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+        # Conteúdo principal da aba (ocupando o resto do espaço)
+        st.markdown('<div style="flex:1 1 auto;">', unsafe_allow_html=True)
+        # -------------------- coloque aqui o resto do conteúdo da aba (tabelas, filtros etc.) --------------------
+        st.markdown('</div>', unsafe_allow_html=True)
         
         # ========== EXIBIR RESULTADO 3S ==========
         if st.session_state.modo_3s and "resumo_3s" in st.session_state:
