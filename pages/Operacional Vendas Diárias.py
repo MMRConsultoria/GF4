@@ -1,30 +1,69 @@
 # pages/OperacionalVendasDiarias.py
 
-
-
 import streamlit as st
 import pandas as pd
 import numpy as np
 from io import BytesIO
-from datetime import datetime
+from datetime import date, datetime, timedelta
 import re
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 import plotly.express as px
 from datetime import date
+import psycopg2
+
 st.set_page_config(page_title="Vendas Diarias", layout="wide")
 
 # 🔒 Bloqueia o acesso caso o usuário não esteja logado
 if not st.session_state.get("acesso_liberado"):
     st.stop()
-from contextlib import contextmanager
-st.set_page_config(page_title="Spinner personalizado | MMR Consultoria")
-import streamlit as st
+
+# ✅ Inicializar controle de modo
+if "modo_3s" not in st.session_state:
+    st.session_state.modo_3s = False
+
+# ✅ Função para limpar estado da Aba 2
+def limpar_estado_aba_google():
+    chaves = [
+        "df_google",
+        "df_google_sheets",
+        "df_para_atualizar",
+        "mensagem_atualizacao",
+        "mensagem_sucesso",
+        "atualizou_google",
+        "preview_google",
+    ]
+    for k in chaves:
+        if k in st.session_state:
+            del st.session_state[k]
 
 # ======================
 # CSS para esconder só a barra superior
 # ======================
+# ADICIONE AQUI:
+st.markdown(
+    """
+    <style>
+    /* Estilo específico para o botão dentro da div 'botao-vermelho' */
+    div.botao-vermelho > button {
+        background-color: #ff4b4b !important;
+        color: white !important;
+        border: none !important;
+        padding: 4px 10px !important;
+        font-size: 12px !important;
+        height: auto !important;
+        width: auto !important;
+    }
+    div.botao-vermelho > button:hover {
+        background-color: #ff3333 !important;
+        color: white !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.markdown("""
     <style>
         [data-testid="stToolbar"] {
@@ -46,18 +85,176 @@ with st.spinner("⏳ Processando..."):
     # ================================
     # 1. Conexão com Google Sheets
     # ================================
+    # ================================
+    # 1. Conexão com Google Sheets - OTIMIZADO
+    # ================================
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     credentials_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
     gc = gspread.authorize(credentials)
     planilha_empresa = gc.open("Vendas diarias")
-    df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
+    
+    # ✅ OTIMIZAÇÃO: Carrega valores brutos e normaliza ANTES de criar DataFrame
+    aba_empresa = planilha_empresa.worksheet("Tabela Empresa")
+    valores_empresa = aba_empresa.get_all_values()
+    
+    if len(valores_empresa) > 1:
+        # Cria DataFrame com cabeçalho
+        df_empresa = pd.DataFrame(valores_empresa[1:], columns=valores_empresa[0])
+        df_empresa.columns = df_empresa.columns.str.strip()
+        
+        # ✅ Força Loja em minúsculo IMEDIATAMENTE após carregar
+        if "Loja" in df_empresa.columns:
+            df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.lower().str.strip()
+    else:
+        df_empresa = pd.DataFrame()
+    # ================================
+    # 2. Função de conexão com PostgreSQL
+    # ================================
+    CERT_PATH = "aws-us-east-2-bundle.pem"
+    
+    if "cert_written" not in st.session_state:
+        with open(CERT_PATH, "w", encoding="utf-8") as f:
+            f.write(st.secrets["certs"]["aws_rds_us_east_2"])
+        st.session_state["cert_written"] = True
+    
+    def get_db_conn():
+        return psycopg2.connect(
+            host=st.secrets["db"]["host"],
+            port=st.secrets["db"]["port"],
+            dbname=st.secrets["db"]["database"],
+            user=st.secrets["db"]["user"],
+            password=st.secrets["db"]["password"],
+            sslmode="verify-full",
+            sslrootcert=CERT_PATH,
+        )
+    
+    
+    
+    def buscar_dados_3s_checkout():
+        """Busca dados do 3S Checkout direto do banco e processa"""
+        conn = get_db_conn()
+        try:
+            # Ajuste para fuso horário de Brasília (UTC-3) e define "ontem" como limite máximo
+            from datetime import datetime, timedelta
+            agora_brasil = datetime.utcnow() - timedelta(hours=3)
+            ontem = (agora_brasil - timedelta(days=1)).date()
+            
+            # ✅ FILTRO SQL: Adicionado "AND business_dt <= %s"
+            query = """
+                SELECT store_code, business_dt, total_gross, custom_properties, order_code, state_id
+                FROM public.order_picture
+                WHERE business_dt >= '2024-12-01'
+                  AND business_dt <= %s
+                  AND store_code NOT IN ('0000', '0001', '9999')
+                  AND state_id = 5
+            """
+            df = pd.read_sql(query, conn, params=(ontem,))
+            
+            
+            # 1. Converter datas
+            df['business_dt'] = pd.to_datetime(df['business_dt'], errors='coerce')
+            
+            # 2. ✅ REMOVER ZEROS À ESQUERDA do store_code
+            df['store_code'] = df['store_code'].astype(str).str.lstrip('0')
+            
+            # 3. Extrair campos de custom_properties
+            def parse_props(x):
+                if pd.isna(x): return {}
+                try:
+                    if isinstance(x, str):
+                        return json.loads(x)
+                except:
+                    try:
+                        import ast
+                        return ast.literal_eval(x)
+                    except:
+                        return {}
+                return x if isinstance(x, dict) else {}
+            
+            props = df['custom_properties'].apply(parse_props)
+            df['TIP_AMOUNT'] = pd.to_numeric(props.apply(lambda x: x.get('TIP_AMOUNT')), errors='coerce').fillna(0)
+            df['VOID_TYPE'] = props.apply(lambda x: x.get('VOID_TYPE'))
+            
+            # 4. Desconsiderar registros com VOID_TYPE preenchido
+            df = df[df['VOID_TYPE'].isna() | (df['VOID_TYPE'] == "") | (df['VOID_TYPE'] == 0)].copy()
+            
+            # 5. Criar coluna de data sem hora para agrupamento
+            df['data'] = df['business_dt'].dt.date
+            
+            # 6. Agrupar totais por store_code e data
+            resumo = df.groupby(['store_code', 'data']).agg(
+                Fat_Real=('total_gross', 'sum'),
+                Serv_Tx=('TIP_AMOUNT', 'sum')
+            ).reset_index()
+            
+            # 7. Calcular Fat.Total
+            resumo['Fat_Total'] = resumo['Fat_Real'] + resumo['Serv_Tx']
+            
+            # 8. Renomear colunas para o formato correto
+            resumo.columns = ['Código Everest', 'Data', 'Fat.Real', 'Serv/Tx', 'Fat.Total']
+            
+            # 9. Formatar Data
+            resumo['Data'] = pd.to_datetime(resumo['Data']).dt.strftime('%d/%m/%Y')
+            
+            # 10. Adicionar Dia da Semana
+            dias_traducao = {
+                "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
+                "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
+            }
+            resumo.insert(1, 'Dia da Semana', pd.to_datetime(resumo['Data'], format='%d/%m/%Y').dt.day_name().map(dias_traducao))
+            
+            # 11. ✅ Buscar informações da Tabela Empresa (também sem zeros à esquerda)
+            df_empresa["Código Everest"] = (
+                df_empresa["Código Everest"]
+                .astype(str)
+                .str.replace(r"\D", "", regex=True)
+                .str.lstrip("0")
+            )
+            resumo["Código Everest"] = resumo["Código Everest"].astype(str).str.strip()
+            
+            resumo = pd.merge(resumo, df_empresa[["Código Everest", "Loja", "Grupo", "Código Grupo Everest"]], 
+                             on="Código Everest", how="left")
+            # ✅ Converte nome da loja para MAIÚSCULO
+            resumo["Loja"] = resumo["Loja"].astype(str).str.strip().str.lower()
+            # 12. Adicionar colunas adicionais
+            resumo['Ticket'] = 0  # Não temos essa informação no agrupamento
+            resumo['Mês'] = pd.to_datetime(resumo['Data'], format='%d/%m/%Y').dt.strftime('%b').str.lower()
+            
+            meses = {"jan": "jan", "feb": "fev", "mar": "mar", "apr": "abr", "may": "mai", "jun": "jun",
+                     "jul": "jul", "aug": "ago", "sep": "set", "oct": "out", "nov": "nov", "dec": "dez"}
+            resumo["Mês"] = resumo["Mês"].map(meses)
+            
+            resumo['Ano'] = pd.to_datetime(resumo['Data'], format='%d/%m/%Y').dt.year
+            resumo['Sistema'] = '3SCheckout'
+            
+            # 13. Ordenar colunas no formato padrão
+            colunas_finais = [
+                "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo",
+                "Código Grupo Everest", "Fat.Total", "Serv/Tx", "Fat.Real",
+                "Ticket", "Mês", "Ano", "Sistema"
+            ]
+            
+            resumo = resumo[[c for c in colunas_finais if c in resumo.columns]]
+            
+            # 14. Arredondar valores
+            for col in ["Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]:
+                if col in resumo.columns:
+                    resumo[col] = resumo[col].round(2)
+            
+            # 15. Ordenar por Data e Loja
+            resumo['Data_Ordenada'] = pd.to_datetime(resumo['Data'], format='%d/%m/%Y')
+            resumo = resumo.sort_values(by=['Data_Ordenada', 'Loja']).drop(columns='Data_Ordenada')
+            
+            return resumo, None, len(df)
+        except Exception as e:
+            return None, str(e), 0
+        finally:
+            conn.close()
     
     # ================================
-    # 2. Configuração inicial do app
+    # Configuração inicial do app
     # ================================
-    
-    #st.title("📋 Relatório de Vendas Diarias")
     
     # 🎨 Estilizar abas
     st.markdown("""
@@ -82,39 +279,32 @@ with st.spinner("⏳ Processando..."):
         planilha = gc.open("Vendas diarias")
         aba_fat = planilha.worksheet("Fat Sistema Externo")
         data_raw = aba_fat.get_all_values()
-    
-        # Converte para DataFrame e define o cabeçalho
+
         if len(data_raw) > 1:
-            df = pd.DataFrame(data_raw[1:], columns=data_raw[0])  # usa a primeira linha como header
-    
-            # Limpa espaços extras nos nomes de colunas
+            df = pd.DataFrame(data_raw[1:], columns=data_raw[0])
             df.columns = df.columns.str.strip()
-    
-            # Verifica se coluna "Data" está presente
+
             if "Data" in df.columns:
                 df["Data"] = pd.to_datetime(df["Data"].astype(str).str.strip(), dayfirst=True, errors="coerce")
-    
-    
+
                 ultima_data_valida = df["Data"].dropna()
-    
+
                 if not ultima_data_valida.empty:
                     ultima_data = ultima_data_valida.max().strftime("%d/%m/%Y")
-    
-                    # Corrige coluna Grupo
+
                     df["Grupo"] = df["Grupo"].astype(str).str.strip().str.lower()
                     df["GrupoExibicao"] = df["Grupo"].apply(
                         lambda g: "Bares" if g in ["amata", "aurora"]
                         else "Kopp" if g == "kopp"
                         else "GF4"
                     )
-    
-                    # Contagem de lojas únicas por grupo
+
                     df_ultima_data = df[df["Data"] == df["Data"].max()]
                     contagem = df_ultima_data.groupby("GrupoExibicao")["Loja"].nunique().to_dict()
                     qtde_bares = contagem.get("Bares", 0)
                     qtde_kopp = contagem.get("Kopp", 0)
                     qtde_gf4 = contagem.get("GF4", 0)
-    
+
                     resumo_msg = f"""
                     <div style='font-size:13px; color:gray; margin-bottom:10px;'>
                     📅 Última atualização: {ultima_data} — Bares ({qtde_bares}), Kopp ({qtde_kopp}), GF4 ({qtde_gf4})
@@ -130,7 +320,7 @@ with st.spinner("⏳ Processando..."):
     except Exception as e:
         st.error(f"❌ Erro ao processar dados do Google Sheets: {e}")
     
-    # Cabeçalho bonito (depois do estilo)
+    # Cabeçalho bonito
     st.markdown("""
         <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
             <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
@@ -138,268 +328,353 @@ with st.spinner("⏳ Processando..."):
         </div>
     """, unsafe_allow_html=True)
     
-    
     # ================================
     # 3. Separação em ABAS
     # ================================
     aba1, aba3, aba4, aba5 = st.tabs(["📄 Upload e Processamento", "🔄 Atualizar Google Sheets","📊 Auditar integração Everest","📊 Auditar Faturamento X Meio Pagamento"])
-    # ---- Helper para saber qual aba está ativa ----
-    def marcar_aba_ativa(tab_key: str):
-        st.session_state["_aba_ativa"] = tab_key
+    
     # ================================
     # 📄 Aba 1 - Upload e Processamento
     # ================================
     
     with aba1:
-       
-        uploaded_file = st.file_uploader(
-            "📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de faturamento",
-            type=["xls", "xlsx"]
-        )    
+        # ========== BOTÃO 3S CHECKOUT ==========
+        st.markdown("### 🔄 Atualização Automática 3S Checkout")
+        
+        # Colunas: pequena à esquerda para o botão, resto do conteúdo à direita
+        col_btn, col_rest = st.columns([1, 9])
     
-        if uploaded_file:
-            try:
-                xls = pd.ExcelFile(uploaded_file)
-                abas = xls.sheet_names
+        with col_btn:
+            # div com classe para aplicar CSS apenas a este botão
+            st.markdown('<div class="botao-vermelho">', unsafe_allow_html=True)
     
-                if "FaturamentoDiarioPorLoja" in abas:
-                    df_raw = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None)
-                    texto_b1 = str(df_raw.iloc[0, 1]).strip().lower()
-                    if texto_b1 != "faturamento diário sintético multi-loja":
-                        st.error(f"❌ A célula B1 está com '{texto_b1}'. Corrija para 'Faturamento diário sintético multi-loja'.")
-                        st.stop()
+            # Botão pequeno e discreto — não usar use_container_width para não esticar
+            if st.button("🔄 Atualizar 3S Checkout", key="btn_3s_vermelho"):
+                st.session_state.modo_3s = True
+                st.session_state.df_final = None  # limpa upload manual
     
-                    df = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None, skiprows=4)
-                    df.iloc[:, 2] = pd.to_datetime(df.iloc[:, 2], dayfirst=True, errors='coerce')
+                # ✅ LIMPA ABA 2
+                limpar_estado_aba_google()
     
-                    registros = []
-                    col = 3
-                    while col < df.shape[1]:
-                        nome_loja = str(df_raw.iloc[3, col]).strip()
-                        if re.match(r"^\d+\s*-?\s*", nome_loja):
-                            nome_loja = nome_loja.split("-", 1)[-1].strip()
-                            header_col = str(df.iloc[0, col]).strip().lower()
-                            if "fat.total" in header_col:
-                                for i in range(1, df.shape[0]):
-                                    linha = df.iloc[i]
-                                    valor_data = df.iloc[i, 2]
-                                    valor_check = str(df.iloc[i, 1]).strip().lower()
-                                    if pd.isna(valor_data) or valor_check in ["total", "subtotal"]:
-                                        continue
-                                    valores = linha[col:col+5].values
-                                    if pd.isna(valores).all():
-                                        continue
-                                    registros.append([
-                                        valor_data, nome_loja, *valores,
-                                        valor_data.strftime("%b"), valor_data.year
-                                    ])
-                            col += 5
-                        else:
-                            col += 1
+                with st.spinner("Buscando dados do banco..."):
+                    resumo_3s, erro_3s, total_registros = buscar_dados_3s_checkout()
     
-                    if len(registros) == 0:
-                        st.warning("⚠️ Nenhum registro encontrado.")
+                    if erro_3s:
+                        st.error(f"❌ Erro ao buscar dados: {erro_3s}")
+                    elif resumo_3s is not None and not resumo_3s.empty:
+                        # Salvar no session_state
+                        st.session_state.resumo_3s = resumo_3s
+                        st.session_state.total_registros_3s = total_registros
+                        st.rerun()
+                    else:
+                        st.warning("⚠️ Nenhum dado encontrado para o período.")
     
-                    df_final = pd.DataFrame(registros, columns=[
-                        "Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket", "Mês", "Ano"
-                    ])
+            st.markdown('</div>', unsafe_allow_html=True)
     
-                elif "Relatório 100132" in abas:
-                    df = pd.read_excel(xls, sheet_name="Relatório 100132")
-                    df["Loja"] = df["Código - Nome Empresa"].astype(str).str.split("-", n=1).str[-1].str.strip().str.lower()
-                    df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
-                    df["Fat.Total"] = pd.to_numeric(df["Valor Total"], errors="coerce")
-                    df["Serv/Tx"] = pd.to_numeric(df["Taxa de Serviço"], errors="coerce")
-                    df["Fat.Real"] = df["Fat.Total"] - df["Serv/Tx"]
-                    df["Ticket"] = pd.to_numeric(df["Ticket Médio"], errors="coerce")
-    
-                    df_agrupado = df.groupby(["Data", "Loja"]).agg({
-                        "Fat.Total": "sum",
-                        "Serv/Tx": "sum",
-                        "Fat.Real": "sum",
-                        "Ticket": "mean"
-                    }).reset_index()
-    
-                    df_agrupado["Mês"] = df_agrupado["Data"].dt.strftime("%b").str.lower()
-                    df_agrupado["Ano"] = df_agrupado["Data"].dt.year
-                    df_final = df_agrupado
+        with col_rest:
+            # Resto do conteúdo da aba (tabela, filtros, etc.)
+            pass
+        
+        # ========== EXIBIR RESULTADO 3S ==========
+        if st.session_state.modo_3s and "resumo_3s" in st.session_state:
+            resumo_3s = st.session_state.resumo_3s
+            total_registros = st.session_state.total_registros_3s
+            
+            st.success(f"✅ {total_registros} registros processados com sucesso!")
+            
+            # Verificar empresas não localizadas
+            empresas_nao_localizadas = resumo_3s[resumo_3s["Loja"].isna()]["Código Everest"].unique()
+            if len(empresas_nao_localizadas) > 0:
+                empresas_nao_localizadas_str = "<br>".join(empresas_nao_localizadas)
+                mensagem = f"""
+                ⚠️ {len(empresas_nao_localizadas)} código(s) não localizado(s) na Tabela Empresa! <br>{empresas_nao_localizadas_str}
+                <br>✏️ Atualize a tabela clicando 
+                <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
+                """
+                st.markdown(mensagem, unsafe_allow_html=True)
+            else:
+                st.success("✅ Todas as lojas foram localizadas na Tabela_Empresa!")
+            
+            # Mostrar resumo do período
+            datas_validas = pd.to_datetime(resumo_3s["Data"], format="%d/%m/%Y", errors='coerce').dropna()
+            if not datas_validas.empty:
+                data_inicial = datas_validas.min().strftime("%d/%m/%Y")
+                data_final_str = datas_validas.max().strftime("%d/%m/%Y")
+                valor_total = resumo_3s["Fat.Total"].sum()
+                valor_total_formatado = f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
                 
-                   
-                    
-                # =====================================================
-                # FORMATO 3 — PRIMEIRA ABA | ID LOJA DINÂMICO
-                # =====================================================
-                else:
-                    nome_aba = abas[0]
-                    df_bruto = pd.read_excel(xls, sheet_name=nome_aba, header=None)
-    
-                    # localizar linha do cabeçalho (ID LOJA na coluna A)
-                    linha_header = None
-                    for i in range(len(df_bruto)):
-                        if "ID LOJA" in str(df_bruto.iloc[i, 0]).upper():
-                            linha_header = i
-                            break
-    
-                    if linha_header is None:
-                        st.error("❌ Arquivo não reconhecido. Não encontrei 'ID LOJA' na coluna A.")
-                        st.stop()
-    
-                    # leitura dos dados (SEM cabeçalho)
-                    df = pd.read_excel(
-                        xls,
-                        sheet_name=nome_aba,
-                        skiprows=linha_header + 1,
-                        header=None
-                    )
-    
-                    # colunas fixas
-                    # A=0 ID LOJA | C=2 DATA | G=6 Ticket | H=7 Fat.Total | L=11 Serv/Tx | M=12 Fat.Real
-                    df = df.iloc[:, [0, 2, 6, 7, 11, 12]]
-                    df = df.dropna(how="all")
-    
-                    # normalizações
-                    df[0] = (
-                        df[0]
-                        .astype(str)
-                        .str.replace(r"\D", "", regex=True)
-                        .str.lstrip("0")
-                    )
-                    df = df[df[0] != "9999"]
-                    df[2] = pd.to_datetime(df[2], dayfirst=True, errors="coerce")
-                    df[7] = pd.to_numeric(df[7], errors="coerce")
-                    df[11] = pd.to_numeric(df[11], errors="coerce")
-                    df[12] = pd.to_numeric(df[12], errors="coerce")
-                    df[6] = pd.to_numeric(df[6], errors="coerce")
-                    df = df[~((df[7] == 0) & (df[12] == 0))]
-                    df = df.dropna(subset=[0, 2])
-    
-                    # merge com Tabela Empresa (Código Everest = coluna C)
-                    df_empresa["Código Everest"] = (
-                        df_empresa["Código Everest"]
-                        .astype(str)
-                        .str.replace(r"\D", "", regex=True)
-                        .str.lstrip("0")
-                    )
-    
-                    df = df.merge(
-                        df_empresa[["Código Everest", "Loja"]],
-                        left_on=0,
-                        right_on="Código Everest",
-                        how="left"
-                    )
-    
-                    df_final = (
-                        df.groupby([2, "Loja"], as_index=False)
-                        .agg({
-                            7: "sum",
-                            11: "sum",
-                            12: "sum",
-                            6: "mean"
-                        })
-                    )
-    
-                    df_final.columns = ["Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]
-                    df_final["Mês"] = df_final["Data"].dt.strftime("%b").str.lower()
-                    df_final["Ano"] = df_final["Data"].dt.year
-                    df_final["Sistema"] = "3SCheckout"
-                    #st.success("✅ Arquivo identificado como FORMATO 3 (ID LOJA dinâmico)")
-                    #st.write("Linhas processadas:", len(df_final))
-                    #st.dataframe(df_final.head(5))
-    
-            #except Exception as e:
-            #    st.error(f"❌ Erro ao processar o arquivo: {e}")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown(f"""
+                        <div style='font-size:24px; font-weight: bold; margin-bottom:10px;'>🗓️ Período processado</div>
+                        <div style='font-size:30px; color:#000;'>{data_inicial} até {data_final_str}</div>
+                    """, unsafe_allow_html=True)
+                with col2:
+                    st.markdown(f"""
+                        <div style='font-size:24px; font-weight: bold; margin-bottom:10px;'>💰 Valor total</div>
+                        <div style='font-size:30px; color:green;'>{valor_total_formatado}</div>
+                    """, unsafe_allow_html=True)
+            
+            # Gera Excel no formato padrão
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                resumo_3s.to_excel(writer, sheet_name='Faturamento Servico', index=False)
+            output.seek(0)
+            
+            st.download_button(
+                label="📥 Baixar Excel 3S Checkout",
+                data=output,
+                file_name=f"3s_checkout_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            
+            # Botão para voltar ao upload manual
+            st.markdown("---")
+            if st.button("↩️ Voltar para Upload Manual"):
+                st.session_state.modo_3s = False
+                if "resumo_3s" in st.session_state:
+                    del st.session_state.resumo_3s
+                if "total_registros_3s" in st.session_state:
+                    del st.session_state.total_registros_3s
+                st.rerun()
+        
+        # ========== UPLOAD MANUAL (só aparece se não estiver no modo 3S) ==========
+        if not st.session_state.modo_3s:
+            st.markdown("---")
+            st.markdown("### 📁 Upload Manual")
+           
+            uploaded_file = st.file_uploader(
+                "📁 Clique para selecionar ou arraste aqui o arquivo Excel com os dados de faturamento",
+                type=["xls", "xlsx"]
+            )    
 
-                #else:
-                #    st.error("❌ O arquivo enviado não contém uma aba reconhecida. Esperado: 'FaturamentoDiarioPorLoja' ou 'Relatório 100113'.")
-                #    st.stop()
-    
-                dias_traducao = {
-                    "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
-                    "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
-                }
-                df_final.insert(1, "Dia da Semana", pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.day_name().map(dias_traducao))
-                df_final["Data"] = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.strftime("%d/%m/%Y")
-    
-                for col_val in ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket"]:
-                    if col_val in df_final.columns:
-                        df_final[col_val] = pd.to_numeric(df_final[col_val], errors="coerce").round(2)
-    
-                meses = {"jan": "jan", "feb": "fev", "mar": "mar", "apr": "abr", "may": "mai", "jun": "jun",
-                         "jul": "jul", "aug": "ago", "sep": "set", "oct": "out", "nov": "nov", "dec": "dez"}
-                df_final["Mês"] = df_final["Mês"].str.lower().map(meses)
-    
-                df_final["Data_Ordenada"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce')
-                df_final = df_final.sort_values(by=["Data_Ordenada", "Loja"]).drop(columns="Data_Ordenada")
-    
-                df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
-                df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.lower()
-                df_final = pd.merge(df_final, df_empresa, on="Loja", how="left")
-    
-                colunas_finais = [
-                    "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo",
-                    "Código Grupo Everest", "Fat.Total", "Serv/Tx", "Fat.Real",
-                    "Ticket", "Mês", "Ano","Sistema"
-                ]
-                df_final = df_final[[c for c in colunas_finais if c in df_final.columns]]
-                
-                st.session_state.df_final = df_final
-                st.session_state.atualizou_google = False
-    
-                datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
-                if not datas_validas.empty:
-                    data_inicial = datas_validas.min().strftime("%d/%m/%Y")
-                    data_final_str = datas_validas.max().strftime("%d/%m/%Y")
-                    valor_total = df_final["Fat.Total"].sum().round(2)
-                    valor_total_formatado = f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.markdown(f"""
-                            <div style='font-size:24px; font-weight: bold; margin-bottom:10px;'>🗓️ Período processado</div>
-                            <div style='font-size:30px; color:#000;'>{data_inicial} até {data_final_str}</div>
-                        """, unsafe_allow_html=True)
-                    with col2:
-                        st.markdown(f"""
-                            <div style='font-size:24px; font-weight: bold; margin-bottom:10px;'>💰 Valor total</div>
-                            <div style='font-size:30px; color:green;'>{valor_total_formatado}</div>
-                        """, unsafe_allow_html=True)
-                else:
-                    st.warning("⚠️ Não foi possível identificar o período de datas.")
-    
-                empresas_nao_localizadas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
-                if len(empresas_nao_localizadas) > 0:
-                    empresas_nao_localizadas_str = "<br>".join(empresas_nao_localizadas)
-                    mensagem = f"""
-                    ⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s), cadastre e reprocesse novamente! <br>{empresas_nao_localizadas_str}
-                    <br>✏️ Atualize a tabela clicando 
-                    <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
-                    """
-                    st.markdown(mensagem, unsafe_allow_html=True)
-                else:
-                    st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
-    
-                    def to_excel(df):
-                        output = BytesIO()
-                        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                            df.to_excel(writer, index=False, sheet_name='Faturamento Servico')
-                        output.seek(0)
-                        return output
-    
-                    excel_data = to_excel(df_final)
-    
-                    st.download_button(
-                        label="📥 Baixar Relatório Excel",
-                        data=excel_data,
-                        file_name="faturamento_servico.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
-    
-            except Exception as e:
-                st.error(f"❌ Erro ao processar o arquivo: {e}")
-    
-    
-    
-    
+            if uploaded_file:
+                try:
+                    xls = pd.ExcelFile(uploaded_file)
+                    abas = xls.sheet_names
+        
+                    if "FaturamentoDiarioPorLoja" in abas:
+                        df_raw = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None)
+                        texto_b1 = str(df_raw.iloc[0, 1]).strip().lower()
+                        if texto_b1 != "faturamento diário sintético multi-loja":
+                            st.error(f"❌ A célula B1 está com '{texto_b1}'. Corrija para 'Faturamento diário sintético multi-loja'.")
+                            st.stop()
+        
+                        df = pd.read_excel(xls, sheet_name="FaturamentoDiarioPorLoja", header=None, skiprows=4)
+                        df.iloc[:, 2] = pd.to_datetime(df.iloc[:, 2], dayfirst=True, errors='coerce')
+        
+                        registros = []
+                        col = 3
+                        while col < df.shape[1]:
+                            nome_loja = str(df_raw.iloc[3, col]).strip()
+                            if re.match(r"^\d+\s*-?\s*", nome_loja):
+                                nome_loja = nome_loja.split("-", 1)[-1].strip()
+                                header_col = str(df.iloc[0, col]).strip().lower()
+                                if "fat.total" in header_col:
+                                    for i in range(1, df.shape[0]):
+                                        linha = df.iloc[i]
+                                        valor_data = df.iloc[i, 2]
+                                        valor_check = str(df.iloc[i, 1]).strip().lower()
+                                        if pd.isna(valor_data) or valor_check in ["total", "subtotal"]:
+                                            continue
+                                        valores = linha[col:col+5].values
+                                        if pd.isna(valores).all():
+                                            continue
+                                        registros.append([
+                                            valor_data, nome_loja, *valores,
+                                            valor_data.strftime("%b"), valor_data.year
+                                        ])
+                                col += 5
+                            else:
+                                col += 1
+        
+                        if len(registros) == 0:
+                            st.warning("⚠️ Nenhum registro encontrado.")
+        
+                        df_final = pd.DataFrame(registros, columns=[
+                            "Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket", "Mês", "Ano"
+                        ])
+        
+                    elif "Relatório 100132" in abas:
+                        df = pd.read_excel(xls, sheet_name="Relatório 100132")
+                        df["Loja"] = df["Código - Nome Empresa"].astype(str).str.split("-", n=1).str[-1].str.strip().str.lower()
+                        df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
+                        df["Fat.Total"] = pd.to_numeric(df["Valor Total"], errors="coerce")
+                        df["Serv/Tx"] = pd.to_numeric(df["Taxa de Serviço"], errors="coerce")
+                        df["Fat.Real"] = df["Fat.Total"] - df["Serv/Tx"]
+                        df["Ticket"] = pd.to_numeric(df["Ticket Médio"], errors="coerce")
+        
+                        df_agrupado = df.groupby(["Data", "Loja"]).agg({
+                            "Fat.Total": "sum",
+                            "Serv/Tx": "sum",
+                            "Fat.Real": "sum",
+                            "Ticket": "mean"
+                        }).reset_index()
+        
+                        df_agrupado["Mês"] = df_agrupado["Data"].dt.strftime("%b").str.lower()
+                        df_agrupado["Ano"] = df_agrupado["Data"].dt.year
+                        df_final = df_agrupado
+                    
+                    # =====================================================
+                    # FORMATO 3 — PRIMEIRA ABA | ID LOJA DINÂMICO
+                    # =====================================================
+                    else:
+                        nome_aba = abas[0]
+                        df_bruto = pd.read_excel(xls, sheet_name=nome_aba, header=None)
+        
+                        # localizar linha do cabeçalho (ID LOJA na coluna A)
+                        linha_header = None
+                        for i in range(len(df_bruto)):
+                            if "ID LOJA" in str(df_bruto.iloc[i, 0]).upper():
+                                linha_header = i
+                                break
+        
+                        if linha_header is None:
+                            st.error("❌ Arquivo não reconhecido. Não encontrei 'ID LOJA' na coluna A.")
+                            st.stop()
+        
+                        # leitura dos dados (SEM cabeçalho)
+                        df = pd.read_excel(
+                            xls,
+                            sheet_name=nome_aba,
+                            skiprows=linha_header + 1,
+                            header=None
+                        )
+        
+                        # colunas fixas
+                        # A=0 ID LOJA | C=2 DATA | G=6 Ticket | H=7 Fat.Total | L=11 Serv/Tx | M=12 Fat.Real
+                        df = df.iloc[:, [0, 2, 6, 7, 11, 12]]
+                        df = df.dropna(how="all")
+        
+                        # normalizações
+                        df[0] = (
+                            df[0]
+                            .astype(str)
+                            .str.replace(r"\D", "", regex=True)
+                            .str.lstrip("0")
+                        )
+                        df = df[df[0] != "9999"]
+                        df[2] = pd.to_datetime(df[2], dayfirst=True, errors="coerce")
+                        df[7] = pd.to_numeric(df[7], errors="coerce")
+                        df[11] = pd.to_numeric(df[11], errors="coerce")
+                        df[12] = pd.to_numeric(df[12], errors="coerce")
+                        df[6] = pd.to_numeric(df[6], errors="coerce")
+                        df = df[~((df[7] == 0) & (df[12] == 0))]
+                        df = df.dropna(subset=[0, 2])
+        
+                        # merge com Tabela Empresa (Código Everest = coluna C)
+                        df_empresa["Código Everest"] = (
+                            df_empresa["Código Everest"]
+                            .astype(str)
+                            .str.replace(r"\D", "", regex=True)
+                            .str.lstrip("0")
+                        )
+        
+                        df = df.merge(
+                            df_empresa[["Código Everest", "Loja"]],
+                            left_on=0,
+                            right_on="Código Everest",
+                            how="left"
+                        )
+        
+                        df_final = (
+                            df.groupby([2, "Loja"], as_index=False)
+                            .agg({
+                                7: "sum",
+                                11: "sum",
+                                12: "sum",
+                                6: "mean"
+                            })
+                        )
+        
+                        df_final.columns = ["Data", "Loja", "Fat.Total", "Serv/Tx", "Fat.Real", "Ticket"]
+                        df_final["Mês"] = df_final["Data"].dt.strftime("%b").str.lower()
+                        df_final["Ano"] = df_final["Data"].dt.year
+                        df_final["Sistema"] = "3SCheckout"
+
+                    dias_traducao = {
+                        "Monday": "segunda-feira", "Tuesday": "terça-feira", "Wednesday": "quarta-feira",
+                        "Thursday": "quinta-feira", "Friday": "sexta-feira", "Saturday": "sábado", "Sunday": "domingo"
+                    }
+                    df_final.insert(1, "Dia da Semana", pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.day_name().map(dias_traducao))
+                    df_final["Data"] = pd.to_datetime(df_final["Data"], dayfirst=True, errors='coerce').dt.strftime("%d/%m/%Y")
+        
+                    for col_val in ["Fat.Total", "Serv/Tx", "Fat.Real", "Pessoas", "Ticket"]:
+                        if col_val in df_final.columns:
+                            df_final[col_val] = pd.to_numeric(df_final[col_val], errors="coerce").round(2)
+        
+                    meses = {"jan": "jan", "feb": "fev", "mar": "mar", "apr": "abr", "may": "mai", "jun": "jun",
+                             "jul": "jul", "aug": "ago", "sep": "set", "oct": "out", "nov": "nov", "dec": "dez"}
+                    df_final["Mês"] = df_final["Mês"].str.lower().map(meses)
+        
+                    df_final["Data_Ordenada"] = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce')
+                    df_final = df_final.sort_values(by=["Data_Ordenada", "Loja"]).drop(columns="Data_Ordenada")
+        
+                    df_empresa["Loja"] = df_empresa["Loja"].astype(str).str.strip().str.lower()
+                    df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.lower()
+                    df_final = pd.merge(df_final, df_empresa, on="Loja", how="left")
+                    df_final["Loja"] = df_final["Loja"].astype(str).str.strip().str.lower()
+                    colunas_finais = [
+                        "Data", "Dia da Semana", "Loja", "Código Everest", "Grupo",
+                        "Código Grupo Everest", "Fat.Total", "Serv/Tx", "Fat.Real",
+                        "Ticket", "Mês", "Ano","Sistema"
+                    ]
+                    df_final = df_final[[c for c in colunas_finais if c in df_final.columns]]
+                    
+                    st.session_state.df_final = df_final
+                    st.session_state.atualizou_google = False
+        
+                    datas_validas = pd.to_datetime(df_final["Data"], format="%d/%m/%Y", errors='coerce').dropna()
+                    if not datas_validas.empty:
+                        data_inicial = datas_validas.min().strftime("%d/%m/%Y")
+                        data_final_str = datas_validas.max().strftime("%d/%m/%Y")
+                        valor_total = df_final["Fat.Total"].sum().round(2)
+                        valor_total_formatado = f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.markdown(f"""
+                                <div style='font-size:24px; font-weight: bold; margin-bottom:10px;'>🗓️ Período processado</div>
+                                <div style='font-size:30px; color:#000;'>{data_inicial} até {data_final_str}</div>
+                            """, unsafe_allow_html=True)
+                        with col2:
+                            st.markdown(f"""
+                                <div style='font-size:24px; font-weight: bold; margin-bottom:10px;'>💰 Valor total</div>
+                                <div style='font-size:30px; color:green;'>{valor_total_formatado}</div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.warning("⚠️ Não foi possível identificar o período de datas.")
+        
+                    empresas_nao_localizadas = df_final[df_final["Código Everest"].isna()]["Loja"].unique()
+                    if len(empresas_nao_localizadas) > 0:
+                        empresas_nao_localizadas_str = "<br>".join(empresas_nao_localizadas)
+                        mensagem = f"""
+                        ⚠️ {len(empresas_nao_localizadas)} empresa(s) não localizada(s), cadastre e reprocesse novamente! <br>{empresas_nao_localizadas_str}
+                        <br>✏️ Atualize a tabela clicando 
+                        <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
+                        """
+                        st.markdown(mensagem, unsafe_allow_html=True)
+                    else:
+                        st.success("✅ Todas as empresas foram localizadas na Tabela_Empresa!")
+        
+                        def to_excel(df):
+                            output = BytesIO()
+                            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                                df.to_excel(writer, index=False, sheet_name='Faturamento Servico')
+                            output.seek(0)
+                            return output
+        
+                        excel_data = to_excel(df_final)
+        
+                        st.download_button(
+                            label="📥 Baixar Relatório Excel",
+                            data=excel_data,
+                            file_name="faturamento_servico.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
+        
+                except Exception as e:
+                    st.error(f"❌ Erro ao processar o arquivo: {e}")
     
     
     # =======================================
@@ -542,8 +817,8 @@ with st.spinner("⏳ Processando..."):
                 codg_col  = next((c for c,n in cols_norm.items() if "codigo" in n and "grupo" in n and "everest" in n), None)
     
                 out = pd.DataFrame()
-                out["Loja"] = df[loja_col].astype(str).str.strip()
-                out["Loja_norm"] = out["Loja"].str.lower()
+                out["Loja"] = df[loja_col].astype(str).str.strip().str.lower()  # ✅ Já em minúsculo
+                out["Loja_norm"] = out["Loja"]  # Já está normalizado
                 out["Grupo"] = df[grupo_col].astype(str).str.strip() if grupo_col else ""
     
                 out["Código Everest"] = pd.to_numeric(df[cod_col], errors="coerce") if cod_col else pd.NA
@@ -732,7 +1007,8 @@ with st.spinner("⏳ Processando..."):
         
             # Completar códigos a partir do catálogo
             df = preencher_codigos_por_loja(df, catalogo)
-        
+            # ✅ Converte nome da loja para MAIÚSCULO
+            df["Loja"] = df["Loja"].astype(str).str.strip().str.lower()
             cols_preferidas = [
                 "Data","Dia da Semana","Loja","Código Everest","Grupo","Código Grupo Everest",
                 "Fat.Total","Serv/Tx","Fat.Real","Ticket","Mês","Ano"
@@ -811,18 +1087,22 @@ with st.spinner("⏳ Processando..."):
                     df_final["Ano"] = df_final["Ano"].apply(to_intstr)
             
                 # ==== M e N com a data correta (YYYY-MM-DD)
+                # ==== M e N com a data correta (YYYY-MM-DD) + Sistema
                 fat_col = "Fat.Total" if "Fat.Total" in df_final.columns else "Fat Total"
                 df_final[fat_col] = pd.to_numeric(df_final[fat_col], errors="coerce").fillna(0)
                 loja_str = df_final["Loja"].astype(str)
-            
-                # M = yyyy-mm-dd + Fat.Total + Loja
+                sistema_str = df_final["Sistema"].astype(str).str.strip()
+                
+                # M = yyyy-mm-dd + Fat.Total + Loja + Sistema
                 df_final["M"] = (df_final["_Data_ymd"].fillna("") +
                                  df_final[fat_col].astype(str) +
-                                 loja_str).str.strip()
-            
-                # N = yyyy-mm-dd + Codigo
+                                 loja_str +
+                                 sistema_str).str.strip()
+                
+                # N = yyyy-mm-dd + Codigo + Sistema
                 df_final["N"] = (df_final["_Data_ymd"].fillna("") +
-                                 df_final[cod_col].astype(str)).str.strip()
+                                 df_final[cod_col].astype(str) +
+                                 sistema_str).str.strip()
             
                 # Limpa coluna auxiliar
                 df_final.drop(columns=["_Data_ymd"], errors="ignore", inplace=True)
@@ -886,20 +1166,28 @@ with st.spinner("⏳ Processando..."):
                     df_final = df_final.rename(columns=rename_map)
         
                 # M/N finais (garantia)
+                # M/N finais (garantia) + Sistema
                 fat_col = "Fat.Total" if "Fat.Total" in df_final.columns else "Fat Total"
                 df_final["Data_Formatada"] = pd.to_datetime(
                     df_final["Data"], origin="1899-12-30", unit="D", errors="coerce"
                 ).dt.strftime("%Y-%m-%d")
                 df_final[fat_col] = pd.to_numeric(df_final[fat_col], errors="coerce").fillna(0)
+                sistema_str = df_final["Sistema"].astype(str).str.strip()
+                
                 df_final["M"] = (df_final["Data_Formatada"].fillna("") +
                                  df_final[fat_col].astype(str) +
-                                 df_final["Loja"].astype(str)).str.strip()
+                                 df_final["Loja"].astype(str) +
+                                 sistema_str).str.strip()
+                
                 if "Codigo Everest" in df_final.columns:
                     df_final["Codigo Everest"] = pd.to_numeric(df_final["Codigo Everest"], errors="coerce").fillna(0).astype(int).astype(str)
                 elif "Código Everest" in df_final.columns:
                     df_final["Código Everest"] = pd.to_numeric(df_final["Código Everest"], errors="coerce").fillna(0).astype(int).astype(str)
+                
                 cod_col = "Codigo Everest" if "Codigo Everest" in df_final.columns else "Código Everest"
-                df_final["N"] = (df_final["Data_Formatada"].fillna("") + df_final[cod_col].astype(str)).str.strip()
+                df_final["N"] = (df_final["Data_Formatada"].fillna("") + 
+                                 df_final[cod_col].astype(str) +
+                                 sistema_str).str.strip()
                 df_final = df_final.drop(columns=["Data_Formatada"], errors="ignore")
         
                 # reindex
@@ -929,7 +1217,21 @@ with st.spinner("⏳ Processando..."):
                 q_novos = int(len(df_novos))
                 q_dup_m = int(len(df_dup_M))
                 q_sus_n = int(len(df_suspeitos))
+                # ✅ ADICIONE AQUI (LOGO APÓS AS CONTAGENS):
+                st.session_state._resumo_envio = {
+                    "enviados": q_novos, 
+                    "dup_m": q_dup_m, 
+                    "sus_n": q_sus_n
+                }
                 
+                # ✅ RENDERIZA A BARRA SEMPRE
+                st.markdown(f"""
+                    <div style="padding:10px; border-radius:8px; background-color:#e8f5e9; border:1px solid #c8e6c9; margin-bottom:15px;">
+                        🟢 Enviados: <b>{q_novos}</b> | 
+                        ❌ Duplicados: <b>{q_dup_m}</b> | 
+                        🔴 Suspeitos: <b>{q_sus_n}</b>
+                    </div>
+                """, unsafe_allow_html=True)
                 # === ENVIA NOVOS MESMO HAVENDO SUSPEITOS ===
                 if q_novos > 0:
                     try:
@@ -1203,8 +1505,18 @@ with st.spinner("⏳ Processando..."):
                 
         # ------------------------ HEADER / BOTÕES ------------------------
         LINK_SHEET = "https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=sharing"
-        df_sess = st.session_state.get("df_final")
-        has_df = isinstance(df_sess, pd.DataFrame) and not df_sess.empty  # ✅ simples e robusto
+        # ✅ Aceita TANTO df_final (upload) QUANTO resumo_3s (3S Checkout)
+        df_final = st.session_state.get("df_final")
+        resumo_3s = st.session_state.get("resumo_3s")
+        
+        if isinstance(df_final, pd.DataFrame) and not df_final.empty:
+            df_sess = df_final
+        elif isinstance(resumo_3s, pd.DataFrame) and not resumo_3s.empty:
+            df_sess = resumo_3s
+        else:
+            df_sess = None
+        
+        has_df = df_sess is not None
 
     
         c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
@@ -1217,13 +1529,28 @@ with st.spinner("⏳ Processando..."):
                 key="btn_enviar_auto_header",
             )
         
+        
         if enviar_auto:
             if not has_df:
                 st.error("Não há dados para enviar.")
             else:
-                ok = enviar_para_sheets(st.session_state.df_final.copy(), titulo_origem="upload")
-                # Se houver suspeitos por N, a função faz st.rerun() e abrirá o painel.
-                # Se não houver, cai aqui e mostramos o resumo.
+                # ✅ Usa o DataFrame disponível (prioriza resumo_3s se existir)
+                # --- Lógica correta para selecionar o DataFrame sem erro de ValueError ---
+                df_para_enviar = None
+                origem = ""
+                
+                # 1. Tenta pegar o do 3S Checkout primeiro
+                if "resumo_3s" in st.session_state and st.session_state.resumo_3s is not None:
+                    if isinstance(st.session_state.resumo_3s, pd.DataFrame) and not st.session_state.resumo_3s.empty:
+                        df_para_enviar = st.session_state.resumo_3s
+                        origem = "3s_checkout"
+                
+                # 2. Se não tiver 3S, tenta o do Upload Manual
+                if df_para_enviar is None:
+                    if "df_final" in st.session_state and st.session_state.df_final is not None:
+                        if isinstance(st.session_state.df_final, pd.DataFrame) and not st.session_state.df_final.empty:
+                            df_para_enviar = st.session_state.df_final
+                            origem = "upload"
         
         # ✅ Mostra o resumo sempre que existir (fora do if enviar_auto)
         r = st.session_state.get("_resumo_envio")
@@ -1292,23 +1619,45 @@ with st.spinner("⏳ Processando..."):
                 st.error(f"❌ Falha ao conectar: {e}")
 
         # === Handler do botão superior "Atualizar SheetsS" ===
+        # === Handler do botão superior "Atualizar Sheets" ===
         if enviar_auto:
             if not has_df:
                 st.error("Não há dados para enviar.")
             else:
-                ok = enviar_para_sheets(st.session_state.df_final.copy(), titulo_origem="upload")
-                # Se a função abriu o painel de conflitos, ela já dá st.rerun().
-                # Só mostramos "concluído" quando NÃO ficou em modo de conflitos.
-                #if ok and not st.session_state.get("modo_conflitos", False):
-                    #st.success("✅ Processo concluído.")
+                df_para_enviar = None
+                origem = None
+                
+                # Prioriza 3S
+                df_3s = st.session_state.get("resumo_3s", None)
+                if isinstance(df_3s, pd.DataFrame) and not df_3s.empty:
+                    df_para_enviar = df_3s
+                    origem = "3s_checkout"
+                
+                # Fallback: upload manual
+                if df_para_enviar is None:
+                    df_up = st.session_state.get("df_final", None)
+                    if isinstance(df_up, pd.DataFrame) and not df_up.empty:
+                        df_para_enviar = df_up
+                        origem = "upload"
+                
+                if df_para_enviar is None:
+                    st.error("❌ Nenhum dado disponível para enviar (faça upload ou rode o 3S Checkout).")
+                else:
+                    ok = enviar_para_sheets(df_para_enviar.copy(), titulo_origem=origem)
+                    # Se a função abriu o painel de conflitos, ela já dá st.rerun().
+                    # Só mostramos "concluído" quando NÃO ficou em modo de conflitos.
+                    # if ok and not st.session_state.get("modo_conflitos", False):
+                    #     st.success("✅ Processo concluído.")
+        
+        # ✅ Mostra resumo se existir
         if "_resumo_envio" in st.session_state:
-                    r = st.session_state._resumo_envio
-                    #st.markdown(
-                    #    f"**Resumo:** 🟢 Enviados: **{r['enviados']}** &nbsp;|&nbsp; "
-                    #    f"❌ Duplicados (M): **{r['dup_m']}** &nbsp;|&nbsp; "
-                    #    f"🔴 Possíveis duplicados (N): **{r['sus_n']}**"
-                    #)
-                    del st.session_state._resumo_envio
+            r = st.session_state._resumo_envio
+            # st.markdown(
+            #     f"**Resumo:** 🟢 Enviados: **{r['enviados']}** &nbsp;|&nbsp; "
+            #     f"❌ Duplicados (M): **{r['dup_m']}** &nbsp;|&nbsp; "
+            #     f"🔴 Possíveis duplicados (N): **{r['sus_n']}**"
+            # )
+            del st.session_state._resumo_envio
         # ========================== FASE 2: FORM DE CONFLITOS ==========================
         if st.session_state.get("modo_conflitos", False) and st.session_state.get("conflitos_df_conf") is not None:
             df_conf = st.session_state.conflitos_df_conf.copy()
@@ -1540,10 +1889,13 @@ with st.spinner("⏳ Processando..."):
                         if col_ano:
                             row_out[col_ano] = ano_val
                         # M / N
+                        # M / N + Sistema
                         if col_M:
-                            row_out[col_M] = M_val
+                            sis_val = str(d.get("Sistema", "") or "").strip()
+                            row_out[col_M] = (data_ymd + str(fat_total) + loja + sis_val) if col_M else None
                         if col_N:
-                            row_out[col_N] = N_val
+                            sis_val = str(d.get("Sistema", "") or "").strip()
+                            row_out[col_N] = (data_ymd + cod_emp + sis_val) if col_N else None
                         # --- Sistema ---
                         if col_sis:
                             sis_val = str(d.get("Sistema", "") or "").strip()
@@ -2244,7 +2596,7 @@ with st.spinner("⏳ Processando..."):
         tabela = resumo[["Mês","Sistema","Total_Faturamento","Total_MeioPagamento","Diferença"]].copy()
     
         # Aparência do Sistema (title) apenas visual; manteremos UPPER nas comparações
-        tabela["Sistema_View"] = tabela["Sistema"].str.title()
+        tabela["Sistema_View"] = tabela["Sistema"].str.lower()
         # Formata BRL em texto
         for col in ["Total_Faturamento","Total_MeioPagamento","Diferença"]:
             tabela[col] = tabela[col].apply(_fmt_brl)
