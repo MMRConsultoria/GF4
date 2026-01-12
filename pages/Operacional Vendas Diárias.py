@@ -45,25 +45,17 @@ def limpar_estado_aba_google():
 st.markdown(
     """
     <style>
-    /* Seleciona o botão dentro da div 'botao-vermelho' */
     div.botao-vermelho > button {
-        /* 1. TRAVA AS DIMENSÕES EXATAS */
-        width: 220px !important;
-        height: 40px !important;
-        min-width: 220px !important;
-        max-width: 220px !important;
-        
-        /* 2. IMPEDE QUEBRA DE TEXTO */
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        
-        /* 3. CENTRALIZA O CONTEÚDO */
+        width: 220px !important;          /* largura fixa */
+        min-width: 220px !important;      /* largura mínima */
+        max-width: 220px !important;      /* largura máxima */
+        height: 40px !important;          /* altura fixa */
+        white-space: nowrap !important;   /* impede quebra de linha */
+        overflow: hidden !important;      /* esconde overflow */
+        text-overflow: ellipsis !important; /* reticências se texto não couber */
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        
-        /* 4. ESTILO VISUAL */
         background-color: #ff4b4b !important;
         color: white !important;
         font-weight: bold !important;
@@ -72,18 +64,14 @@ st.markdown(
         border-radius: 5px !important;
         padding: 0 !important;
     }
-
-    /* Efeito de Hover */
     div.botao-vermelho > button:hover {
         background-color: #ff3333 !important;
         color: white !important;
-        border: none !important;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
-
 st.markdown("""
     <style>
         [data-testid="stToolbar"] {
