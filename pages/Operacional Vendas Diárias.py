@@ -45,16 +45,26 @@ def limpar_estado_aba_google():
 st.markdown(
     """
     <style>
-    /* Estilo específico para o botão dentro da div 'botao-vermelho' */
+    /* Estilo com TAMANHO FIXO para o botão vermelho */
     div.botao-vermelho > button {
         background-color: #ff4b4b !important;
         color: white !important;
         border: none !important;
-        padding: 4px 10px !important;
-        font-size: 12px !important;
-        height: auto !important;
-        width: auto !important;
+        
+        /* Tamanho Fixo */
+        width: 220px !important;   /* Largura fixa */
+        height: 45px !important;  /* Altura fixa */
+        
+        /* Texto */
+        font-size: 14px !important;
+        font-weight: bold !important;
+        padding: 0px !important; /* Remove padding para não distorcer o tamanho fixo */
+        
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
+    
     div.botao-vermelho > button:hover {
         background-color: #ff3333 !important;
         color: white !important;
