@@ -339,10 +339,10 @@ with st.spinner("⏳ Processando..."):
     
     with aba1:
         # ========== BOTÃO 3S CHECKOUT ==========
-        st.markdown("### 🔄 Atualização Automática 3S Checkout")
+        #st.markdown("### 🔄 Atualização Automática 3S Checkout")
         
         # Colunas: pequena à esquerda para o botão, resto do conteúdo à direita
-        col_btn, col_rest = st.columns([1, 9])
+        col_btn, col_rest = st.columns([1, 29])
     
         with col_btn:
             # div com classe para aplicar CSS apenas a este botão
