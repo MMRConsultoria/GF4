@@ -42,28 +42,52 @@ def limpar_estado_aba_google():
 # CSS para esconder só a barra superior
 # ======================
 # ADICIONE AQUI:
+# ======= CSS QUE TRAVA O BOTÃO (COLE NO TOPO DO ARQUIVO) =======
 st.markdown(
     """
     <style>
+    /* Torna o container um bloco com largura fixa e impede que encolha */
+    div.botao-vermelho {
+        display: inline-flex !important;
+        flex: 0 0 220px !important;    /* NÃO encolher; largura fixa */
+        min-width: 220px !important;
+        max-width: 220px !important;
+        box-sizing: border-box !important;
+        margin: 8px 0 !important;
+    }
+
+    /* Faz o botão ocupar 100% do container fixo e impede quebra de linha */
     div.botao-vermelho > button {
-        width: 220px !important;          /* largura fixa */
-        min-width: 220px !important;      /* largura mínima */
-        max-width: 220px !important;      /* largura máxima */
-        height: 40px !important;          /* altura fixa */
-        white-space: nowrap !important;   /* impede quebra de linha */
-        overflow: hidden !important;      /* esconde overflow */
-        text-overflow: ellipsis !important; /* reticências se texto não couber */
+        width: 100% !important;
+        height: 40px !important;
+        min-height: 40px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        box-sizing: border-box !important;
+
+        /* Estilo visual (opcional) */
         background-color: #ff4b4b !important;
         color: white !important;
-        font-weight: bold !important;
+        font-weight: 600 !important;
         font-size: 14px !important;
+        border-radius: 6px !important;
         border: none !important;
-        border-radius: 5px !important;
-        padding: 0 !important;
+        padding: 0 12px !important;
+        box-shadow: none !important;
     }
+
+    /* Se Streamlit renderizar texto do botão dentro de <p> ou <span>, prevenir quebra também */
+    div.botao-vermelho > button * {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    /* Hover */
     div.botao-vermelho > button:hover {
         background-color: #ff3333 !important;
         color: white !important;
@@ -346,42 +370,40 @@ with st.spinner("⏳ Processando..."):
     # ================================
     
     with aba1:
-        # ========== BOTÃO 3S CHECKOUT ==========
-        #st.markdown("### 🔄 Atualização Automática 3S Checkout")
-        
-        # Colunas: pequena à esquerda para o botão, resto do conteúdo à direita
-        col_btn, col_rest = st.columns([1, 5])
-        
-        with col_btn:
-            # div com classe para aplicar CSS apenas a este botão
-            st.markdown('<div class="botao-vermelho">', unsafe_allow_html=True)
-    
-            # Botão pequeno e discreto — não usar use_container_width para não esticar
-            if st.button("🔄 Atualizar 3S Checkout", key="btn_3s_vermelho"):
-                st.session_state.modo_3s = True
-                st.session_state.df_final = None  # limpa upload manual
-    
-                # ✅ LIMPA ABA 2
-                limpar_estado_aba_google()
-    
-                with st.spinner("Buscando dados do banco..."):
-                    resumo_3s, erro_3s, total_registros = buscar_dados_3s_checkout()
-    
-                    if erro_3s:
-                        st.error(f"❌ Erro ao buscar dados: {erro_3s}")
-                    elif resumo_3s is not None and not resumo_3s.empty:
-                        # Salvar no session_state
-                        st.session_state.resumo_3s = resumo_3s
-                        st.session_state.total_registros_3s = total_registros
-                        st.rerun()
-                    else:
-                        st.warning("⚠️ Nenhum dado encontrado para o período.")
-    
-            st.markdown('</div>', unsafe_allow_html=True)
-    
-        with col_rest:
-            # Resto do conteúdo da aba (tabela, filtros, etc.)
-            pass
+    # ========== BOTÃO 3S CHECKOUT ==========
+    # Colunas: pequena à esquerda para o botão, resto do conteúdo à direita
+    col_btn, col_rest = st.columns([1, 5])
+
+    with col_btn:
+        # div com classe para aplicar CSS apenas a este botão
+        st.markdown('<div class="botao-vermelho">', unsafe_allow_html=True)
+
+        # O botão irá ocupar 100% do container fixo (220px)
+        if st.button("🔄 Atualizar 3S Checkout", key="btn_3s_vermelho"):
+            st.session_state.modo_3s = True
+            st.session_state.df_final = None  # limpa upload manual
+
+            # ✅ LIMPA ABA 2
+            limpar_estado_aba_google()
+
+            with st.spinner("Buscando dados do banco..."):
+                resumo_3s, erro_3s, total_registros = buscar_dados_3s_checkout()
+
+                if erro_3s:
+                    st.error(f"❌ Erro ao buscar dados: {erro_3s}")
+                elif resumo_3s is not None and not resumo_3s.empty:
+                    # Salvar no session_state
+                    st.session_state.resumo_3s = resumo_3s
+                    st.session_state.total_registros_3s = total_registros
+                    st.rerun()
+                else:
+                    st.warning("⚠️ Nenhum dado encontrado para o período.")
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col_rest:
+        # Resto do conteúdo da aba (tabela, filtros, etc.)
+        pass
         
         # ========== EXIBIR RESULTADO 3S ==========
         if st.session_state.modo_3s and "resumo_3s" in st.session_state:
