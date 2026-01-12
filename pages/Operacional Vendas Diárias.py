@@ -45,29 +45,22 @@ def limpar_estado_aba_google():
 st.markdown(
     """
     <style>
-    /* Estilo com TAMANHO FIXO para o botão vermelho */
     div.botao-vermelho > button {
-        background-color: #ff4b4b !important;
-        color: white !important;
-        border: none !important;
+        /* TRAVA O TAMANHO AQUI */
+        width: 200px !important;
+        height: 40px !important;
         
-        /* Tamanho Fixo */
-        width: 220px !important;   /* Largura fixa */
-        height: 45px !important;  /* Altura fixa */
-        
-        /* Texto */
-        font-size: 14px !important;
-        font-weight: bold !important;
-        padding: 0px !important; /* Remove padding para não distorcer o tamanho fixo */
-        
+        /* IMPEDE O TEXTO DE QUEBRAR OU MUDAR */
+        white-space: nowrap !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-    }
-    
-    div.botao-vermelho > button:hover {
-        background-color: #ff3333 !important;
+        
+        /* COR (opcional, mas mantém o estilo) */
+        background-color: #ff4b4b !important;
         color: white !important;
+        font-weight: bold !important;
+        border: none !important;
     }
     </style>
     """,
@@ -352,8 +345,8 @@ with st.spinner("⏳ Processando..."):
         #st.markdown("### 🔄 Atualização Automática 3S Checkout")
         
         # Colunas: pequena à esquerda para o botão, resto do conteúdo à direita
-        col_btn, col_rest = st.columns([1, 4])
-    
+        col_btn, col_rest = st.columns([1, 5])
+        
         with col_btn:
             # div com classe para aplicar CSS apenas a este botão
             st.markdown('<div class="botao-vermelho">', unsafe_allow_html=True)
