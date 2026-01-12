@@ -170,17 +170,18 @@ with st.spinner("⏳ Processando..."):
             from datetime import datetime, timedelta
             agora_brasil = datetime.utcnow() - timedelta(hours=3)
             ontem = (agora_brasil - timedelta(days=1)).date()
+            data_inicio = ontem - timedelta(days=29)  # últimos 30 dias incluindo ontem
             
             # ✅ FILTRO SQL: Adicionado "AND business_dt <= %s"
             query = """
                 SELECT store_code, business_dt, total_gross, custom_properties, order_code, state_id
                 FROM public.order_picture
-                WHERE business_dt >= '2024-12-01'
+                WHERE business_dt >= %s
                   AND business_dt <= %s
                   AND store_code NOT IN ('0000', '0001', '9999')
                   AND state_id = 5
             """
-            df = pd.read_sql(query, conn, params=(ontem,))
+            df = pd.read_sql(query, conn, params=(data_inicio, ontem))
             
             
             # 1. Converter datas
