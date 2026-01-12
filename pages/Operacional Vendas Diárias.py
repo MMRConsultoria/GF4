@@ -45,21 +45,38 @@ def limpar_estado_aba_google():
 st.markdown(
     """
     <style>
+    /* Seleciona o botão dentro da div 'botao-vermelho' */
     div.botao-vermelho > button {
-        /* TRAVA O TAMANHO AQUI */
-        width: 200px !important;
+        /* 1. TRAVA AS DIMENSÕES EXATAS */
+        width: 220px !important;
         height: 40px !important;
+        min-width: 220px !important;
+        max-width: 220px !important;
         
-        /* IMPEDE O TEXTO DE QUEBRAR OU MUDAR */
+        /* 2. IMPEDE QUEBRA DE TEXTO */
         white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        
+        /* 3. CENTRALIZA O CONTEÚDO */
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         
-        /* COR (opcional, mas mantém o estilo) */
+        /* 4. ESTILO VISUAL */
         background-color: #ff4b4b !important;
         color: white !important;
         font-weight: bold !important;
+        font-size: 14px !important;
+        border: none !important;
+        border-radius: 5px !important;
+        padding: 0 !important;
+    }
+
+    /* Efeito de Hover */
+    div.botao-vermelho > button:hover {
+        background-color: #ff3333 !important;
+        color: white !important;
         border: none !important;
     }
     </style>
