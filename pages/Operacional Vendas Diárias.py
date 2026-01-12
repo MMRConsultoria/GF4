@@ -46,7 +46,7 @@ def limpar_estado_aba_google():
 st.markdown(
     """
     <style>
-    /* Torna o container um bloco com largura fixa e impede que encolha */
+    /* Container fixo que NÃO encolhe */
     div.botao-vermelho {
         display: inline-flex !important;
         flex: 0 0 220px !important;    /* NÃO encolher; largura fixa */
@@ -56,7 +56,7 @@ st.markdown(
         margin: 8px 0 !important;
     }
 
-    /* Faz o botão ocupar 100% do container fixo e impede quebra de linha */
+    /* Botão ocupa 100% do container fixo e não quebra texto */
     div.botao-vermelho > button {
         width: 100% !important;
         height: 40px !important;
@@ -69,7 +69,7 @@ st.markdown(
         justify-content: center !important;
         box-sizing: border-box !important;
 
-        /* Estilo visual (opcional) */
+        /* Estética (opcional) */
         background-color: #ff4b4b !important;
         color: white !important;
         font-weight: 600 !important;
@@ -80,14 +80,13 @@ st.markdown(
         box-shadow: none !important;
     }
 
-    /* Se Streamlit renderizar texto do botão dentro de <p> ou <span>, prevenir quebra também */
+    /* Se Streamlit usar elementos internos (<p>, <span>) */
     div.botao-vermelho > button * {
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
     }
 
-    /* Hover */
     div.botao-vermelho > button:hover {
         background-color: #ff3333 !important;
         color: white !important;
