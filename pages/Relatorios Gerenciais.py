@@ -54,10 +54,33 @@ with st.spinner("⏳ Processando..."):
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
     gc = gspread.authorize(credentials)
     planilha_empresa = gc.open("Vendas diarias")
-    
-    
-    
     df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
+    
+    # ==========================================
+    # Nova Conexão: Planilha Meios de Pagamento
+    # ==========================================
+    sh_meio_pagto = gc.open_by_key("1GSI291SEeeU9MtOWkGwsKGCGMi_xXMSiQnL_9GhXxfU")
+    
+    # Carrega "Faturamento Meio Pagamento"
+    ws_mp = sh_meio_pagto.worksheet("Faturamento Meio Pagamento")
+    df_relatorio_base = pd.DataFrame(ws_mp.get_all_records())
+    
+    sh_tabela_meio_pagto = gc.open_by_key("1QfmPRZBzbdd2lQA8uajnqWnb3mAmxwLgUwzDM4FtYeA")
+    ws_tab_mp = sh_tabela_meio_pagto.worksheet("Tabela Meio Pagamento")
+    df_meio_pagamento_base = pd.DataFrame(ws_tab_mp.get_all_records())
+    
+    
+    # Carrega os dados
+    df_relatorio_base = pd.DataFrame(ws_mp.get_all_records())
+    df_meio_pagamento_base = pd.DataFrame(ws_tab_mp.get_all_records())
+    
+    # --- ADICIONE ESTA LIMPEZA AQUI ---
+   
+    df_relatorio_base = df_relatorio_base.replace('-', 0).replace('', 0)
+    
+   
+        
+    
     
     # ================================
     # 2. Configuração inicial do app
@@ -87,18 +110,19 @@ with st.spinner("⏳ Processando..."):
     st.markdown("""
         <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
             <img src='https://img.icons8.com/color/48/graph.png' width='40'/>
-            <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatórios</h1>
+            <h1 style='display: inline; margin: 0; font-size: 2.4rem;'>Relatórios Gerenciais</h1>
         </div>
     """, unsafe_allow_html=True)
     
     # ================================
     # 3. Separação em ABAS
     # ================================
-    aba1, aba3, aba4, aba5 = st.tabs([
+    aba1, aba2, aba3, aba4 = st.tabs([
         "📈 Gráficos",
         "📆 Relatórios Vendas",
         "📋 Relatório Diario Vendas/Metas",
         "📋 Relatórios Financeiros"
+        
     ])
     # ================================
     # Aba 1: Graficos Anuais
@@ -612,9 +636,9 @@ with st.spinner("⏳ Processando..."):
     
     
     # ================================
-    # Aba 3: Relatórios Vendas
+    # Aba 2: Relatórios Vendas
     # ================================
-    with aba3:
+    with aba2:
         import pandas as pd
         import numpy as np
         import streamlit as st
@@ -1079,9 +1103,9 @@ with st.spinner("⏳ Processando..."):
     
     
     # ================================
-    # Aba 4: Relatório Vendas/Metas
+    # Aba 3: Relatório Vendas/Metas
     # ================================
-    with aba4:
+    with aba3:
         # Carrega dados
         df_empresa = pd.DataFrame(planilha_empresa.worksheet("Tabela Empresa").get_all_records())
         df_vendas = pd.DataFrame(planilha_empresa.worksheet("Fat Sistema Externo").get_all_records())
@@ -1847,7 +1871,7 @@ with st.spinner("⏳ Processando..."):
     # 📝 Relatórios Financeiros
     # ======================
     
-    with aba5:
+    with aba4:
         try:
             st.markdown("""
             <div style="background-color:#fff3cd; border-left: 6px solid #ffecb5; padding: 1rem; border-radius: 6px; font-size: 16px;">
@@ -1855,28 +1879,17 @@ with st.spinner("⏳ Processando..."):
             </div>
             """, unsafe_allow_html=True)
             
-            # Carrega a planilha (caso ainda não tenha feito antes)
-            planilha = gc.open("Vendas diarias")
-    
-            # Aba com dados analíticos
-            aba_relatorio = planilha.worksheet("Faturamento Meio Pagamento")
-            df_relatorio = pd.DataFrame(aba_relatorio.get_all_records())
+            # --- NOVA LEITURA (Copiando do que foi carregado no início) ---
+            df_relatorio = df_relatorio_base.copy()
             df_relatorio.columns = df_relatorio.columns.str.strip()
     
-            # Aba com o tipo de pagamento
-            aba_meio_pagamento = planilha.worksheet("Tabela Meio Pagamento")
-            df_meio_pagamento = pd.DataFrame(aba_meio_pagamento.get_all_records())
+            df_meio_pagamento = df_meio_pagamento_base.copy()
             df_meio_pagamento.columns = df_meio_pagamento.columns.str.strip()
-    
+            # --------------------------------------------------------------
+
             # Normaliza colunas usadas no merge
             df_relatorio["Meio de Pagamento"] = df_relatorio["Meio de Pagamento"].astype(str).str.strip().str.upper()
-            df_meio_pagamento["Meio de Pagamento"] = df_meio_pagamento["Meio de Pagamento"].astype(str).str.strip().str.upper()
-            df_meio_pagamento["Tipo de Pagamento"] = df_meio_pagamento["Tipo de Pagamento"].astype(str).str.strip().str.upper()
-
-            # --- Antes deste bloco você já fez:
-            # df_relatorio["Meio de Pagamento"] = ...
-            # df_meio_pagamento["Meio de Pagamento"] = ...
-            # df_meio_pagamento["Tipo de Pagamento"] = ...
+            
             
             # ⬇️ USE ESTE BLOCO NO LUGAR DO MERGE ANTIGO
             # 1) Saber se o relatório já tem "Tipo de Pagamento"
@@ -1921,13 +1934,35 @@ with st.spinner("⏳ Processando..."):
                 .str.replace(" ", "")
                 .str.replace(".", "")
                 .str.replace(",", ".")
-                .astype(float)
+                .replace("-", "0")
+                #.astype(float)
             )
-            df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
-    
+            #df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
+
+            df_relatorio["Valor (R$)"] = pd.to_numeric(df_relatorio["Valor (R$)"], errors="coerce").fillna(0)
+            
             # Datas mínimas e máximas
-            data_min = df_relatorio["Data"].min().date()
-            data_max = df_relatorio["Data"].max().date()
+            # Converte coluna Data para datetime de forma segura
+            df_relatorio["Data"] = pd.to_datetime(df_relatorio["Data"], dayfirst=True, errors="coerce")
+            
+            # Remove linhas sem Data se necessário (opcional)
+            df_relatorio = df_relatorio.dropna(subset=["Data"])
+            
+            # Verifica se existem datas válidas
+            valid_dates = df_relatorio["Data"].dropna()
+            if valid_dates.empty:
+                st.warning("⚠️ Não há datas válidas na base (Faturamento Meio Pagamento).")
+                st.stop()
+            
+            # Datas mínimas e máximas como objetos date
+            data_min = valid_dates.min().date()
+            data_max = valid_dates.max().date()
+
+
+
+            
+            #data_min = df_relatorio["Data"].min().date()
+            #data_max = df_relatorio["Data"].max().date()
     
             # ===== FILTROS GERAIS =====
             # 📅 Seleção de data
@@ -2326,14 +2361,13 @@ with st.spinner("⏳ Processando..."):
             # ========================
             with aba_previsao_fc:
                 
-                # Carrega planilha e abas
-                planilha = gc.open("Vendas diarias")
-                aba_fat = planilha.worksheet("Faturamento Meio Pagamento")
-                aba_empresa = planilha.worksheet("Tabela Empresa")
+                # Usa os dados já carregados no início
+                df_fat = df_relatorio_base.copy()
+                df_empresa = df_empresa.copy()  # ou df_empresa_base se você tiver renomeado
             
                 # --- Dados principais ---
-                df_fat = pd.DataFrame(aba_fat.get_all_records())
-                df_empresa = pd.DataFrame(aba_empresa.get_all_records())
+                #df_fat = pd.DataFrame(aba_fat.get_all_records())
+                #df_empresa = pd.DataFrame(aba_empresa.get_all_records())
             
                 # --- Normalizações ---
                 df_fat.columns = df_fat.columns.str.strip()
@@ -2476,5 +2510,5 @@ with st.spinner("⏳ Processando..."):
                 st.warning("📌 em desenvolvimento")
         except Exception as e:
             st.error(f"❌ Erro ao acessar dados: {e}")
-    
-    
+
+   
