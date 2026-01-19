@@ -2514,11 +2514,21 @@ with st.spinner("⏳ Processando..."):
             credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
             _gc = gspread.authorize(credentials)
     
-        sh = _gc.open("Vendas diarias")
-        del _gc  # remove o cliente para não “aparecer”
+        # Abre a planilha pelo ID (substitua pelo seu ID)
+        sh = _gc.open_by_key("1GSI291SEeeU9MtOWkGwsKGCGMi_xXMSiQnL_9GhXxfU")
+
+        # 1. Abre a planilha antiga para pegar o Sistema Externo
+        sh_vendas = _gc.open("Vendas diarias")
+        ws_ext = sh_vendas.worksheet("Fat Sistema Externo")
+
+        # 2. Abre a NOVA planilha para pegar o Meio de Pagamento
+        sh_meio_pagto = _gc.open_by_key("1GSI291SEeeU9MtOWkGwsKGCGMi_xXMSiQnL_9GhXxfU")
+        ws_mp = sh_meio_pagto.worksheet("Faturamento Meio Pagamento")
+
+        del _gc
     
         # ---------------- Leitura ----------------
-        ws_ext = sh.worksheet("Fat Sistema Externo")
+        #ws_ext = sh.worksheet("Fat Sistema Externo")
         vals_ext = ws_ext.get_all_values()
         if len(vals_ext) < 2:
             st.error("Aba 'Fat Sistema Externo' vazia.")
@@ -2526,7 +2536,7 @@ with st.spinner("⏳ Processando..."):
         header_ext, rows_ext = vals_ext[0], vals_ext[1:]
         df_ext = pd.DataFrame(rows_ext, columns=[c.strip() for c in header_ext])
     
-        ws_mp = sh.worksheet("Faturamento Meio Pagamento")
+        #ws_mp = sh.worksheet("Faturamento Meio Pagamento")
         vals_mp = ws_mp.get_all_values()
         if len(vals_mp) < 2:
             st.error("Aba 'Faturamento Meio Pagamento' vazia.")
