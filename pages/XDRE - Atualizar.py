@@ -24,6 +24,7 @@ USUARIOS_AUTORIZADOS_CONTROLADORIA = {
     
     "maricelisrossi@gmail.com",
     "alex.komatsu@grupofit.com.br",
+    "joao.guimaraes@grupofit.com.br",
     
 }
 
