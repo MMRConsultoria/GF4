@@ -15,118 +15,100 @@ try:
 except Exception:
     build = None
 
+# st-aggrid
+from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
+from st_aggrid.shared import JsCode
+
 # ================= BLOQUEIO DE ACESSO – RH (simples, EM-CÓDIGO) =================
 USUARIOS_AUTORIZADOS_CONTROLADORIA = {
+    
     "maricelisrossi@gmail.com",
     "alex.komatsu@grupofit.com.br",
+    
 }
 
+# usuário vindo do login/SSO (espera-se que seja preenchido externamente)
 usuario_logado = st.session_state.get("usuario_logado")
 
+# Se preferir habilitar um login manual rápido para teste local, descomente:
+# if not usuario_logado:
+#     stub = st.text_input("Email (teste)", value="", placeholder="email@dominio.com")
+#     if st.button("Entrar (teste)"):
+#         st.session_state["usuario_logado"] = stub.strip().lower()
+#         st.experimental_rerun()
+#     st.stop()
+
+# Bloqueio se não estiver logado
 if not usuario_logado:
     st.stop()
 
+# Bloqueio se não for autorizado
 if str(usuario_logado).strip().lower() not in {e.lower() for e in USUARIOS_AUTORIZADOS_CONTROLADORIA}:
     st.warning("⛔ Acesso restrito ao CONTROLADORIA")
     st.stop()
 # ============================================================================
 
+
 # ---- CONFIG ----
 PASTA_PRINCIPAL_ID = "0B1owaTi3RZnFfm4tTnhfZ2l0VHo4bWNMdHhKS3ZlZzR1ZjRSWWJSSUFxQTJtUExBVlVTUW8"
 TARGET_SHEET_NAME = "Configurações Não Apagar"
+
+# Origem FATURAMENTO
 ID_PLANILHA_ORIGEM_FAT = "1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU"
 ABA_ORIGEM_FAT = "Fat Sistema Externo"
+
+# Origem MEIO DE PAGAMENTO
 ID_PLANILHA_ORIGEM_MP = "1GSI291SEeeU9MtOWkGwsKGCGMi_xXMSiQnL_9GhXxfU"
 ABA_ORIGEM_MP = "Faturamento Meio Pagamento"
 
 st.set_page_config(page_title="Atualizador DRE", layout="wide")
 
-# ================= PERFUMARIA: CSS CUSTOMIZADO =================
-# ================= SUBSTITUA O SEU BLOCO DE CSS POR ESTE =================
+# --- ESTILO DAS ABAS (IGUAL À FOTO) ---
 st.markdown(
     """
     <style>
-    /* 1. REMOVE O ESPAÇO VAZIO NO TOPO DA PÁGINA (HEADER DO STREAMLIT) */
-    header {visibility: hidden;}
-    .main .block-container {
-        padding-top: 3rem !important; /* Dá um espaço de segurança no topo */
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
-    }
-    
-    /* 2. ESTILO DO TÍTULO (PARA NÃO CORTAR) */
-    .main-title {
-        font-size: 32px;
-        font-weight: bold;
-        color: #1e3d59;
-        margin-bottom: 30px;
-        display: block; /* Garante que ocupe a linha toda */
-        width: 100%;
-    }
-    
-    /* 3. ESTILO DAS ABAS (CORRIGINDO A COR DO TEXTO) */
+    /* Container geral */
+    .block-container { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+
+    /* Estilo das abas */
     button[data-baseweb="tab"] {
-        font-size: 18px !important;
-        font-weight: bold !important;
-        color: #555 !important;
-        background-color: #f0f2f6 !important;
-        border-radius: 8px 8px 0px 0px !important;
-        padding: 10px 25px !important;
-    }
-    
-    button[data-baseweb="tab"][aria-selected="true"] {
-        background-color: #0066cc !important;
+        font-size: 22px !important;
+        font-weight: 900 !important;
+        background-color: #e0e4f7 !important;
+        border-radius: 12px 12px 0 0 !important;
+        margin-right: 8px !important;
+        padding: 14px 28px !important;
+        color: #2a2e45 !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        transition: background-color 0.3s ease, color 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
     }
 
-    button[data-baseweb="tab"][aria-selected="true"] p {
-        color: white !important; /* Texto branco na aba azul */
+    /* Aba selecionada */
+    button[data-baseweb="tab"][aria-selected="true"] {
+        background-color: #0033cc !important;
+        color: #ffffff !important;
+        border-bottom: 5px solid #ff3b3b !important;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+
+    /* Hover nas abas */
+    button[data-baseweb="tab"]:hover {
+        background-color: #b3b9f9 !important;
+        color: #000000 !important;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# O Título agora com uma margem melhor
-st.markdown('<div class="main-title">📈 Atualizar DRE</div>', unsafe_allow_html=True)
-# =========================================================================
-# --- INICIO: CSS ESPECÍFICO PARA A TABELA DE AUDITORIA ---
-st.markdown("""
-<style>
-#auditoria .ag-theme-alpine .ag-root-wrapper {
-    border: 1px solid #c9d2da !important;
-    border-radius: 6px !important;
-    overflow: hidden !important;
-}
-#auditoria .ag-theme-alpine .ag-header-cell,
-#auditoria .ag-theme-alpine .ag-cell {
-    border-right: 1px solid #e6edf3 !important;
-    border-bottom: 1px solid #e6edf3 !important;
-}
-#auditoria .ag-theme-alpine .ag-header {
-    border-bottom: 2px solid #cfd8e3 !important;
-    background: #f7fafc !important;
-}
-#auditoria .ag-theme-alpine .ag-cell,
-#auditoria .ag-theme-alpine .ag-header-cell {
-    padding: 6px 8px !important;
-}
-#auditoria .ag-theme-alpine .ag-header-cell-label {
-    color: #203040 !important;
-    font-weight: 600 !important;
-}
-#auditoria .ag-theme-alpine .ag-cell-focus {
-    outline: none !important;
-    box-shadow: none !important;
-}
-#auditoria .ag-theme-alpine .ag-center-cols-container .ag-row .ag-cell:last-child {
-    border-right: 1px solid #e6edf3 !important;
-}
-#auditoria .ag-theme-alpine .ag-body-viewport {
-    background: #ffffff !important;
-}
-</style>
-""", unsafe_allow_html=True)
-# --- FIM: CSS ESPECÍFICO PARA A TABELA DE AUDITORIA ---
+# --- DEFINIÇÃO DAS TABS COM ÍCONES ---
+# Inverti a ordem para Auditoria vir primeiro se desejar, ou mantenha como preferir
+#tab_atual, tab_audit = st.tabs(["🔄 Atualização", "🔍 Auditoria"])
+
+st.title("Atualizar DRE")
+
 # ---- AUTENTICAÇÃO ----
 @st.cache_resource
 def autenticar():
@@ -143,7 +125,7 @@ except Exception as e:
     st.error(f"Erro de autenticação: {e}")
     st.stop()
 
-# ---- HELPERS GLOBAIS (Lógica Intacta) ----
+# ---- HELPERS GLOBAIS ----
 @st.cache_data(ttl=300)
 def list_child_folders(_drive, parent_id, filtro_texto=None):
     if _drive is None: return []
@@ -204,6 +186,7 @@ def get_headers_and_df_raw(ws):
 
 def detect_date_col(headers):
     if not headers: return None
+    # Prioriza a coluna A (índice 0) se ela tiver "data" no nome
     if len(headers) > 0 and "data" in headers[0].lower():
         return headers[0]
     for h in headers:
@@ -237,6 +220,7 @@ def tratar_numericos(df, headers):
     for idx in indices_valor:
         if idx < len(headers):
             col_name = headers[idx]
+            # use try/except to avoid key errors
             try:
                 df[col_name] = df[col_name].apply(_parse_currency_like).fillna(0.0)
             except Exception:
@@ -268,14 +252,13 @@ def to_bool_like(x):
     s = str(x).strip().lower()
     return s in ("true", "t", "1", "yes", "y", "sim", "s")
 
-# ---- TABS ESTILIZADAS ----
-tab_atual, tab_audit  = st.tabs(["🔄 Atualização","🔍 Auditoria" ])
+# ---- TABS ----
+tab_atual,tab_audit = st.tabs(["Atualização", "Auditoria" ])
 
 # -----------------------------
-# ABA: ATUALIZAÇÃO (Lógica Intacta)
+# ABA: ATUALIZAÇÃO (mantive seu código praticamente intacto)
 # -----------------------------
 with tab_atual:
-    st.subheader("Atualizar DRE Google Sheets")
     col_d1, col_d2 = st.columns(2)
     with col_d1:
         data_de = st.date_input("De", value=date.today() - timedelta(days=30), key="at_de")
@@ -325,6 +308,7 @@ with tab_atual:
                 status_placeholder = st.empty()
                 status_placeholder.info("Carregando dados de origem...")
 
+                # Carregar Origem Faturamento
                 try:
                     sh_orig_fat = gc.open_by_key(ID_PLANILHA_ORIGEM_FAT)
                     ws_orig_fat = sh_orig_fat.worksheet(ABA_ORIGEM_FAT)
@@ -338,6 +322,7 @@ with tab_atual:
                 except Exception as e:
                     st.error(f"Erro origem Fat: {e}"); st.stop()
 
+                # Carregar Origem Meio Pagamento
                 try:
                     sh_orig_mp = gc.open_by_key(ID_PLANILHA_ORIGEM_MP)
                     ws_orig_mp = sh_orig_mp.worksheet(ABA_ORIGEM_MP)
@@ -373,6 +358,7 @@ with tab_atual:
                         if b4: lojas_filtro.append(str(b4).strip())
                         if b5: lojas_filtro.append(str(b5).strip())
 
+                        # --- ATUALIZAR FATURAMENTO ---
                         if row["Faturamento"]:
                             df_ins = df_orig_fat_f.copy()
                             if len(h_orig_fat) > 5:
@@ -409,6 +395,7 @@ with tab_atual:
                             else:
                                 logs.append(f"{row['Planilha']}: Fat Sem dados.")
 
+                        # --- ATUALIZAR MEIO DE PAGAMENTO ---
                         if row["Meio Pagamento"]:
                             df_ins_mp = df_orig_mp_f.copy()
                             if len(h_orig_mp) > 8:
@@ -503,11 +490,11 @@ with tab_audit:
 
     if "au_planilhas_df" not in st.session_state:
         st.session_state.au_planilhas_df = pd.DataFrame(columns=["Planilha", "Flag", "Planilha_id", "Origem", "DRE", "MP DRE", "Dif", "Dif MP", "Status"])
-    
+  
     df_table = st.session_state.au_planilhas_df.copy()
     if df_table.empty:
         st.info("Nenhuma planilha encontrada.")
-    
+  
     expected_cols = ["Planilha", "Planilha_id", "Flag", "Origem", "DRE", "MP DRE", "Dif", "Dif MP", "Status"]
     for c in expected_cols:
         if c not in df_table.columns:
@@ -533,8 +520,8 @@ with tab_audit:
     grid_options['getRowStyle'] = row_style_js
 
  
-    st.markdown('<div id="auditoria">', unsafe_allow_html=True)    
-    
+    st.markdown('<div id="auditoria">', unsafe_allow_html=True)  
+  
     grid_response = AgGrid(
         display_df,
         gridOptions=grid_options,
@@ -545,8 +532,9 @@ with tab_audit:
         fit_columns_on_grid_load=True,
     )
     st.markdown('</div>', unsafe_allow_html=True)
-    
-    col_btn1, col_btn2, col_btn3, _ = st.columns([2, 2, 1, 6])
+  
+    # use the fourth column for the verification button so everything stays aligned
+    col_btn1, col_btn2, col_btn3, col_btn4 = st.columns([2, 2, 2, 2])
 
     with col_btn1:
         executar_clicado = st.button("📊 Atualizar", key="au_exec", use_container_width=True)
@@ -600,6 +588,97 @@ with tab_audit:
             key="au_download"
         )
 
+    # place the verification button in the 4th column (aligned)
+    with col_btn4:
+        verificar_btn = st.button("🔎 Verificar Lojas", use_container_width=True, key="au_verif_simple")
+
+    # --- VERIFICAÇÃO DE LOJAS (mantida) ---
+    if verificar_btn:
+        st.info("Executando verificação — gerando arquivo para download quando concluir...")
+        try:
+            # --- PASSO 1: Ler Tabela Empresa (Origem) col A (nome) e col C (código) ---
+            sh_origem = gc.open_by_key(ID_PLANILHA_ORIGEM_FAT)
+            ws_empresa = sh_origem.worksheet("Tabela Empresa")
+            dados_empresa = ws_empresa.get_all_values()
+
+            nomes_codigos = []  # lista de tuples (nome, codigo_normalizado)
+            for r in dados_empresa[1:]:  # pula cabeçalho
+                nome = r[0].strip() if len(r) > 0 and r[0] is not None else ""
+                codigo_raw = r[2] if len(r) > 2 else ""
+                if str(codigo_raw).strip() != "":
+                    cod_norm = normalize_code(codigo_raw)
+                    nomes_codigos.append((nome, cod_norm))
+
+            if not nomes_codigos:
+                st.error("Nenhum código encontrado na coluna C da aba 'Tabela Empresa'.")
+                st.stop()
+
+            codigos_origem = set(c for _, c in nomes_codigos)
+
+            # --- PASSO 2: Varre as planilhas da pasta e coleta todos os códigos em B3/B4/B5 ---
+            planilhas_pasta = st.session_state.get("au_planilhas_df", pd.DataFrame()).copy()
+            mapa_codigos_nas_planilhas = {}  # {codigo_normalizado: [nomes_das_planilhas]}
+
+            prog = st.progress(0)
+            total = len(planilhas_pasta) if not planilhas_pasta.empty else 0
+
+            for i, prow in planilhas_pasta.reset_index(drop=True).iterrows():
+                pname = prow.get("Planilha", "Sem Nome")
+                sid = prow.get("Planilha_id")
+                try:
+                    if sid and str(sid).strip() != "":
+                        sh_dest = gc.open_by_key(sid)
+                        _, b3, b4, b5 = read_codes_from_config_sheet(sh_dest)
+                        for val in (b3, b4, b5):
+                            if val and str(val).strip() != "":
+                                cod_norm = normalize_code(val)
+                                mapa_codigos_nas_planilhas.setdefault(cod_norm, []).append(pname)
+                except Exception:
+                    # ignora falhas em planilhas individuais (não interrompe todo processo)
+                    pass
+                if total:
+                    prog.progress((i + 1) / total)
+
+            # --- PASSO 3: Monta relatório com nome, código e onde foi encontrado ---
+            relatorio = []
+            for nome, cod in nomes_codigos:
+                planilhas_onde_esta = mapa_codigos_nas_planilhas.get(cod, [])
+                relatorio.append({
+                    "Nome Empresa (Origem)": nome,
+                    "Código Loja (Origem)": cod,
+                    "Status": "✅ OK" if planilhas_onde_esta else "❌ FALTANDO PLANILHA",
+                    "Planilhas Vinculadas": ", ".join(planilhas_onde_esta) if planilhas_onde_esta else "NENHUMA"
+                })
+
+            df_relatorio = pd.DataFrame(relatorio)
+
+            # --- PASSO 4: Gera Excel e disponibiliza para download SEM mostrar tabela abaixo ---
+            buf = io.BytesIO()
+            with pd.ExcelWriter(buf, engine="xlsxwriter") as writer:
+                df_relatorio.to_excel(writer, index=False, sheet_name="Lojas_Faltantes")
+                # formatação básica de colunas
+                workbook = writer.book
+                worksheet = writer.sheets["Lojas_Faltantes"]
+                worksheet.set_column(0, 0, 40)  # Nome Empresa
+                worksheet.set_column(1, 1, 20)  # Código
+                worksheet.set_column(2, 2, 18)  # Status
+                worksheet.set_column(3, 3, 60)  # Planilhas Vinculadas
+
+            excel_bytes = buf.getvalue()
+            faltam = int((df_relatorio["Status"] == "❌ FALTANDO PLANILHA").sum())
+            st.success(f"Verificação concluída — {faltam} lojas sem planilha. Faça o download do relatório abaixo.")
+            st.download_button(
+                label="⬇️ Baixar Relatório de Lojas Faltantes",
+                data=excel_bytes,
+                file_name=f"lojas_sem_planilha_{date.today()}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+                key="au_verif_download_simple"
+            )
+
+        except Exception as e:
+            st.error(f"Erro na verificação: {e}")
+
     if limpar_clicadas:
         df_grid_now = pd.DataFrame(grid_response.get("data", []))
         planilhas_marcadas = []
@@ -619,7 +698,7 @@ with tab_audit:
                 st.session_state.au_planilhas_df.loc[mask, col] = ""
             st.session_state.au_planilhas_df.loc[mask, "Flag"] = False
             st.success(f"Dados de {len(planilhas_marcadas)} planilhas limpos.")
-            st.experimental_rerun()
+            st.rerun()
 
     if executar_clicado:
         df_grid = pd.DataFrame(grid_response.get("data", []))
@@ -663,7 +742,7 @@ with tab_audit:
                         pname = row.get("Planilha")
                         match = st.session_state.au_planilhas_df.loc[st.session_state.au_planilhas_df["Planilha"] == pname, "Planilha_id"]
                         if not match.empty: sid = match.iloc[0]
-                    
+                  
                     if not sid:
                         logs.append(f"{row.get('Planilha')}: ID não encontrado.")
                         continue
@@ -702,23 +781,85 @@ with tab_audit:
                                 v_d = float(df_d_periodo[h_d[6]].sum()) if len(h_d) > 6 and not df_d_periodo.empty else 0.0
 
                         ws_mp = sh_d.worksheet("Meio de Pagamento")
-                        h_mp, df_mp = get_headers_and_df_raw(ws_mp)
-                        if not df_mp.empty:
-                            df_mp = tratar_numericos(df_mp, h_mp)
-                            c_dt_mp = h_mp[0] if h_mp else None
-                            if c_dt_mp:
-                                df_mp["_dt"] = pd.to_datetime(df_mp[c_dt_mp], dayfirst=True, errors="coerce").dt.date
-                                df_mp_periodo = df_mp[(df_mp["_dt"] >= d_ini) & (df_mp["_dt"] <= d_fim)]
-                                if not df_mp_periodo.empty:
-                                    col_b2_mp = h_mp[8] if len(h_mp) > 8 else None
-                                    col_loja_mp = h_mp[6] if len(h_mp) > 6 else None
-                                    col_val_mp = h_mp[9] if len(h_mp) > 9 else None
-                                    if col_b2_mp in df_mp_periodo.columns:
-                                        mask = df_mp_periodo[col_b2_mp].apply(normalize_code) == normalize_code(b2)
-                                        if lojas_audit and col_loja_mp in df_mp_periodo.columns:
-                                            mask &= df_mp_periodo[col_loja_mp].apply(normalize_code).isin(lojas_audit)
-                                        v_mp = float(df_mp_periodo[mask][col_val_mp].sum()) if col_val_mp else 0.0
+                        # MEIO DE PAGAMENTO (substituir por este bloco)
+                        try:
+                            ws_mp = sh_d.worksheet("Meio de Pagamento")
+                            h_mp, df_mp = get_headers_and_df_raw(ws_mp)
+                            if not df_mp.empty:
+                                df_mp = tratar_numericos(df_mp, h_mp)
 
+                            # Data sempre na coluna A conforme informado => priorizar h_mp[0]
+                            c_dt_mp = (h_mp[0] if h_mp and len(h_mp) > 0 else None)
+                            if not c_dt_mp:
+                                c_dt_mp = detect_date_col(h_mp)
+
+                            if c_dt_mp and not df_mp.empty:
+                                df_mp["_dt"] = pd.to_datetime(df_mp[c_dt_mp], dayfirst=True, errors="coerce")
+                                # se não parseou com dayfirst, tenta sem
+                                if df_mp["_dt"].isna().all():
+                                    df_mp["_dt"] = pd.to_datetime(df_mp[c_dt_mp], dayfirst=False, errors="coerce")
+                                df_mp["_dt"] = df_mp["_dt"].dt.date
+                                df_mp_periodo = df_mp[(df_mp["_dt"] >= d_ini) & (df_mp["_dt"] <= d_fim)]
+                            else:
+                                df_mp_periodo = df_mp.copy()
+
+                            v_mp_calc = 0.0
+                            if not df_mp_periodo.empty:
+                                col_b2_mp = h_mp[8] if len(h_mp) > 8 else None
+                                col_loja_mp = h_mp[6] if len(h_mp) > 6 else None
+                                col_val_mp = h_mp[9] if len(h_mp) > 9 else None
+
+                                ok_b2 = (col_b2_mp in df_mp_periodo.columns) if col_b2_mp else False
+                                ok_loja = (col_loja_mp in df_mp_periodo.columns) if col_loja_mp else False
+                                ok_val = (col_val_mp in df_mp_periodo.columns) if col_val_mp else False
+
+                                if ok_b2:
+                                    b2_norm = normalize_code(b2)
+                                    match_b2 = df_mp_periodo[col_b2_mp].apply(lambda x: normalize_code(x) if pd.notna(x) else "") == b2_norm
+
+                                    if lojas_audit and ok_loja:
+                                        match_loja = df_mp_periodo[col_loja_mp].apply(lambda x: normalize_code(x) if pd.notna(x) else "").isin(lojas_audit)
+                                        mask_final = match_b2 & match_loja
+                                    else:
+                                        mask_final = match_b2
+
+                                    df_mp_dest_f = df_mp_periodo.loc[mask_final]
+
+                                    if not df_mp_dest_f.empty and ok_val:
+                                        try:
+                                            v_mp_calc = float(df_mp_dest_f[col_val_mp].sum())
+                                        except Exception:
+                                            # fallback para somar strings com separadores
+                                            v_mp_calc = float(pd.to_numeric(df_mp_dest_f[col_val_mp].astype(str).str.replace(".", "", regex=False).str.replace(",", ".", regex=False), errors="coerce").sum())
+                                    else:
+                                        # fallback: tentar detectar coluna de valor por palavras-chave
+                                        col_val_guess = None
+                                        try:
+                                            col_val_guess = detect_column_by_keywords(h_mp, ["valor", "soma", "total", "amount", "receita", "vl"])
+                                        except Exception:
+                                            col_val_guess = None
+
+                                        if col_val_guess and col_val_guess in df_mp_periodo.columns:
+                                            df_guess = df_mp_periodo.copy()
+                                            if col_b2_mp in df_guess.columns:
+                                                df_guess = df_guess[df_guess[col_b2_mp].astype(str).str.strip() == str(b2).strip()]
+                                            if lojas_audit and ok_loja and col_loja_mp in df_guess.columns:
+                                                df_guess = df_guess[df_guess[col_loja_mp].apply(lambda x: normalize_code(x) if pd.notna(x) else "").isin(lojas_audit)]
+                                            if not df_guess.empty:
+                                                try:
+                                                    v_mp_calc = float(df_guess[col_val_guess].sum())
+                                                except Exception:
+                                                    v_mp_calc = float(pd.to_numeric(df_guess[col_val_guess].astype(str).str.replace(".", "", regex=False).str.replace(",", ".", regex=False), errors="coerce").sum())
+                                        else:
+                                            v_mp_calc = 0.0
+                                else:
+                                    v_mp_calc = 0.0
+
+                            v_mp = v_mp_calc
+                        except Exception as e:
+                            # loga o erro para diagnóstico e mantém v_mp = 0.0
+                            logs.append(f"{pname} - MP: Erro {e}")
+                            v_mp = 0.0
                         diff = v_o - v_d
                         diff_mp = v_d - v_mp
                         status = "✅ OK" if (abs(diff) < 0.01 and abs(diff_mp) < 0.01) else "❌ Erro"
