@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 import json
@@ -6,6 +7,8 @@ import io
 from datetime import datetime, timedelta, date
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
+import numpy as np
+import psycopg2
 
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 from st_aggrid.shared import JsCode
@@ -15,28 +18,14 @@ try:
 except Exception:
     build = None
 
-# st-aggrid
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
-from st_aggrid.shared import JsCode
-
 # ================= BLOQUEIO DE ACESSO – RH (simples, EM-CÓDIGO) =================
 USUARIOS_AUTORIZADOS_CONTROLADORIA = {
-    
     "maricelisrossi@gmail.com",
     "alex.komatsu@grupofit.com.br",
-    
 }
 
 # usuário vindo do login/SSO (espera-se que seja preenchido externamente)
 usuario_logado = st.session_state.get("usuario_logado")
-
-# Se preferir habilitar um login manual rápido para teste local, descomente:
-# if not usuario_logado:
-#     stub = st.text_input("Email (teste)", value="", placeholder="email@dominio.com")
-#     if st.button("Entrar (teste)"):
-#         st.session_state["usuario_logado"] = stub.strip().lower()
-#         st.experimental_rerun()
-#     st.stop()
 
 # Bloqueio se não estiver logado
 if not usuario_logado:
@@ -47,7 +36,6 @@ if str(usuario_logado).strip().lower() not in {e.lower() for e in USUARIOS_AUTOR
     st.warning("⛔ Acesso restrito ao CONTROLADORIA")
     st.stop()
 # ============================================================================
-
 
 # ---- CONFIG ----
 PASTA_PRINCIPAL_ID = "0B1owaTi3RZnFfm4tTnhfZ2l0VHo4bWNMdHhKS3ZlZzR1ZjRSWWJSSUFxQTJtUExBVlVTUW8"
@@ -118,21 +106,268 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- DEFINIÇÃO DAS TABS COM ÍCONES ---
-# Inverti a ordem para Auditoria vir primeiro se desejar, ou mantenha como preferir
-#tab_atual, tab_audit = st.tabs(["🔄 Atualização", "🔍 Auditoria"])
-
 st.title("Atualizar DRE")
+st.markdown(
+    """
+    <style>
+    /* Botão com texto "🔄 Atualizar Desconto 3S" */
+    button[aria-label="🔄 Atualizar Desconto 3S"] {
+        background-color: #ff3b3b !important;
+        color: white !important;
+        font-weight: bold !important;
+        border-radius: 8px !important;
+        border: none !important;
+        transition: background-color 0.3s ease !important;
+    }
+    button[aria-label="🔄 Atualizar Desconto 3S"]:hover {
+        background-color: #d32f2f !important;
+        color: white !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+
+)
+# ----------------- Helpers para Desconto 3S / DB / GSheets -----------------
+
+def _parse_money_to_float(x):
+    if pd.isna(x):
+        return 0.0
+    s = str(x).strip()
+    s = s.replace("R$", "").replace("\u00A0", "").replace(" ", "")
+    s = re.sub(r"[^\d,\-\.]", "", s)
+    if s == "":
+        return 0.0
+    if s.count(",") == 1 and s.count(".") >= 1:
+        s = s.replace(".", "").replace(",", ".")
+    elif s.count(",") == 1 and s.count(".") == 0:
+        s = s.replace(",", ".")
+    try:
+        return float(s)
+    except Exception:
+        try:
+            return float(s.replace(",", "."))
+        except Exception:
+            return 0.0
+
+def _get_db_params():
+    try:
+        db = st.secrets["db"]
+        return {
+            "host": db["host"],
+            "port": int(db.get("port", 5432)),
+            "dbname": db["database"],
+            "user": db["user"],
+            "password": db["password"]
+        }
+    except Exception:
+        return {
+            "host": os.environ.get("PGHOST", "localhost"),
+            "port": int(os.environ.get("PGPORT", 5432)),
+            "dbname": os.environ.get("PGDATABASE", ""),
+            "user": os.environ.get("PGUSER", ""),
+            "password": os.environ.get("PGPASSWORD", "")
+        }
+
+def create_db_conn(params):
+    return psycopg2.connect(
+        host=params["host"],
+        port=params["port"],
+        dbname=params["dbname"],
+        user=params["user"],
+        password=params["password"]
+    )
+
+@st.cache_data(ttl=300)
+def fetch_order_picture(data_de, data_ate, excluir_stores=("0000", "0001", "9999"), estado_filtrar=5):
+    params = _get_db_params()
+    if not params["dbname"] or not params["user"] or not params["password"]:
+        raise RuntimeError("Credenciais do banco nao encontradas. Configure st.secrets['db'] ou variaveis de ambiente PG*.")
+    conn = create_db_conn(params)
+    try:
+        base_sql = """
+            SELECT store_code, business_dt, order_discount_amount
+            FROM public.order_picture
+            WHERE business_dt >= %s
+              AND business_dt <= %s
+              AND store_code NOT IN %s
+              AND state_id = %s
+        """
+        try_cols = [
+            ("VOID_TYPE", "AND (VOID_TYPE IS NULL OR VOID_TYPE = '' OR LOWER(VOID_TYPE) NOT LIKE %s)"),
+            ("pod_type", "AND (pod_type IS NULL OR pod_type = '' OR LOWER(pod_type) NOT LIKE %s)")
+        ]
+        like_void = "%void%"
+        for col_name, cond_sql in try_cols:
+            sql = f"{base_sql} {cond_sql} ORDER BY business_dt, store_code"
+            try:
+                df = pd.read_sql(sql, conn, params=(data_de, data_ate, tuple(excluir_stores), estado_filtrar, like_void))
+                return df
+            except Exception as e:
+                msg = str(e).lower()
+                if "does not exist" in msg or (("column" in msg) and (col_name.lower() in msg)):
+                    continue
+                else:
+                    raise
+        sql = f"{base_sql} ORDER BY business_dt, store_code"
+        df = pd.read_sql(sql, conn, params=(data_de, data_ate, tuple(excluir_stores), estado_filtrar))
+        return df
+    finally:
+        conn.close()
+
+@st.cache_data(ttl=300)
+def fetch_tabela_empresa():
+    # usa o gc global retornado por autenticar()
+    global gc
+    sh = gc.open_by_key(ID_PLANILHA_ORIGEM_FAT) if 'ID_PLANILHA_ORIGEM_FAT' in globals() else gc.open("Vendas diarias")
+    ws = sh.worksheet("Tabela Empresa")
+    values = ws.get_all_values()
+    if not values:
+        return pd.DataFrame()
+    max_cols = max(len(r) for r in values)
+    rows = [r + [""] * (max_cols - len(r)) for r in values]
+    cols = [chr(ord("A") + i) for i in range(max_cols)]
+    data_rows = rows[1:] if len(rows) > 1 else []
+    df = pd.DataFrame(data_rows, columns=cols)
+    df = df.loc[~(df[cols].apply(lambda r: all(str(x).strip() == "" for x in r), axis=1))]
+    return df
+
+def process_and_build_report_summary(df_orders: pd.DataFrame, df_empresa: pd.DataFrame) -> pd.DataFrame:
+    if df_orders is None or df_orders.empty:
+        return pd.DataFrame(columns=[
+            "3S Checkout", "Business Month", "Loja", "Grupo",
+            "Loja Nome", "Order Discount Amount (BRL)", "Store Code", "Código do Grupo"
+        ])
+    df = df_orders.copy()
+    df["store_code"] = df["store_code"].astype(str).str.replace(r"\D", "", regex=True).str.lstrip("0").replace("", "0")
+    df["business_dt"] = pd.to_datetime(df["business_dt"], errors="coerce")
+    df["business_month"] = df["business_dt"].dt.strftime("%m/%Y").fillna("")
+    df["order_discount_amount_val"] = df["order_discount_amount"].apply(_parse_money_to_float)
+    if df_empresa is None or df_empresa.empty:
+        mapa_codigo_para_nome = {}
+        mapa_codigo_para_colB = {}
+        mapa_codigo_para_grupo = {}
+    else:
+        for col in ["A", "B", "C", "D"]:
+            if col not in df_empresa.columns:
+                df_empresa[col] = ""
+        codigo_col = df_empresa["C"].astype(str).str.replace(r"\D", "", regex=True).str.lstrip("0").replace("", "0")
+        mapa_codigo_para_nome = dict(zip(codigo_col, df_empresa["A"].astype(str)))
+        mapa_codigo_para_colB = dict(zip(codigo_col, df_empresa["B"].astype(str)))
+        mapa_codigo_para_grupo = dict(zip(codigo_col, df_empresa["D"].astype(str)))
+    df["Loja Nome (lookup)"] = df["store_code"].map(mapa_codigo_para_nome)
+    df["ColB (lookup)"] = df["store_code"].map(mapa_codigo_para_colB)
+    df["Grupo (lookup)"] = df["store_code"].map(mapa_codigo_para_grupo)
+    grouped = df.groupby(["business_month", "store_code"], as_index=False).agg({
+        "order_discount_amount_val": "sum",
+        "Loja Nome (lookup)": "first",
+        "ColB (lookup)": "first",
+        "Grupo (lookup)": "first"
+    })
+    df_final = pd.DataFrame({
+        "3S Checkout": ["3S Checkout"] * len(grouped),
+        "Business Month": grouped["business_month"],
+        "Loja": grouped["Loja Nome (lookup)"],
+        "Grupo": grouped["ColB (lookup)"],
+        "Loja Nome": grouped["Loja Nome (lookup)"],
+        "Order Discount Amount (BRL)": grouped["order_discount_amount_val"],
+        "Store Code": grouped["store_code"],
+        "Código do Grupo": grouped["Grupo (lookup)"]
+    })
+    col_order = [
+        "3S Checkout", "Business Month", "Loja", "Grupo",
+        "Loja Nome", "Order Discount Amount (BRL)", "Store Code", "Código do Grupo"
+    ]
+    df_final = df_final[col_order]
+    return df_final
+
+def upload_df_to_gsheet_replace_months(df: pd.DataFrame,
+                                       spreadsheet_key="1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU",
+                                       worksheet_name="Desconto"):
+    # usa gc global para evitar passar cliente para funções cacheadas
+    global gc
+    if df is None or df.empty:
+        raise ValueError("DataFrame vazio. Nada a importar.")
+    sh = gc.open_by_key(spreadsheet_key)
+    try:
+        ws = sh.worksheet(worksheet_name)
+    except gspread.exceptions.WorksheetNotFound:
+        ws = sh.add_worksheet(title=worksheet_name, rows="1000", cols="20")
+
+    existing = ws.get_all_values()
+    header = existing[0] if existing else df.columns.tolist()
+    existing_rows = existing[1:] if len(existing) > 1 else []
+
+    meses_importar = set(df["Business Month"].astype(str).unique())
+
+    def keep_row(row):
+        a = row[0].strip() if len(row) > 0 else ""
+        b = row[1].strip() if len(row) > 1 else ""
+        if a == "3S Checkout" and b in meses_importar:
+            return False
+        return True
+
+    filtered_existing = [r for r in existing_rows if keep_row(r)]
+
+    # Prepara df convertendo NaN -> None para não virar "nan" e preservando tipos numéricos nativos
+    df_clean = df.copy()
+    df_clean = df_clean.where(pd.notnull(df_clean), None)
+
+    # Detecta colunas numéricas (pandas) para preservar como números
+    numeric_cols = df_clean.select_dtypes(include=[np.number]).columns.tolist()
+
+    df_rows = []
+    for _, row in df_clean.iterrows():
+        converted = []
+        for col in df_clean.columns:
+            val = row[col]
+            if val is None:
+                converted.append("")
+            elif col in numeric_cols:
+                # garante tipos nativos do Python para o gspread entender como número
+                if isinstance(val, (np.integer,)):
+                    converted.append(int(val))
+                elif isinstance(val, (np.floating,)):
+                    converted.append(float(val))
+                elif isinstance(val, (int, float)):
+                    converted.append(val)
+                else:
+                    # fallback: tenta converter
+                    try:
+                        converted.append(float(val))
+                    except Exception:
+                        converted.append(str(val))
+            else:
+                # Mantém strings (datas no formato "MM/YYYY" ou "dd/mm/yyyy" serão interpretadas pelo Sheets)
+                converted.append("" if val is None else str(val))
+        df_rows.append(converted)
+
+    final_values = [header] + filtered_existing + df_rows
+
+    ws.clear()
+    # IMPORTANTE: usar USER_ENTERED para que o Sheets interprete números/datas corretamente
+    ws.update("A1", final_values, value_input_option="USER_ENTERED")
+
+    return {"kept_rows": len(filtered_existing), "inserted_rows": len(df_rows), "header": header}
 
 # ---- AUTENTICAÇÃO ----
 @st.cache_resource
 def autenticar():
     scope = ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/spreadsheets"]
     creds_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-    gc = gspread.authorize(creds)
-    drive = build("drive", "v3", credentials=creds) if build else None
-    return gc, drive
+    # gspread (oauth2client)
+    sa_creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    gc_local = gspread.authorize(sa_creds)
+    # googleapiclient (google-auth) para Drive
+    drive_local = None
+    if build:
+        try:
+            from google.oauth2.service_account import Credentials as GA_Credentials
+            ga_creds = GA_Credentials.from_service_account_info(creds_dict, scopes=scope)
+            drive_local = build("drive", "v3", credentials=ga_creds)
+        except Exception:
+            drive_local = None
+    return gc_local, drive_local
 
 try:
     gc, drive_service = autenticar()
@@ -235,7 +470,6 @@ def tratar_numericos(df, headers):
     for idx in indices_valor:
         if idx < len(headers):
             col_name = headers[idx]
-            # use try/except to avoid key errors
             try:
                 df[col_name] = df[col_name].apply(_parse_currency_like).fillna(0.0)
             except Exception:
@@ -268,10 +502,10 @@ def to_bool_like(x):
     return s in ("true", "t", "1", "yes", "y", "sim", "s")
 
 # ---- TABS ----
-tab_atual,tab_audit = st.tabs(["Atualização", "Auditoria" ])
+tab_atual, tab_audit = st.tabs(["Atualização", "Auditoria"])
 
 # -----------------------------
-# ABA: ATUALIZAÇÃO (mantive seu código praticamente intacto)
+# ABA: ATUALIZAÇÃO
 # -----------------------------
 with tab_atual:
     col_d1, col_d2 = st.columns(2)
@@ -279,6 +513,27 @@ with tab_atual:
         data_de = st.date_input("De", value=date.today() - timedelta(days=30), key="at_de")
     with col_d2:
         data_ate = st.date_input("Até", value=date.today(), key="at_ate")
+
+    # Botão para atualizar Desconto 3S
+    if st.button("🔄 Atualizar Desconto 3S", use_container_width=True, key="btn_desconto_3s"):
+        try:
+            with st.spinner("Buscando Tabela Empresa (Vendas diarias)..."):
+                df_empresa = fetch_tabela_empresa()
+            with st.spinner("Buscando dados 3S (order_picture)..."):
+                df_orders = fetch_order_picture(data_de, data_ate)
+            with st.spinner("Processando dados..."):
+                df_final = process_and_build_report_summary(df_orders, df_empresa)
+            if df_final.empty:
+                st.warning("Nenhum dado encontrado para o período selecionado.")
+            else:
+                with st.spinner("Atualizando aba 'Desconto' na planilha 'Vendas diarias'..."):
+                    result = upload_df_to_gsheet_replace_months(df_final,
+                                                               spreadsheet_key=ID_PLANILHA_ORIGEM_DESCONTO,
+                                                               worksheet_name="Desconto")
+                st.success(f"Atualização concluída! Linhas mantidas: {result['kept_rows']}; Linhas inseridas: {result['inserted_rows']}.")
+        except Exception as e:
+            st.error(f"Erro durante a atualização: {e}")
+            st.exception(e)
 
     try:
         pastas_fech = list_child_folders(drive_service, PASTA_PRINCIPAL_ID, "fechamento")
@@ -300,6 +555,7 @@ with tab_atual:
         else:
             df_list = pd.DataFrame(planilhas).sort_values("name").reset_index(drop=True)
             df_list = df_list.rename(columns={"name": "Planilha", "id": "ID_Planilha"})
+
             c1, c2, c3, _ = st.columns([1.2, 1.2, 1.2, 5])
             with c1: s_desc = st.checkbox("Desconto", value=False, key="at_chk1")
             with c2: s_mp = st.checkbox("Meio Pagto", value=True, key="at_chk2")
@@ -351,7 +607,6 @@ with tab_atual:
                 except Exception as e:
                     st.error(f"Erro origem MP: {e}"); st.stop()
 
-                
                 total = len(df_marcadas)
                 prog = st.progress(0)
                 logs = []
@@ -361,7 +616,7 @@ with tab_atual:
                     try:
                         sid = row.get("ID_Planilha")
                         if not sid:
-                            sid = row.get("ID_Planilha")  # fallback (mantive seu padrão)
+                            sid = row.get("ID_Planilha")
                         if not sid:
                             logs.append(f"{row.get('Planilha', '(sem nome)')}: ID não encontrado.")
                             prog.progress((i+1)/total)
@@ -471,18 +726,16 @@ with tab_atual:
                                 logs.append(f"{row.get('Planilha', '(sem nome)')}: MP Erro {e}")
 
                         # --- ATUALIZAR DESCONTO ---
-                        # --- ATUALIZAR DESCONTO ---
                         if row.get("Desconto"):
                             try:
                                 # abrir origem Desconto
                                 sh_orig_des = gc.open_by_key(ID_PLANILHA_ORIGEM_DESCONTO)
                                 ws_orig_des = sh_orig_des.worksheet(ABA_ORIGEM_DESCONTO)
                                 h_orig_des, df_orig_des = get_headers_and_df_raw(ws_orig_des)
-                                
+
                                 # --- FILTRO DE DATA NA ORIGEM (Forçando Coluna B / Índice 1) ---
                                 if len(h_orig_des) > 1:
-                                    c_dt_orig_des = h_orig_des[1] # Coluna B
-                                    # Converte para datetime e extrai apenas a DATA para comparar
+                                    c_dt_orig_des = h_orig_des[1]  # Coluna B
                                     df_orig_des["_dt_orig"] = pd.to_datetime(df_orig_des[c_dt_orig_des], dayfirst=True, errors="coerce").dt.date
                                     df_ins_des = df_orig_des[(df_orig_des["_dt_orig"] >= data_de) & (df_orig_des["_dt_orig"] <= data_ate)].copy()
                                 else:
@@ -510,20 +763,19 @@ with tab_atual:
                                 if not df_ins_des.empty and cols_to_take:
                                     existing_take = [c for c in cols_to_take if c in df_ins_des.columns]
                                     df_ins_des = df_ins_des[existing_take].copy()
-                                
+
                                 if not df_ins_des.empty:
                                     try:
                                         try:
                                             ws_dest_des = sh_dest.worksheet("Desconto")
                                         except Exception:
                                             ws_dest_des = sh_dest.add_worksheet("Desconto", 1000, max(30, len(cols_to_take)))
-                                        
+
                                         h_dest_des, df_dest_des = get_headers_and_df_raw(ws_dest_des)
 
                                         if df_dest_des.empty:
                                             df_f_des, h_f_des = df_ins_des, list(df_ins_des.columns)
                                         else:
-                                            # Evitar duplicação no destino (Usa a coluna de data do destino)
                                             c_dt_d_des = detect_date_col(h_dest_des)
                                             if c_dt_d_des:
                                                 df_dest_des["_dt"] = pd.to_datetime(df_dest_des[c_dt_d_des], dayfirst=True, errors="coerce").dt.date
@@ -539,7 +791,7 @@ with tab_atual:
                                             for col in cols_to_take:
                                                 if col not in df_dest_sub.columns: df_dest_sub[col] = ""
                                             df_dest_sub = df_dest_sub[[c for c in cols_to_take if c in df_dest_sub.columns]]
-                                            
+
                                             for col in cols_to_take:
                                                 if col not in df_ins_des.columns: df_ins_des[col] = ""
                                             df_ins_des = df_ins_des[[c for c in cols_to_take if c in df_ins_des.columns]]
@@ -549,7 +801,7 @@ with tab_atual:
 
                                         if "_dt" in df_f_des.columns: df_f_des = df_f_des.drop(columns=["_dt"])
                                         if "_dt_orig" in df_f_des.columns: df_f_des = df_f_des.drop(columns=["_dt_orig"])
-                                        
+
                                         send_des = df_f_des[h_f_des].fillna("")
                                         ws_dest_des.clear()
                                         ws_dest_des.update("A1", [h_f_des] + send_des.values.tolist(), value_input_option="USER_ENTERED")
@@ -622,11 +874,11 @@ with tab_audit:
 
     if "au_planilhas_df" not in st.session_state:
         st.session_state.au_planilhas_df = pd.DataFrame(columns=["Planilha", "Flag", "Planilha_id", "Origem", "DRE", "MP DRE", "Dif", "Dif MP", "Status"])
-  
+
     df_table = st.session_state.au_planilhas_df.copy()
     if df_table.empty:
         st.info("Nenhuma planilha encontrada.")
-  
+
     expected_cols = ["Planilha", "Planilha_id", "Flag", "Origem", "DRE", "MP DRE", "Dif", "Dif MP", "Status"]
     for c in expected_cols:
         if c not in df_table.columns:
@@ -651,9 +903,8 @@ with tab_audit:
     grid_options = gb.build()
     grid_options['getRowStyle'] = row_style_js
 
- 
-    st.markdown('<div id="auditoria">', unsafe_allow_html=True)  
-  
+    st.markdown('<div id="auditoria">', unsafe_allow_html=True)
+
     grid_response = AgGrid(
         display_df,
         gridOptions=grid_options,
@@ -664,7 +915,7 @@ with tab_audit:
         fit_columns_on_grid_load=True,
     )
     st.markdown('</div>', unsafe_allow_html=True)
-  
+
     # use the fourth column for the verification button so everything stays aligned
     col_btn1, col_btn2, col_btn3, col_btn4 = st.columns([2, 2, 2, 2])
 
@@ -766,7 +1017,6 @@ with tab_audit:
                                 cod_norm = normalize_code(val)
                                 mapa_codigos_nas_planilhas.setdefault(cod_norm, []).append(pname)
                 except Exception:
-                    # ignora falhas em planilhas individuais (não interrompe todo processo)
                     pass
                 if total:
                     prog.progress((i + 1) / total)
@@ -784,11 +1034,10 @@ with tab_audit:
 
             df_relatorio = pd.DataFrame(relatorio)
 
-            # --- PASSO 4: Gera Excel e disponibiliza para download SEM mostrar tabela abaixo ---
+            # --- PASSO 4: Gera Excel e disponibiliza para download ---
             buf = io.BytesIO()
             with pd.ExcelWriter(buf, engine="xlsxwriter") as writer:
                 df_relatorio.to_excel(writer, index=False, sheet_name="Lojas_Faltantes")
-                # formatação básica de colunas
                 workbook = writer.book
                 worksheet = writer.sheets["Lojas_Faltantes"]
                 worksheet.set_column(0, 0, 40)  # Nome Empresa
@@ -811,7 +1060,7 @@ with tab_audit:
         except Exception as e:
             st.error(f"Erro na verificação: {e}")
 
-    if limpar_clicadas:
+    if 'limpar_clicadas' in locals() and limpar_clicadas:
         df_grid_now = pd.DataFrame(grid_response.get("data", []))
         planilhas_marcadas = []
         if not df_grid_now.empty and "Planilha" in df_grid_now.columns:
@@ -874,7 +1123,7 @@ with tab_audit:
                         pname = row.get("Planilha")
                         match = st.session_state.au_planilhas_df.loc[st.session_state.au_planilhas_df["Planilha"] == pname, "Planilha_id"]
                         if not match.empty: sid = match.iloc[0]
-                  
+
                     if not sid:
                         logs.append(f"{row.get('Planilha')}: ID não encontrado.")
                         continue
@@ -912,22 +1161,16 @@ with tab_audit:
                                 df_d_periodo = df_d[(df_d["_dt"] >= d_ini) & (df_d["_dt"] <= d_fim)]
                                 v_d = float(df_d_periodo[h_d[6]].sum()) if len(h_d) > 6 and not df_d_periodo.empty else 0.0
 
-                        ws_mp = sh_d.worksheet("Meio de Pagamento")
-                        # MEIO DE PAGAMENTO (substituir por este bloco)
                         try:
                             ws_mp = sh_d.worksheet("Meio de Pagamento")
                             h_mp, df_mp = get_headers_and_df_raw(ws_mp)
                             if not df_mp.empty:
                                 df_mp = tratar_numericos(df_mp, h_mp)
-
-                            # Data sempre na coluna A conforme informado => priorizar h_mp[0]
                             c_dt_mp = (h_mp[0] if h_mp and len(h_mp) > 0 else None)
                             if not c_dt_mp:
                                 c_dt_mp = detect_date_col(h_mp)
-
                             if c_dt_mp and not df_mp.empty:
                                 df_mp["_dt"] = pd.to_datetime(df_mp[c_dt_mp], dayfirst=True, errors="coerce")
-                                # se não parseou com dayfirst, tenta sem
                                 if df_mp["_dt"].isna().all():
                                     df_mp["_dt"] = pd.to_datetime(df_mp[c_dt_mp], dayfirst=False, errors="coerce")
                                 df_mp["_dt"] = df_mp["_dt"].dt.date
@@ -961,16 +1204,9 @@ with tab_audit:
                                         try:
                                             v_mp_calc = float(df_mp_dest_f[col_val_mp].sum())
                                         except Exception:
-                                            # fallback para somar strings com separadores
                                             v_mp_calc = float(pd.to_numeric(df_mp_dest_f[col_val_mp].astype(str).str.replace(".", "", regex=False).str.replace(",", ".", regex=False), errors="coerce").sum())
                                     else:
-                                        # fallback: tentar detectar coluna de valor por palavras-chave
-                                        col_val_guess = None
-                                        try:
-                                            col_val_guess = detect_column_by_keywords(h_mp, ["valor", "soma", "total", "amount", "receita", "vl"])
-                                        except Exception:
-                                            col_val_guess = None
-
+                                        col_val_guess = detect_column_by_keywords(h_mp, ["valor", "soma", "total", "amount", "receita", "vl"])
                                         if col_val_guess and col_val_guess in df_mp_periodo.columns:
                                             df_guess = df_mp_periodo.copy()
                                             if col_b2_mp in df_guess.columns:
@@ -989,9 +1225,9 @@ with tab_audit:
 
                             v_mp = v_mp_calc
                         except Exception as e:
-                            # loga o erro para diagnóstico e mantém v_mp = 0.0
                             logs.append(f"{pname} - MP: Erro {e}")
                             v_mp = 0.0
+
                         diff = v_o - v_d
                         diff_mp = v_d - v_mp
                         status = "✅ OK" if (abs(diff) < 0.01 and abs(diff_mp) < 0.01) else "❌ Erro"
