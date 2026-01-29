@@ -105,6 +105,18 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+st.markdown("""
+    <style>
+        [data-testid="stToolbar"] {
+            visibility: hidden;
+            height: 0%;
+            position: fixed;
+        }
+        .stSpinner {
+            visibility: visible !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 # --- DEFINIÇÃO DAS TABS COM ÍCONES ---
 # Inverti a ordem para Auditoria vir primeiro se desejar, ou mantenha como preferir
