@@ -22,6 +22,7 @@ except Exception:
 USUARIOS_AUTORIZADOS_CONTROLADORIA = {
     "maricelisrossi@gmail.com",
     "alex.komatsu@grupofit.com.br",
+    "joao.guimaraes@grupofit.com.br",
 }
 
 # usuário vindo do login/SSO (espera-se que seja preenchido externamente)
