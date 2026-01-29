@@ -24,7 +24,6 @@ USUARIOS_AUTORIZADOS_CONTROLADORIA = {
     
     "maricelisrossi@gmail.com",
     "alex.komatsu@grupofit.com.br",
-    "joao.guimaraes@grupofit.com.br",
     
 }
 
@@ -57,6 +56,9 @@ TARGET_SHEET_NAME = "Configurações Não Apagar"
 # Origem FATURAMENTO
 ID_PLANILHA_ORIGEM_FAT = "1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU"
 ABA_ORIGEM_FAT = "Fat Sistema Externo"
+
+ID_PLANILHA_ORIGEM_DESCONTO = "1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU"
+ABA_ORIGEM_DESCONTO = "Desconto"
 
 # Origem MEIO DE PAGAMENTO
 ID_PLANILHA_ORIGEM_MP = "1GSI291SEeeU9MtOWkGwsKGCGMi_xXMSiQnL_9GhXxfU"
@@ -259,7 +261,6 @@ tab_atual,tab_audit = st.tabs(["Atualização", "Auditoria" ])
 # -----------------------------
 # ABA: ATUALIZAÇÃO (mantive seu código praticamente intacto)
 # -----------------------------
-
 with tab_atual:
     col_d1, col_d2 = st.columns(2)
     with col_d1:
