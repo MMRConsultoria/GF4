@@ -170,8 +170,8 @@ with st.spinner("⏳ Processando..."):
             from datetime import datetime, timedelta
             agora_brasil = datetime.utcnow() - timedelta(hours=3)
             ontem = (agora_brasil - timedelta(days=1)).date()
-            data_inicio = ontem - timedelta(days=29)  # últimos 30 dias incluindo ontem
-            
+            #data_inicio = ontem - timedelta(days=29)  # últimos 30 dias incluindo ontem
+            data_inicio = date(2026, 1, 1)  # desde 01/01/2026
             # ✅ FILTRO SQL: Adicionado "AND business_dt <= %s"
             query = """
                 SELECT store_code, business_dt, total_gross, custom_properties, order_code, state_id
