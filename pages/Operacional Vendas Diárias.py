@@ -408,15 +408,21 @@ with st.spinner("⏳ Processando..."):
             st.success(f"✅ {total_registros} registros processados com sucesso!")
             
             # Verificar empresas não localizadas
-            empresas_nao_localizadas = resumo_3s[resumo_3s["Loja"].isna()]["Código Everest"].unique()
+            df_nao_localizadas = resumo_3s[resumo_3s["Loja"].isna() | (resumo_3s["Loja"] == "nan")]
+            empresas_nao_localizadas = df_nao_localizadas["Código Everest"].unique()
             if len(empresas_nao_localizadas) > 0:
-                empresas_nao_localizadas_str = "<br>".join(empresas_nao_localizadas)
+                empresas_nao_localizadas_str = "<​br>".join(map(str, empresas_nao_localizadas))
                 mensagem = f"""
-                ⚠️ {len(empresas_nao_localizadas)} código(s) não localizado(s) na Tabela Empresa! <br>{empresas_nao_localizadas_str}
-                <br>✏️ Atualize a tabela clicando 
-                <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>.
+                <div style='background-color:#ffcccc; padding:15px; border-radius:5px; border:1px solid red;'>
+                    <strong>❌ BLOQUEADO: {len(empresas_nao_localizadas)} código(s) Everest sem cadastro na Tabela Empresa:</strong><br>
+                    <span style='color:red; font-size:16px;'>{empresas_nao_localizadas_str}</span><br><br>
+                    ✏️ Cadastre clicando 
+                    <a href='https://docs.google.com/spreadsheets/d/1AVacOZDQT8vT-E8CiD59IVREe3TpKwE_25wjsj--qTU/edit?usp=drive_link' target='_blank'><strong>aqui</strong></a>
+                    e clique em "Atualizar 3S Checkout" novamente.
+                </div>
                 """
                 st.markdown(mensagem, unsafe_allow_html=True)
+                st.stop()
             else:
                 st.success("✅ Todas as lojas foram localizadas na Tabela_Empresa!")
             
