@@ -418,7 +418,7 @@ def buscar_meio_pagamento_3s_checkout(df_empresa: pd.DataFrame, df_meio_pgto_goo
         # Ajuste para fuso horário de Brasília (UTC-3) e define "ontem" como limite máximo
         agora_brasil = datetime.utcnow() - timedelta(hours=3)
         ontem = (agora_brasil - timedelta(days=1)).date()
-        data_inicio = ontem - timedelta(days=59)  # últimos 60 dias incluindo ontem
+        data_inicio = ontem - timedelta(days=90)  # últimos 60 dias incluindo ontem
 
         # BASE (order_picture) p/ VOID_TYPE + store/date
         query_op = """
