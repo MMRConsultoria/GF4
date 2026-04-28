@@ -2427,7 +2427,7 @@ with st.spinner("⏳ Processando..."):
         #st.subheader("📊 Auditoria Mensal — Sistema × Meio de Pagamento (Mês/Ano das abas)")
     
         # ---------------- Config ----------------
-        ANO_MIN = 2023       # considera 2023 em diante (>= 2023)
+        ANO_MIN = 2025       # considera 2025 em diante (>= 2025)
         TOL = 0.01           # tolerância de 1 centavo
     
         # ---------------- Helpers ----------------
@@ -2624,7 +2624,7 @@ with st.spinner("⏳ Processando..."):
             ext["MesNum"] = ext["MesNum"].fillna(pd.to_datetime(ext["Data"], errors="coerce").dt.month)
         if ext["Ano"].isna().any():
             ext["Ano"] = ext["Ano"].fillna(pd.to_datetime(ext["Data"], errors="coerce").dt.year)
-        # 2023+
+        # 2025+
         ext = ext[ext["Ano"] >= ANO_MIN].copy()
         ext["Mês"] = ext.apply(lambda r: _mk_messtr(r["MesNum"], r["Ano"]), axis=1)
     
@@ -2644,7 +2644,7 @@ with st.spinner("⏳ Processando..."):
             mp["MesNum"] = mp["MesNum"].fillna(pd.to_datetime(mp["Data"], errors="coerce").dt.month)
         if mp["Ano"].isna().any():
             mp["Ano"] = mp["Ano"].fillna(pd.to_datetime(mp["Data"], errors="coerce").dt.year)
-        # 2023+
+        # 2025+
         mp = mp[mp["Ano"] >= ANO_MIN].copy()
         mp["Mês"] = mp.apply(lambda r: _mk_messtr(r["MesNum"], r["Ano"]), axis=1)
     
