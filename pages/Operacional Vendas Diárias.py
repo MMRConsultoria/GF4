@@ -1664,7 +1664,7 @@ with st.spinner("⏳ Processando..."):
                 help="Dispara a atualização do DRE agora",
             )
         if atualizar_dre:
-            SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-gK_KYcSyqyfimHTuXFLEDxKvWdW4k0o_kOPE-r-SWxL-SpogE2U9wiZt7qCZoH-gqQ/exec"
+            SCRIPT_URL = "/AKfycbw-gK_KYcSyqyfimHTuXFLEDxKvWdW4k0o_kOPE-r-SWxL-SpogE2U9wiZt7qCZoH-gqQ/exec"
             try:
                 with st.spinner("Atualizando DRE..."):
                     resp = fetch_with_retry(SCRIPT_URL, connect_timeout=10, read_timeout=180, retries=3, backoff=1.5)
