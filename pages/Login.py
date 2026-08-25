@@ -91,7 +91,7 @@ USUARIOS = [
     {"codigo": "1825", "email": "paulo.fagundes@grupofit.com.br", "senha": "Fgh*$#@&Mjo*21."},
     {"codigo": "1825", "email": "alex.komatsu@grupofit.com.br", "senha": "Kolplmt5876"},
     {"codigo": "1825", "email": "biateste@grupofit.com.br", "senha": "YUJA2510$%1."},
-    {"codigo": "1825", "email": "micaelly@grupofit.com.br", "senha": "MICA3010$%1"},
+    {"codigo": "1825", "email": "micaelly@grupofit.com.br", "senha": "MICA3010$%1."},
     {"codigo": "1825", "email": "testerh@gmail.com", "senha": "teste1425."},
     {"codigo": "3377", "email": "maricelisrossi@gmail.com", "senha": "1825"}
 ]
